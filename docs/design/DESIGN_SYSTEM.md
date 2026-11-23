@@ -78,7 +78,9 @@ Menu editing, import history, and operations show an illustrated empty state whe
 
 ### Assinatura
 
-A landing reutiliza o bloco de CTA para mostrar o plano mensal. O painel agrupa preço, ações e situação da assinatura nos cards existentes. O preço é exibido em reais e a periodicidade usa os catálogos PT, EN e ES. A escolha do plano cria o checkout com um formulário local. Um link normal abre o Asaas, preservando a diretiva `form-action 'self'` do painel.
+A seção do Plano Essencial usa a mesma faixa de fundo de `.landing-how`. O cartão combina a cor creme, os contornos escuros, a coroa amarela e as formas de fundo azul e rosa da landing. O botão abre um `<dialog>` com os controles de foco e fechamento de `panel-dialog.js`. O cartão e o modal compartilham as macros de preço e benefícios. A periodicidade e as ações usam os catálogos PT, EN e ES.
+
+O painel agrupa preço, situação da assinatura e ações. O proprietário inicia o checkout pelo formulário local do painel e segue por um link para o Asaas, preservando a diretiva `form-action 'self'`.
 
 ### Link do cardápio no cadastro
 

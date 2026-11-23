@@ -1,7 +1,7 @@
 {% extends "layouts/base.html" %}
 
 {% block nav_links %}
-  <a class="nav-link" href="/login" data-i18n="nav.login">{{ page.t("nav.login") }}</a>
+  <a class="nav-link" href="/login{% if subscribe_plan %}?plan=1{% endif %}" data-i18n="nav.login">{{ page.t("nav.login") }}</a>
 {% endblock %}
 
 {% block content %}
@@ -16,7 +16,7 @@
       <div class="alert alert-error" role="alert" data-i18n="{{ err }}">{{ page.t(err) }}</div>
       {% endif %}
 
-      <form class="form-stack" method="post" action="/register">
+      <form class="form-stack" method="post" action="/register{% if subscribe_plan %}?plan=1{% endif %}">
         <div class="hp-field" aria-hidden="true">
           <label for="website">Website</label>
           <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
@@ -44,7 +44,7 @@
 
       <p class="mt-4 text-muted">
         <span data-i18n="auth.has_account">{{ page.t("auth.has_account") }}</span>
-        <a href="/login" data-i18n="auth.sign_in_here">{{ page.t("auth.sign_in_here") }}</a>
+        <a href="/login{% if subscribe_plan %}?plan=1{% endif %}" data-i18n="auth.sign_in_here">{{ page.t("auth.sign_in_here") }}</a>
       </p>
     </section>
   </div>

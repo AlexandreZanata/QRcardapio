@@ -1,10 +1,11 @@
 use axum::Form;
-use axum::extract::State;
+use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect, Response};
 use axum_extra::extract::CookieJar;
 use serde::Deserialize;
 
+use super::onboarding::{PLAN_ONBOARDING, PlanIntent};
 use crate::app::AppState;
 use crate::application::auth::{login, logout, redeem_password_reset, register_owner};
 use crate::error::AppResult;
@@ -45,16 +46,25 @@ pub struct CsrfOnlyForm {
 }
 
 pub async fn login_page(
+    State(state): State<AppState>,
     RequestLocale(locale): RequestLocale,
     OptionalAuth(auth): OptionalAuth,
     jar: CookieJar,
+    Query(plan): Query<PlanIntent>,
 ) -> AppResult<Response> {
+    let subscribe_plan = plan.enabled(&state);
     if auth.is_some() {
-        return Ok(Redirect::to("/dashboard").into_response());
+        let destination = if subscribe_plan {
+            PLAN_ONBOARDING
+        } else {
+            "/dashboard"
+        };
+        return Ok(Redirect::to(destination).into_response());
     }
     let (jar, flash) = take_flash(jar);
     let tpl = LoginTemplate {
         page: PageMeta::new(locale, "auth.login_title", flash),
+        subscribe_plan,
         email_value: String::new(),
         error_key: None,
     };
@@ -66,11 +76,14 @@ pub async fn login_submit(
     RequestLocale(locale): RequestLocale,
     ClientIp(ip): ClientIp,
     jar: CookieJar,
+    Query(plan): Query<PlanIntent>,
     Form(form): Form<LoginForm>,
 ) -> AppResult<Response> {
+    let subscribe_plan = plan.enabled(&state);
     if state.rate_limiters.login_ip.check_key(&ip).is_err() {
         let tpl = LoginTemplate {
             page: PageMeta::new(locale, "auth.login_title", None),
+            subscribe_plan,
             email_value: form.email,
             error_key: Some("error.rate_limited".to_string()),
         };
@@ -83,7 +96,11 @@ pub async fn login_submit(
                 build_session_cookie(success.raw_session_token, state.config.cookie_secure);
             Ok(with_flash_redirect(
                 jar.add(cookie),
-                "/dashboard",
+                if subscribe_plan {
+                    PLAN_ONBOARDING
+                } else {
+                    "/dashboard"
+                },
                 false,
                 "flash.logged_in",
                 state.config.cookie_secure,
@@ -92,6 +109,7 @@ pub async fn login_submit(
         Err(err) => {
             let tpl = LoginTemplate {
                 page: PageMeta::new(locale, "auth.login_title", None),
+                subscribe_plan,
                 email_value: form.email,
                 error_key: Some(err.i18n_key().to_string()),
             };
@@ -101,16 +119,25 @@ pub async fn login_submit(
 }
 
 pub async fn register_page(
+    State(state): State<AppState>,
     RequestLocale(locale): RequestLocale,
     OptionalAuth(auth): OptionalAuth,
     jar: CookieJar,
+    Query(plan): Query<PlanIntent>,
 ) -> AppResult<Response> {
+    let subscribe_plan = plan.enabled(&state);
     if auth.is_some() {
-        return Ok(Redirect::to("/dashboard").into_response());
+        let destination = if subscribe_plan {
+            PLAN_ONBOARDING
+        } else {
+            "/dashboard"
+        };
+        return Ok(Redirect::to(destination).into_response());
     }
     let (jar, flash) = take_flash(jar);
     let tpl = RegisterTemplate {
         page: PageMeta::new(locale, "auth.register_title", flash),
+        subscribe_plan,
         email_value: String::new(),
         error_key: None,
     };
@@ -122,8 +149,10 @@ pub async fn register_submit(
     RequestLocale(locale): RequestLocale,
     ClientIp(ip): ClientIp,
     jar: CookieJar,
+    Query(plan): Query<PlanIntent>,
     Form(form): Form<RegisterForm>,
 ) -> AppResult<Response> {
+    let subscribe_plan = plan.enabled(&state);
     // Honeypot field traps naive automated spam bots silently.
     if !form.website.trim().is_empty() {
         return Ok(Redirect::to("/login").into_response());
@@ -132,6 +161,7 @@ pub async fn register_submit(
     if state.rate_limiters.register_ip.check_key(&ip).is_err() {
         let tpl = RegisterTemplate {
             page: PageMeta::new(locale, "auth.register_title", None),
+            subscribe_plan,
             email_value: form.email,
             error_key: Some("error.rate_limited".to_string()),
         };
@@ -153,7 +183,11 @@ pub async fn register_submit(
                 build_session_cookie(success.raw_session_token, state.config.cookie_secure);
             Ok(with_flash_redirect(
                 jar.add(cookie),
-                "/onboarding",
+                if subscribe_plan {
+                    PLAN_ONBOARDING
+                } else {
+                    "/onboarding"
+                },
                 false,
                 "flash.registered",
                 state.config.cookie_secure,
@@ -163,6 +197,7 @@ pub async fn register_submit(
             let status = err.status_code();
             let tpl = RegisterTemplate {
                 page: PageMeta::new(locale, "auth.register_title", None),
+                subscribe_plan,
                 email_value: form.email,
                 error_key: Some(err.i18n_key().to_string()),
             };

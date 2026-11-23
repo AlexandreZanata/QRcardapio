@@ -60,6 +60,7 @@ All `POST` routes verify `_csrf` against the server session's `csrf_token` in co
 
 ## Assinatura Asaas
 
+- Com o Asaas configurado, o modal do plano encaminha pelo cadastro, login ou configuração do estabelecimento. `GET` e `POST` de `/register`, `/login` e `/onboarding` preservam `?plan=1` nos formulários e encaminham a `/dashboard/billing` após a configuração. Os destinos são rotas fixas do sistema.
 - `GET /dashboard/billing` exibe o plano, o estado do checkout ou da assinatura e a cobertura paga. O retorno do navegador para essa rota é somente leitura.
 - `POST /dashboard/billing/checkout`, `POST /dashboard/billing/reconcile` e `POST /dashboard/billing/cancel` verificam sessão, vínculo de proprietário e `_csrf`. As três ações retornam ao painel. O cancelamento exige confirmação e verifica o ID informado contra a assinatura corrente do estabelecimento.
 - `POST /webhooks/asaas` aceita JSON até 64 KiB e autentica `asaas-access-token` antes de interpretar o corpo. Retorna `200` após aplicar o evento de forma idempotente, `401` com token ausente ou inválido, `413` acima do limite e `404` quando a cobrança está desabilitada.

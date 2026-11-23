@@ -293,18 +293,3 @@ body:has(.landing-page) {
   html:has(.landing-page) { scroll-behavior: auto; }
   .landing-button { transition: none; }
 }
-
-.landing-plan .landing-plan-action {
-  flex: none;
-  display: grid;
-  gap: 0.7rem;
-}
-
-.landing-plan .landing-plan-price {
-  line-height: 1.15;
-}
-
-.landing-plan-price strong {
-  font-size: clamp(1.85rem, 4vw, 2.8rem);
-  letter-spacing: -0.05em;
-}

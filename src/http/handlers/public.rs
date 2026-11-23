@@ -1,3 +1,4 @@
+use std::net::IpAddr;
 use std::os::unix::fs::MetadataExt;
 
 use axum::extract::{Path, State};
@@ -21,13 +22,30 @@ pub async fn landing(
     RequestLocale(locale): RequestLocale,
     OptionalAuth(auth): OptionalAuth,
 ) -> AppResult<Response> {
+    let billing_enabled = state.asaas.is_some();
     let tpl = LandingTemplate {
         page: PageMeta::new(locale, "landing.page_title", None),
         is_logged_in: auth.is_some(),
-        billing_enabled: state.asaas.is_some(),
+        billing_enabled,
+        show_plan: billing_enabled || local_plan_preview(&state.config.public_base_url),
         plan_price: crate::rendering::billing::plan_price(),
     };
     render_html(&tpl, StatusCode::OK)
+}
+
+fn local_plan_preview(public_base_url: &str) -> bool {
+    let Ok(base) = reqwest::Url::parse(public_base_url) else {
+        return false;
+    };
+    base.scheme() == "http"
+        && base.host_str().is_some_and(|host| {
+            host == "localhost"
+                || match host.trim_matches(['[', ']']).parse::<IpAddr>() {
+                    Ok(IpAddr::V4(ip)) => ip.is_loopback() || ip.is_private(),
+                    Ok(IpAddr::V6(ip)) => ip.is_loopback() || ip.is_unique_local(),
+                    Err(_) => false,
+                }
+        })
 }
 
 /// Serves a published static menu (`/c/{slug}`) directly from disk WITHOUT touching SQLite.

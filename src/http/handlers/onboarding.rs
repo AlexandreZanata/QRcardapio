@@ -1,5 +1,5 @@
 use axum::Form;
-use axum::extract::State;
+use axum::extract::{Query, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect, Response};
 use axum_extra::extract::CookieJar;
@@ -16,6 +16,21 @@ use crate::http::responses::{take_flash, with_flash_redirect};
 use crate::infrastructure::database::queries::find_establishment_for_account;
 use crate::rendering::dashboard::OnboardingTemplate;
 use crate::rendering::{PageMeta, render_html};
+
+pub(crate) const PLAN_ONBOARDING: &str = "/onboarding?plan=1";
+const BILLING_PAGE: &str = "/dashboard/billing";
+
+#[derive(Deserialize)]
+pub struct PlanIntent {
+    #[serde(default)]
+    plan: String,
+}
+
+impl PlanIntent {
+    pub(crate) fn enabled(&self, state: &AppState) -> bool {
+        self.plan == "1" && state.asaas.is_some()
+    }
+}
 
 #[derive(Deserialize)]
 pub struct OnboardingForm {
@@ -34,12 +49,19 @@ pub async fn onboarding_page(
     RequestLocale(locale): RequestLocale,
     auth: AuthContext,
     jar: CookieJar,
+    Query(plan): Query<PlanIntent>,
 ) -> AppResult<Response> {
+    let subscribe_plan = plan.enabled(&state);
     if find_establishment_for_account(&state.pool, &auth.account.id)
         .await?
         .is_some()
     {
-        return Ok(Redirect::to("/dashboard").into_response());
+        let destination = if subscribe_plan {
+            BILLING_PAGE
+        } else {
+            "/dashboard"
+        };
+        return Ok(Redirect::to(destination).into_response());
     }
 
     let (jar, flash) = take_flash(jar);
@@ -51,6 +73,7 @@ pub async fn onboarding_page(
         is_admin: auth.account.role == AccountRole::Admin,
         active_nav: "",
         csrf_token: auth.csrf_token,
+        subscribe_plan,
         step: 2,
         base_host: state.config.public_base_url.clone(),
         name_value: String::new(),
@@ -67,9 +90,11 @@ pub async fn onboarding_submit(
     RequestLocale(locale): RequestLocale,
     auth: AuthContext,
     jar: CookieJar,
+    Query(plan): Query<PlanIntent>,
     Form(form): Form<OnboardingForm>,
 ) -> AppResult<Response> {
     verify_csrf(&auth, &form._csrf)?;
+    let subscribe_plan = plan.enabled(&state);
 
     let res = create_establishment(
         &state.pool,
@@ -86,7 +111,11 @@ pub async fn onboarding_submit(
     match res {
         Ok(_) => Ok(with_flash_redirect(
             jar,
-            "/dashboard/menu",
+            if subscribe_plan {
+                BILLING_PAGE
+            } else {
+                "/dashboard/menu"
+            },
             false,
             "flash.establishment_created",
             state.config.cookie_secure,
@@ -100,6 +129,7 @@ pub async fn onboarding_submit(
                 is_admin: auth.account.role == AccountRole::Admin,
                 active_nav: "",
                 csrf_token: auth.csrf_token,
+                subscribe_plan,
                 step: 2,
                 base_host: state.config.public_base_url.clone(),
                 name_value: form.name,

@@ -14,7 +14,7 @@
     <div class="alert alert-error" role="alert" data-i18n="{{ err }}">{{ page.t(err) }}</div>
     {% endif %}
 
-    <form class="form-stack" method="post" action="/onboarding">
+    <form class="form-stack" method="post" action="/onboarding{% if subscribe_plan %}?plan=1{% endif %}">
       <input type="hidden" name="_csrf" value="{{ csrf_token }}">
 
       {{ fields::input("name", "onboarding.name_label", name_value, 100, guide_key="guide.business_name", required=true, placeholder_key="onboarding.name_placeholder") }}

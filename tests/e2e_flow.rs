@@ -10,8 +10,9 @@ use tempfile::TempDir;
 use tower::ServiceExt;
 
 use qrcardapio::app::{AppState, build_router};
-use qrcardapio::config::{Config, DbSynchronous, LogFormat};
+use qrcardapio::config::{AsaasConfig, AsaasEnvironment, Config, DbSynchronous, LogFormat};
 use qrcardapio::infrastructure::database::init_pool;
+use qrcardapio::rendering::billing::plan_price;
 
 fn test_config(dir: &TempDir) -> Config {
     Config {
@@ -92,6 +93,77 @@ async fn body_string(res: axum::response::Response) -> String {
 }
 
 #[tokio::test]
+async fn landing_plan_reaches_billing_after_registration_and_login() {
+    let dir = TempDir::new().unwrap();
+    let mut cfg = test_config(&dir);
+    cfg.asaas = Some(
+        AsaasConfig::new(
+            AsaasEnvironment::Sandbox,
+            "test-api-credential",
+            &"a".repeat(40),
+        )
+        .unwrap(),
+    );
+    let pool = init_pool(&cfg).await.unwrap();
+    let app = build_router(AppState::new(cfg, pool));
+    let send = |path: &str, cookie: &str, form: Option<String>| {
+        let mut request = Request::builder().uri(path).header(COOKIE, cookie);
+        let body = if let Some(form) = form {
+            request = request
+                .method("POST")
+                .header(CONTENT_TYPE, "application/x-www-form-urlencoded");
+            Body::from(form)
+        } else {
+            Body::empty()
+        };
+        app.clone().oneshot(request.body(body).unwrap())
+    };
+
+    let landing = body_string(send("/", "", None).await.unwrap()).await;
+    assert!(landing.contains("id=\"landing-plan-dialog\""));
+    assert!(landing.contains(&plan_price()));
+    assert!(landing.contains("href=\"/register?plan=1\""));
+    assert!(landing.contains("href=\"/login?plan=1\""));
+
+    let account = "email=plano%40example.test&password=SenhaForte123";
+    let register = send(
+        "/register?plan=1",
+        "",
+        Some(format!("{account}&password_confirm=SenhaForte123")),
+    )
+    .await
+    .unwrap();
+    let onboarding_url = "/onboarding?plan=1";
+    assert_eq!(register.headers()[LOCATION], onboarding_url);
+    let cookie = extract_session_cookie(&register).unwrap();
+    let onboarding = body_string(send(onboarding_url, &cookie, None).await.unwrap()).await;
+    assert!(onboarding.contains("action=\"/onboarding?plan=1\""));
+    let csrf = extract_csrf_token(&onboarding);
+    let created = send(
+        onboarding_url,
+        &cookie,
+        Some(format!(
+            "_csrf={csrf}&name=Plano+Teste&slug=plano-teste&accent_color=%23D9532F"
+        )),
+    )
+    .await
+    .unwrap();
+    let billing_url = "/dashboard/billing";
+    assert_eq!(created.headers()[LOCATION], billing_url);
+
+    let login = send("/login?plan=1", "", Some(account.into()))
+        .await
+        .unwrap();
+    assert_eq!(login.headers()[LOCATION], onboarding_url);
+    let cookie = extract_session_cookie(&login).unwrap();
+    let redirect = send(onboarding_url, &cookie, None).await.unwrap();
+    assert_eq!(redirect.headers()[LOCATION], billing_url);
+    let billing = body_string(send(billing_url, &cookie, None).await.unwrap()).await;
+    assert!(billing.contains(&plan_price()));
+    assert!(billing.contains("action=\"/dashboard/billing/checkout\""));
+}
+
+#[tokio::test]
 async fn complete_definition_of_done_e2e_flow_including_restart() {
     let dir = TempDir::new().unwrap();
     let cfg = test_config(&dir);
@@ -114,6 +186,7 @@ async fn complete_definition_of_done_e2e_flow_including_restart() {
     assert!(landing_html.contains("/static/images/landing-review-frame-4k.webp 2160w"));
     assert!(!landing_html.contains("href=\"/static/images/landing-dashboard-4k.webp\""));
     assert!(!landing_html.contains("href=\"/static/images/landing-menu-4k.webp\""));
+    assert!(!landing_html.contains("id=\"landing-plan-dialog\""));
 
     // 2. Register Owner 1
     let reg_res = app

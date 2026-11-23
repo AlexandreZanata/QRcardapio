@@ -4,7 +4,7 @@ Um estabelecimento pode contratar um plano mensal de **R$ 29,90** por cartão de
 
 ## Acesso e renovação
 
-- O proprietário contrata a assinatura após cadastrar o estabelecimento. Gerentes podem acompanhar o status. A cobrança só aparece com o Asaas configurado.
+- O proprietário escolhe o Plano Essencial na landing e inicia a assinatura pelo painel após entrar na conta e cadastrar o estabelecimento. Gerentes podem acompanhar o status. A contratação exige configuração do Asaas. Ambientes HTTP com `localhost` ou IP privado ou de loopback exibem uma prévia visual quando a cobrança está desabilitada.
 - Quem edita o cardápio pode salvar e visualizar rascunhos. Quando a cobrança está habilitada, tanto a primeira publicação quanto as atualizações exigem que um pagamento integral cubra a data atual.
 - O início do período é o vencimento original da cobrança. O acesso vence no mesmo dia do mês seguinte, ajustado ao último dia quando necessário. O vencimento é exclusivo e o calendário usa UTC−03:00. A confirmação de um novo pagamento estende a cobertura conforme o respectivo vencimento.
 - O cancelamento pelo painel encerra a recorrência no Asaas. Um período pago continua disponível até o vencimento. Um estorno integral ou chargeback invalida a cobertura da cobrança afetada. Acesso já coberto por outra cobrança segue o respectivo período.

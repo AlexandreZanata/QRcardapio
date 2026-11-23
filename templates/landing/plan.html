@@ -1,16 +1,94 @@
-<section id="plan" class="landing-container landing-final" aria-labelledby="landing-plan-title">
-  <div class="landing-cta landing-plan">
-    <div>
-      <h2 id="landing-plan-title" data-i18n="billing.plan_title">{{ page.t("billing.plan_title") }}</h2>
-      <p data-i18n="billing.plan_description">{{ page.t("billing.plan_description") }}</p>
+{% import "components/icons.html" as icons %}
+
+{% macro price(price_value) %}
+<div class="landing-plan-price">
+  <strong>{{ price_value }}</strong>
+  <span data-i18n="billing.per_month">{{ page.t("billing.per_month") }}</span>
+</div>
+{% endmacro %}
+
+{% macro benefits() %}
+<ul class="landing-plan-benefits">
+  {% for key in ["landing.plan_feature_menu", "landing.plan_feature_qr", "landing.plan_feature_updates", "landing.plan_feature_style", "landing.plan_feature_reviews"] %}
+  <li>{{ icons::icon("check") }} <span data-i18n="{{ key }}">{{ page.t(key) }}</span></li>
+  {% endfor %}
+</ul>
+{% endmacro %}
+
+<section id="plan" class="landing-how landing-plan-band" aria-labelledby="landing-plan-title">
+  <div class="landing-container">
+    <h2 class="landing-plan-heading" id="landing-plan-title">
+      <span data-i18n="landing.plan_heading">{{ page.t("landing.plan_heading") }}</span>
+      <span class="hero-highlight hero-highlight-yellow" data-i18n="landing.plan_heading_highlight">{{ page.t("landing.plan_heading_highlight") }}</span>
+      <span class="hero-highlight hero-highlight-pink" data-i18n="landing.plan_heading_end">{{ page.t("landing.plan_heading_end") }}</span>
+    </h2>
+
+    <div class="landing-plan-stage">
+      <div class="landing-plan-burst">{{ icons::sticker("burst") }}</div>
+      <article class="landing-plan-card" aria-labelledby="landing-plan-name">
+        <div class="landing-plan-summary">
+          <div>
+            <h3 id="landing-plan-name" class="landing-plan-name">
+              {{ icons::sticker("plan-crown") }} <span data-i18n="landing.plan_name">{{ page.t("landing.plan_name") }}</span>
+            </h3>
+            <p data-i18n="landing.plan_intro">{{ page.t("landing.plan_intro") }}</p>
+          </div>
+          {{ price(plan_price) }}
+        </div>
+        {{ benefits() }}
+        <a class="btn landing-button landing-button-blue landing-plan-primary"
+           href="{% if billing_enabled && is_logged_in %}/onboarding?plan=1{% else if billing_enabled %}/register?plan=1{% else %}#plan-details{% endif %}"
+           data-panel-dialog-open="landing-plan-dialog" data-i18n="landing.plan_open">
+          {{ page.t("landing.plan_open") }}
+        </a>
+        <div id="plan-details" class="landing-plan-notice">
+          {% if billing_enabled %}
+          {{ icons::icon("check") }} <span data-i18n="landing.plan_cancel_note">{{ page.t("landing.plan_cancel_note") }}</span>
+          {% else %}
+          <span data-i18n="landing.plan_preview">{{ page.t("landing.plan_preview") }}</span>
+          {% endif %}
+        </div>
+      </article>
     </div>
-    <div class="landing-plan-action">
-      <p class="landing-plan-price"><strong>{{ plan_price }}</strong> <span data-i18n="billing.per_month">{{ page.t("billing.per_month") }}</span></p>
-      {% if is_logged_in %}
-      <a class="btn landing-button landing-button-yellow" href="/dashboard/billing" data-i18n="billing.view_plan">{{ page.t("billing.view_plan") }}</a>
+
+    <p class="landing-plan-audience">
+      {{ icons::panel("store") }} <span data-i18n="landing.plan_audience">{{ page.t("landing.plan_audience") }}</span>
+    </p>
+  </div>
+
+  <dialog class="panel-dialog landing-plan-dialog" id="landing-plan-dialog" aria-labelledby="landing-plan-dialog-title">
+    <header class="landing-plan-dialog-header">
+      <h2 id="landing-plan-dialog-title" class="landing-plan-name" tabindex="-1" data-panel-dialog-focus>
+        {{ icons::sticker("plan-crown") }} <span data-i18n="landing.plan_dialog_title">{{ page.t("landing.plan_dialog_title") }}</span>
+      </h2>
+      <button class="panel-dialog-close" type="button" data-panel-dialog-close
+              aria-label="{{ page.t("common.close") }}" data-i18n-aria="common.close">
+        {{ icons::panel("close") }}
+      </button>
+    </header>
+    <div class="panel-dialog-body landing-plan-dialog-body">
+      {{ price(plan_price) }}
+      {{ benefits() }}
+      {% if billing_enabled %}
+      <p class="landing-plan-checkout-note" data-i18n="billing.payment_method">{{ page.t("billing.payment_method") }}</p>
       {% else %}
-      <a class="btn landing-button landing-button-yellow" href="/register" data-i18n="landing.create_menu">{{ page.t("landing.create_menu") }}</a>
+      <p class="landing-plan-checkout-note" data-i18n="landing.plan_preview">{{ page.t("landing.plan_preview") }}</p>
       {% endif %}
     </div>
-  </div>
+    <footer class="landing-plan-dialog-actions">
+      {% if billing_enabled %}
+        {% if is_logged_in %}
+        <a class="btn landing-button landing-button-blue landing-plan-primary" href="/onboarding?plan=1"
+           data-i18n="landing.plan_continue">{{ page.t("landing.plan_continue") }}</a>
+        {% else %}
+        <a class="btn landing-button landing-button-blue landing-plan-primary" href="/register?plan=1"
+           data-i18n="landing.plan_signup">{{ page.t("landing.plan_signup") }}</a>
+        <a class="landing-plan-login" href="/login?plan=1" data-i18n="landing.plan_login">{{ page.t("landing.plan_login") }}</a>
+        {% endif %}
+      {% else %}
+      <button class="btn landing-button landing-plan-primary" type="button" data-panel-dialog-close
+              data-i18n="common.close">{{ page.t("common.close") }}</button>
+      {% endif %}
+    </footer>
+  </dialog>
 </section>

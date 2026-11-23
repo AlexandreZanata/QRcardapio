@@ -54,4 +54,8 @@
     <path d="m20.2 19.3 2.6 2.7 5.6-5.6" fill="none" stroke="#161721" stroke-width="2.15" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="m3.4 11.5 3 1m36.3 13.1 2.8 1.3M37.5 5.2l2.8-2.1" fill="none" stroke="#ef3c82" stroke-width="2.1" stroke-linecap="round"/>
   </symbol>
+  <symbol id="plan-crown" viewBox="0 0 32 32">
+    <path d="M4 11l7 4 5-10 5 10 7-4-3 14H7z" fill="#ffdc38" stroke="#161721" stroke-width="2.3" stroke-linejoin="round"/>
+    <path d="M8 21h16" fill="none" stroke="#ffef9a" stroke-width="1.6" stroke-linecap="round"/>
+  </symbol>
 </svg>

@@ -1,7 +1,7 @@
 {% extends "layouts/base.html" %}
 
 {% block nav_links %}
-  <a class="nav-link" href="/register" data-i18n="nav.register">{{ page.t("nav.register") }}</a>
+  <a class="nav-link" href="/register{% if subscribe_plan %}?plan=1{% endif %}" data-i18n="nav.register">{{ page.t("nav.register") }}</a>
 {% endblock %}
 
 {% block content %}
@@ -16,7 +16,7 @@
       <div class="alert alert-error" role="alert" data-i18n="{{ err }}">{{ page.t(err) }}</div>
       {% endif %}
 
-      <form class="form-stack" method="post" action="/login">
+      <form class="form-stack" method="post" action="/login{% if subscribe_plan %}?plan=1{% endif %}">
         <div class="field">
           <label for="email" data-i18n="auth.email_label">{{ page.t("auth.email_label") }}</label>
           <input id="email" name="email" type="email" value="{{ email_value }}" required autocomplete="email"
@@ -33,7 +33,7 @@
 
       <p class="mt-4 text-muted">
         <span data-i18n="auth.no_account">{{ page.t("auth.no_account") }}</span>
-        <a href="/register" data-i18n="auth.create_one">{{ page.t("auth.create_one") }}</a>
+        <a href="/register{% if subscribe_plan %}?plan=1{% endif %}" data-i18n="auth.create_one">{{ page.t("auth.create_one") }}</a>
       </p>
       <p class="mt-2 field-hint">
         <a href="/reset-password" data-i18n="auth.forgot_password">{{ page.t("auth.forgot_password") }}</a>
