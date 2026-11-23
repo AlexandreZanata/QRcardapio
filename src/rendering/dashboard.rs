@@ -13,7 +13,7 @@ pub struct OnboardingTemplate {
     pub active_nav: &'static str,
     pub csrf_token: String,
     pub step: u8,
-    pub subscribe_plan: bool,
+    pub plan_suffix: String,
     pub base_host: String,
     pub name_value: String,
     pub slug_value: String,

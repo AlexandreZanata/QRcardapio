@@ -1,9 +1,9 @@
 {% import "components/icons.html" as icons %}
 
-{% macro price(price_value) %}
+{% macro price(offer) %}
 <div class="landing-plan-price">
-  <strong>{{ price_value }}</strong>
-  <span data-i18n="billing.per_month">{{ page.t("billing.per_month") }}</span>
+  <strong>{{ offer.price }}</strong>
+  <span data-i18n="{{ offer.period_key }}">{{ page.t(offer.period_key) }}</span>
 </div>
 {% endmacro %}
 
@@ -13,6 +13,50 @@
   <li>{{ icons::icon("check") }} <span data-i18n="{{ key }}">{{ page.t(key) }}</span></li>
   {% endfor %}
 </ul>
+{% endmacro %}
+
+{% macro plan_choices() %}
+<div class="landing-plan-choices">
+  {% for offer in plans %}
+  <article class="landing-plan-option landing-plan-option-{{ offer.key }}">
+    <div class="landing-plan-option-art" aria-hidden="true">
+      {{ icons::sticker(offer.art) }}
+      {% if offer.discount > 0 %}<strong>{{ offer.discount }}%</strong>{% endif %}
+    </div>
+    <header class="landing-plan-option-header">
+      {% if offer.recommended %}
+      <span class="landing-plan-best" data-i18n="landing.plan_best">{{ page.t("landing.plan_best") }}</span>
+      {% endif %}
+      <h3 data-i18n="{{ offer.name_key }}">{{ page.t(offer.name_key) }}</h3>
+      {% if offer.discount > 0 %}
+      <p class="landing-plan-option-deal"><span>{{ offer.discount }}%</span> <span data-i18n="landing.plan_off">{{ page.t("landing.plan_off") }}</span></p>
+      {% endif %}
+    </header>
+    <div class="landing-plan-option-price">
+      {% if offer.discount > 0 %}
+      <p class="landing-plan-original"><span data-i18n="landing.plan_regular_price">{{ page.t("landing.plan_regular_price") }}</span> <del>{{ offer.full_price }}</del></p>
+      {% endif %}
+      <strong>{{ offer.price }}</strong>
+      <p data-i18n="{{ offer.period_key }}">{{ page.t(offer.period_key) }}</p>
+    </div>
+    {% if billing_enabled %}
+    <div class="landing-plan-option-actions">
+      <a class="btn landing-button landing-plan-choice{% if offer.recommended %} landing-button-blue{% endif %}"
+         href="{% if is_logged_in %}/onboarding{% else %}/register{% endif %}?plan={{ offer.key }}">
+        <span data-i18n="landing.plan_choose">{{ page.t("landing.plan_choose") }}</span>
+        <span class="visually-hidden" data-i18n="{{ offer.name_key }}">{{ page.t(offer.name_key) }}</span>
+      </a>
+      {% if !is_logged_in %}
+      <a class="landing-plan-login" href="/login?plan={{ offer.key }}">
+        <span data-i18n="landing.plan_login">{{ page.t("landing.plan_login") }}</span>
+        <span class="visually-hidden" data-i18n="{{ offer.name_key }}">{{ page.t(offer.name_key) }}</span>
+      </a>
+      {% endif %}
+    </div>
+    {% endif %}
+  </article>
+  {% endfor %}
+</div>
 {% endmacro %}
 
 <section id="plan" class="landing-how landing-plan-band" aria-labelledby="landing-plan-title">
@@ -33,11 +77,11 @@
             </h3>
             <p data-i18n="landing.plan_intro">{{ page.t("landing.plan_intro") }}</p>
           </div>
-          {{ price(plan_price) }}
+          {{ price(plans[0]) }}
         </div>
         {{ benefits() }}
         <a class="btn landing-button landing-button-blue landing-plan-primary"
-           href="{% if billing_enabled && is_logged_in %}/onboarding?plan=1{% else if billing_enabled %}/register?plan=1{% else %}#plan-details{% endif %}"
+           href="#plan-options"
            data-panel-dialog-open="landing-plan-dialog" data-i18n="landing.plan_open">
           {{ page.t("landing.plan_open") }}
         </a>
@@ -54,6 +98,7 @@
     <p class="landing-plan-audience">
       {{ icons::panel("store") }} <span data-i18n="landing.plan_audience">{{ page.t("landing.plan_audience") }}</span>
     </p>
+    <div class="landing-plan-inline" id="plan-options">{{ plan_choices() }}</div>
   </div>
 
   <dialog class="panel-dialog landing-plan-dialog" id="landing-plan-dialog" aria-labelledby="landing-plan-dialog-title">
@@ -67,28 +112,12 @@
       </button>
     </header>
     <div class="panel-dialog-body landing-plan-dialog-body">
-      {{ price(plan_price) }}
-      {{ benefits() }}
+      {{ plan_choices() }}
       {% if billing_enabled %}
       <p class="landing-plan-checkout-note" data-i18n="billing.payment_method">{{ page.t("billing.payment_method") }}</p>
       {% else %}
       <p class="landing-plan-checkout-note" data-i18n="landing.plan_preview">{{ page.t("landing.plan_preview") }}</p>
       {% endif %}
     </div>
-    <footer class="landing-plan-dialog-actions">
-      {% if billing_enabled %}
-        {% if is_logged_in %}
-        <a class="btn landing-button landing-button-blue landing-plan-primary" href="/onboarding?plan=1"
-           data-i18n="landing.plan_continue">{{ page.t("landing.plan_continue") }}</a>
-        {% else %}
-        <a class="btn landing-button landing-button-blue landing-plan-primary" href="/register?plan=1"
-           data-i18n="landing.plan_signup">{{ page.t("landing.plan_signup") }}</a>
-        <a class="landing-plan-login" href="/login?plan=1" data-i18n="landing.plan_login">{{ page.t("landing.plan_login") }}</a>
-        {% endif %}
-      {% else %}
-      <button class="btn landing-button landing-plan-primary" type="button" data-panel-dialog-close
-              data-i18n="common.close">{{ page.t("common.close") }}</button>
-      {% endif %}
-    </footer>
   </dialog>
 </section>

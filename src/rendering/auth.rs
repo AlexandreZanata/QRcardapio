@@ -7,7 +7,7 @@ use super::PageMeta;
 pub struct LoginTemplate {
     pub page: PageMeta,
     pub email_value: String,
-    pub subscribe_plan: bool,
+    pub plan_suffix: String,
     pub error_key: Option<String>,
 }
 
@@ -16,7 +16,7 @@ pub struct LoginTemplate {
 pub struct RegisterTemplate {
     pub page: PageMeta,
     pub email_value: String,
-    pub subscribe_plan: bool,
+    pub plan_suffix: String,
     pub error_key: Option<String>,
 }
 

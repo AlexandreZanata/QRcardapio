@@ -1,6 +1,6 @@
 use askama::Template;
 
-use super::PageMeta;
+use super::{PageMeta, billing::PlanOffer};
 
 #[derive(Template)]
 #[template(path = "landing/index.html")]
@@ -9,5 +9,5 @@ pub struct LandingTemplate {
     pub is_logged_in: bool,
     pub billing_enabled: bool,
     pub show_plan: bool,
-    pub plan_price: String,
+    pub plans: [PlanOffer; 3],
 }

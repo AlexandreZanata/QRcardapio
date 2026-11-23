@@ -14,7 +14,7 @@ use qrcardapio::app::{AppState, build_router};
 use qrcardapio::application::auth::{AuthSuccess, register_owner};
 use qrcardapio::application::establishments::{CreateEstablishmentInput, create_establishment};
 use qrcardapio::config::{AsaasConfig, AsaasEnvironment, Config, DbSynchronous, LogFormat};
-use qrcardapio::domain::billing::billing_now;
+use qrcardapio::domain::billing::{BillingPlan, billing_now};
 use qrcardapio::i18n::Locale;
 use qrcardapio::infrastructure::database::{init_pool, queries::billing};
 use qrcardapio::infrastructure::security::PasswordService;
@@ -87,14 +87,11 @@ async fn post_form(
         .unwrap()
 }
 
-#[tokio::test]
-async fn billing_is_tenant_scoped_and_tracks_authenticated_financial_events() {
-    let dir = TempDir::new().unwrap();
-    let token = webhook_token();
-    let config = Config {
+fn test_config(dir: &TempDir, token: &str) -> Config {
+    Config {
         mcp_enabled: false,
         asaas: Some(
-            AsaasConfig::new(AsaasEnvironment::Sandbox, "test-api-credential", &token).unwrap(),
+            AsaasConfig::new(AsaasEnvironment::Sandbox, "test-api-credential", token).unwrap(),
         ),
         bind_addr: "127.0.0.1:0".parse().unwrap(),
         public_base_url: "https://menu.example.test".to_owned(),
@@ -106,7 +103,14 @@ async fn billing_is_tenant_scoped_and_tracks_authenticated_financial_events() {
         trust_proxy: false,
         log_format: LogFormat::Pretty,
         log_level: "warn".to_owned(),
-    };
+    }
+}
+
+#[tokio::test]
+async fn billing_is_tenant_scoped_and_tracks_authenticated_financial_events() {
+    let dir = TempDir::new().unwrap();
+    let token = webhook_token();
+    let config = test_config(&dir, &token);
     let pool = init_pool(&config).await.unwrap();
     let app = build_router(AppState::new(config, pool.clone()));
     let (alice, est) = owner(&pool, "test-billing-a").await;
@@ -115,8 +119,8 @@ async fn billing_is_tenant_scoped_and_tracks_authenticated_financial_events() {
     let first = Uuid::new_v4().to_string();
     let second = Uuid::new_v4().to_string();
     let (a, b) = tokio::join!(
-        billing::reserve_checkout(&pool, "sandbox", &est, &first, today),
-        billing::reserve_checkout(&pool, "sandbox", &est, &second, today),
+        billing::reserve_checkout(&pool, "sandbox", &est, &first, today, BillingPlan::Monthly),
+        billing::reserve_checkout(&pool, "sandbox", &est, &second, today, BillingPlan::Monthly),
     );
     let (a, b) = (a.unwrap(), b.unwrap());
     assert_ne!(a, b);
@@ -249,9 +253,16 @@ async fn billing_is_tenant_scoped_and_tracks_authenticated_financial_events() {
             .is_some()
     );
     assert!(
-        !billing::reserve_checkout(&pool, "sandbox", &est, &Uuid::new_v4().to_string(), today)
-            .await
-            .unwrap()
+        !billing::reserve_checkout(
+            &pool,
+            "sandbox",
+            &est,
+            &Uuid::new_v4().to_string(),
+            today,
+            BillingPlan::Monthly
+        )
+        .await
+        .unwrap()
     );
 
     let refunded = payment("evt_refunded", "PAYMENT_REFUNDED", "10:03:00", json!(29.90));
@@ -269,4 +280,96 @@ async fn billing_is_tenant_scoped_and_tracks_authenticated_financial_events() {
         .await
         .unwrap();
     assert_eq!(public.status(), StatusCode::OK);
+}
+
+#[tokio::test]
+async fn discounted_charges_grant_only_the_reserved_period_and_price() {
+    let dir = TempDir::new().unwrap();
+    let token = webhook_token();
+    let config = test_config(&dir, &token);
+    let pool = init_pool(&config).await.unwrap();
+    let app = build_router(AppState::new(config, pool.clone()));
+    let env = "sandbox";
+    for (plan, amount, due, expires) in [
+        (
+            BillingPlan::Semiannual,
+            json!(170.43),
+            "2026-08-31",
+            "2027-02-28",
+        ),
+        (
+            BillingPlan::Annual,
+            json!(322.92),
+            "2024-02-29",
+            "2025-02-28",
+        ),
+    ] {
+        let slug = format!("test-{}", plan.key());
+        let (_, est) = owner(&pool, &slug).await;
+        let reference = Uuid::new_v4().to_string();
+        let checkout = Uuid::new_v4().to_string();
+        let subscription = format!("sub_{}", plan.key());
+        let payment = format!("pay_{}", plan.key());
+        let today = due.parse().unwrap();
+        assert!(
+            billing::reserve_checkout(&pool, env, &est, &reference, today, plan)
+                .await
+                .unwrap()
+        );
+        billing::finish_checkout(&pool, env, &est, &reference, Some(&checkout))
+            .await
+            .unwrap();
+
+        let payment_event = |key: &str, kind: &str, time: &str, value: &Value| {
+            json!({
+                "id": format!("{slug}-{key}"), "event": kind, "dateCreated": format!("{due} {time}"),
+                "payment": {"id": payment, "subscription": subscription, "dueDate": due, "value": value}
+            })
+        };
+        let wrong = payment_event("wrong", "PAYMENT_CONFIRMED", "10:00:00", &json!(29.90));
+        assert_eq!(webhook(&app, Some(&token), wrong).await, StatusCode::OK);
+        assert!(
+            billing::paid_through(&pool, env, &est, today)
+                .await
+                .unwrap()
+                .is_none()
+        );
+        let exact = payment_event("exact", "PAYMENT_CONFIRMED", "10:01:00", &amount);
+        assert_eq!(webhook(&app, Some(&token), exact).await, StatusCode::OK);
+        assert!(
+            billing::paid_through(&pool, env, &est, today)
+                .await
+                .unwrap()
+                .is_none()
+        );
+        let link = json!({"id": format!("{slug}-link"), "event": "SUBSCRIPTION_CREATED",
+        "dateCreated": format!("{due} 10:02:00"), "subscription": {
+            "id": subscription, "checkoutSession": checkout, "status": "ACTIVE"
+        }});
+        assert_eq!(webhook(&app, Some(&token), link).await, StatusCode::OK);
+        let coverage = billing::paid_coverage(&pool, env, &est, today)
+            .await
+            .unwrap()
+            .unwrap();
+        assert_eq!(coverage.plan_months, plan.months());
+        assert_eq!(coverage.price_centavos, plan.price());
+        assert_eq!(
+            coverage.paid_through,
+            expires.parse::<chrono::NaiveDate>().unwrap()
+        );
+        assert!(
+            billing::paid_through(&pool, env, &est, coverage.paid_through)
+                .await
+                .unwrap()
+                .is_none()
+        );
+        let reversal = payment_event("refund", "PAYMENT_REFUNDED", "10:01:00", &amount);
+        assert_eq!(webhook(&app, Some(&token), reversal).await, StatusCode::OK);
+        assert!(
+            billing::paid_through(&pool, env, &est, today)
+                .await
+                .unwrap()
+                .is_none()
+        );
+    }
 }

@@ -1,12 +1,18 @@
 # Assinatura QR Cardápio com Asaas
 
-Um estabelecimento pode contratar um plano mensal de **R$ 29,90** por cartão de crédito. A página pública e o painel exibem o preço a partir de `MONTHLY_PRICE_CENTAVOS`. O QR Cardápio monta a cobrança em reais com aritmética inteira. O Asaas hospeda o checkout e coleta os dados do pagador e do cartão.
+O Plano Essencial tem três períodos de cobrança recorrente por cartão de crédito.
+
+- Mensal de R$ 29,90.
+- Semestral de R$ 170,43, com 5% de desconto sobre seis mensalidades.
+- Anual de R$ 322,92, com 10% de desconto sobre doze mensalidades.
+
+O domínio calcula os totais em centavos a partir de `MONTHLY_PRICE_CENTAVOS`. A landing e o painel usam esse catálogo. A reserva de checkout grava o preço e a duração contratados, inclusive quando o catálogo muda depois. O Asaas usa o ciclo `MONTHLY`, `SEMIANNUALLY` ou `YEARLY` e hospeda a coleta dos dados do pagador e do cartão.
 
 ## Acesso e renovação
 
 - O proprietário escolhe o Plano Essencial na landing e inicia a assinatura pelo painel após entrar na conta e cadastrar o estabelecimento. Gerentes podem acompanhar o status. A contratação exige configuração do Asaas. Ambientes HTTP com `localhost` ou IP privado ou de loopback exibem uma prévia visual quando a cobrança está desabilitada.
 - Quem edita o cardápio pode salvar e visualizar rascunhos. Quando a cobrança está habilitada, tanto a primeira publicação quanto as atualizações exigem que um pagamento integral cubra a data atual.
-- O início do período é o vencimento original da cobrança. O acesso vence no mesmo dia do mês seguinte, ajustado ao último dia quando necessário. O vencimento é exclusivo e o calendário usa UTC−03:00. A confirmação de um novo pagamento estende a cobertura conforme o respectivo vencimento.
+- O início do período é o vencimento original da cobrança. O acesso vence após 1, 6 ou 12 meses do vencimento, com ajuste para o último dia quando necessário. O pagamento precisa corresponder ao valor gravado no checkout do estabelecimento. O vencimento é exclusivo e o calendário usa UTC−03:00. A confirmação de um novo pagamento estende a cobertura conforme o respectivo vencimento.
 - O cancelamento pelo painel encerra a recorrência no Asaas. Um período pago continua disponível até o vencimento. Um estorno integral ou chargeback invalida a cobertura da cobrança afetada. Acesso já coberto por outra cobrança segue o respectivo período.
 - O cardápio publicado continua no ar até ser retirado pelo estabelecimento. A URL pública e o QR Code permanecem estáveis, com entrega estática pelo Caddy ou pelo fallback Axum. Retirar o cardápio do ar continua disponível a qualquer momento.
 

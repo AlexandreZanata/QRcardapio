@@ -8,6 +8,7 @@ use serde::Deserialize;
 use crate::app::AppState;
 use crate::application::establishments::{CreateEstablishmentInput, create_establishment};
 use crate::domain::account::AccountRole;
+use crate::domain::billing::BillingPlan;
 use crate::domain::establishment::AccentColor;
 use crate::error::AppResult;
 use crate::http::middleware::auth::{AuthContext, verify_csrf};
@@ -17,7 +18,6 @@ use crate::infrastructure::database::queries::find_establishment_for_account;
 use crate::rendering::dashboard::OnboardingTemplate;
 use crate::rendering::{PageMeta, render_html};
 
-pub(crate) const PLAN_ONBOARDING: &str = "/onboarding?plan=1";
 const BILLING_PAGE: &str = "/dashboard/billing";
 
 #[derive(Deserialize)]
@@ -27,8 +27,17 @@ pub struct PlanIntent {
 }
 
 impl PlanIntent {
-    pub(crate) fn enabled(&self, state: &AppState) -> bool {
-        self.plan == "1" && state.asaas.is_some()
+    pub(crate) fn selected(&self) -> Option<BillingPlan> {
+        BillingPlan::from_key(&self.plan)
+    }
+
+    pub(crate) fn suffix(&self, state: &AppState) -> String {
+        if state.asaas.is_some()
+            && let Some(plan) = self.selected()
+        {
+            return format!("?plan={}", plan.key());
+        }
+        String::new()
     }
 }
 
@@ -51,17 +60,17 @@ pub async fn onboarding_page(
     jar: CookieJar,
     Query(plan): Query<PlanIntent>,
 ) -> AppResult<Response> {
-    let subscribe_plan = plan.enabled(&state);
+    let plan_suffix = plan.suffix(&state);
     if find_establishment_for_account(&state.pool, &auth.account.id)
         .await?
         .is_some()
     {
-        let destination = if subscribe_plan {
-            BILLING_PAGE
+        let destination = if plan_suffix.is_empty() {
+            "/dashboard".to_owned()
         } else {
-            "/dashboard"
+            format!("{BILLING_PAGE}{plan_suffix}")
         };
-        return Ok(Redirect::to(destination).into_response());
+        return Ok(Redirect::to(&destination).into_response());
     }
 
     let (jar, flash) = take_flash(jar);
@@ -73,7 +82,7 @@ pub async fn onboarding_page(
         is_admin: auth.account.role == AccountRole::Admin,
         active_nav: "",
         csrf_token: auth.csrf_token,
-        subscribe_plan,
+        plan_suffix,
         step: 2,
         base_host: state.config.public_base_url.clone(),
         name_value: String::new(),
@@ -94,7 +103,7 @@ pub async fn onboarding_submit(
     Form(form): Form<OnboardingForm>,
 ) -> AppResult<Response> {
     verify_csrf(&auth, &form._csrf)?;
-    let subscribe_plan = plan.enabled(&state);
+    let plan_suffix = plan.suffix(&state);
 
     let res = create_establishment(
         &state.pool,
@@ -111,10 +120,10 @@ pub async fn onboarding_submit(
     match res {
         Ok(_) => Ok(with_flash_redirect(
             jar,
-            if subscribe_plan {
-                BILLING_PAGE
+            &if plan_suffix.is_empty() {
+                "/dashboard/menu".to_owned()
             } else {
-                "/dashboard/menu"
+                format!("{BILLING_PAGE}{plan_suffix}")
             },
             false,
             "flash.establishment_created",
@@ -129,7 +138,7 @@ pub async fn onboarding_submit(
                 is_admin: auth.account.role == AccountRole::Admin,
                 active_nav: "",
                 csrf_token: auth.csrf_token,
-                subscribe_plan,
+                plan_suffix,
                 step: 2,
                 base_host: state.config.public_base_url.clone(),
                 name_value: form.name,

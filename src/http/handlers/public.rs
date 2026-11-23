@@ -28,7 +28,7 @@ pub async fn landing(
         is_logged_in: auth.is_some(),
         billing_enabled,
         show_plan: billing_enabled || local_plan_preview(&state.config.public_base_url),
-        plan_price: crate::rendering::billing::plan_price(),
+        plans: crate::rendering::billing::PlanOffer::catalog(),
     };
     render_html(&tpl, StatusCode::OK)
 }

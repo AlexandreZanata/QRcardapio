@@ -1,6 +1,7 @@
 use chrono::NaiveDate;
 use sqlx::{Sqlite, SqlitePool, Transaction};
 
+use crate::domain::billing::BillingPlan;
 use crate::error::AppResult;
 use crate::infrastructure::database::begin_immediate;
 
@@ -10,6 +11,8 @@ pub struct Checkout {
     pub checkout_status: String,
     pub subscription_id: Option<String>,
     pub subscription_status: String,
+    pub plan_months: i64,
+    pub price_centavos: i64,
 }
 
 pub async fn current_checkout(
@@ -18,7 +21,7 @@ pub async fn current_checkout(
     est: &str,
 ) -> AppResult<Option<Checkout>> {
     Ok(sqlx::query_as(
-        "SELECT checkout_id, checkout_status, subscription_id, subscription_status
+        "SELECT checkout_id, checkout_status, subscription_id, subscription_status, plan_months, price_centavos
          FROM billing_checkouts WHERE environment = ? AND establishment_id = ?
            AND checkout_status <> 'closed' AND subscription_status <> 'deleted'
            AND (checkout_status <> 'creating' OR created_at > datetime('now', '-60 minutes'))",
@@ -35,11 +38,35 @@ pub async fn paid_through(
     est: &str,
     today: NaiveDate,
 ) -> AppResult<Option<NaiveDate>> {
-    Ok(sqlx::query_scalar(
-        "SELECT MAX(p.paid_through) FROM billing_payments p
-         INNER JOIN billing_checkouts c ON c.environment = p.environment AND c.subscription_id = p.subscription_id
-         WHERE c.environment = ? AND c.establishment_id = ? AND p.due_date <= ? AND p.paid_through > ?",
-    ).bind(env).bind(est).bind(today).bind(today).fetch_one(pool).await?)
+    Ok(paid_coverage(pool, env, est, today)
+        .await?
+        .map(|coverage| coverage.paid_through))
+}
+
+#[derive(sqlx::FromRow)]
+pub struct Coverage {
+    pub paid_through: NaiveDate,
+    pub plan_months: i64,
+    pub price_centavos: i64,
+}
+
+pub async fn paid_coverage(
+    pool: &SqlitePool,
+    env: &str,
+    est: &str,
+    today: NaiveDate,
+) -> AppResult<Option<Coverage>> {
+    Ok(sqlx::query_as(
+        "SELECT paid_through, plan_months, price_centavos FROM billing_coverage
+         WHERE environment = ? AND establishment_id = ? AND due_date <= ? AND paid_through > ?
+         ORDER BY paid_through DESC, due_date DESC LIMIT 1",
+    )
+    .bind(env)
+    .bind(est)
+    .bind(today)
+    .bind(today)
+    .fetch_optional(pool)
+    .await?)
 }
 
 pub async fn reserve_checkout(
@@ -48,6 +75,7 @@ pub async fn reserve_checkout(
     est: &str,
     reference: &str,
     today: NaiveDate,
+    plan: BillingPlan,
 ) -> AppResult<bool> {
     let mut tx = begin_immediate(pool).await?;
     // A creating row has never exposed a link. Allow recovery after the provider's
@@ -62,13 +90,13 @@ pub async fn reserve_checkout(
     .execute(&mut *tx)
     .await?;
     let result = sqlx::query(
-        "INSERT INTO billing_checkouts (reference, environment, establishment_id, created_at)
-         SELECT ?, ?, ?, datetime('now') WHERE NOT EXISTS (
-            SELECT 1 FROM billing_payments p
-            INNER JOIN billing_checkouts c ON c.environment = p.environment AND c.subscription_id = p.subscription_id
-            WHERE c.environment = ? AND c.establishment_id = ? AND p.due_date <= ? AND p.paid_through > ?
+        "INSERT INTO billing_checkouts (reference, environment, establishment_id, created_at, plan_months, price_centavos)
+         SELECT ?, ?, ?, datetime('now'), ?, ? WHERE NOT EXISTS (
+            SELECT 1 FROM billing_coverage
+            WHERE environment = ? AND establishment_id = ? AND due_date <= ? AND paid_through > ?
          ) ON CONFLICT DO NOTHING",
-    ).bind(reference).bind(env).bind(est).bind(env).bind(est).bind(today).bind(today)
+    ).bind(reference).bind(env).bind(est).bind(plan.months()).bind(plan.price())
+        .bind(env).bind(est).bind(today).bind(today)
         .execute(&mut *tx).await?;
     tx.commit().await?;
     Ok(result.rows_affected() == 1)
@@ -205,7 +233,7 @@ pub struct Payment<'a> {
     pub id: &'a str,
     pub subscription: &'a str,
     pub due_date: NaiveDate,
-    pub paid_through: Option<NaiveDate>,
+    pub confirmed_centavos: Option<i64>,
     pub at: &'a str,
     pub priority: i64,
 }
@@ -216,14 +244,14 @@ pub async fn record_payment(
     payment: Payment<'_>,
 ) -> AppResult<()> {
     sqlx::query(
-        "INSERT INTO billing_payments (environment, payment_id, subscription_id, due_date, paid_through, event_at, event_priority)
+        "INSERT INTO billing_payments (environment, payment_id, subscription_id, due_date, confirmed_centavos, event_at, event_priority)
          VALUES (?, ?, ?, ?, ?, ?, ?)
          ON CONFLICT(environment, payment_id) DO UPDATE SET due_date = excluded.due_date,
-            paid_through = excluded.paid_through, event_at = excluded.event_at, event_priority = excluded.event_priority
+            confirmed_centavos = excluded.confirmed_centavos, event_at = excluded.event_at, event_priority = excluded.event_priority
          WHERE subscription_id = excluded.subscription_id AND (
             event_at < excluded.event_at OR (event_at = excluded.event_at AND event_priority < excluded.event_priority)
          )",
-    ).bind(env).bind(payment.id).bind(payment.subscription).bind(payment.due_date).bind(payment.paid_through)
+    ).bind(env).bind(payment.id).bind(payment.subscription).bind(payment.due_date).bind(payment.confirmed_centavos)
         .bind(payment.at).bind(payment.priority).execute(&mut **tx).await?;
     Ok(())
 }

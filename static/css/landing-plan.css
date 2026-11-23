@@ -169,31 +169,119 @@
 .landing-plan-audience .panel-icon { flex: none; }
 
 .landing-plan-dialog {
-  width: min(35rem, calc(100% - 1.45rem));
+  width: min(60rem, calc(100% - 1.5rem));
   background: var(--landing-paper);
 }
 
-.landing-plan-dialog-header,
-.landing-plan-dialog-actions { flex: none; padding: 0.72rem clamp(0.82rem, 3vw, 1.3rem); }
-
 .landing-plan-dialog-header {
   display: flex;
+  flex: none;
   align-items: center;
   justify-content: space-between;
   gap: 0.55rem;
+  padding: 0.85rem clamp(0.85rem, 3vw, 1.4rem);
   border-bottom: 1px solid var(--landing-rule);
 }
 
-.landing-plan-dialog-header .landing-plan-name { font-size: clamp(1.23rem, 3.5vw, 1.9rem); }
+.landing-plan-dialog-header .landing-plan-name { font-size: clamp(1.3rem, 3.5vw, 1.95rem); }
 
-.landing-plan-dialog-actions {
+.landing-plan-dialog-body { padding-top: 1.45rem; }
+
+.landing-plan-inline { display: none; }
+.landing-plan-inline:target { display: block; max-width: 60rem; margin: 2rem auto 0; }
+
+.landing-plan-choices {
   display: grid;
-  gap: 0.5rem;
-  border-top: 1px solid var(--landing-rule);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.65rem, 2vw, 1.15rem);
+  padding: 0 4px 5px 0;
+}
+
+.landing-plan-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 0.8rem;
+  padding: clamp(0.7rem, 2vw, 1.12rem);
+  border: 2px solid var(--landing-ink);
+  border-radius: 0.9rem;
+  background: var(--plan-surface);
+  box-shadow: 3px 4px 0 var(--landing-ink);
+}
+
+.landing-plan-option-monthly { --plan-surface: #eef0ff; }
+.landing-plan-option-semiannual { --plan-surface: #ffedf5; }
+.landing-plan-option-annual { --plan-surface: #fff1a6; }
+
+.landing-plan-option-header { min-height: 4.4rem; padding-right: 4.1rem; }
+.landing-plan-option-header h3 {
+  margin: 0;
+  font-size: clamp(1.25rem, 2.3vw, 1.62rem);
+  line-height: 1.08;
+  letter-spacing: -0.05em;
+}
+
+.landing-plan-option-art {
+  position: absolute;
+  top: -0.68rem;
+  right: 0.48rem;
+  display: grid;
+  width: clamp(4rem, 7vw, 5.2rem);
+  aspect-ratio: 1;
+  place-items: center;
+  transform: rotate(9deg);
+  pointer-events: none;
+}
+
+.landing-plan-option-art .landing-sticker { width: 100%; height: 100%; }
+.landing-plan-option-art strong {
+  position: absolute;
+  font-size: clamp(1.14rem, 2.5vw, 1.65rem);
+  line-height: 1;
+  letter-spacing: -0.085em;
+}
+
+.landing-plan-option-annual .landing-plan-option-art { top: -0.82rem; transform: rotate(6deg) scale(1.1); }
+.landing-plan-best {
+  display: inline-block;
+  margin-bottom: 0.4rem;
+  color: #fff;
+  background: var(--landing-ink);
+  padding: 0.24rem 0.45rem;
+  border-radius: 0.3rem;
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.landing-plan-option-deal { margin: 0.35rem 0 0; font-size: 0.88rem; font-weight: 750; }
+.landing-plan-option-price { margin-top: auto; }
+.landing-plan-option-price > strong {
+  font-size: clamp(1.7rem, 3.2vw, 2.5rem);
+  line-height: 1;
+  letter-spacing: -0.065em;
+  white-space: nowrap;
+}
+
+.landing-plan-option-price p { margin: 0; font-size: 0.86rem; }
+.landing-plan-option-price .landing-plan-original { margin-bottom: 0.35rem; color: #4d4651; }
+.landing-plan-option-actions { display: grid; gap: 0.2rem; }
+.landing-plan-choice { min-height: 44px; text-align: center; }
+.landing-plan-login {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  justify-self: center;
+  color: var(--landing-ink);
+  font-size: 0.84rem;
+  font-weight: 750;
+  text-underline-offset: 0.19em;
+  text-decoration: underline;
 }
 
 .landing-plan-checkout-note {
-  margin: 0;
+  margin: 0.85rem 0 0;
   padding: 0.6rem 0.74rem;
   border-radius: 0.55rem;
   color: #45414b;
@@ -201,13 +289,21 @@
   font-size: 0.87rem;
 }
 
-.landing-plan-login {
-  justify-self: center;
-  color: var(--landing-ink);
-  font-size: 0.89rem;
-  font-weight: 750;
-  text-underline-offset: 0.19em;
-  text-decoration: underline;
+.landing-plan-option .visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (max-width: 46rem) {
+  .landing-plan-choices { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+  .landing-plan-option-header { min-height: auto; }
+  .landing-plan-option-art { right: 0.7rem; }
+  .landing-plan-option-actions { grid-template-columns: minmax(0, 1fr) auto; gap: 0.75rem; }
+  .landing-plan-choice:only-child { grid-column: 1 / -1; }
 }
 
 @media (max-width: 36rem) {

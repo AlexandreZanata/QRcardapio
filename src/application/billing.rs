@@ -1,7 +1,7 @@
 use sqlx::SqlitePool;
 use uuid::Uuid;
 
-use crate::domain::billing::billing_now;
+use crate::domain::billing::{BillingPlan, billing_now};
 use crate::error::{AppError, AppResult};
 use crate::infrastructure::asaas::{AsaasClient, Change, GatewayError, Webhook};
 use crate::infrastructure::database::queries::billing as queries;
@@ -27,6 +27,7 @@ pub async fn start_checkout(
     client: &AsaasClient,
     public_base: &str,
     establishment: &str,
+    plan: BillingPlan,
 ) -> AppResult<()> {
     let env = client.config().environment.as_str();
     let reference = Uuid::now_v7();
@@ -37,10 +38,11 @@ pub async fn start_checkout(
         establishment,
         &reference_text,
         billing_now().date_naive(),
+        plan,
     )
     .await?
     {
-        match client.create_checkout(public_base, reference).await {
+        match client.create_checkout(public_base, reference, plan).await {
             Ok(id) => {
                 queries::finish_checkout(
                     pool,
@@ -145,7 +147,7 @@ pub async fn process_webhook(pool: &SqlitePool, env: &str, event: Webhook) -> Ap
             id,
             checkout,
             subscription_id,
-            paid_through,
+            confirmed_centavos,
             due_date,
             priority,
             at,
@@ -161,7 +163,7 @@ pub async fn process_webhook(pool: &SqlitePool, env: &str, event: Webhook) -> Ap
                     id: &id,
                     subscription: &subscription_id,
                     due_date,
-                    paid_through,
+                    confirmed_centavos,
                     at: &at,
                     priority,
                 },

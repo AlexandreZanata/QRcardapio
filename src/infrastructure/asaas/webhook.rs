@@ -5,7 +5,6 @@ use serde_json::Number;
 use uuid::Uuid;
 
 use super::BILLING_PATH;
-use crate::domain::billing::{MONTHLY_PRICE_CENTAVOS, paid_period_end};
 use crate::domain::product::parse_price_centavos;
 
 #[derive(Deserialize)]
@@ -70,7 +69,7 @@ pub enum Change {
         id: String,
         checkout: Option<Uuid>,
         subscription_id: String,
-        paid_through: Option<NaiveDate>,
+        confirmed_centavos: Option<i64>,
         due_date: NaiveDate,
         priority: i64,
         at: String,
@@ -150,20 +149,20 @@ impl Webhook {
                     self.event.as_str(),
                     "PAYMENT_CONFIRMED" | "PAYMENT_RECEIVED"
                 );
-                let exact_price = data
-                    .original_value
-                    .as_ref()
-                    .or(data.value.as_ref())
-                    .and_then(|value| parse_price_centavos(&value.to_string()).ok())
-                    == Some(MONTHLY_PRICE_CENTAVOS);
-                let paid_through = (settled && exact_price)
-                    .then(|| paid_period_end(due_date))
-                    .flatten();
+                let confirmed_centavos = if settled {
+                    data.original_value
+                        .as_ref()
+                        .or(data.value.as_ref())
+                        .and_then(|value| parse_price_centavos(&value.to_string()).ok())
+                        .filter(|&centavos| centavos > 0)
+                } else {
+                    None
+                };
                 Ok(Some(Change::Payment {
                     id: data.id,
                     checkout: data.checkout_session.as_deref().and_then(parse_uuid),
                     subscription_id,
-                    paid_through,
+                    confirmed_centavos,
                     due_date,
                     priority: if settled { 1 } else { 2 },
                     at: parse_timestamp(self.date_created.as_deref())?,

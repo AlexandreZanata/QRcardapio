@@ -11,17 +11,25 @@
 
 <div class="grid-2">
   <section class="card" aria-labelledby="billing-plan-title">
-    <h2 id="billing-plan-title" data-i18n="billing.plan_title">{{ page.t("billing.plan_title") }}</h2>
-    <p><strong>{{ plan_price }}</strong> <span data-i18n="billing.per_month">{{ page.t("billing.per_month") }}</span></p>
+    <h2 id="billing-plan-title" data-i18n="{{ plan.name_key }}">{{ page.t(plan.name_key) }}</h2>
+    <p><strong>{{ plan.price }}</strong> <span data-i18n="{{ plan.period_key }}">{{ page.t(plan.period_key) }}</span></p>
     <p data-i18n="billing.payment_method">{{ page.t("billing.payment_method") }}</p>
     {% if !is_owner %}
     <p class="field-hint" data-i18n="error.billing_owner_required">{{ page.t("error.billing_owner_required") }}</p>
     {% else if let Some(url) = checkout_url %}
     <a class="btn btn-primary" href="{{ url }}" referrerpolicy="no-referrer" data-i18n="billing.resume_checkout">{{ page.t("billing.resume_checkout") }}</a>
     {% else if start_checkout %}
+    <nav class="inline-actions mb-4" aria-label="{{ page.t("billing.choose_period") }}" data-i18n-aria="billing.choose_period">
+      {% for offer in plans %}
+      <a class="btn panel-action{% if plan.key == offer.key %} panel-action-primary{% endif %}"
+         href="/dashboard/billing?plan={{ offer.key }}"{% if plan.key == offer.key %} aria-current="page"{% endif %}
+         data-i18n="{{ offer.name_key }}">{{ page.t(offer.name_key) }}</a>
+      {% endfor %}
+    </nav>
     <form method="post" action="/dashboard/billing/checkout">
       <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-      <button class="btn btn-primary" type="submit" data-i18n="billing.subscribe">{{ page.t("billing.subscribe") }}</button>
+      <input type="hidden" name="plan" value="{{ plan.key }}">
+      <button class="btn panel-action panel-action-primary" type="submit" data-i18n="billing.subscribe">{{ page.t("billing.subscribe") }}</button>
     </form>
     {% endif %}
   </section>

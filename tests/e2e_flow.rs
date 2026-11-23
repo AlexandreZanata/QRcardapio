@@ -12,7 +12,6 @@ use tower::ServiceExt;
 use qrcardapio::app::{AppState, build_router};
 use qrcardapio::config::{AsaasConfig, AsaasEnvironment, Config, DbSynchronous, LogFormat};
 use qrcardapio::infrastructure::database::init_pool;
-use qrcardapio::rendering::billing::plan_price;
 
 fn test_config(dir: &TempDir) -> Config {
     Config {
@@ -122,23 +121,29 @@ async fn landing_plan_reaches_billing_after_registration_and_login() {
 
     let landing = body_string(send("/", "", None).await.unwrap()).await;
     assert!(landing.contains("id=\"landing-plan-dialog\""));
-    assert!(landing.contains(&plan_price()));
-    assert!(landing.contains("href=\"/register?plan=1\""));
-    assert!(landing.contains("href=\"/login?plan=1\""));
+    for (key, price) in [
+        ("monthly", "R$ 29,90"),
+        ("semiannual", "R$ 170,43"),
+        ("annual", "R$ 322,92"),
+    ] {
+        assert!(landing.contains(price));
+        assert!(landing.contains(&format!("href=\"/register?plan={key}\"")));
+        assert!(landing.contains(&format!("href=\"/login?plan={key}\"")));
+    }
 
     let account = "email=plano%40example.test&password=SenhaForte123";
     let register = send(
-        "/register?plan=1",
+        "/register?plan=annual",
         "",
         Some(format!("{account}&password_confirm=SenhaForte123")),
     )
     .await
     .unwrap();
-    let onboarding_url = "/onboarding?plan=1";
+    let onboarding_url = "/onboarding?plan=annual";
     assert_eq!(register.headers()[LOCATION], onboarding_url);
     let cookie = extract_session_cookie(&register).unwrap();
     let onboarding = body_string(send(onboarding_url, &cookie, None).await.unwrap()).await;
-    assert!(onboarding.contains("action=\"/onboarding?plan=1\""));
+    assert!(onboarding.contains("action=\"/onboarding?plan=annual\""));
     let csrf = extract_csrf_token(&onboarding);
     let created = send(
         onboarding_url,
@@ -149,10 +154,10 @@ async fn landing_plan_reaches_billing_after_registration_and_login() {
     )
     .await
     .unwrap();
-    let billing_url = "/dashboard/billing";
+    let billing_url = "/dashboard/billing?plan=annual";
     assert_eq!(created.headers()[LOCATION], billing_url);
 
-    let login = send("/login?plan=1", "", Some(account.into()))
+    let login = send("/login?plan=annual", "", Some(account.into()))
         .await
         .unwrap();
     assert_eq!(login.headers()[LOCATION], onboarding_url);
@@ -160,7 +165,8 @@ async fn landing_plan_reaches_billing_after_registration_and_login() {
     let redirect = send(onboarding_url, &cookie, None).await.unwrap();
     assert_eq!(redirect.headers()[LOCATION], billing_url);
     let billing = body_string(send(billing_url, &cookie, None).await.unwrap()).await;
-    assert!(billing.contains(&plan_price()));
+    assert!(billing.contains("R$ 322,92"));
+    assert!(billing.contains("name=\"plan\" value=\"annual\""));
     assert!(billing.contains("action=\"/dashboard/billing/checkout\""));
 }
 

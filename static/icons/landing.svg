@@ -58,4 +58,17 @@
     <path d="M4 11l7 4 5-10 5 10 7-4-3 14H7z" fill="#ffdc38" stroke="#161721" stroke-width="2.3" stroke-linejoin="round"/>
     <path d="M8 21h16" fill="none" stroke="#ffef9a" stroke-width="1.6" stroke-linecap="round"/>
   </symbol>
+  <symbol id="plan-monthly" viewBox="0 0 100 100">
+    <path d="M22 16H82Q93 16 93 27V78Q93 89 82 89H22Q11 89 11 78V27Q11 16 22 16Z" fill="#e2e7ff" stroke="#161721" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M13 42H91M34 9V27M70 9V27" fill="none" stroke="#161721" stroke-width="6" stroke-linecap="round"/>
+    <path d="M35 61L47 72L69 54" fill="none" stroke="#263be8" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="plan-semiannual" viewBox="0 0 100 100">
+    <path d="M48 7C58 7 62 12 65 18C76 14 86 22 84 32C94 35 97 47 91 54C98 62 91 72 80 73C81 85 69 92 59 86C53 95 40 94 34 85C24 88 14 82 15 71C5 68 3 57 10 50C4 41 10 30 20 28C20 17 31 12 39 17C41 11 44 8 48 7Z" fill="#ff8aba" stroke="#161721" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M18 49L22 42M77 70L80 63" stroke="#161721" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="plan-annual" viewBox="0 0 100 100">
+    <path d="M50 4L61 18L78 10L80 29L96 37L85 51L96 65L79 71L76 90L60 83L49 97L38 82L21 88L20 71L4 63L14 49L5 35L23 30L25 11L41 18Z" fill="#ffdc38" stroke="#161721" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M22 37L27 31M76 69L81 62" stroke="#161721" stroke-width="3" stroke-linecap="round"/>
+  </symbol>
 </svg>
