@@ -1,12 +1,12 @@
-use sqlx::SqlitePool;
+use sqlx::{SqliteConnection, SqliteExecutor, SqlitePool};
 
 use super::mappers::row_to_establishment;
 use crate::domain::establishment::Establishment;
-use crate::error::AppResult;
+use crate::error::{AppError, AppResult};
 use crate::infrastructure::database::begin_immediate;
 
-pub async fn find_establishment_for_account(
-    pool: &SqlitePool,
+pub async fn find_establishment_for_account<'e>(
+    executor: impl SqliteExecutor<'e>,
     account_id: &str,
 ) -> AppResult<Option<Establishment>> {
     let row = sqlx::query(
@@ -18,7 +18,7 @@ pub async fn find_establishment_for_account(
          LIMIT 1",
     )
     .bind(account_id)
-    .fetch_optional(pool)
+    .fetch_optional(executor)
     .await?;
 
     Ok(row.map(|r| row_to_establishment(&r)))
@@ -35,41 +35,54 @@ pub async fn find_establishment_by_id(
     Ok(row.map(|r| row_to_establishment(&r)))
 }
 
-pub async fn slug_exists(
-    pool: &SqlitePool,
-    slug: &str,
-    exclude_est_id: Option<&str>,
-) -> AppResult<bool> {
-    let found: Option<i64> = match exclude_est_id {
-        Some(eid) => {
-            sqlx::query_scalar("SELECT 1 FROM establishments WHERE slug = ? AND id != ? LIMIT 1")
-                .bind(slug)
-                .bind(eid)
-                .fetch_optional(pool)
-                .await?
-        }
-        None => {
-            sqlx::query_scalar("SELECT 1 FROM establishments WHERE slug = ? LIMIT 1")
-                .bind(slug)
-                .fetch_optional(pool)
-                .await?
-        }
-    };
-    Ok(found.is_some())
-}
-
 pub async fn create_establishment_with_member(
     pool: &SqlitePool,
-    est: &Establishment,
+    mut est: Establishment,
     account_id: &str,
-) -> AppResult<()> {
+    alternatives: impl Iterator<Item = String> + Send,
+) -> AppResult<Establishment> {
     let mut tx = begin_immediate(pool).await?;
+    // Check inside the write transaction so parallel onboarding from one account is idempotent.
+    if let Some(existing) = find_establishment_for_account(&mut *tx, account_id).await? {
+        tx.commit().await?;
+        return Ok(existing);
+    }
+
+    let mut candidates = std::iter::once(est.slug.clone()).chain(alternatives);
+    loop {
+        est.slug = candidates
+            .next()
+            .ok_or(AppError::Conflict("error.slug_taken"))?;
+        if try_insert_establishment(&mut tx, &est).await? {
+            break;
+        }
+    }
+
     sqlx::query(
+        "INSERT INTO establishment_members (establishment_id, account_id, member_role, created_at)
+         VALUES (?, ?, 'owner', ?)",
+    )
+    .bind(&est.id)
+    .bind(account_id)
+    .bind(&est.created_at)
+    .execute(&mut *tx)
+    .await?;
+
+    tx.commit().await?;
+    Ok(est)
+}
+
+async fn try_insert_establishment(
+    conn: &mut SqliteConnection,
+    est: &Establishment,
+) -> AppResult<bool> {
+    let result = sqlx::query(
         "INSERT INTO establishments (
             id, slug, name, description, description_en, description_es,
             accent_color, logo_asset_id, is_published, published_version,
             has_unpublished_changes, last_published_at, created_at, updated_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+         ON CONFLICT(slug) DO NOTHING",
     )
     .bind(&est.id)
     .bind(&est.slug)
@@ -85,21 +98,9 @@ pub async fn create_establishment_with_member(
     .bind(&est.last_published_at)
     .bind(&est.created_at)
     .bind(&est.updated_at)
-    .execute(&mut *tx)
+    .execute(conn)
     .await?;
-
-    sqlx::query(
-        "INSERT INTO establishment_members (establishment_id, account_id, member_role, created_at)
-         VALUES (?, ?, 'owner', ?)",
-    )
-    .bind(&est.id)
-    .bind(account_id)
-    .bind(&est.created_at)
-    .execute(&mut *tx)
-    .await?;
-
-    tx.commit().await?;
-    Ok(())
+    Ok(result.rows_affected() == 1)
 }
 
 #[allow(clippy::too_many_arguments)]
@@ -115,15 +116,16 @@ pub async fn update_establishment_profile(
     google_maps_url: Option<Option<&str>>,
     google_review_url: Option<Option<&str>>,
     now: &str,
-) -> AppResult<()> {
-    sqlx::query(
+) -> AppResult<Option<Establishment>> {
+    let row = sqlx::query(
         "UPDATE establishments
          SET slug = ?, name = ?, description = ?, description_en = ?, description_es = ?,
              accent_color = ?,
              google_maps_url = CASE WHEN ? THEN ? ELSE google_maps_url END,
              google_review_url = CASE WHEN ? THEN ? ELSE google_review_url END,
              has_unpublished_changes = 1, updated_at = ?
-         WHERE id = ?",
+         WHERE id = ? AND (published_version = 0 OR slug = ?)
+         RETURNING *",
     )
     .bind(slug)
     .bind(name)
@@ -137,9 +139,10 @@ pub async fn update_establishment_profile(
     .bind(google_review_url.flatten())
     .bind(now)
     .bind(est_id)
-    .execute(pool)
+    .bind(slug)
+    .fetch_optional(pool)
     .await?;
-    Ok(())
+    Ok(row.map(|row| row_to_establishment(&row)))
 }
 
 pub async fn set_establishment_logo(

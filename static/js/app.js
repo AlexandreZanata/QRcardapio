@@ -1,16 +1,6 @@
 (() => {
   "use strict";
 
-  function slugify(raw) {
-    return raw
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 64);
-  }
-
   const sidebarToggle = document.querySelector("[data-sidebar-toggle]");
   if (sidebarToggle) {
     const sidebar = sidebarToggle.closest(".dashboard-sidebar");
@@ -31,21 +21,6 @@
     });
     sidebar.querySelectorAll(".sidebar-section").forEach((link) => {
       link.addEventListener("click", () => setSidebarOpen(false));
-    });
-  }
-
-  // Onboarding automatic slug suggestion
-  const nameInput = document.querySelector("[data-slug-source]");
-  const slugInput = document.querySelector("[data-slug-target]");
-  if (nameInput && slugInput) {
-    let userEdited = slugInput.value.trim().length > 0;
-    slugInput.addEventListener("input", () => {
-      userEdited = slugInput.value.trim().length > 0;
-    });
-    nameInput.addEventListener("input", () => {
-      if (!userEdited) {
-        slugInput.value = slugify(nameInput.value);
-      }
     });
   }
 

@@ -17,8 +17,8 @@
     <form class="form-stack" method="post" action="/onboarding">
       <input type="hidden" name="_csrf" value="{{ csrf_token }}">
 
-      {{ fields::input("name", "onboarding.name_label", name_value, 100, guide_key="guide.business_name", required=true, placeholder_key="onboarding.name_placeholder", slug_source=true) }}
-      {{ fields::slug(base_host, slug_value, suggest=true) }}
+      {{ fields::input("name", "onboarding.name_label", name_value, 100, guide_key="guide.business_name", required=true, placeholder_key="onboarding.name_placeholder") }}
+      {{ fields::slug(base_host, slug_value, automatic=true) }}
       {{ fields::textarea("description", "onboarding.description_label", description_value, guide_key="guide.business_description", max_length=280, placeholder_key="onboarding.description_placeholder") }}
       {{ fields::color(accent_color) }}
 

@@ -10,6 +10,7 @@
 
 2. **Establishment (`src/domain/establishment.rs`)**
    - `slug`: Normalized lowercase ASCII `^[a-z0-9]+(?:-[a-z0-9]+)*$` (length 3–64); diacritics stripped (`Açaí do João` -> `acai-do-joao`). Reserved system prefixes (`admin`, `api`, `c`, `dashboard`, `login`, `register`, `static`, etc.) are rejected.
+   - **Automatic link**: A blank address in onboarding derives a base of at most 32 ASCII characters from the display name. A name shorter than three characters or a reserved word uses a `-loja` ending. A name with no usable characters uses `loja`. If the base is taken, a hyphen and four base-32 characters distinguish the address (e.g. `bar-k7m2`). The automatic slug is at most 37 characters. Owners can choose a custom address up to 64 characters before publication.
    - **Slug Immutability Rule**: Once `published_version > 0`, `slug` cannot be modified via profile updates so printed table QR Codes remain valid forever.
    - `accent_color`: Validated `#RRGGBB` hex string; computes WCAG relative luminance to select `#FFFFFF` or `#1C1917` foreground ink (`contrast_ink()`).
    - `description`, `description_en`, `description_es`: Up to 280 chars; EN/ES fall back cleanly to primary `description` when empty.

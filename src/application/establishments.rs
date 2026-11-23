@@ -3,6 +3,7 @@ use sqlx::SqlitePool;
 use uuid::Uuid;
 
 use crate::application::auth::is_unique_violation;
+use crate::application::publishing::PublishLocks;
 use crate::domain::establishment::{
     AccentColor, Establishment, Slug, sanitize_optional_text, validate_non_empty_name,
 };
@@ -11,9 +12,9 @@ use crate::domain::publication::{MediaAsset, MediaKind};
 use crate::error::{AppError, AppResult};
 use crate::infrastructure::assets::AssetProcessor;
 use crate::infrastructure::database::queries::{
-    create_establishment_with_member, delete_media_asset_for_est, find_establishment_by_id,
-    find_establishment_for_account, find_media_asset_for_est, insert_media_asset,
-    set_establishment_logo, slug_exists, update_establishment_profile,
+    create_establishment_with_member, delete_media_asset_for_est, find_establishment_for_account,
+    find_media_asset_for_est, insert_media_asset, set_establishment_logo,
+    update_establishment_profile,
 };
 
 pub struct CreateEstablishmentInput<'a> {
@@ -44,22 +45,23 @@ pub async fn create_establishment(
     }
 
     let name = validate_non_empty_name(input.name, 100)?;
-    let slug_source = if input.slug.trim().is_empty() {
-        name.as_str()
+    let automatic = input.slug.trim().is_empty();
+    let slug = if automatic {
+        Slug::from_name(&name)
     } else {
-        input.slug
+        Slug::from_input(input.slug)?
     };
-    let slug = Slug::from_input(slug_source)?;
+    let alternatives = (0..if automatic { 8 } else { 0 }).map(|_| {
+        let random = Uuid::new_v4().into_bytes();
+        slug.with_short_code([random[0], random[1], random[2], random[3]])
+            .into_string()
+    });
     let color = AccentColor::parse(if input.accent_color.trim().is_empty() {
         AccentColor::DEFAULT_HEX
     } else {
         input.accent_color
     })?;
     let description = sanitize_optional_text(input.description, 280);
-
-    if slug_exists(pool, slug.as_str(), None).await? {
-        return Err(AppError::Conflict("error.slug_taken"));
-    }
 
     let now = Utc::now().to_rfc3339();
     let est = Establishment {
@@ -81,18 +83,12 @@ pub async fn create_establishment(
         updated_at: now,
     };
 
-    if let Err(err) = create_establishment_with_member(pool, &est, account_id).await {
-        if is_unique_violation(&err) {
-            return Err(AppError::Conflict("error.slug_taken"));
-        }
-        return Err(err);
-    }
-
-    Ok(est)
+    create_establishment_with_member(pool, est, account_id, alternatives).await
 }
 
 pub async fn update_profile(
     pool: &SqlitePool,
+    publication_locks: &PublishLocks,
     est: &Establishment,
     input: UpdateEstablishmentInput<'_>,
 ) -> AppResult<Establishment> {
@@ -111,27 +107,15 @@ pub async fn update_profile(
         .map(validate_google_maps_link)
         .transpose()?;
 
-    let new_slug = if est.published_version > 0 {
-        let requested = Slug::from_input(input.slug)?;
-        if requested.as_str() != est.slug {
-            return Err(AppError::Validation("error.slug_locked"));
-        }
-        est.slug.clone()
-    } else {
-        let requested = Slug::from_input(input.slug)?;
-        if requested.as_str() != est.slug
-            && slug_exists(pool, requested.as_str(), Some(&est.id)).await?
-        {
-            return Err(AppError::Conflict("error.slug_taken"));
-        }
-        requested.as_str().to_string()
-    };
+    let slug = Slug::from_input(input.slug)?;
+    let lock = publication_locks.lock_for(&est.id);
+    let _guard = lock.lock().await;
 
     let now = Utc::now().to_rfc3339();
-    update_establishment_profile(
+    let updated = update_establishment_profile(
         pool,
         &est.id,
-        &new_slug,
+        slug.as_str(),
         &name,
         &description,
         &description_en,
@@ -141,11 +125,13 @@ pub async fn update_profile(
         google_review_url,
         &now,
     )
-    .await?;
-
-    find_establishment_by_id(pool, &est.id)
-        .await?
-        .ok_or(AppError::NotFound("error.not_found"))
+    .await;
+    match updated {
+        Ok(Some(establishment)) => Ok(establishment),
+        Ok(None) => Err(AppError::Validation("error.slug_locked")),
+        Err(error) if is_unique_violation(&error) => Err(AppError::Conflict("error.slug_taken")),
+        Err(error) => Err(error),
+    }
 }
 
 pub async fn upload_logo(

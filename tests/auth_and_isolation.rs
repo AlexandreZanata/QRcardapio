@@ -11,6 +11,7 @@ use qrcardapio::application::menus::{
     CategoryInput, ProductInput, create_category, create_product, delete_category, delete_product,
     move_category, move_product, toggle_product_availability, update_category, update_product,
 };
+use qrcardapio::application::publishing::PublishLocks;
 use qrcardapio::config::{Config, DbSynchronous, LogFormat};
 use qrcardapio::error::AppError;
 use qrcardapio::i18n::Locale;
@@ -374,8 +375,10 @@ async fn strict_multi_tenant_isolation_and_slug_locking() {
     );
 
     // Slug can be updated before first publication, then locked after publication.
+    let publish_locks = PublishLocks::default();
     let est_a_updated = update_profile(
         &pool,
+        &publish_locks,
         &est_a,
         UpdateEstablishmentInput {
             name: "Café da Praça Central",
@@ -400,9 +403,13 @@ async fn strict_multi_tenant_isolation_and_slug_locking() {
         .unwrap()
         .unwrap();
 
+    assert_eq!(est_a_pub.slug, "cafe-central");
+
+    // A form from before publication cannot overwrite the now-locked address.
     let locked = update_profile(
         &pool,
-        &est_a_pub,
+        &publish_locks,
+        &est_a_updated,
         UpdateEstablishmentInput {
             name: "Café da Praça Central",
             slug: "novo-slug-proibido",

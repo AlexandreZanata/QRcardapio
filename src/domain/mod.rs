@@ -2,6 +2,7 @@ pub mod account;
 pub mod billing;
 pub mod category;
 pub mod establishment;
+pub mod establishment_slug;
 pub mod google_maps;
 pub mod ocr;
 pub mod ocr_parser;

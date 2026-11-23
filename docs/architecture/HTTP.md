@@ -31,7 +31,7 @@ All `POST` routes verify `_csrf` against the server session's `csrf_token` in co
 
 | Method | Path | Purpose |
 |---|---|---|
-| `GET`/`POST` | `/onboarding` | Initial establishment setup (slug auto-suggested, normalized, reserved-word checked). |
+| `GET`/`POST` | `/onboarding` | Initial establishment setup. An omitted or blank slug assigns a compact address from the name with a short code on collision. Custom addresses are validated and return `409` on a collision. |
 | `GET` | `/dashboard` | Overview: draft/published badge, counts, checklist, publish & unpublish triggers. |
 | `GET` | `/dashboard/theme.css` | Tenant-specific brand CSS variables (`no-store`). |
 | `GET` | `/dashboard/preview` | Live draft preview (includes unpublished changes and draft preview banner). |

@@ -21,6 +21,7 @@ use crate::rendering::{PageMeta, render_html};
 pub struct OnboardingForm {
     pub _csrf: String,
     pub name: String,
+    #[serde(default)]
     pub slug: String,
     #[serde(default)]
     pub description: String,

@@ -79,3 +79,7 @@ Menu editing, import history, and operations show an illustrated empty state whe
 ### Assinatura
 
 A landing reutiliza o bloco de CTA para mostrar o plano mensal. O painel agrupa preço, ações e situação da assinatura nos cards existentes. O preço é exibido em reais e a periodicidade usa os catálogos PT, EN e ES. A escolha do plano cria o checkout com um formulário local. Um link normal abre o Asaas, preservando a diretiva `form-action 'self'` do painel.
+
+### Link do cardápio no cadastro
+
+O campo de endereço inicial mostra o prefixo `/c/` e explica a geração automática quando o campo está vazio. O endereço atribuído pode receber um código curto para nomes repetidos. Antes de publicar, o proprietário pode escolher um endereço personalizado. Após publicar, o painel exibe o endereço como somente leitura.

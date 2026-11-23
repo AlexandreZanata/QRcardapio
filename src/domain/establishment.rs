@@ -1,133 +1,7 @@
 use crate::error::{AppError, AppResult};
 use crate::i18n::{Locale, pick_localized_text};
 
-const RESERVED_SLUGS: &[&str] = &[
-    "admin",
-    "api",
-    "app",
-    "assets",
-    "auth",
-    "c",
-    "cardapio",
-    "dashboard",
-    "favicon",
-    "health",
-    "healthz",
-    "help",
-    "i18n",
-    "login",
-    "logout",
-    "media",
-    "menu",
-    "onboarding",
-    "pricing",
-    "privacy",
-    "published",
-    "qr",
-    "readyz",
-    "register",
-    "reset-password",
-    "robots",
-    "settings",
-    "sitemap",
-    "static",
-    "support",
-    "terms",
-    "www",
-];
-
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Slug(String);
-
-impl Slug {
-    /// Normalizes a user-supplied slug or establishment name into a URL-safe ASCII slug.
-    pub fn from_input(raw: &str) -> AppResult<Self> {
-        let normalized = normalize_ascii_slug(raw);
-        Self::validate_normalized(&normalized)?;
-        Ok(Self(normalized))
-    }
-
-    /// Generates a valid preview slug from an arbitrary establishment name.
-    pub fn suggest_from_name(name: &str) -> String {
-        normalize_ascii_slug(name)
-    }
-
-    pub fn validate_existing(raw: &str) -> AppResult<Self> {
-        if raw.len() < 3 || raw.len() > 64 {
-            return Err(AppError::Validation("error.slug_invalid"));
-        }
-        let valid_chars = raw
-            .bytes()
-            .all(|b| b.is_ascii_lowercase() || b.is_ascii_digit() || b == b'-')
-            && !raw.starts_with('-')
-            && !raw.ends_with('-')
-            && !raw.contains("--");
-        if !valid_chars {
-            return Err(AppError::Validation("error.slug_invalid"));
-        }
-        if is_reserved_slug(raw) {
-            return Err(AppError::Validation("error.slug_reserved"));
-        }
-        Ok(Self(raw.to_string()))
-    }
-
-    fn validate_normalized(s: &str) -> AppResult<()> {
-        if s.len() < 3 || s.len() > 64 {
-            return Err(AppError::Validation("error.slug_invalid"));
-        }
-        if is_reserved_slug(s) {
-            return Err(AppError::Validation("error.slug_reserved"));
-        }
-        Ok(())
-    }
-
-    pub fn as_str(&self) -> &str {
-        &self.0
-    }
-}
-
-pub fn is_reserved_slug(slug: &str) -> bool {
-    RESERVED_SLUGS.contains(&slug)
-}
-
-fn normalize_ascii_slug(raw: &str) -> String {
-    let mut out = String::with_capacity(raw.len());
-    let mut last_dash = true;
-
-    for ch in raw.trim().chars() {
-        let mapped = match ch {
-            'a'..='z' | '0'..='9' => Some(ch),
-            'A'..='Z' => Some(ch.to_ascii_lowercase()),
-            'á' | 'à' | 'â' | 'ã' | 'ä' | 'Á' | 'À' | 'Â' | 'Ã' | 'Ä' => Some('a'),
-            'é' | 'è' | 'ê' | 'ë' | 'É' | 'È' | 'Ê' | 'Ë' => Some('e'),
-            'í' | 'ì' | 'î' | 'ï' | 'Í' | 'Ì' | 'Î' | 'Ï' => Some('i'),
-            'ó' | 'ò' | 'ô' | 'õ' | 'ö' | 'Ó' | 'Ò' | 'Ô' | 'Õ' | 'Ö' => Some('o'),
-            'ú' | 'ù' | 'û' | 'ü' | 'Ú' | 'Ù' | 'Û' | 'Ü' => Some('u'),
-            'ç' | 'Ç' => Some('c'),
-            'ñ' | 'Ñ' => Some('n'),
-            _ => None,
-        };
-
-        if let Some(c) = mapped {
-            out.push(c);
-            last_dash = false;
-        } else if !last_dash {
-            out.push('-');
-            last_dash = true;
-        }
-    }
-
-    while out.ends_with('-') {
-        out.pop();
-    }
-    if out.len() > 64 {
-        out.truncate(64);
-        while out.ends_with('-') {
-            out.pop();
-        }
-    }
-    out
-}
+pub use super::establishment_slug::Slug;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AccentColor(String);
@@ -237,14 +111,6 @@ pub fn sanitize_optional_text(raw: &str, max_len: usize) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn portuguese_slug_normalization() {
-        let s = Slug::from_input("Açaí do João & Cia!").unwrap();
-        assert_eq!(s.as_str(), "acai-do-joao-cia");
-        assert!(Slug::from_input("admin").is_err());
-        assert!(Slug::from_input("ab").is_err());
-    }
 
     #[test]
     fn accent_color_contrast_selection() {

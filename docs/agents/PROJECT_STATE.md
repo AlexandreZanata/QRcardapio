@@ -37,6 +37,8 @@ The category creation dialog shares its fields with the standalone category form
 
 The menu editor uses tenant-scoped pagination with 12 product or empty-category rows per page. The editor retains the active page through inline actions and edit forms. Mobile layouts preserve the landing Maps mockup composition, adapt dashboard tables into labeled rows, and scale the QR print preview to the screen.
 
+O cadastro atribui links compactos a partir do nome do estabelecimento. Um código de quatro caracteres distingue nomes repetidos. Endereços personalizados continuam disponíveis no rascunho e o caminho publicado é protegido contra renomeação concorrente.
+
 ## Verification Snapshot
 
 - `cargo fmt --check`: Passed

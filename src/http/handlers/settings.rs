@@ -96,6 +96,7 @@ pub async fn settings_submit(
 
     match update_profile(
         &state.pool,
+        &state.publish_locks,
         &tenant.establishment,
         UpdateEstablishmentInput {
             name: &form.name,
@@ -115,6 +116,13 @@ pub async fn settings_submit(
             "/dashboard/settings",
             false,
             "flash.settings_saved",
+            state.config.cookie_secure,
+        )),
+        Err(AppError::Validation("error.slug_locked")) => Ok(with_flash_redirect(
+            jar,
+            "/dashboard/settings",
+            true,
+            "error.slug_locked",
             state.config.cookie_secure,
         )),
         Err(err) => {

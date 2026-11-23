@@ -11,7 +11,7 @@
 {% endif %}
 {% endmacro %}
 
-{% macro input(id, label_key, value, max_length, guide_key="", hint_key="", kind="text", required=false, placeholder_key="", input_mode="", slug_source=false) %}
+{% macro input(id, label_key, value, max_length, guide_key="", hint_key="", kind="text", required=false, placeholder_key="", input_mode="") %}
 <div class="dashboard-field" {% if !guide_key.is_empty() %}{{ guide::hint(guide_key) }}{% endif %}>
   {{ label(id, label_key) }}
   <input class="dashboard-control" id="{{ id }}" name="{{ id }}" type="{{ kind }}" value="{{ value }}"
@@ -19,8 +19,7 @@
          {% if required %}required{% endif %}
          {% if !input_mode.is_empty() %}inputmode="{{ input_mode }}"{% endif %}
          {% if !placeholder_key.is_empty() %}placeholder="{{ page.t(placeholder_key) }}" data-i18n-placeholder="{{ placeholder_key }}"{% endif %}
-         {% if !hint_key.is_empty() %}aria-describedby="{{ id }}-hint"{% endif %}
-         {% if slug_source %}data-slug-source{% endif %}>
+         {% if !hint_key.is_empty() %}aria-describedby="{{ id }}-hint"{% endif %}>
   {{ hint(id, hint_key) }}
 </div>
 {% endmacro %}
@@ -36,16 +35,20 @@
 </div>
 {% endmacro %}
 
-{% macro slug(prefix, value, locked=false, suggest=false) %}
+{% macro slug(prefix, value, locked=false, automatic=false) %}
 <div class="dashboard-field" {{ guide::hint("guide.slug") }}>
   {{ label("slug", "onboarding.slug_label") }}
   <div class="dashboard-address{% if locked %} dashboard-address-locked{% endif %}">
     <span class="dashboard-address-prefix">{% if locked %}{{ icons::panel("lock") }}{% else %}{{ icons::panel("link") }}{% endif %} <span>{{ prefix }}/c/</span></span>
     <input class="dashboard-control" id="slug" name="slug" type="text" maxlength="64" value="{{ value }}" aria-describedby="slug-hint"
-           {% if locked %}readonly{% endif %}{% if suggest %} required data-slug-target{% endif %}>
+           {% if locked %}readonly{% endif %}
+           {% if automatic %}placeholder="{{ page.t("onboarding.slug_automatic_placeholder") }}"
+           data-i18n-placeholder="onboarding.slug_automatic_placeholder"{% endif %}>
   </div>
   {% if locked %}
   {{ hint("slug", "settings.slug_locked_note") }}
+  {% else if automatic %}
+  {{ hint("slug", "onboarding.slug_automatic_hint") }}
   {% else %}
   {{ hint("slug", "onboarding.slug_hint") }}
   {% endif %}
