@@ -51,3 +51,25 @@ Each published `index.html` includes full Askama SSR markup, `data-pt`/`data-en`
 
 - **Test**: 8 distinct authenticated owners simultaneously creating 3 categories + publishing + verifying `GET /c/{slug}` against the live `--release` server (`BEGIN IMMEDIATE` write transactions + `busy_timeout = 5000`).
 - **Result**: **8 / 8 succeeded (100% HTTP 200, 0 `SQLITE_BUSY` errors)**, total wall time **617.6 ms**, average per-owner 5-request flow **362.1 ms**.
+
+## Verificação local após a integração Asaas — 23/11/2026
+
+Release otimizado em Linux, dados sintéticos, HTTP em localhost e gerador `oha`. O host dispõe de 16 threads de CPU e 31 GiB de RAM. Os cenários abaixo tiveram HTTP 200 em todas as respostas concluídas.
+
+### Cardápio, painel e publicação
+
+- Regressão via `scripts/bench_run.sh`, com cobrança desabilitada. O cardápio no Axum chegou a **30.086 req/s**, p95 **1,94 ms**, com 32 conexões por 5 s. O painel autenticado chegou a **3.248 req/s**, p95 **6,36 ms**, com 16 conexões por 5 s. O cardápio durante cinco republicações chegou a **26.435 req/s**, p95 **2,24 ms**, com 32 conexões por 4 s. O `oha` encerrou 80 requisições em voo pelo prazo de duração, sem contabilizá-las como respostas HTTP.
+- O Caddy, em contêiner com limite de 1 vCPU e sem o processo Axum rodando, serviu o cardápio de 35 itens a **6.469 req/s**, p95 **10,65 ms**, com 32 conexões por 5 s. A regra de controle de arquivos temporários retornou `404`.
+- A geração sintética de **100.000 estabelecimentos, 300.000 categorias e 1,2 milhão de produtos**, com três publicações de amostra, levou **19,86 s**. O arquivo SQLite mediu aproximadamente **733 MiB**.
+
+### Cobrança habilitada, aplicação limitada a 1 CPU
+
+Execute `BENCH_CPU=0 ./scripts/bench_billing.sh` ou escolha um núcleo permitido no seu sistema. O script usa 1.000 estabelecimentos, ambiente temporário e credenciais fictícias, sem requisições ao Asaas. Cada cenário usa 16 conexões por 5 s, com espera pelas requisições já iniciadas.
+
+- O painel autenticado chegou a **1.987 req/s**, p95 **10,69 ms**.
+- A página de assinatura chegou a **3.020 req/s**, p95 **6,98 ms**.
+- O webhook processou a **reentrega do mesmo evento** a **39.832 req/s**, p95 **0,57 ms**. A medição cobre leitura de idempotência.
+- Em uma segunda execução, **1.000 cobranças inéditas** foram enviadas por 16 conexões persistentes com um gerador Python. As 1.000 retornaram `200`, a **201 req/s** e p95 **164,99 ms**. Esse cenário inclui a transação SQLite de deduplicação e persistência de cada cobrança, com `synchronous=FULL`. A escrita é a etapa mais sensível à concorrência nesta bateria.
+- Na primeira execução, o RSS da aplicação passou de **13.652 KiB** para **18.176 KiB**. Na execução com eventos inéditos, encerrou em **18.500 KiB**.
+
+As amostras medem latência de resposta completa e não incluem TLS público, tráfego externo, chamadas ao Asaas nem carga sustentada na VPS de produção. Varie a quantidade de conexões e a mistura de rotas para dimensionar a implantação.

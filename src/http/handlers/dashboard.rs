@@ -7,6 +7,7 @@ use axum_extra::extract::CookieJar;
 use serde::Deserialize;
 
 use crate::app::AppState;
+use crate::application::billing::publication_allowed;
 use crate::application::publishing::{publish_establishment, unpublish_establishment};
 use crate::domain::account::AccountRole;
 use crate::error::{AppError, AppResult};
@@ -34,6 +35,7 @@ pub async fn overview_page(
     let est = &tenant.establishment;
     let categories = list_categories_for_est(&state.pool, &est.id).await?;
     let products = list_products_for_est(&state.pool, &est.id).await?;
+    let can_publish = publication_allowed(&state.pool, state.asaas.as_ref(), &est.id).await?;
     let (jar, flash) = take_flash(jar);
 
     let tpl = OverviewTemplate {
@@ -52,6 +54,8 @@ pub async fn overview_page(
         last_published_at: est.last_published_at.clone(),
         category_count: categories.len(),
         product_count: products.len(),
+        billing_enabled: state.asaas.is_some(),
+        can_publish,
     };
     Ok((jar, render_html(&tpl, StatusCode::OK)?).into_response())
 }
@@ -124,6 +128,16 @@ pub async fn publish_submit(
     Form(form): Form<CsrfForm>,
 ) -> AppResult<Response> {
     verify_csrf(&tenant.auth, &form._csrf)?;
+
+    if !publication_allowed(&state.pool, state.asaas.as_ref(), &tenant.establishment.id).await? {
+        return Ok(with_flash_redirect(
+            jar,
+            "/dashboard/billing",
+            true,
+            "error.subscription_required",
+            state.config.cookie_secure,
+        ));
+    }
 
     match publish_establishment(
         &state.pool,

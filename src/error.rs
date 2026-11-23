@@ -26,6 +26,9 @@ pub enum AppError {
     #[error("rate limited")]
     RateLimited,
 
+    #[error("service unavailable: {0}")]
+    Unavailable(&'static str),
+
     #[error("database error: {0}")]
     Database(#[from] sqlx::Error),
 
@@ -44,6 +47,7 @@ impl AppError {
             | Self::Unauthorized(key)
             | Self::Forbidden(key)
             | Self::NotFound(key)
+            | Self::Unavailable(key)
             | Self::Conflict(key) => key,
             Self::RateLimited => "error.rate_limited",
             Self::Database(_) | Self::Io(_) | Self::Internal(_) => "error.internal",
@@ -58,6 +62,7 @@ impl AppError {
             Self::NotFound(_) => StatusCode::NOT_FOUND,
             Self::Conflict(_) => StatusCode::CONFLICT,
             Self::RateLimited => StatusCode::TOO_MANY_REQUESTS,
+            Self::Unavailable(_) => StatusCode::SERVICE_UNAVAILABLE,
             Self::Database(_) | Self::Io(_) | Self::Internal(_) => {
                 StatusCode::INTERNAL_SERVER_ERROR
             }

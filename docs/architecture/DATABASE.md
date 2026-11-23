@@ -45,3 +45,7 @@ In WAL mode, `NORMAL` avoids `fsync` on every transaction commit (flushing mainl
 - **Migrations**: Versioned SQL files under `migrations/` executed automatically at boot via `sqlx::migrate!()` and `qrcardapio db migrate`.
 - **Online Backups**: Uses `VACUUM INTO ?` (`backup_sqlite_into`), followed by read-only `PRAGMA integrity_check;`. Never `cp` an active `-wal` database directly.
 - **When SQLite stops being the right choice**: When sustained concurrent write throughput across many accounts exceeds ~50–100 write transactions/sec persistently, when horizontal multi-node active-active write instances are required, or when database size outgrows single-node SSD capacity. Migration path: extract a clean repository boundary behind `queries/` targeting PostgreSQL (`sqlx::PgPool`).
+
+## SQLite e assinatura Asaas
+
+A migração `20261123000004_asaas_billing.sql` cria `billing_checkouts` por estabelecimento, `billing_payments` por cobrança do provedor e `billing_webhook_events` para deduplicação. As chaves do provedor incluem o ambiente para isolar Sandbox e produção. Os eventos e as alterações de cobrança são confirmados na mesma transação de escrita. A publicação lê apenas a cobertura vigente vinculada ao estabelecimento. O snapshot público continua independente do SQLite.

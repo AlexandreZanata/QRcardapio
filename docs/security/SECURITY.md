@@ -24,3 +24,9 @@ Redeeming the token at `/reset-password` updates the password hash and revokes a
 ## LGPD Data Minimization
 
 Only the owner's email, hashed password, preferred locale, and public business menu data are collected. Customers scanning public QR Codes never create accounts, submit personal data, or trigger tracking cookies or database writes.
+
+## Pagamentos e publicação estática
+
+O checkout do plano mensal fica no domínio Asaas. As ações do painel exigem `TenantContext`, papel de proprietário, `_csrf` e limite de seis ações por minuto por estabelecimento. Apenas o webhook autenticado ou uma conciliação feita no servidor associa a assinatura ao checkout. O webhook verifica um segredo separado em tempo constante, limita o corpo a 64 KiB e deduplica por identificador de evento e ambiente. Os dados de cartão e de cadastro do pagador ficam no Asaas. O Caddy bloqueia `/c/.tmp` e seus descendentes para preservar a visibilidade atômica dos arquivos de publicação.
+
+A verificação de 23/11/2026 incluiu o RustSec atualizado, o Gitleaks com saída redigida, a configuração do proxy e 32 testes automatizados. O RustSec não reportou vulnerabilidades nas dependências auditadas e manteve avisos de falta de manutenção em `basic-toml 0.1.10` e `chrono 0.4.45`. Os dois alertas do histórico Git correspondem a senhas fictícias nos testes de cadastro. A suíte cobre autenticação, autorização, CSRF, isolamento multi-tenant, verificação de uploads e publicação, rejeição de webhook sem token e reentrega de eventos financeiros.

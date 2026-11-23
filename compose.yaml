@@ -13,6 +13,9 @@ services:
       TRUST_PROXY: "true"
       LOG_FORMAT: "json"
       LOG_LEVEL: "${LOG_LEVEL:-info,qrcardapio=info}"
+      ASAAS_ENV: "${ASAAS_ENV:-}"
+      ASAAS_API_KEY: "${ASAAS_API_KEY:-}"
+      ASAAS_WEBHOOK_TOKEN: "${ASAAS_WEBHOOK_TOKEN:-}"
     volumes:
       - db_data:/data/db
       - media_data:/data/media

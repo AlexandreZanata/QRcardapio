@@ -20,8 +20,9 @@ governor = "0.10.4"
 hex = "0.4.3"
 image = { version = "0.25.10", default-features = false, features = ["jpeg", "png", "webp"] }
 qrcode = { version = "0.15.0", default-features = false, features = ["svg", "image"] }
+reqwest = { version = "0.13.5", default-features = false, features = ["json", "query", "rustls"] }
 serde = { version = "1.0.229", features = ["derive"] }
-serde_json = "1.0.154"
+serde_json = { version = "1.0.154", features = ["arbitrary_precision"] }
 sha2 = "0.11.1"
 sqlx = { version = "0.9.1", features = ["runtime-tokio", "sqlite-bundled", "migrate", "chrono"] }
 subtle = "2.6.1"

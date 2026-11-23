@@ -1,3 +1,4 @@
+pub mod asaas;
 pub mod assets;
 pub mod database;
 pub mod ocr;

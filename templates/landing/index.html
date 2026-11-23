@@ -20,6 +20,9 @@
       <a href="#benefits" data-i18n="landing.nav_features">{{ page.t("landing.nav_features") }}</a>
       <a href="#how-it-works" data-i18n="nav.features">{{ page.t("nav.features") }}</a>
       <a href="#google-maps">Google Maps</a>
+      {% if billing_enabled %}
+      <a href="#plan" data-i18n="billing.nav_plan">{{ page.t("billing.nav_plan") }}</a>
+      {% endif %}
     </nav>
     <div class="landing-account">
       {% if is_logged_in %}
@@ -47,6 +50,8 @@
       <div class="landing-actions">
         {% if is_logged_in %}
         <a class="btn landing-button landing-button-blue" href="/dashboard" data-i18n="landing.open_panel">{{ page.t("landing.open_panel") }}</a>
+        {% else if billing_enabled %}
+        <a class="btn landing-button landing-button-blue" href="#plan" data-i18n="billing.view_plan">{{ page.t("billing.view_plan") }}</a>
         {% else %}
         <a class="btn landing-button landing-button-blue" href="/register" data-i18n="landing.hero_cta_primary">{{ page.t("landing.hero_cta_primary") }}</a>
         {% endif %}
@@ -87,6 +92,10 @@
   </section>
 
   {% include "landing/maps.html" %}
+
+  {% if billing_enabled %}
+  {% include "landing/plan.html" %}
+  {% endif %}
 
   <section class="landing-container landing-final">
     <div class="landing-cta">

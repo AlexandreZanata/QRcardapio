@@ -1,4 +1,5 @@
 pub mod account;
+pub mod billing;
 pub mod category;
 pub mod establishment;
 pub mod google_maps;

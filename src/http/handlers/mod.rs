@@ -1,5 +1,6 @@
 pub mod admin;
 pub mod auth;
+pub mod billing;
 pub mod categories;
 pub mod dashboard;
 pub mod health;

@@ -17,13 +17,15 @@ use crate::rendering::landing::LandingTemplate;
 use crate::rendering::{PageMeta, render_html};
 
 pub async fn landing(
-    State(_state): State<AppState>,
+    State(state): State<AppState>,
     RequestLocale(locale): RequestLocale,
     OptionalAuth(auth): OptionalAuth,
 ) -> AppResult<Response> {
     let tpl = LandingTemplate {
         page: PageMeta::new(locale, "landing.page_title", None),
         is_logged_in: auth.is_some(),
+        billing_enabled: state.asaas.is_some(),
+        plan_price: crate::rendering::billing::plan_price(),
     };
     render_html(&tpl, StatusCode::OK)
 }

@@ -1,0 +1,16 @@
+<section id="plan" class="landing-container landing-final" aria-labelledby="landing-plan-title">
+  <div class="landing-cta landing-plan">
+    <div>
+      <h2 id="landing-plan-title" data-i18n="billing.plan_title">{{ page.t("billing.plan_title") }}</h2>
+      <p data-i18n="billing.plan_description">{{ page.t("billing.plan_description") }}</p>
+    </div>
+    <div class="landing-plan-action">
+      <p class="landing-plan-price"><strong>{{ plan_price }}</strong> <span data-i18n="billing.per_month">{{ page.t("billing.per_month") }}</span></p>
+      {% if is_logged_in %}
+      <a class="btn landing-button landing-button-yellow" href="/dashboard/billing" data-i18n="billing.view_plan">{{ page.t("billing.view_plan") }}</a>
+      {% else %}
+      <a class="btn landing-button landing-button-yellow" href="/register" data-i18n="landing.create_menu">{{ page.t("landing.create_menu") }}</a>
+      {% endif %}
+    </div>
+  </div>
+</section>

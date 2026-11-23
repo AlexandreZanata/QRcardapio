@@ -14,6 +14,9 @@
     <p data-i18n="dashboard.subtitle">{{ page.t("dashboard.subtitle") }}</p>
   </div>
   <div class="inline-actions">
+    {% if billing_enabled %}
+    <a class="btn btn-secondary" href="/dashboard/billing" data-i18n="billing.heading">{{ page.t("billing.heading") }}</a>
+    {% endif %}
     {% if is_published %}
     <span class="badge badge-success" data-i18n="dashboard.status_published">{{ page.t("dashboard.status_published") }}</span>
     {% else %}
@@ -50,7 +53,9 @@
     </div>
 
     <div class="panel-publication-actions">
-      {% if is_published %}
+      {% if !can_publish %}
+      <a class="btn btn-primary" href="/dashboard/billing" data-i18n="billing.view_plan">{{ page.t("billing.view_plan") }}</a>
+      {% else if is_published %}
       {{ publication::submit("dashboard.action_republish") }}
       {% else %}
       {{ publication::submit("dashboard.action_publish") }}

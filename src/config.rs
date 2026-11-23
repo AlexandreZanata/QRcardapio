@@ -1,6 +1,9 @@
 use std::net::SocketAddr;
 use std::path::PathBuf;
 
+mod billing;
+pub use billing::{AsaasConfig, AsaasEnvironment};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DbSynchronous {
     Full,
@@ -46,6 +49,7 @@ pub struct Config {
     pub trust_proxy: bool,
     pub log_format: LogFormat,
     pub log_level: String,
+    pub asaas: Option<AsaasConfig>,
 }
 
 impl Config {
@@ -84,6 +88,7 @@ impl Config {
             .unwrap_or(LogFormat::Pretty);
         let log_level =
             std::env::var("LOG_LEVEL").unwrap_or_else(|_| "info,qrcardapio=debug".to_string());
+        let asaas = AsaasConfig::from_env(&public_base_url, cookie_secure)?;
 
         Ok(Self {
             bind_addr,
@@ -96,6 +101,7 @@ impl Config {
             trust_proxy,
             log_format,
             log_level,
+            asaas,
         })
     }
 

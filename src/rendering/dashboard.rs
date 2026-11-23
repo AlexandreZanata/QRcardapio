@@ -39,6 +39,8 @@ pub struct OverviewTemplate {
     pub last_published_at: Option<String>,
     pub category_count: usize,
     pub product_count: usize,
+    pub billing_enabled: bool,
+    pub can_publish: bool,
 }
 
 #[derive(Template)]

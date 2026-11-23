@@ -1,0 +1,55 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block content %}
+<div class="page-top">
+  <div>
+    <h1 data-i18n="billing.heading">{{ page.t("billing.heading") }}</h1>
+    <p data-i18n="billing.panel_description">{{ page.t("billing.panel_description") }}</p>
+  </div>
+  <a class="btn btn-secondary" href="/dashboard" data-i18n="nav.overview">{{ page.t("nav.overview") }}</a>
+</div>
+
+<div class="grid-2">
+  <section class="card" aria-labelledby="billing-plan-title">
+    <h2 id="billing-plan-title" data-i18n="billing.plan_title">{{ page.t("billing.plan_title") }}</h2>
+    <p><strong>{{ plan_price }}</strong> <span data-i18n="billing.per_month">{{ page.t("billing.per_month") }}</span></p>
+    <p data-i18n="billing.payment_method">{{ page.t("billing.payment_method") }}</p>
+    {% if !is_owner %}
+    <p class="field-hint" data-i18n="error.billing_owner_required">{{ page.t("error.billing_owner_required") }}</p>
+    {% else if let Some(url) = checkout_url %}
+    <a class="btn btn-primary" href="{{ url }}" referrerpolicy="no-referrer" data-i18n="billing.resume_checkout">{{ page.t("billing.resume_checkout") }}</a>
+    {% else if start_checkout %}
+    <form method="post" action="/dashboard/billing/checkout">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <button class="btn btn-primary" type="submit" data-i18n="billing.subscribe">{{ page.t("billing.subscribe") }}</button>
+    </form>
+    {% endif %}
+  </section>
+  <section class="card" aria-labelledby="billing-status-title">
+    <h2 id="billing-status-title" data-i18n="billing.status_heading">{{ page.t("billing.status_heading") }}</h2>
+    <p role="status" data-i18n="{{ status_key }}">{{ page.t(status_key) }}</p>
+    {% if let Some(date) = paid_through %}
+    <p class="field-hint">
+      <span data-i18n="billing.valid_until">{{ page.t("billing.valid_until") }}</span>
+      <time datetime="{{ date }}">{{ date.format("%d/%m/%Y") }}</time>
+    </p>
+    {% endif %}
+    {% if is_owner %}
+    {% if can_reconcile %}
+    <form method="post" action="/dashboard/billing/reconcile">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <button class="btn btn-secondary" type="submit" data-i18n="billing.reconcile">{{ page.t("billing.reconcile") }}</button>
+    </form>
+    {% endif %}
+    {% if let Some(subscription) = cancellable_id %}
+    <form method="post" action="/dashboard/billing/cancel">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <input type="hidden" name="subscription" value="{{ subscription }}">
+      <p><label><input type="checkbox" name="confirm" value="yes" required> <span data-i18n="billing.cancel_confirm">{{ page.t("billing.cancel_confirm") }}</span></label></p>
+      <button class="btn btn-secondary" type="submit" data-i18n="billing.cancel">{{ page.t("billing.cancel") }}</button>
+    </form>
+    {% endif %}
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

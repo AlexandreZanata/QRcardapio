@@ -52,3 +52,7 @@ An optional Google review invitation is rendered into the static HTML on publica
 ## Unpublishing
 
 `unpublish_establishment` acquires the per-slug mutex, deletes `published/{slug}/`, sets `is_published = 0` and `has_unpublished_changes = 1`, and records `'unpublished'` in `publications`. Public requests to `/c/{slug}` immediately return `404`.
+
+## Assinatura e arquivos em preparação
+
+Com Asaas habilitado, a ação de publicar do painel verifica a cobertura da assinatura antes de renderizar o snapshot. A verificação se aplica à gravação de versões novas. A entrega dos snapshots existentes continua estática. No Caddy, `/c/.tmp` e seus descendentes retornam `404` inclusive durante uma publicação.

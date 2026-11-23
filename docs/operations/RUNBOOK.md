@@ -65,3 +65,16 @@ docker compose start app
 - Production sets `LOG_FORMAT=json` (`stdout`). Docker's `json-file` log driver or `journald` should rotate logs (`max-size: 20m, max-file: 5`).
 - If a snapshot file becomes corrupted or missing on disk without touching SQLite, run `qrcardapio republish-all` to rebuild all published static menus cleanly.
 - Never copy an active `qrcardapio.sqlite` without `VACUUM INTO` or stopping the process; never mount `DATA_DIR/db` over NFS.
+
+## Habilitação do Asaas
+
+1. Separe a implantação de homologação da produção, inclusive banco, domínio HTTPS e chave de API. Configure `PUBLIC_BASE_URL` com a origem pública HTTPS e `COOKIE_SECURE=true`.
+2. Configure `ASAAS_ENV=sandbox`, `ASAAS_API_KEY` com a credencial do Sandbox e `ASAAS_WEBHOOK_TOKEN` com um segredo diferente de pelo menos 32 caracteres. O Compose injeta essas variáveis no serviço `app`. Se usar um arquivo de ambiente, coloque o valor da chave entre aspas simples para preservar o caractere `$`. Proteja o arquivo e mantenha-o fora do Git. Com as três variáveis vazias, o sistema opera sem cobrança.
+3. Na conta correspondente do Asaas, cadastre `https://<domínio>/webhooks/asaas` com o valor de `ASAAS_WEBHOOK_TOKEN` como token de autenticação, API v3 e entrega sequencial. Habilite `CHECKOUT_CREATED`, `CHECKOUT_PAID`, `CHECKOUT_CANCELED`, `CHECKOUT_EXPIRED`, `SUBSCRIPTION_CREATED`, `SUBSCRIPTION_UPDATED`, `SUBSCRIPTION_INACTIVATED`, `SUBSCRIPTION_DELETED`, `PAYMENT_CONFIRMED`, `PAYMENT_RECEIVED`, `PAYMENT_REFUNDED`, `PAYMENT_CHARGEBACK_REQUESTED`, `PAYMENT_CHARGEBACK_DISPUTE`, `PAYMENT_AWAITING_CHARGEBACK_REVERSAL` e `PAYMENT_DELETED`.
+4. No Sandbox, valide criação e expiração do checkout, retorno ao painel, primeira cobrança e renovação, reentrega de evento, estorno e cancelamento. Confirme que o período pago habilita a publicação e que a URL pública abre sem sessão. Ao mudar para `ASAAS_ENV=production`, use a chave e o webhook da conta de produção.
+
+Se o retorno do checkout ocorrer antes da confirmação, o painel exibe o estado pendente. Se a cobrança confirmar e o vínculo da assinatura ainda faltar, use **Conciliar com o Asaas**. Se um checkout conhecido permanecer aberto após o vencimento, confira seu status no Asaas e reenvie o evento de cancelamento ou expiração antes de abrir outro. Se uma assinatura ou cobrança estiver ausente após rollback ou restauração, reenvie os webhooks correspondentes e confirme a ativação antes de novas contratações. Use a referência local e o ID do checkout para localizar a operação. Evite repetir cobranças ou editar o SQLite manualmente.
+
+Desabilitar a integração local interrompe o recebimento de eventos e remove a exigência de cobrança no painel. Assinaturas vigentes devem ser encerradas no Asaas se a operação comercial for interrompida. Antes de um rollback ou troca de ambiente, preserve o banco e os eventos recebidos.
+
+[Sandbox Asaas](https://docs.asaas.com/docs/sandbox) · [Configurar o webhook](https://docs.asaas.com/docs/receba-eventos-do-asaas-no-seu-endpoint-de-webhook)

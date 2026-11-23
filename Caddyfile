@@ -14,6 +14,11 @@
 	handle_path /c/* {
 		root * /srv/published
 
+		@staging path /.tmp /.tmp/*
+		handle @staging {
+			respond 404
+		}
+
 		@published file {
 			try_files {path} {path}/index.html
 		}
@@ -25,7 +30,9 @@
 			header @html Cache-Control "public, max-age=60, stale-while-revalidate=300"
 
 			rewrite * {http.matchers.file.relative}
-			file_server
+			file_server {
+				hide /srv/published/.tmp
+			}
 		}
 		handle {
 			rewrite * /c{path}

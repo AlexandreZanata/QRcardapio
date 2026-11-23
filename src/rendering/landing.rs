@@ -7,4 +7,6 @@ use super::PageMeta;
 pub struct LandingTemplate {
     pub page: PageMeta,
     pub is_logged_in: bool,
+    pub billing_enabled: bool,
+    pub plan_price: String,
 }

@@ -13,12 +13,13 @@ use tower_http::trace::TraceLayer;
 use crate::application::publishing::PublishLocks;
 use crate::config::Config;
 use crate::http::handlers::{
-    admin, auth, categories, dashboard, health, menu_editor, ocr, onboarding, products, public, qr,
-    settings,
+    admin, auth, billing, categories, dashboard, health, menu_editor, ocr, onboarding, products,
+    public, qr, settings,
 };
 use crate::http::middleware::branded_errors::branded_errors;
 use crate::http::middleware::security_headers::security_headers_middleware;
 use crate::i18n::Catalog;
+use crate::infrastructure::asaas::AsaasClient;
 use crate::infrastructure::assets::AssetProcessor;
 use crate::infrastructure::ocr::OcrService;
 use crate::infrastructure::security::PasswordService;
@@ -34,11 +35,13 @@ pub struct AppState {
     pub ocr: OcrService,
     pub rate_limiters: AppRateLimiters,
     pub publish_locks: PublishLocks,
+    pub asaas: Option<AsaasClient>,
 }
 
 impl AppState {
     pub fn new(config: Config, pool: SqlitePool) -> Self {
         let assets = AssetProcessor::new(config.media_dir());
+        let asaas = config.asaas.clone().map(AsaasClient::new);
         Self {
             config: Arc::new(config),
             pool,
@@ -48,6 +51,7 @@ impl AppState {
             ocr: OcrService::new(),
             rate_limiters: AppRateLimiters::new(),
             publish_locks: PublishLocks::default(),
+            asaas,
         }
     }
 }
@@ -71,6 +75,10 @@ pub fn build_router(state: AppState) -> Router {
         .route("/dashboard/ocr/extract", post(ocr::ocr_extract_submit))
         .layer(DefaultBodyLimit::max(16 * 1024 * 1024));
 
+    let billing_webhook = Router::new()
+        .route("/webhooks/asaas", post(billing::webhook))
+        .layer(DefaultBodyLimit::max(64 * 1024));
+
     Router::new()
         .route("/", get(public::landing))
         .route("/login", get(auth::login_page).post(auth::login_submit))
@@ -88,6 +96,10 @@ pub fn build_router(state: AppState) -> Router {
             get(onboarding::onboarding_page).post(onboarding::onboarding_submit),
         )
         .route("/dashboard", get(dashboard::overview_page))
+        .route("/dashboard/billing", get(billing::page))
+        .route("/dashboard/billing/checkout", post(billing::checkout))
+        .route("/dashboard/billing/cancel", post(billing::cancel))
+        .route("/dashboard/billing/reconcile", post(billing::reconcile))
         .route("/dashboard/theme.css", get(dashboard::dashboard_theme_css))
         .route("/dashboard/preview", get(dashboard::preview_menu_page))
         .route(
@@ -164,6 +176,7 @@ pub fn build_router(state: AppState) -> Router {
         .route("/static/i18n/{file}", get(health::serve_i18n_catalog))
         .merge(upload_routes)
         .merge(ocr_upload_routes)
+        .merge(billing_webhook)
         .nest_service("/static", ServeDir::new(static_dir))
         .with_state(state)
         .layer(middleware::from_fn(branded_errors))

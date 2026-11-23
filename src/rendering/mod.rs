@@ -1,5 +1,6 @@
 pub mod admin;
 pub mod auth;
+pub mod billing;
 pub mod dashboard;
 pub mod error_page;
 pub mod landing;

@@ -1,5 +1,6 @@
 pub mod accounts;
 pub mod admin;
+pub mod billing;
 pub mod categories;
 pub mod establishments;
 pub(crate) mod mappers;

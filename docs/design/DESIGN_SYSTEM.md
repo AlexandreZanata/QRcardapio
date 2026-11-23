@@ -75,3 +75,7 @@ Menu editing, import history, and operations show an illustrated empty state whe
    - Published HTML embeds ~1.6 KB `#qr-menu-i18n` JSON for chrome strings and `data-pt` / `data-en` / `data-es` attributes for owner-provided translations.
    - Switching `PT | EN | ES` updates the interface, formatted BRL prices, and translated dishes in place from the embedded catalog.
    - Existing snapshots adopt the same compact picker when `static/js/menu.js` enhances their previous language controls.
+
+### Assinatura
+
+A landing reutiliza o bloco de CTA para mostrar o plano mensal. O painel agrupa preço, ações e situação da assinatura nos cards existentes. O preço é exibido em reais e a periodicidade usa os catálogos PT, EN e ES. A escolha do plano cria o checkout com um formulário local. Um link normal abre o Asaas, preservando a diretiva `form-action 'self'` do painel.

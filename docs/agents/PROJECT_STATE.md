@@ -41,7 +41,7 @@ The menu editor uses tenant-scoped pagination with 12 product or empty-category 
 
 - `cargo fmt --check`: Passed
 - `cargo clippy --all-targets --all-features -- -D warnings`: Passed (0 warnings)
-- `cargo test --locked`: Passed (17 unit tests + 12 integration tests across 8 integration suites, including real `pdftotext` + `tesseract` E2E OCR tests)
+- `cargo test --locked`: Passed (19 unit tests + 13 integration tests across 9 integration suites, including real `pdftotext` + `tesseract` E2E OCR tests)
 - `cargo audit`: Passed (0 vulnerabilities; 2 unmaintained advisory notices: `basic-toml 0.1.10` transitive, `chrono 0.4.45`)
 - `cargo build --release --locked`: Passed
 - Live smoke test (`admin create`, `seed`, `backup.sh`, `restore.sh`, HTTP SSR + static `/c/cafe-da-praca`, `/dashboard/ocr`): Passed
@@ -51,3 +51,7 @@ The menu editor uses tenant-scoped pagination with 12 product or empty-category 
 1. Provision a 1 vCPU / 1 GB Linux VPS with DNS pointing `qrcardapio.com.br` and run `compose.yaml` + `Caddyfile` over HTTPS.
 2. Run Lighthouse audits on a live HTTPS deployment (`/` and `/c/{slug}`) and verify physical smartphone QR scanning on iOS and Android cameras.
 3. Onboard the first 5–10 pilot restaurants and collect real feedback before evaluating out-of-scope features (e.g., WhatsApp ordering or custom domains).
+
+## Assinatura Asaas
+
+O plano mensal de R$ 29,90 pode ser habilitado por ambiente. O proprietário contrata pelo checkout hospedado do Asaas, acompanha a cobrança no painel e pode cancelar a renovação. Webhooks autenticados e idempotentes sincronizam o acesso à publicação. Cardápios já publicados mantêm a entrega estática. A configuração e a homologação estão no [runbook](../operations/RUNBOOK.md#habilitação-do-asaas). A suíte local validou o ciclo financeiro com webhooks simulados. A validação na conta Sandbox do Asaas está pendente. Os [resultados de carga](../performance/PERFORMANCE.md#verificação-local-após-a-integração-asaas--23112026) incluem o proxy Caddy e a reentrega de webhooks a 1 vCPU.

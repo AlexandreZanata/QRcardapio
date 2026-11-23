@@ -24,6 +24,7 @@ fn test_config(dir: &TempDir) -> Config {
     let static_dir = dir.path().join("static");
     std::fs::create_dir_all(&static_dir).unwrap();
     Config {
+        asaas: None,
         bind_addr: "127.0.0.1:0".parse().unwrap(),
         public_base_url: "http://127.0.0.1:8080".to_string(),
         data_dir: dir.path().join("data"),
