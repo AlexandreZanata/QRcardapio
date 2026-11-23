@@ -288,7 +288,7 @@ const PLACARD_PT: ToolContent = ToolContent {
     id: ToolId::TablePlacard,
     name: "Criador de Placa QR Code para Mesa",
     short_desc: "Monte e imprima placa A5/mesa personalizada com nome da loja, chamada e QR Code.",
-    meta_title: "Criador de Placa QR Code para Mesa (Grátis para Imprimir) | QR Cardápio",
+    meta_title: "Criador Grátis de Placa QR Code para Mesa | QR Cardápio",
     meta_description: "Crie e imprima grátis sua placa de mesa com QR Code para cardápio ou avaliação no Google Maps, com o nome do seu negócio e chamada pronta.",
     h1: "Criador gratuito de placa QR Code para mesa",
     answer_summary: "Monte uma placa limpa e legível com o nome do seu estabelecimento, uma frase de chamada (como 'Aponte a câmera para ver o cardápio') e o QR Code em alta definição. Clique em imprimir para gerar folha A4/A5 ou PDF direto pelo navegador.",

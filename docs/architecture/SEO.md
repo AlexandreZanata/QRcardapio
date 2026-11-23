@@ -44,3 +44,8 @@ All JSON-LD payloads are serialized through `src/seo/schema.rs` using `safe_json
 - Localized 1200×630 PNG social cards (`static/images/og-{pt-BR,en,es}.png`) power `og:image` and `twitter:card` (`summary_large_image`).
 - `templates/landing/index.html` preloads the responsive hero LCP dashboard WebP image (`<link rel="preload" as="image" imagesrcset=...>`).
 - Zero inline `<script>` execution and zero `style="..."` attributes preserve strict `script-src 'self'; style-src 'self'` CSP compliance across all SEO pages.
+
+## 6. Automated SEO Contracts & CI Protection
+
+- [tests/seo.rs](../../tests/seo.rs) and [tests/seo_contracts.rs](../../tests/seo_contracts.rs) validate every URL emitted by `/sitemap.xml` (57 static multilingual pages + dynamic `/c/{slug}` menus): `200 OK`, strict CSP, zero inline styles/scripts, single `<h1>`, unique titles (`30..=68` chars) and descriptions (`110..=165` chars), HTML/XML `hreflang` parity and full bidirectional reciprocity, valid `@graph` JSON-LD without fabricated `aggregateRating`/`Review` nodes, exact OG/icon PNG dimensions, live `llms.txt` and footer link integrity, and `noindex, nofollow` on auth/error/preview routes.
+- GitHub Actions runs `branch-policy` (enforcing [BRANCH_POLICY.md](../agents/BRANCH_POLICY.md)), `seo-contracts`, and `quality` as required PR checks before merging into protected `main`.

@@ -163,7 +163,7 @@ const GOOGLE_MAPS_REVIEWS: GuideContent = GuideContent {
     id: GuideId::GoogleMapsReviews,
     title: "How to Get More Google Maps Reviews Directly from Your Menu",
     short_desc: "Turn happy seated guests into authentic neighborhood proof without friction.",
-    meta_title: "How to Get More Google Maps Reviews from Your Digital Menu | QR Cardápio",
+    meta_title: "How to Get More Google Maps Reviews by Menu | QR Cardápio",
     meta_description: "Learn how to find your official Google Business review link and convert satisfied restaurant guests into steady Google Maps reviews.",
     read_minutes: 4,
     published_date: "2026-11-23",
