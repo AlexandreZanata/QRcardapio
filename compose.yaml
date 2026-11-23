@@ -1,0 +1,52 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      BIND_ADDR: "0.0.0.0:8080"
+      PUBLIC_BASE_URL: "${PUBLIC_BASE_URL:-https://qrcardapio.com.br}"
+      DATA_DIR: "/data"
+      STATIC_DIR: "/app/static"
+      DB_MAX_CONNECTIONS: "${DB_MAX_CONNECTIONS:-5}"
+      DB_SYNCHRONOUS: "${DB_SYNCHRONOUS:-FULL}"
+      COOKIE_SECURE: "${COOKIE_SECURE:-true}"
+      TRUST_PROXY: "true"
+      LOG_FORMAT: "json"
+      LOG_LEVEL: "${LOG_LEVEL:-info,qrcardapio=info}"
+    volumes:
+      - db_data:/data/db
+      - media_data:/data/media
+      - published_data:/data/published
+    mem_limit: 512m
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/healthz"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    depends_on:
+      app:
+        condition: service_healthy
+    environment:
+      DOMAIN: "${DOMAIN:-:80}"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./static:/srv/static:ro
+      - published_data:/srv/published:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    mem_limit: 128m
+
+volumes:
+  db_data:
+  media_data:
+  published_data:
+  caddy_data:
+  caddy_config:

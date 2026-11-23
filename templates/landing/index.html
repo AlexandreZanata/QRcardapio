@@ -1,0 +1,120 @@
+{% extends "layouts/base.html" %}
+
+{% block nav_links %}
+  <a class="nav-link" href="#how-it-works" data-i18n="nav.features">{{ page.t("nav.features") }}</a>
+  <a class="nav-link" href="#benefits" data-i18n="nav.benefits">{{ page.t("nav.benefits") }}</a>
+  {% if is_logged_in %}
+  <a class="btn btn-primary btn-sm" href="/dashboard" data-i18n="nav.overview">{{ page.t("nav.overview") }}</a>
+  {% else %}
+  <a class="nav-link" href="/login" data-i18n="nav.login">{{ page.t("nav.login") }}</a>
+  <a class="btn btn-primary btn-sm" href="/register" data-i18n="nav.register">{{ page.t("nav.register") }}</a>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<main id="main-content">
+  <section class="hero">
+    <div class="container hero-grid">
+      <div>
+        <span class="eyebrow" data-i18n="landing.hero_eyebrow">{{ page.t("landing.hero_eyebrow") }}</span>
+        <h1 data-i18n="landing.hero_title">{{ page.t("landing.hero_title") }}</h1>
+        <p class="hero-subtitle" data-i18n="landing.hero_subtitle">{{ page.t("landing.hero_subtitle") }}</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="/register" data-i18n="landing.hero_cta_primary">{{ page.t("landing.hero_cta_primary") }}</a>
+          <a class="btn btn-secondary" href="/login" data-i18n="landing.hero_cta_secondary">{{ page.t("landing.hero_cta_secondary") }}</a>
+        </div>
+        <p class="hero-note" data-i18n="landing.hero_note">{{ page.t("landing.hero_note") }}</p>
+      </div>
+
+      <div>
+        <div class="phone-frame" aria-label="{{ page.t("landing.demo_badge") }}">
+          <div class="phone-screen">
+            <div class="phone-header">
+              <span class="phone-title" data-i18n="landing.demo_place">{{ page.t("landing.demo_place") }}</span>
+              <span class="badge badge-neutral" data-i18n="landing.demo_badge">{{ page.t("landing.demo_badge") }}</span>
+            </div>
+            <div class="phone-cat" data-i18n="landing.demo_cat_1">{{ page.t("landing.demo_cat_1") }}</div>
+            <div class="phone-item">
+              <div>
+                <strong data-i18n="landing.demo_item_1">{{ page.t("landing.demo_item_1") }}</strong>
+                <span data-i18n="landing.demo_item_1_desc">{{ page.t("landing.demo_item_1_desc") }}</span>
+              </div>
+              <div class="phone-price" data-price-centavos="850">{{ page.price(850) }}</div>
+            </div>
+            <div class="phone-item">
+              <div>
+                <strong data-i18n="landing.demo_item_2">{{ page.t("landing.demo_item_2") }}</strong>
+                <span data-i18n="landing.demo_item_2_desc">{{ page.t("landing.demo_item_2_desc") }}</span>
+              </div>
+              <div class="phone-price" data-price-centavos="1490">{{ page.price(1490) }}</div>
+            </div>
+            <div class="phone-cat" data-i18n="landing.demo_cat_2">{{ page.t("landing.demo_cat_2") }}</div>
+            <div class="phone-item">
+              <div>
+                <strong data-i18n="landing.demo_item_3">{{ page.t("landing.demo_item_3") }}</strong>
+                <span data-i18n="landing.demo_item_3_desc">{{ page.t("landing.demo_item_3_desc") }}</span>
+              </div>
+              <div class="phone-price" data-price-centavos="900">{{ page.price(900) }}</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="how-it-works" class="section">
+    <div class="container">
+      <div class="section-header">
+        <h2 data-i18n="landing.how_title">{{ page.t("landing.how_title") }}</h2>
+        <p data-i18n="landing.how_subtitle">{{ page.t("landing.how_subtitle") }}</p>
+      </div>
+      <div class="grid-3">
+        <article class="card">
+          <h3 data-i18n="landing.step1_title">{{ page.t("landing.step1_title") }}</h3>
+          <p class="text-muted" data-i18n="landing.step1_body">{{ page.t("landing.step1_body") }}</p>
+        </article>
+        <article class="card">
+          <h3 data-i18n="landing.step2_title">{{ page.t("landing.step2_title") }}</h3>
+          <p class="text-muted" data-i18n="landing.step2_body">{{ page.t("landing.step2_body") }}</p>
+        </article>
+        <article class="card">
+          <h3 data-i18n="landing.step3_title">{{ page.t("landing.step3_title") }}</h3>
+          <p class="text-muted" data-i18n="landing.step3_body">{{ page.t("landing.step3_body") }}</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="benefits" class="section">
+    <div class="container">
+      <div class="section-header">
+        <h2 data-i18n="landing.benefits_title">{{ page.t("landing.benefits_title") }}</h2>
+      </div>
+      <div class="grid-2">
+        <article class="card">
+          <h3 data-i18n="landing.benefit1_title">{{ page.t("landing.benefit1_title") }}</h3>
+          <p class="text-muted" data-i18n="landing.benefit1_body">{{ page.t("landing.benefit1_body") }}</p>
+        </article>
+        <article class="card">
+          <h3 data-i18n="landing.benefit2_title">{{ page.t("landing.benefit2_title") }}</h3>
+          <p class="text-muted" data-i18n="landing.benefit2_body">{{ page.t("landing.benefit2_body") }}</p>
+        </article>
+        <article class="card">
+          <h3 data-i18n="landing.benefit3_title">{{ page.t("landing.benefit3_title") }}</h3>
+          <p class="text-muted" data-i18n="landing.benefit3_body">{{ page.t("landing.benefit3_body") }}</p>
+        </article>
+        <article class="card">
+          <h3 data-i18n="landing.benefit4_title">{{ page.t("landing.benefit4_title") }}</h3>
+          <p class="text-muted" data-i18n="landing.benefit4_body">{{ page.t("landing.benefit4_body") }}</p>
+        </article>
+      </div>
+
+      <div class="cta-band mt-5">
+        <h2 data-i18n="landing.cta_title">{{ page.t("landing.cta_title") }}</h2>
+        <p data-i18n="landing.cta_subtitle">{{ page.t("landing.cta_subtitle") }}</p>
+        <a class="btn btn-primary" href="/register" data-i18n="landing.cta_button">{{ page.t("landing.cta_button") }}</a>
+      </div>
+    </div>
+  </section>
+</main>
+{% endblock %}

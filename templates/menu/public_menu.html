@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="{{ locale_code }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ establishment_name }} — QR Cardápio</title>
+  {% if !establishment_description.is_empty() %}
+  <meta name="description" content="{{ establishment_description }}">
+  {% endif %}
+  <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg">
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/menu.css">
+  <link rel="stylesheet" href="{{ theme_css_href }}">
+</head>
+<body>
+  <a class="skip-link" href="#menu-content" data-i18n="common.skip_to_content">{{ skip_label }}</a>
+
+  {% if is_preview %}
+  <div class="preview-bar" role="status" data-i18n="public_menu.preview_banner">{{ preview_banner_text }}</div>
+  {% endif %}
+
+  <div class="menu-shell">
+    <header class="menu-hero">
+      <div class="menu-hero-top">
+        <div class="menu-brand">
+          {% if let Some(logo) = logo_url %}
+          <img class="menu-logo" src="{{ logo }}" alt="{{ establishment_name }}" width="64" height="64">
+          {% endif %}
+          <div>
+            <h1 class="menu-title">{{ establishment_name }}</h1>
+            <p class="menu-desc {% if establishment_display_description.is_empty() %}is-hidden{% endif %}"
+               data-pt="{{ establishment_description }}"
+               data-en="{{ establishment_description_en }}"
+               data-es="{{ establishment_description_es }}"
+               data-hide-if-empty="1">{{ establishment_display_description }}</p>
+          </div>
+        </div>
+
+        <div class="lang-switcher" role="group" aria-label="{{ switcher_label }}" data-i18n-aria="lang.switcher_label">
+          <button type="button" class="lang-btn {% if locale_code == "pt-BR" %}is-active{% endif %}" data-lang-btn="pt-BR" aria-pressed="{% if locale_code == "pt-BR" %}true{% else %}false{% endif %}">PT</button>
+          <button type="button" class="lang-btn {% if locale_code == "en" %}is-active{% endif %}" data-lang-btn="en" aria-pressed="{% if locale_code == "en" %}true{% else %}false{% endif %}">EN</button>
+          <button type="button" class="lang-btn {% if locale_code == "es" %}is-active{% endif %}" data-lang-btn="es" aria-pressed="{% if locale_code == "es" %}true{% else %}false{% endif %}">ES</button>
+        </div>
+      </div>
+    </header>
+
+    <main id="menu-content">
+      {% if categories.is_empty() %}
+      <div class="empty-state">
+        <p data-i18n="public_menu.empty_menu">{{ empty_menu_text }}</p>
+      </div>
+      {% else %}
+      <div class="menu-controls">
+        <input id="menu-search" class="menu-search" type="search"
+               placeholder="{{ search_placeholder }}"
+               aria-label="{{ search_placeholder }}"
+               data-i18n-placeholder="public_menu.search_placeholder"
+               data-i18n-aria="public_menu.search_placeholder">
+
+        <nav class="cat-pills" aria-label="Categories">
+          <button type="button" class="cat-pill is-active" data-cat-filter="all" aria-pressed="true" data-i18n="public_menu.all_categories">{{ all_categories_text }}</button>
+          {% for cat in categories %}
+          <button type="button" class="cat-pill" data-cat-filter="{{ cat.id }}" aria-pressed="false"
+                  data-pt="{{ cat.name }}"
+                  data-en="{{ cat.name_en }}"
+                  data-es="{{ cat.name_es }}">{{ cat.display_name }}</button>
+          {% endfor %}
+        </nav>
+      </div>
+
+      {% for cat in categories %}
+      <section class="menu-section" id="cat-{{ cat.id }}" data-cat-section="{{ cat.id }}">
+        <div class="menu-section-head">
+          <h2 data-pt="{{ cat.name }}" data-en="{{ cat.name_en }}" data-es="{{ cat.name_es }}">{{ cat.display_name }}</h2>
+          <p class="{% if cat.display_description.is_empty() %}is-hidden{% endif %}"
+             data-pt="{{ cat.description }}"
+             data-en="{{ cat.description_en }}"
+             data-es="{{ cat.description_es }}"
+             data-hide-if-empty="1">{{ cat.display_description }}</p>
+        </div>
+
+        <div class="item-list">
+          {% for item in cat.products %}
+          <article class="item-card {% if !item.is_available %}is-unavailable{% endif %}" data-menu-item>
+            <div class="item-body">
+              <div>
+                <h3 class="item-name" data-pt="{{ item.name }}" data-en="{{ item.name_en }}" data-es="{{ item.name_es }}">{{ item.display_name }}</h3>
+                <p class="item-desc {% if item.display_description.is_empty() %}is-hidden{% endif %}"
+                   data-pt="{{ item.description }}"
+                   data-en="{{ item.description_en }}"
+                   data-es="{{ item.description_es }}"
+                   data-hide-if-empty="1">{{ item.display_description }}</p>
+              </div>
+              <div class="item-meta">
+                <span class="item-price" data-price-centavos="{{ item.price_centavos }}">{{ item.price_display }}</span>
+                {% if !item.is_available %}
+                <span class="item-unavailable-badge" data-i18n="public_menu.unavailable_badge">{{ unavailable_text }}</span>
+                {% endif %}
+              </div>
+            </div>
+            {% if let Some(img) = item.image_url %}
+            <img class="item-photo" src="{{ img }}" alt="{{ item.display_name }}" loading="lazy" width="92" height="92">
+            {% endif %}
+          </article>
+          {% endfor %}
+        </div>
+      </section>
+      {% endfor %}
+
+      <div id="menu-no-results" class="empty-state is-hidden">
+        <p data-i18n="public_menu.no_results">{{ no_results_text }}</p>
+      </div>
+      {% endif %}
+    </main>
+
+    <footer class="menu-footer">
+      <a href="/" data-i18n="public_menu.powered_by">{{ powered_by_text }}</a>
+    </footer>
+  </div>
+
+  <script type="application/json" id="qr-menu-i18n">{{ menu_i18n_json|safe }}</script>
+  <script src="/static/js/menu.js" defer></script>
+</body>
+</html>

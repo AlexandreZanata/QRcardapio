@@ -1,0 +1,64 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block content %}
+<div class="container-narrow">
+  <div class="page-top">
+    <h1 data-i18n="{{ page.title_key }}">{{ page.t(page.title_key) }}</h1>
+    <a class="btn btn-secondary btn-sm" href="/dashboard/menu" data-i18n="common.back">{{ page.t("common.back") }}</a>
+  </div>
+
+  <section class="card">
+    {% if let Some(err) = error_key %}
+    <div class="alert alert-error" role="alert" data-i18n="{{ err }}">{{ page.t(err) }}</div>
+    {% endif %}
+
+    <form class="form-stack" method="post" action="{{ form_action }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+
+      <div class="field">
+        <label for="name" data-i18n="category_form.name_label">{{ page.t("category_form.name_label") }}</label>
+        <input id="name" name="name" type="text" required maxlength="80" value="{{ name_value }}"
+               placeholder="{{ page.t("category_form.name_placeholder") }}" data-i18n-placeholder="category_form.name_placeholder">
+      </div>
+
+      <div class="field">
+        <label for="description" data-i18n="category_form.description_label">{{ page.t("category_form.description_label") }}</label>
+        <textarea id="description" name="description" maxlength="240"
+                  placeholder="{{ page.t("category_form.description_placeholder") }}" data-i18n-placeholder="category_form.description_placeholder">{{ description_value }}</textarea>
+      </div>
+
+      <label class="checkbox-row">
+        <input type="checkbox" name="is_visible" value="1" {% if is_visible %}checked{% endif %}>
+        <span data-i18n="category_form.visible_label">{{ page.t("category_form.visible_label") }}</span>
+      </label>
+
+      <details class="details-box">
+        <summary data-i18n="category_form.translations_toggle">{{ page.t("category_form.translations_toggle") }}</summary>
+        <div class="form-stack">
+          <div class="field">
+            <label for="name_en" data-i18n="category_form.name_en_label">{{ page.t("category_form.name_en_label") }}</label>
+            <input id="name_en" name="name_en" type="text" maxlength="80" value="{{ name_en }}">
+          </div>
+          <div class="field">
+            <label for="name_es" data-i18n="category_form.name_es_label">{{ page.t("category_form.name_es_label") }}</label>
+            <input id="name_es" name="name_es" type="text" maxlength="80" value="{{ name_es }}">
+          </div>
+          <div class="field">
+            <label for="description_en" data-i18n="category_form.description_en_label">{{ page.t("category_form.description_en_label") }}</label>
+            <textarea id="description_en" name="description_en" maxlength="240">{{ description_en }}</textarea>
+          </div>
+          <div class="field">
+            <label for="description_es" data-i18n="category_form.description_es_label">{{ page.t("category_form.description_es_label") }}</label>
+            <textarea id="description_es" name="description_es" maxlength="240">{{ description_es }}</textarea>
+          </div>
+        </div>
+      </details>
+
+      <div class="inline-actions">
+        <button class="btn btn-primary" type="submit" data-i18n="common.save">{{ page.t("common.save") }}</button>
+        <a class="btn btn-secondary" href="/dashboard/menu" data-i18n="common.cancel">{{ page.t("common.cancel") }}</a>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="{{ page.locale_code }}" data-i18n-version="{{ page.i18n_version }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.t(page.title_key) }}</title>
+  <meta name="description" content="{{ page.t("landing.meta_description") }}">
+  <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg">
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/app.css">
+  {% block head_extra %}{% endblock %}
+</head>
+<body data-page-title-key="{{ page.title_key }}">
+  <a class="skip-link" href="#main-content" data-i18n="common.skip_to_content">{{ page.t("common.skip_to_content") }}</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand-mark" href="/">
+        <span class="brand-badge">QR</span>
+        <span data-i18n="app.name">{{ page.t("app.name") }}</span>
+      </a>
+      <nav class="nav-group" aria-label="Main navigation">
+        {% block nav_links %}{% endblock %}
+        {% include "components/lang_switcher.html" %}
+      </nav>
+    </div>
+  </header>
+
+  {% block content %}{% endblock %}
+
+  <footer class="site-footer">
+    <div class="container">
+      <span data-i18n="landing.footer_copy">{{ page.t("landing.footer_copy") }}</span>
+    </div>
+  </footer>
+
+  <script src="/static/js/i18n.js" defer></script>
+  <script src="/static/js/app.js" defer></script>
+</body>
+</html>

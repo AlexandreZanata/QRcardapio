@@ -1,0 +1,11 @@
+pub mod admin;
+pub mod auth;
+pub mod categories;
+pub mod dashboard;
+pub mod health;
+pub mod onboarding;
+pub mod product_multipart;
+pub mod products;
+pub mod public;
+pub mod qr;
+pub mod settings;

@@ -1,0 +1,43 @@
+{$DOMAIN::80} {
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+		-Server
+	}
+
+	# Static published public menus served directly off disk without hitting Rust or SQLite.
+	handle_path /c/* {
+		root * /srv/published
+
+		@immutable path */media/* */theme-*.css
+		header @immutable Cache-Control "public, max-age=31536000, immutable"
+
+		@html not path */media/* */theme-*.css
+		header @html Cache-Control "public, max-age=60, stale-while-revalidate=300"
+
+		try_files {path} {path}/index.html
+		file_server
+	}
+
+	# Embedded i18n JSON endpoints served by the Rust app (with ETag + immutable caching).
+	handle /static/i18n/* {
+		reverse_proxy app:8080
+	}
+
+	# Static CSS, JS, and icons served directly by Caddy.
+	handle_path /static/* {
+		root * /srv/static
+		header Cache-Control "public, max-age=86400"
+		file_server
+	}
+
+	# Dynamic owner dashboard, auth, QR generation, and landing page.
+	handle {
+		reverse_proxy app:8080
+	}
+}

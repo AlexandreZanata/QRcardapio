@@ -1,0 +1,108 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block content %}
+<div class="page-top">
+  <div>
+    <h1 data-i18n="dashboard.heading">{{ page.t("dashboard.heading") }}</h1>
+    <p>{{ est_name }}</p>
+  </div>
+  <div class="inline-actions">
+    {% if is_published %}
+    <span class="badge badge-success" data-i18n="dashboard.status_published">{{ page.t("dashboard.status_published") }}</span>
+    {% else %}
+    <span class="badge badge-warn" data-i18n="dashboard.status_draft">{{ page.t("dashboard.status_draft") }}</span>
+    {% endif %}
+
+    {% if is_published && has_unpublished_changes %}
+    <span class="badge badge-warn" data-i18n="dashboard.status_pending">{{ page.t("dashboard.status_pending") }}</span>
+    {% else if is_published %}
+    <span class="badge badge-neutral" data-i18n="dashboard.status_synced">{{ page.t("dashboard.status_synced") }}</span>
+    {% endif %}
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label" data-i18n="dashboard.stat_categories">{{ page.t("dashboard.stat_categories") }}</div>
+    <div class="stat-value">{{ category_count }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label" data-i18n="dashboard.stat_products">{{ page.t("dashboard.stat_products") }}</div>
+    <div class="stat-value">{{ product_count }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label" data-i18n="dashboard.stat_version">{{ page.t("dashboard.stat_version") }}</div>
+    <div class="stat-value">v{{ published_version }}</div>
+  </div>
+</div>
+
+<div class="grid-2">
+  <section class="card">
+    <h2 class="mb-3" data-i18n="dashboard.public_url_label">{{ page.t("dashboard.public_url_label") }}</h2>
+    <div class="url-box mb-4">
+      <code id="public-menu-url" class="url-code">{{ public_url }}</code>
+      <button type="button" class="btn btn-secondary btn-sm" data-copy-target="public-menu-url">
+        <span data-i18n="common.copy">{{ page.t("common.copy") }}</span>
+      </button>
+    </div>
+
+    <div class="inline-actions">
+      <form class="inline-form" method="post" action="/dashboard/publish">
+        <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+        <button class="btn btn-primary" type="submit"
+                data-i18n="{% if is_published %}dashboard.action_republish{% else %}dashboard.action_publish{% endif %}">
+          {% if is_published %}{{ page.t("dashboard.action_republish") }}{% else %}{{ page.t("dashboard.action_publish") }}{% endif %}
+        </button>
+      </form>
+
+      <a class="btn btn-secondary" href="/dashboard/preview" target="_blank" rel="noopener" data-i18n="dashboard.action_preview">{{ page.t("dashboard.action_preview") }}</a>
+
+      {% if is_published %}
+      <a class="btn btn-secondary" href="/c/{{ slug }}" target="_blank" rel="noopener" data-i18n="nav.public_menu">{{ page.t("nav.public_menu") }}</a>
+      <form class="inline-form" method="post" action="/dashboard/unpublish"
+            data-confirm-key="dashboard.confirm_unpublish"
+            data-confirm-fallback="{{ page.t("dashboard.confirm_unpublish") }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+        <button class="btn btn-danger btn-sm" type="submit" data-i18n="dashboard.action_unpublish">{{ page.t("dashboard.action_unpublish") }}</button>
+      </form>
+      {% endif %}
+    </div>
+
+    <p class="field-hint mt-3">
+      <span data-i18n="dashboard.last_published_label">{{ page.t("dashboard.last_published_label") }}</span>
+      {% if let Some(ts) = last_published_at %}
+        <span>{{ ts }}</span>
+      {% else %}
+        <span data-i18n="dashboard.never_published">{{ page.t("dashboard.never_published") }}</span>
+      {% endif %}
+    </p>
+  </section>
+
+  <section class="card">
+    <h2 class="mb-3" data-i18n="dashboard.checklist_title">{{ page.t("dashboard.checklist_title") }}</h2>
+    <ul class="checklist">
+      <li>
+        <span class="check-dot is-done">✓</span>
+        <span data-i18n="dashboard.checklist_place">{{ page.t("dashboard.checklist_place") }}</span>
+      </li>
+      <li>
+        <span class="check-dot {% if category_count > 0 %}is-done{% endif %}">{% if category_count > 0 %}✓{% else %}2{% endif %}</span>
+        <span data-i18n="dashboard.checklist_category">{{ page.t("dashboard.checklist_category") }}</span>
+      </li>
+      <li>
+        <span class="check-dot {% if product_count > 0 %}is-done{% endif %}">{% if product_count > 0 %}✓{% else %}3{% endif %}</span>
+        <span data-i18n="dashboard.checklist_product">{{ page.t("dashboard.checklist_product") }}</span>
+      </li>
+      <li>
+        <span class="check-dot {% if is_published %}is-done{% endif %}">{% if is_published %}✓{% else %}4{% endif %}</span>
+        <span data-i18n="dashboard.checklist_publish">{{ page.t("dashboard.checklist_publish") }}</span>
+      </li>
+    </ul>
+
+    <div class="inline-actions mt-4">
+      <a class="btn btn-secondary" href="/dashboard/menu" data-i18n="dashboard.action_edit_menu">{{ page.t("dashboard.action_edit_menu") }}</a>
+      <a class="btn btn-secondary" href="/dashboard/qr" data-i18n="dashboard.action_qr">{{ page.t("dashboard.action_qr") }}</a>
+    </div>
+  </section>
+</div>
+{% endblock %}

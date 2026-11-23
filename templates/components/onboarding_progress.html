@@ -1,0 +1,6 @@
+<div class="steps-bar" aria-label="{{ page.t("dashboard.checklist_title") }}">
+  <span class="step-pill is-done" data-i18n="onboarding.step_account">{{ page.t("onboarding.step_account") }}</span>
+  <span class="step-pill {% if step == 2 %}is-current{% else if step > 2 %}is-done{% endif %}" data-i18n="onboarding.step_place">{{ page.t("onboarding.step_place") }}</span>
+  <span class="step-pill {% if step == 3 %}is-current{% else if step > 3 %}is-done{% endif %}" data-i18n="onboarding.step_menu">{{ page.t("onboarding.step_menu") }}</span>
+  <span class="step-pill {% if step == 4 %}is-current{% else if step > 4 %}is-done{% endif %}" data-i18n="onboarding.step_publish">{{ page.t("onboarding.step_publish") }}</span>
+</div>

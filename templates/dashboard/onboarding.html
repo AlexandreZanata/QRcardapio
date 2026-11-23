@@ -1,0 +1,57 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block content %}
+<div class="container-narrow">
+  {% include "components/onboarding_progress.html" %}
+
+  <section class="card">
+    <h1 data-i18n="onboarding.heading">{{ page.t("onboarding.heading") }}</h1>
+    <p class="text-muted mb-4" data-i18n="onboarding.subtitle">{{ page.t("onboarding.subtitle") }}</p>
+
+    {% if let Some(err) = error_key %}
+    <div class="alert alert-error" role="alert" data-i18n="{{ err }}">{{ page.t(err) }}</div>
+    {% endif %}
+
+    <form class="form-stack" method="post" action="/onboarding">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+
+      <div class="field">
+        <label for="name" data-i18n="onboarding.name_label">{{ page.t("onboarding.name_label") }}</label>
+        <input id="name" name="name" type="text" required maxlength="100" value="{{ name_value }}"
+               data-slug-source
+               placeholder="{{ page.t("onboarding.name_placeholder") }}" data-i18n-placeholder="onboarding.name_placeholder">
+      </div>
+
+      <div class="field">
+        <label for="slug" data-i18n="onboarding.slug_label">{{ page.t("onboarding.slug_label") }}</label>
+        <div class="slug-input-group">
+          <span class="slug-prefix">{{ base_host }}/c/</span>
+          <input id="slug" name="slug" type="text" required maxlength="64" value="{{ slug_value }}" data-slug-target>
+        </div>
+        <p class="field-hint" data-i18n="onboarding.slug_hint">{{ page.t("onboarding.slug_hint") }}</p>
+      </div>
+
+      <div class="field">
+        <label for="description" data-i18n="onboarding.description_label">{{ page.t("onboarding.description_label") }}</label>
+        <textarea id="description" name="description" maxlength="280"
+                  placeholder="{{ page.t("onboarding.description_placeholder") }}" data-i18n-placeholder="onboarding.description_placeholder">{{ description_value }}</textarea>
+      </div>
+
+      <div class="field">
+        <label for="accent_color" data-i18n="onboarding.color_label">{{ page.t("onboarding.color_label") }}</label>
+        <div class="color-picker-row">
+          <input id="accent_color" name="accent_color" type="color" value="{{ accent_color }}">
+          <button type="button" class="swatch-btn swatch-coral" data-swatch-hex="#D9532F" aria-label="#D9532F"></button>
+          <button type="button" class="swatch-btn swatch-olive" data-swatch-hex="#3F6212" aria-label="#3F6212"></button>
+          <button type="button" class="swatch-btn swatch-espresso" data-swatch-hex="#44403C" aria-label="#44403C"></button>
+          <button type="button" class="swatch-btn swatch-berry" data-swatch-hex="#9D174D" aria-label="#9D174D"></button>
+          <button type="button" class="swatch-btn swatch-ocean" data-swatch-hex="#1D4ED8" aria-label="#1D4ED8"></button>
+          <button type="button" class="swatch-btn swatch-amber" data-swatch-hex="#B45309" aria-label="#B45309"></button>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" type="submit" data-i18n="onboarding.submit">{{ page.t("onboarding.submit") }}</button>
+    </form>
+  </section>
+</div>
+{% endblock %}

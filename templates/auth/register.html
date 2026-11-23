@@ -1,0 +1,52 @@
+{% extends "layouts/base.html" %}
+
+{% block nav_links %}
+  <a class="nav-link" href="/login" data-i18n="nav.login">{{ page.t("nav.login") }}</a>
+{% endblock %}
+
+{% block content %}
+<main id="main-content" class="auth-wrap">
+  <div class="container">
+    <section class="card auth-card">
+      {% include "components/flash.html" %}
+      <h1 data-i18n="auth.register_heading">{{ page.t("auth.register_heading") }}</h1>
+      <p data-i18n="auth.register_subtitle">{{ page.t("auth.register_subtitle") }}</p>
+
+      {% if let Some(err) = error_key %}
+      <div class="alert alert-error" role="alert" data-i18n="{{ err }}">{{ page.t(err) }}</div>
+      {% endif %}
+
+      <form class="form-stack" method="post" action="/register">
+        <div class="hp-field" aria-hidden="true">
+          <label for="website">Website</label>
+          <input id="website" name="website" type="text" tabindex="-1" autocomplete="off">
+        </div>
+
+        <div class="field">
+          <label for="email" data-i18n="auth.email_label">{{ page.t("auth.email_label") }}</label>
+          <input id="email" name="email" type="email" value="{{ email_value }}" required autocomplete="email"
+                 placeholder="{{ page.t("auth.email_placeholder") }}" data-i18n-placeholder="auth.email_placeholder">
+        </div>
+
+        <div class="field">
+          <label for="password" data-i18n="auth.password_label">{{ page.t("auth.password_label") }}</label>
+          <input id="password" name="password" type="password" required minlength="8" autocomplete="new-password"
+                 placeholder="{{ page.t("auth.password_placeholder") }}" data-i18n-placeholder="auth.password_placeholder">
+        </div>
+
+        <div class="field">
+          <label for="password_confirm" data-i18n="auth.password_confirm_label">{{ page.t("auth.password_confirm_label") }}</label>
+          <input id="password_confirm" name="password_confirm" type="password" required minlength="8" autocomplete="new-password">
+        </div>
+
+        <button class="btn btn-primary btn-block" type="submit" data-i18n="auth.submit_register">{{ page.t("auth.submit_register") }}</button>
+      </form>
+
+      <p class="mt-4 text-muted">
+        <span data-i18n="auth.has_account">{{ page.t("auth.has_account") }}</span>
+        <a href="/login" data-i18n="auth.sign_in_here">{{ page.t("auth.sign_in_here") }}</a>
+      </p>
+    </section>
+  </div>
+</main>
+{% endblock %}

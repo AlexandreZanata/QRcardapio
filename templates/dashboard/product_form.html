@@ -1,0 +1,97 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block content %}
+<div class="container-narrow">
+  <div class="page-top">
+    <h1 data-i18n="{{ page.title_key }}">{{ page.t(page.title_key) }}</h1>
+    <a class="btn btn-secondary btn-sm" href="/dashboard/menu" data-i18n="common.back">{{ page.t("common.back") }}</a>
+  </div>
+
+  <section class="card">
+    {% if let Some(err) = error_key %}
+    <div class="alert alert-error" role="alert" data-i18n="{{ err }}">{{ page.t(err) }}</div>
+    {% endif %}
+
+    <form class="form-stack" method="post" action="{{ form_action }}" enctype="multipart/form-data">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+
+      <div class="field">
+        <label for="category_id" data-i18n="product_form.category_label">{{ page.t("product_form.category_label") }}</label>
+        <select id="category_id" name="category_id" required>
+          {% for opt in category_options %}
+          <option value="{{ opt.id }}" {% if opt.id == selected_category_id %}selected{% endif %}>{{ opt.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="name" data-i18n="product_form.name_label">{{ page.t("product_form.name_label") }}</label>
+        <input id="name" name="name" type="text" required maxlength="100" value="{{ name_value }}"
+               placeholder="{{ page.t("product_form.name_placeholder") }}" data-i18n-placeholder="product_form.name_placeholder">
+      </div>
+
+      <div class="field">
+        <label for="price" data-i18n="product_form.price_label">{{ page.t("product_form.price_label") }}</label>
+        <input id="price" name="price" type="text" required value="{{ price_value }}" inputmode="decimal"
+               placeholder="{{ page.t("product_form.price_placeholder") }}" data-i18n-placeholder="product_form.price_placeholder">
+      </div>
+
+      <div class="field">
+        <label for="description" data-i18n="product_form.description_label">{{ page.t("product_form.description_label") }}</label>
+        <textarea id="description" name="description" maxlength="320"
+                  placeholder="{{ page.t("product_form.description_placeholder") }}" data-i18n-placeholder="product_form.description_placeholder">{{ description_value }}</textarea>
+      </div>
+
+      <div class="field">
+        <label for="image" data-i18n="product_form.image_label">{{ page.t("product_form.image_label") }}</label>
+        {% if let Some(img) = existing_image_url %}
+        <img class="product-thumb mb-3" src="{{ img }}" alt="{{ name_value }}" width="64" height="64">
+        <label class="checkbox-row">
+          <input type="checkbox" name="remove_image" value="1">
+          <span data-i18n="product_form.remove_image">{{ page.t("product_form.remove_image") }}</span>
+        </label>
+        {% endif %}
+        <input id="image" name="image" type="file" accept="image/jpeg,image/png,image/webp">
+        <p class="field-hint" data-i18n="product_form.image_hint">{{ page.t("product_form.image_hint") }}</p>
+      </div>
+
+      <label class="checkbox-row">
+        <input type="checkbox" name="is_available" value="1" {% if is_available %}checked{% endif %}>
+        <span data-i18n="product_form.available_label">{{ page.t("product_form.available_label") }}</span>
+      </label>
+
+      <label class="checkbox-row">
+        <input type="checkbox" name="is_visible" value="1" {% if is_visible %}checked{% endif %}>
+        <span data-i18n="product_form.visible_label">{{ page.t("product_form.visible_label") }}</span>
+      </label>
+
+      <details class="details-box">
+        <summary data-i18n="product_form.translations_toggle">{{ page.t("product_form.translations_toggle") }}</summary>
+        <div class="form-stack">
+          <div class="field">
+            <label for="name_en" data-i18n="product_form.name_en_label">{{ page.t("product_form.name_en_label") }}</label>
+            <input id="name_en" name="name_en" type="text" maxlength="100" value="{{ name_en }}">
+          </div>
+          <div class="field">
+            <label for="name_es" data-i18n="product_form.name_es_label">{{ page.t("product_form.name_es_label") }}</label>
+            <input id="name_es" name="name_es" type="text" maxlength="100" value="{{ name_es }}">
+          </div>
+          <div class="field">
+            <label for="description_en" data-i18n="product_form.description_en_label">{{ page.t("product_form.description_en_label") }}</label>
+            <textarea id="description_en" name="description_en" maxlength="320">{{ description_en }}</textarea>
+          </div>
+          <div class="field">
+            <label for="description_es" data-i18n="product_form.description_es_label">{{ page.t("product_form.description_es_label") }}</label>
+            <textarea id="description_es" name="description_es" maxlength="320">{{ description_es }}</textarea>
+          </div>
+        </div>
+      </details>
+
+      <div class="inline-actions">
+        <button class="btn btn-primary" type="submit" data-i18n="common.save">{{ page.t("common.save") }}</button>
+        <a class="btn btn-secondary" href="/dashboard/menu" data-i18n="common.cancel">{{ page.t("common.cancel") }}</a>
+      </div>
+    </form>
+  </section>
+</div>
+{% endblock %}

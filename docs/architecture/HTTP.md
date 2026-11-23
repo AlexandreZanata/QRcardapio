@@ -1,0 +1,54 @@
+# HTTP Routes & Contracts
+
+All routes use Axum 0.8 `{param}` syntax and emit strict security headers via `security_headers_middleware`.
+
+## Public Routes
+
+| Method | Path | Auth | Notes |
+|---|---|---|---|
+| `GET` | `/` | Optional | Commercial landing page (`landing.page_title`) with SSR + zero-reload i18n. |
+| `GET` | `/c/{slug}`, `/c/{slug}/` | None | Static published menu served from disk (**0 SQLite queries**); `ETag` + `304` + branded `404`. |
+| `GET` | `/c/{slug}/{*file}` | None | Static published CSS & media (**0 SQLite queries**); `immutable` cache headers. |
+| `GET` | `/static/i18n/{file}` | None | Serves embedded `pt-BR.json`, `en.json`, `es.json` with `ETag`, `304`, and `immutable` caching. |
+| `GET` | `/static/*` | None | Serves CSS, JS, and favicon assets. |
+| `GET` | `/healthz` | None | Liveness probe (`{"status":"ok"}`). |
+| `GET` | `/readyz` | None | Readiness probe executing `SELECT sqlite_version()`. |
+
+## Authentication Routes
+
+| Method | Path | Protection | Notes |
+|---|---|---|---|
+| `GET`/`POST` | `/login` | IP rate limit (10/min) | Rotates session cookie (`qr_session`) on success. |
+| `GET`/`POST` | `/register` | IP rate limit (5/min) + honeypot | Creates owner account, issues session cookie, redirects to `/onboarding`. |
+| `POST` | `/logout` | `AuthContext` + CSRF | Deletes session hash from SQLite and clears `qr_session`. |
+| `GET`/`POST` | `/reset-password` | IP rate limit (5/min) | Redeems single-use CLI token, rotates hash, revokes all active sessions. |
+
+## Owner Onboarding & Dashboard Routes (`AuthContext` / `TenantContext`)
+
+All `POST` routes verify `_csrf` against the server session's `csrf_token` in constant time. Dynamic pages set `Cache-Control: no-store`.
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET`/`POST` | `/onboarding` | Initial establishment setup (slug auto-suggested, normalized, reserved-word checked). |
+| `GET` | `/dashboard` | Overview: draft/published badge, counts, checklist, publish & unpublish triggers. |
+| `GET` | `/dashboard/theme.css` | Tenant-specific brand CSS variables (`no-store`). |
+| `GET` | `/dashboard/preview` | Live draft preview (includes unpublished changes and draft preview banner). |
+| `GET` | `/dashboard/media/{filename}` | Tenant-isolated private media preview (scoped to `establishment_id`). |
+| `POST` | `/dashboard/publish` | Triggers atomic static snapshot build. |
+| `POST` | `/dashboard/unpublish` | Removes published static files and reverts to draft. |
+| `GET` | `/dashboard/menu` | Category and product management board. |
+| `GET`/`POST` | `/dashboard/categories/new`, `/dashboard/categories` | Create category (optional EN/ES translations). |
+| `GET`/`POST` | `/dashboard/categories/{id}/edit`, `/dashboard/categories/{id}` | Edit category. |
+| `POST` | `/dashboard/categories/{id}/delete`, `/move` | Delete or reorder category. |
+| `GET`/`POST` | `/dashboard/products/new`, `/dashboard/products` | Create product (multipart max 6 MiB, upload rate limit 20/min). |
+| `GET`/`POST` | `/dashboard/products/{id}/edit`, `/dashboard/products/{id}` | Edit product, price, availability, photo, translations. |
+| `POST` | `/dashboard/products/{id}/toggle`, `/delete`, `/move` | Toggle sold-out status, delete, or reorder within category. |
+| `GET`/`POST` | `/dashboard/settings` | Update profile, brand color, EN/ES description; slug locked once published. |
+| `POST` | `/dashboard/settings/logo`, `/logo/remove` | Upload (max 2 MiB) or remove establishment logo. |
+| `GET` | `/dashboard/qr`, `/qr/print`, `/qr.svg`, `/qr.png` | Preview, printable card sheet, SVG download, 1024px PNG download. |
+
+## Operational Administration
+
+| Method | Path | Protection | Purpose |
+|---|---|---|---|
+| `GET` | `/admin` | `AdminContext` (`role = 'admin'`) | Operational counts, SQLite version, recent establishments, recent publication metrics. |

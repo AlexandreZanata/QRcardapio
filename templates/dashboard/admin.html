@@ -1,0 +1,90 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block content %}
+<div class="page-top">
+  <div>
+    <h1 data-i18n="admin.heading">{{ page.t("admin.heading") }}</h1>
+    <p data-i18n="admin.subtitle">{{ page.t("admin.subtitle") }}</p>
+  </div>
+  <span class="badge badge-neutral">
+    <span data-i18n="admin.sqlite_version">{{ page.t("admin.sqlite_version") }}</span>: {{ sqlite_version }}
+  </span>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label" data-i18n="admin.stat_accounts">{{ page.t("admin.stat_accounts") }}</div>
+    <div class="stat-value">{{ account_count }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label" data-i18n="admin.stat_establishments">{{ page.t("admin.stat_establishments") }}</div>
+    <div class="stat-value">{{ establishment_count }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label" data-i18n="admin.stat_published">{{ page.t("admin.stat_published") }}</div>
+    <div class="stat-value">{{ published_count }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label" data-i18n="admin.stat_publications">{{ page.t("admin.stat_publications") }}</div>
+    <div class="stat-value">{{ publication_count }}</div>
+  </div>
+</div>
+
+<section class="card mb-4">
+  <h2 class="mb-3" data-i18n="admin.recent_establishments">{{ page.t("admin.recent_establishments") }}</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th data-i18n="admin.col_name">{{ page.t("admin.col_name") }}</th>
+          <th data-i18n="admin.col_slug">{{ page.t("admin.col_slug") }}</th>
+          <th data-i18n="admin.col_status">{{ page.t("admin.col_status") }}</th>
+          <th data-i18n="admin.col_version">{{ page.t("admin.col_version") }}</th>
+          <th data-i18n="admin.col_created">{{ page.t("admin.col_created") }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for e in establishments %}
+        <tr>
+          <td>{{ e.name }}</td>
+          <td><code>{{ e.slug }}</code></td>
+          <td>{% if e.is_published %}published{% else %}draft{% endif %}</td>
+          <td>v{{ e.published_version }}</td>
+          <td>{{ e.created_at }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section class="card">
+  <h2 class="mb-3" data-i18n="admin.recent_publications">{{ page.t("admin.recent_publications") }}</h2>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th data-i18n="admin.col_name">{{ page.t("admin.col_name") }}</th>
+          <th data-i18n="admin.col_slug">{{ page.t("admin.col_slug") }}</th>
+          <th data-i18n="admin.col_status">{{ page.t("admin.col_status") }}</th>
+          <th data-i18n="admin.col_version">{{ page.t("admin.col_version") }}</th>
+          <th data-i18n="admin.col_bytes">{{ page.t("admin.col_bytes") }}</th>
+          <th data-i18n="admin.col_duration">{{ page.t("admin.col_duration") }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in publications %}
+        <tr>
+          <td>{{ p.est_name }}</td>
+          <td><code>{{ p.est_slug }}</code></td>
+          <td>{{ p.status }}</td>
+          <td>v{{ p.version }}</td>
+          <td>{{ p.html_bytes }} B</td>
+          <td>{{ p.duration_ms }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

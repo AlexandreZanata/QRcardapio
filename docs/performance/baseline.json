@@ -1,0 +1,59 @@
+{
+  "measured_at_utc": "2026-11-23T15:58:07Z",
+  "rust_version": "1.100.0",
+  "sqlite_version": "3.54.1",
+  "release_binary_bytes": 9961472,
+  "host": {
+    "cpu_threads": 16,
+    "ram_gib": 31,
+    "kernel": "7.2.15-76070215-generic"
+  },
+  "memory_kb": {
+    "idle_rss_kb": 10780,
+    "post_load_rss_kb": 53040
+  },
+  "database_scaling": [
+    { "establishments": 100, "items_per_est": 12, "db_bytes": 933888 },
+    { "establishments": 1000, "items_per_est": 12, "db_bytes": 7700480, "gen_ms": 302 },
+    { "establishments": 10000, "items_per_est": 12, "db_bytes": 76460032, "gen_ms": 2329 },
+    { "establishments": 100000, "items_per_est": 12, "db_bytes": 768606208, "gen_ms": 21370 }
+  ],
+  "snapshot_sizes": [
+    { "items": 10, "html_bytes": 14824, "gzip_bytes": 2309, "republish_cli_ms": 18.0 },
+    { "items": 35, "html_bytes": 33319, "gzip_bytes": 2813, "republish_cli_ms": 11.1 },
+    { "items": 80, "html_bytes": 66664, "gzip_bytes": 3728, "republish_cli_ms": 77.2 }
+  ],
+  "http_benchmarks": {
+    "public_static_menu": {
+      "connections": 32,
+      "rps": 28794.52,
+      "success_pct": 100.0,
+      "p50_ms": 0.9673,
+      "p95_ms": 2.1538,
+      "p99_ms": 3.0652
+    },
+    "authenticated_dashboard": {
+      "connections": 16,
+      "rps": 3333.86,
+      "success_pct": 100.0,
+      "p50_ms": 4.6972,
+      "p95_ms": 5.8342,
+      "p99_ms": 6.9530
+    },
+    "public_during_concurrent_publish": {
+      "connections": 32,
+      "rps": 26880.94,
+      "success_pct": 100.0,
+      "p50_ms": 1.0281,
+      "p95_ms": 2.3479,
+      "p99_ms": 3.3542
+    },
+    "concurrent_owners_edit_and_publish": {
+      "owners": 8,
+      "completed": 8,
+      "all_200": true,
+      "total_wall_ms": 617.6,
+      "avg_flow_ms": 362.1
+    }
+  }
+}

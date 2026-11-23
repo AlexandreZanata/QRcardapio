@@ -1,0 +1,49 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block content %}
+<div class="page-top">
+  <div>
+    <h1 data-i18n="qr.heading">{{ page.t("qr.heading") }}</h1>
+    <p data-i18n="qr.subtitle">{{ page.t("qr.subtitle") }}</p>
+  </div>
+</div>
+
+{% if !is_published %}
+<div class="alert alert-warn" role="status">
+  <span data-i18n="qr.not_published_warning">{{ page.t("qr.not_published_warning") }}</span>
+  <form class="inline-form" method="post" action="/dashboard/publish">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <button class="btn btn-primary btn-sm" type="submit" data-i18n="dashboard.action_publish">{{ page.t("dashboard.action_publish") }}</button>
+  </form>
+</div>
+{% endif %}
+
+<div class="grid-2">
+  <section class="card">
+    <div class="qr-preview-box mb-4">
+      {{ qr_svg|safe }}
+    </div>
+    <div class="url-box">
+      <code id="qr-target-url" class="url-code">{{ public_url }}</code>
+      <button type="button" class="btn btn-secondary btn-sm" data-copy-target="qr-target-url">
+        <span data-i18n="common.copy">{{ page.t("common.copy") }}</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="card">
+    <div class="form-stack">
+      <a class="btn btn-primary" href="/dashboard/qr.svg" download data-i18n="qr.download_svg">{{ page.t("qr.download_svg") }}</a>
+      <a class="btn btn-secondary" href="/dashboard/qr.png" download data-i18n="qr.download_png">{{ page.t("qr.download_png") }}</a>
+      <a class="btn btn-secondary" href="/dashboard/qr/print" target="_blank" rel="noopener" data-i18n="qr.open_print">{{ page.t("qr.open_print") }}</a>
+    </div>
+
+    <h2 class="mt-5 mb-3" data-i18n="qr.tips_title">{{ page.t("qr.tips_title") }}</h2>
+    <ul>
+      <li data-i18n="qr.tip_1">{{ page.t("qr.tip_1") }}</li>
+      <li data-i18n="qr.tip_2">{{ page.t("qr.tip_2") }}</li>
+      <li data-i18n="qr.tip_3">{{ page.t("qr.tip_3") }}</li>
+    </ul>
+  </section>
+</div>
+{% endblock %}

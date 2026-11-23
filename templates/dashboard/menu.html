@@ -1,0 +1,130 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block content %}
+<div class="page-top">
+  <div>
+    <h1 data-i18n="menu_editor.heading">{{ page.t("menu_editor.heading") }}</h1>
+    <p data-i18n="menu_editor.subtitle">{{ page.t("menu_editor.subtitle") }}</p>
+  </div>
+  <div class="inline-actions">
+    <a class="btn btn-secondary" href="/dashboard/categories/new" data-i18n="menu_editor.new_category">{{ page.t("menu_editor.new_category") }}</a>
+    {% if !categories.is_empty() %}
+    <a class="btn btn-primary" href="/dashboard/products/new" data-i18n="menu_editor.new_product">{{ page.t("menu_editor.new_product") }}</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if has_unpublished_changes %}
+<div class="alert alert-warn" role="status">
+  <span data-i18n="menu_editor.publish_banner">{{ page.t("menu_editor.publish_banner") }}</span>
+  <form class="inline-form" method="post" action="/dashboard/publish">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    <button class="btn btn-primary btn-sm" type="submit" data-i18n="dashboard.action_publish">{{ page.t("dashboard.action_publish") }}</button>
+  </form>
+</div>
+{% endif %}
+
+{% if categories.is_empty() %}
+<section class="card">
+  <h2 data-i18n="menu_editor.empty_title">{{ page.t("menu_editor.empty_title") }}</h2>
+  <p class="text-muted mb-4" data-i18n="menu_editor.empty_body">{{ page.t("menu_editor.empty_body") }}</p>
+  <a class="btn btn-primary" href="/dashboard/categories/new" data-i18n="menu_editor.new_category">{{ page.t("menu_editor.new_category") }}</a>
+</section>
+{% else %}
+  {% for cat in categories %}
+  <section class="category-block">
+    <div class="category-head">
+      <div class="category-title">
+        <h2>{{ cat.name }}</h2>
+        {% if cat.is_visible %}
+        <span class="badge badge-success" data-i18n="menu_editor.visible">{{ page.t("menu_editor.visible") }}</span>
+        {% else %}
+        <span class="badge badge-neutral" data-i18n="menu_editor.hidden">{{ page.t("menu_editor.hidden") }}</span>
+        {% endif %}
+      </div>
+
+      <div class="inline-actions">
+        <a class="btn btn-secondary btn-sm" href="/dashboard/products/new?category_id={{ cat.id }}" data-i18n="menu_editor.add_product_here">{{ page.t("menu_editor.add_product_here") }}</a>
+        <form class="inline-form" method="post" action="/dashboard/categories/{{ cat.id }}/move">
+          <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+          <input type="hidden" name="direction" value="up">
+          <button class="btn btn-ghost btn-sm" type="submit" aria-label="{{ page.t("menu_editor.move_up") }}" data-i18n="menu_editor.move_up">{{ page.t("menu_editor.move_up") }}</button>
+        </form>
+        <form class="inline-form" method="post" action="/dashboard/categories/{{ cat.id }}/move">
+          <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+          <input type="hidden" name="direction" value="down">
+          <button class="btn btn-ghost btn-sm" type="submit" aria-label="{{ page.t("menu_editor.move_down") }}" data-i18n="menu_editor.move_down">{{ page.t("menu_editor.move_down") }}</button>
+        </form>
+        <a class="btn btn-secondary btn-sm" href="/dashboard/categories/{{ cat.id }}/edit" data-i18n="common.edit">{{ page.t("common.edit") }}</a>
+        <form class="inline-form" method="post" action="/dashboard/categories/{{ cat.id }}/delete"
+              data-confirm-key="menu_editor.confirm_delete_category"
+              data-confirm-fallback="{{ page.t("menu_editor.confirm_delete_category") }}">
+          <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+          <button class="btn btn-danger btn-sm" type="submit" data-i18n="common.delete">{{ page.t("common.delete") }}</button>
+        </form>
+      </div>
+    </div>
+
+    {% if cat.products.is_empty() %}
+    <div class="product-row">
+      <span class="text-muted" data-i18n="menu_editor.empty_products">{{ page.t("menu_editor.empty_products") }}</span>
+    </div>
+    {% else %}
+      {% for prod in cat.products %}
+      <div class="product-row">
+        <div class="product-main">
+          {% if let Some(img) = prod.thumb_url %}
+          <img class="product-thumb" src="{{ img }}" alt="{{ prod.name }}" width="64" height="64" loading="lazy">
+          {% endif %}
+          <div>
+            <strong>{{ prod.name }}</strong>
+            {% if !prod.description.is_empty() %}
+            <p class="field-hint">{{ prod.description }}</p>
+            {% endif %}
+            <div class="inline-actions mt-2">
+              <strong data-price-centavos="{{ prod.price_centavos }}">{{ prod.price_display }}</strong>
+              {% if prod.is_available %}
+              <span class="badge badge-success" data-i18n="menu_editor.available">{{ page.t("menu_editor.available") }}</span>
+              {% else %}
+              <span class="badge badge-danger" data-i18n="menu_editor.unavailable">{{ page.t("menu_editor.unavailable") }}</span>
+              {% endif %}
+              {% if !prod.is_visible %}
+              <span class="badge badge-neutral" data-i18n="menu_editor.hidden">{{ page.t("menu_editor.hidden") }}</span>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <div class="inline-actions">
+          <form class="inline-form" method="post" action="/dashboard/products/{{ prod.id }}/toggle">
+            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+            <button class="btn btn-secondary btn-sm" type="submit"
+                    data-i18n="{% if prod.is_available %}menu_editor.unavailable{% else %}menu_editor.available{% endif %}">
+              {% if prod.is_available %}{{ page.t("menu_editor.unavailable") }}{% else %}{{ page.t("menu_editor.available") }}{% endif %}
+            </button>
+          </form>
+          <form class="inline-form" method="post" action="/dashboard/products/{{ prod.id }}/move">
+            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+            <input type="hidden" name="direction" value="up">
+            <button class="btn btn-ghost btn-sm" type="submit" data-i18n="menu_editor.move_up">{{ page.t("menu_editor.move_up") }}</button>
+          </form>
+          <form class="inline-form" method="post" action="/dashboard/products/{{ prod.id }}/move">
+            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+            <input type="hidden" name="direction" value="down">
+            <button class="btn btn-ghost btn-sm" type="submit" data-i18n="menu_editor.move_down">{{ page.t("menu_editor.move_down") }}</button>
+          </form>
+          <a class="btn btn-secondary btn-sm" href="/dashboard/products/{{ prod.id }}/edit" data-i18n="common.edit">{{ page.t("common.edit") }}</a>
+          <form class="inline-form" method="post" action="/dashboard/products/{{ prod.id }}/delete"
+                data-confirm-key="menu_editor.confirm_delete_product"
+                data-confirm-fallback="{{ page.t("menu_editor.confirm_delete_product") }}">
+            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+            <button class="btn btn-danger btn-sm" type="submit" data-i18n="common.delete">{{ page.t("common.delete") }}</button>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    {% endif %}
+  </section>
+  {% endfor %}
+{% endif %}
+{% endblock %}

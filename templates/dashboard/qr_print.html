@@ -1,0 +1,26 @@
+{% extends "layouts/print.html" %}
+
+{% block content %}
+<div class="print-toolbar no-print">
+  <a class="btn btn-secondary btn-sm" href="/dashboard/qr" data-i18n="common.back">{{ page.t("common.back") }}</a>
+  <div class="inline-actions">
+    {% include "components/lang_switcher.html" %}
+    <button type="button" class="btn btn-primary" data-action="print" data-i18n="print.button">{{ page.t("print.button") }}</button>
+  </div>
+</div>
+
+<main class="print-sheet">
+  {% if let Some(logo) = logo_url %}
+  <img class="print-logo" src="{{ logo }}" alt="{{ est_name }}" width="84" height="84">
+  {% endif %}
+  <h1 class="print-title">{{ est_name }}</h1>
+  <p class="print-cta" data-i18n="print.scan_cta">{{ page.t("print.scan_cta") }}</p>
+  <div class="print-qr-frame">
+    {{ qr_svg|safe }}
+  </div>
+  <p class="print-url">{{ public_url }}</p>
+  <p class="print-footer" data-i18n="public_menu.powered_by">{{ page.t("public_menu.powered_by") }}</p>
+</main>
+
+<p class="print-helper no-print" data-i18n="print.helper">{{ page.t("print.helper") }}</p>
+{% endblock %}
