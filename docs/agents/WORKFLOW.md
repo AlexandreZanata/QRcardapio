@@ -16,3 +16,4 @@ Every coding agent modifying QR Cardápio must follow this sequence:
    cargo test --locked
    ```
 9. **Update affected documentation and [PROJECT_STATE.md](PROJECT_STATE.md)** before summarizing work.
+10. **Commit and push to GitHub**: After all checks pass and docs are updated, always commit and push every completed change to GitHub (`git push origin main`).

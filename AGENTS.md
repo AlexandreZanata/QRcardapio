@@ -77,6 +77,7 @@ cargo test --locked
 
 When changing dependencies, run `cargo audit` and `cargo build --release --locked`.
 When modifying architecture, schemas, routes, UI patterns, or performance paths, update the corresponding document under `docs/` and `docs/agents/PROJECT_STATE.md`.
+After passing all required checks above, **always commit and push the changes to GitHub (`origin main`)** before finishing any task.
 
 ## 7. Authoritative Documentation Links
 
