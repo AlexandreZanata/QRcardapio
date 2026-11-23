@@ -115,6 +115,9 @@ async fn i18n_catalog_parity_and_http_zero_reload_contracts() {
     assert!(html_es.contains("Siempre a mano."));
     assert!(html_es.contains("Brasa 128"));
     assert!(html_es.contains("Resumen de reseñas"));
+    assert!(html_es.contains("Perfil ficticio · Datos simulados"));
+    assert!(html_es.contains("href=\"#maps-demo\""));
+    assert!(html_es.contains("id=\"maps-demo\""));
     assert!(html_es.contains("data-i18n-alt=\"maps.storefront_alt\""));
     assert!(html_es.contains("data-i18n=\"landing.hero_title\""));
     assert!(html_es.contains("/static/js/i18n.js"));

@@ -2,7 +2,7 @@
 
 {% macro review_summary(period_key, score_key, total, distribution, featured) %}
 <section class="maps-period{% if featured %} maps-period-highlight{% endif %}">
-  <h5 data-i18n="{{ period_key }}">{{ page.t(period_key) }}</h5>
+  <h4 data-i18n="{{ period_key }}">{{ page.t(period_key) }}</h4>
   <div class="maps-rating">
     <strong><span data-i18n="{{ score_key }}">{{ page.t(score_key) }}</span> <span class="maps-accessible" data-i18n="maps.score_suffix">{{ page.t("maps.score_suffix") }}</span></strong>
     {{ icons::sticker("review-star") }}
@@ -25,52 +25,88 @@
 
 <section id="google-maps" class="landing-container landing-maps" aria-labelledby="landing-maps-title">
   <div class="landing-maps-content">
-    <div class="landing-section-heading">
-      <h2 id="landing-maps-title" data-i18n="maps.heading">{{ page.t("maps.heading") }}</h2>
-      <p data-i18n="maps.subtitle">{{ page.t("maps.subtitle") }}</p>
+    <div class="maps-kicker">{{ icons::panel("map") }} <span>Google Maps</span></div>
+    <h2 id="landing-maps-title">
+      <span data-i18n="maps.heading">{{ page.t("maps.heading") }}</span>
+      <span class="hero-line">
+        <span data-i18n="maps.heading_bridge">{{ page.t("maps.heading_bridge") }}</span>
+        <span class="hero-highlight hero-highlight-yellow" data-i18n="maps.heading_highlight">{{ page.t("maps.heading_highlight") }}</span>
+      </span>
+      <span class="hero-line"><span class="hero-highlight hero-highlight-pink" data-i18n="maps.heading_end">{{ page.t("maps.heading_end") }}</span></span>
+    </h2>
+    <p class="landing-hero-description" data-i18n="maps.subtitle">{{ page.t("maps.subtitle") }}</p>
+    <div class="landing-actions">
+      <a class="btn landing-button landing-button-blue" href="{% if is_logged_in %}/dashboard/settings#google-maps{% else %}/register{% endif %}" data-i18n="maps.cta">{{ page.t("maps.cta") }}</a>
+      <a class="btn landing-button" href="#maps-demo">
+        {{ icons::icon("play") }}
+        <span data-i18n="maps.demo_cta">{{ page.t("maps.demo_cta") }}</span>
+      </a>
     </div>
-    <div class="landing-maps-action">
-      {{ icons::panel("map") }}
-      <div>
-        <span class="landing-maps-action-label" data-i18n="maps.menu_prompt">{{ page.t("maps.menu_prompt") }}</span>
-        <strong data-i18n="public_menu.google_review_action">{{ page.t("public_menu.google_review_action") }}</strong>
-      </div>
-    </div>
-    <a class="btn landing-button landing-button-blue" href="{% if is_logged_in %}/dashboard/settings#google-maps{% else %}/register{% endif %}" data-i18n="maps.cta">{{ page.t("maps.cta") }}</a>
+    <ul class="landing-proof">
+      <li>{{ icons::icon("check") }} <span data-i18n="maps.proof_link">{{ page.t("maps.proof_link") }}</span></li>
+      <li>{{ icons::icon("check") }} <span data-i18n="maps.proof_publish">{{ page.t("maps.proof_publish") }}</span></li>
+    </ul>
   </div>
 
-  <article class="maps-example" aria-labelledby="maps-profile-name">
-    <img src="/static/images/brasa-128.webp" width="1080" height="720" loading="lazy"
-         alt="{{ page.t("maps.storefront_alt") }}" data-i18n-alt="maps.storefront_alt">
-    <div class="maps-example-content">
-      <header class="maps-profile-title">
-        <div>
-          <h3 id="maps-profile-name">Brasa 128</h3>
-          <span data-i18n="maps.category">{{ page.t("maps.category") }}</span>
-        </div>
-        <p data-i18n="maps.example">{{ page.t("maps.example") }}</p>
+  <div id="maps-demo" class="maps-showcase" role="group" aria-labelledby="maps-example-note" tabindex="-1">
+    <div class="maps-showcase-burst">{{ icons::sticker("burst") }}</div>
+    <article class="maps-profile" aria-labelledby="maps-profile-name">
+      <header class="maps-profile-bar">
+        {{ icons::panel("map") }}
+        <span data-i18n="maps.profile_label">{{ page.t("maps.profile_label") }}</span>
       </header>
+      <img class="maps-storefront" src="/static/images/brasa-128.webp" width="1080" height="720" loading="lazy"
+           alt="{{ page.t("maps.storefront_alt") }}" data-i18n-alt="maps.storefront_alt">
+      <div class="maps-profile-content">
+        <h3 id="maps-profile-name">Brasa 128</h3>
+        <div class="maps-profile-rating">
+          <strong data-i18n="maps.score_after">{{ page.t("maps.score_after") }}</strong>
+          {{ icons::sticker("review-star") }}
+          <span>(87 <span data-i18n="maps.reviews">{{ page.t("maps.reviews") }}</span>)</span>
+        </div>
+        <p class="maps-profile-category" data-i18n="maps.category">{{ page.t("maps.category") }}</p>
+        <dl class="maps-profile-details">
+          <div>
+            <dt>{{ icons::panel("map") }} <span class="maps-accessible" data-i18n="maps.address">{{ page.t("maps.address") }}</span></dt>
+            <dd>Rua da Brasa, 128 · Vila do Cedro</dd>
+          </div>
+          <div>
+            <dt>{{ icons::panel("history") }} <span class="maps-accessible" data-i18n="maps.hours">{{ page.t("maps.hours") }}</span></dt>
+            <dd data-i18n="maps.hours_value">{{ page.t("maps.hours_value") }}</dd>
+          </div>
+          <div>
+            <dt>{{ icons::panel("globe") }} <span class="maps-accessible" data-i18n="maps.website">{{ page.t("maps.website") }}</span></dt>
+            <dd>brasa128.example</dd>
+          </div>
+        </dl>
+      </div>
+    </article>
 
-      <dl class="maps-profile-details">
-        <div>
-          <dt data-i18n="maps.address">{{ page.t("maps.address") }}</dt>
-          <dd>Rua da Brasa, 128 · Vila do Cedro</dd>
+    <div class="maps-phone" role="group" aria-labelledby="maps-phone-label">
+      <div class="maps-phone-screen">
+        <div class="maps-phone-brand">
+          <img src="/static/icons/favicon.svg" width="26" height="26" alt="">
+          <span data-i18n="app.name">{{ page.t("app.name") }}</span>
         </div>
-        <div>
-          <dt data-i18n="maps.hours">{{ page.t("maps.hours") }}</dt>
-          <dd data-i18n="maps.hours_value">{{ page.t("maps.hours_value") }}</dd>
+        <p class="maps-phone-label" id="maps-phone-label" data-i18n="maps.menu_prompt">{{ page.t("maps.menu_prompt") }}</p>
+        <div class="maps-phone-card">
+          {{ icons::panel("map") }}
+          <strong data-i18n="public_menu.google_review_heading">{{ page.t("public_menu.google_review_heading") }}</strong>
+          <p data-i18n="maps.invite_body">{{ page.t("maps.invite_body") }}</p>
+          <span class="maps-phone-action" data-i18n="public_menu.google_review_action">{{ page.t("public_menu.google_review_action") }}</span>
         </div>
-        <div>
-          <dt data-i18n="maps.website">{{ page.t("maps.website") }}</dt>
-          <dd>brasa128.example</dd>
-        </div>
-      </dl>
+      </div>
+    </div>
 
-      <h4 class="maps-ratings-heading" data-i18n="maps.review_summary">{{ page.t("maps.review_summary") }}</h4>
+    <section class="maps-scores" aria-labelledby="maps-ratings-heading">
+      <div class="maps-scores-heading">
+        <h3 id="maps-ratings-heading" data-i18n="maps.review_summary">{{ page.t("maps.review_summary") }}</h3>
+        <p id="maps-example-note" data-i18n="maps.example">{{ page.t("maps.example") }}</p>
+      </div>
       <div class="maps-comparison">
         {{ review_summary("maps.before", "maps.score_before", 12, [(5, 6), (4, 3), (3, 2), (2, 0), (1, 1)], false) }}
         {{ review_summary("maps.after", "maps.score_after", 87, [(5, 70), (4, 11), (3, 3), (2, 1), (1, 2)], true) }}
       </div>
-    </div>
-  </article>
+    </section>
+  </div>
 </section>

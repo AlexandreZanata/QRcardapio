@@ -25,7 +25,7 @@ For screens with a file field, include `components/file_picker.html` once in the
 
 ### Landing page assets
 
-The Google Maps feature section shows the public profile fields for Brasa 128, a fictional hamburger restaurant. Its original storefront photo uses a cream façade, cobalt frames, and a yellow awning. The review comparison uses a simulated average, total count, and 1–5 star distribution. Profile views are an owner performance metric and sit outside the public profile demonstration. [Google Business Profile performance documentation](https://support.google.com/business/answer/9918094?hl=pt-BR)
+The Google Maps section pairs the landing's highlighted headline and buttons with two HTML mockups. The profile shows Brasa 128, a fictional hamburger restaurant with a cream façade, cobalt frames, and a yellow awning. The phone illustrates the review invitation shown in a published menu. The comparison beneath both frames labels its simulated averages, totals, and 1–5 star distributions. The layout stacks on narrow screens. Profile views are an owner performance metric and sit outside the public profile demonstration. [Google Business Profile performance documentation](https://support.google.com/business/answer/9918094?hl=pt-BR)
 
 See the [guide to applying the landing style](GUIA_ESTILO_LANDING.md) for the visual tokens, page structure, and reusable examples for this repository and other projects.
 

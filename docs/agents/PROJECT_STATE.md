@@ -25,6 +25,8 @@ The landing, dashboard, and public menu share an illustrated disclosure that sho
 
 The dashboard uses original icons and a contextual tutorial on the owner and platform workflows. Empty collections and browser error pages use coordinated illustrations. Owners can save a Google Maps profile or direct review link and publish an optional review invitation in their menu. The landing comparison uses public Maps profile fields and labeled synthetic review data for the fictional Brasa 128 hamburger restaurant. The landing style has a transferable implementation guide under `docs/design/`.
 
+The Google Maps landing section layers the fictional business profile and the mobile review invitation above the ratings comparison. Its example link navigates to the responsive demonstration.
+
 Settings groups business details, Google Maps links, and the current logo. Dashboard forms share translated Askama field components for settings, onboarding, categories, products, and menu import and review. Logo, product photo, and menu imports share an illustrated file picker with image preview, local format and size checks, and a native input fallback.
 
 ## Verification Snapshot
