@@ -22,6 +22,11 @@ FROM debian:bookworm-slim AS runtime
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     curl \
+    poppler-utils \
+    tesseract-ocr \
+    tesseract-ocr-por \
+    tesseract-ocr-eng \
+    tesseract-ocr-spa \
     && rm -rf /var/lib/apt/lists/* \
     && groupadd --system --gid 10001 qrcardapio \
     && useradd --system --uid 10001 --gid qrcardapio --home-dir /app --shell /usr/sbin/nologin qrcardapio \

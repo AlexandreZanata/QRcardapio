@@ -7,6 +7,11 @@ cp .env.example .env
 ./scripts/dev.sh
 ```
 
+System packages for local OCR & PDF menu pre-registration (pre-installed in `Dockerfile`):
+```bash
+sudo apt-get install -y tesseract-ocr tesseract-ocr-por tesseract-ocr-eng tesseract-ocr-spa poppler-utils
+```
+
 Useful CLI commands:
 ```bash
 qrcardapio serve

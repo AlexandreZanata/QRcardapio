@@ -1,0 +1,104 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block content %}
+<div class="page-top">
+  <div>
+    <h1 data-i18n="ocr.heading">{{ page.t("ocr.heading") }}</h1>
+    <p data-i18n="ocr.subtitle">{{ page.t("ocr.subtitle") }}</p>
+  </div>
+  <div class="inline-actions">
+    <a class="btn btn-secondary btn-sm" href="/dashboard/menu" data-i18n="common.back">{{ page.t("common.back") }}</a>
+  </div>
+</div>
+
+{% if let Some(err) = error_key %}
+<div class="alert alert-error" role="alert" data-i18n="{{ err }}">{{ page.t(err) }}</div>
+{% endif %}
+
+<div class="ocr-grid">
+  <section class="card">
+    <h2 class="ocr-card-title" data-i18n="ocr.upload_title">{{ page.t("ocr.upload_title") }}</h2>
+
+    <form class="form-stack" method="post" action="/dashboard/ocr/extract" enctype="multipart/form-data" data-ocr-upload-form>
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+
+      <div class="field">
+        <label class="dropzone" for="menu_file" data-ocr-dropzone>
+          <span class="dropzone-title" data-i18n="ocr.upload_label">{{ page.t("ocr.upload_label") }}</span>
+          <span class="dropzone-hint" data-ocr-filename data-i18n="ocr.upload_drop_hint">{{ page.t("ocr.upload_drop_hint") }}</span>
+          <input id="menu_file" name="menu_file" type="file"
+                 accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf"
+                 required data-ocr-file-input>
+        </label>
+        <p class="field-hint" data-i18n="ocr.upload_formats">{{ page.t("ocr.upload_formats") }}</p>
+      </div>
+
+      <button class="btn btn-primary" type="submit" data-ocr-submit>
+        <span data-i18n="ocr.submit_extract">{{ page.t("ocr.submit_extract") }}</span>
+      </button>
+    </form>
+
+    <details class="ocr-details mt-5">
+      <summary class="ocr-summary" data-i18n="ocr.paste_toggle">{{ page.t("ocr.paste_toggle") }}</summary>
+      <form class="form-stack mt-3" method="post" action="/dashboard/ocr/text">
+        <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+        <div class="field">
+          <label for="raw_text" data-i18n="ocr.paste_label">{{ page.t("ocr.paste_label") }}</label>
+          <textarea id="raw_text" name="raw_text" rows="7" required
+                    placeholder="{{ page.t("ocr.paste_placeholder") }}"
+                    data-i18n-placeholder="ocr.paste_placeholder"></textarea>
+        </div>
+        <button class="btn btn-secondary" type="submit" data-i18n="ocr.submit_text">{{ page.t("ocr.submit_text") }}</button>
+      </form>
+    </details>
+  </section>
+
+  <aside class="card card-muted">
+    <h2 class="ocr-card-title" data-i18n="ocr.tips_title">{{ page.t("ocr.tips_title") }}</h2>
+    <ul class="ocr-tips-list">
+      <li data-i18n="ocr.tip_1">{{ page.t("ocr.tip_1") }}</li>
+      <li data-i18n="ocr.tip_2">{{ page.t("ocr.tip_2") }}</li>
+      <li data-i18n="ocr.tip_3">{{ page.t("ocr.tip_3") }}</li>
+    </ul>
+  </aside>
+</div>
+
+<section class="card mt-5">
+  <h2 class="ocr-card-title" data-i18n="ocr.history_title">{{ page.t("ocr.history_title") }}</h2>
+  {% if imports.is_empty() %}
+  <p class="text-muted" data-i18n="ocr.history_empty">{{ page.t("ocr.history_empty") }}</p>
+  {% else %}
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th data-i18n="ocr.col_file">{{ page.t("ocr.col_file") }}</th>
+          <th data-i18n="ocr.col_source">{{ page.t("ocr.col_source") }}</th>
+          <th data-i18n="ocr.col_detected">{{ page.t("ocr.col_detected") }}</th>
+          <th data-i18n="ocr.col_imported">{{ page.t("ocr.col_imported") }}</th>
+          <th data-i18n="ocr.col_status">{{ page.t("ocr.col_status") }}</th>
+          <th data-i18n="ocr.col_action">{{ page.t("ocr.col_action") }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for imp in imports %}
+        <tr>
+          <td>
+            <strong>{{ imp.source_filename }}</strong>
+            <div class="field-hint">{{ imp.created_at }}</div>
+          </td>
+          <td><span class="badge badge-neutral" data-i18n="{{ imp.source_kind_key }}">{{ page.t(imp.source_kind_key) }}</span></td>
+          <td>{{ imp.items_detected }}</td>
+          <td>{{ imp.items_imported }}</td>
+          <td><span class="badge {{ imp.status_badge_class }}" data-i18n="{{ imp.status_key }}">{{ page.t(imp.status_key) }}</span></td>
+          <td>
+            <a class="btn btn-secondary btn-sm" href="/dashboard/ocr/{{ imp.id }}" data-i18n="ocr.open_review">{{ page.t("ocr.open_review") }}</a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

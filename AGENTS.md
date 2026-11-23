@@ -27,12 +27,13 @@ Modular monolith written in **Rust 1.100.0 (Edition 2024)** with **Axum 0.8.9**,
 │   ├── config.rs                  # Environment-driven Config
 │   ├── error.rs                   # Centralized AppError -> i18n key + HTTP status
 │   ├── domain/                    # Pure domain types, invariants, centavos math, slug & color rules
-│   ├── application/               # Use cases: auth, establishments, menus, publishing, admin, seed, bench_gen
+│   ├── application/               # Use cases: auth, establishments, menus, ocr, publishing, admin, seed, bench_gen
 │   ├── infrastructure/
 │   │   ├── database/              # SQLite pool, PRAGMAs, VACUUM INTO backup/restore
 │   │   │   └── queries/           # Standardized per-entity query submodules (NEVER a monolith)
 │   │   ├── security/              # Bounded Argon2id, tokens, constant-time compare, governor rate limits
 │   │   ├── assets/                # Magic-byte validation, bounded resize/re-encode (EXIF stripped)
+│   │   ├── ocr/                   # Hybrid local PDF/image OCR (pdftotext/pdftoppm/tesseract + preprocessing)
 │   │   └── storage/               # Path traversal guards & same-FS atomic temp+fsync+rename
 │   ├── http/
 │   │   ├── handlers/              # Thin per-feature Axum handlers

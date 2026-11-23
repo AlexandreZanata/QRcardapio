@@ -15,6 +15,7 @@ pub struct AppRateLimiters {
     pub register_ip: Arc<KeyedLimiter<IpAddr>>,
     pub reset_ip: Arc<KeyedLimiter<IpAddr>>,
     pub upload_account: Arc<KeyedLimiter<String>>,
+    pub ocr_account: Arc<KeyedLimiter<String>>,
 }
 
 impl Default for AppRateLimiters {
@@ -38,6 +39,9 @@ impl AppRateLimiters {
             upload_account: Arc::new(RateLimiter::dashmap(Quota::per_minute(
                 NonZeroU32::new(20).expect("non-zero"),
             ))),
+            ocr_account: Arc::new(RateLimiter::dashmap(Quota::per_minute(
+                NonZeroU32::new(10).expect("non-zero"),
+            ))),
         }
     }
 
@@ -51,5 +55,7 @@ impl AppRateLimiters {
         self.reset_ip.shrink_to_fit();
         self.upload_account.retain_recent();
         self.upload_account.shrink_to_fit();
+        self.ocr_account.retain_recent();
+        self.ocr_account.shrink_to_fit();
     }
 }

@@ -24,8 +24,8 @@ QR Cardápio is built as a **single-binary modular monolith** in Rust paired wit
 | Layer | Directory | Responsibility |
 |---|---|---|
 | Entry & Composition | `src/main.rs`, `src/app.rs`, `src/config.rs`, `src/error.rs` | CLI parsing, graceful shutdown, router assembly, typed configuration, unified error mapping. |
-| Domain | `src/domain/` | Pure business types and validation (`Email`, `Slug`, `AccentColor`, `parse_price_centavos`, `Establishment`, `Category`, `Product`, `MenuSnapshot`). |
-| Application | `src/application/` | Orchestrated use cases (`auth`, `establishments`, `menus`, `publishing`, `admin`, `seed`, `bench_gen`). |
-| Infrastructure | `src/infrastructure/` | Bundled SQLite pool & migrations (`database/`), domain-split SQL queries (`database/queries/`), Argon2id & rate limiters (`security/`), EXIF-stripping image resizing (`assets/`), safe atomic filesystem writes (`storage/`). |
+| Domain | `src/domain/` | Pure business types and validation (`Email`, `Slug`, `AccentColor`, `parse_price_centavos`, `Establishment`, `Category`, `Product`, `MenuSnapshot`, `ocr`, `ocr_parser`). |
+| Application | `src/application/` | Orchestrated use cases (`auth`, `establishments`, `menus`, `ocr`, `publishing`, `admin`, `seed`, `bench_gen`). |
+| Infrastructure | `src/infrastructure/` | Bundled SQLite pool & migrations (`database/`), domain-split SQL queries (`database/queries/`), Argon2id & rate limiters (`security/`), EXIF-stripping image resizing (`assets/`), local hybrid PDF/image OCR (`ocr/`), safe atomic filesystem writes (`storage/`). |
 | HTTP | `src/http/` | Thin feature handlers (`handlers/`), auth/locale/security-header extractors (`middleware/`), flash & ETag helpers (`responses/`). |
 | Presentation & QR | `src/rendering/`, `src/qr/`, `src/i18n/` | Askama view models, static HTML/CSS generator, SVG/PNG QR Code generation, compile-time i18n catalogs. |

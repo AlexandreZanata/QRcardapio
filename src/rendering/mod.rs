@@ -3,6 +3,7 @@ pub mod auth;
 pub mod dashboard;
 pub mod landing;
 pub mod menu_editor;
+pub mod ocr;
 pub mod public_menu;
 pub mod qr;
 

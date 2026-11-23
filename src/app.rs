@@ -13,11 +13,12 @@ use tower_http::trace::TraceLayer;
 use crate::application::publishing::PublishLocks;
 use crate::config::Config;
 use crate::http::handlers::{
-    admin, auth, categories, dashboard, health, onboarding, products, public, qr, settings,
+    admin, auth, categories, dashboard, health, ocr, onboarding, products, public, qr, settings,
 };
 use crate::http::middleware::security_headers::security_headers_middleware;
 use crate::i18n::Catalog;
 use crate::infrastructure::assets::AssetProcessor;
+use crate::infrastructure::ocr::OcrService;
 use crate::infrastructure::security::PasswordService;
 use crate::infrastructure::security::rate_limit::AppRateLimiters;
 
@@ -28,6 +29,7 @@ pub struct AppState {
     pub catalog: &'static Catalog,
     pub passwords: PasswordService,
     pub assets: AssetProcessor,
+    pub ocr: OcrService,
     pub rate_limiters: AppRateLimiters,
     pub publish_locks: PublishLocks,
 }
@@ -41,6 +43,7 @@ impl AppState {
             catalog: Catalog::global(),
             passwords: PasswordService::new(),
             assets,
+            ocr: OcrService::new(),
             rate_limiters: AppRateLimiters::new(),
             publish_locks: PublishLocks::default(),
         }
@@ -61,6 +64,10 @@ pub fn build_router(state: AppState) -> Router {
             post(settings::upload_logo_submit),
         )
         .layer(DefaultBodyLimit::max(6 * 1024 * 1024));
+
+    let ocr_upload_routes = Router::new()
+        .route("/dashboard/ocr/extract", post(ocr::ocr_extract_submit))
+        .layer(DefaultBodyLimit::max(16 * 1024 * 1024));
 
     Router::new()
         .route("/", get(public::landing))
@@ -141,6 +148,11 @@ pub fn build_router(state: AppState) -> Router {
         .route("/dashboard/qr/print", get(qr::qr_print_page))
         .route("/dashboard/qr.svg", get(qr::download_qr_svg))
         .route("/dashboard/qr.png", get(qr::download_qr_png))
+        .route("/dashboard/ocr", get(ocr::ocr_index_page))
+        .route("/dashboard/ocr/text", post(ocr::ocr_text_submit))
+        .route("/dashboard/ocr/{id}", get(ocr::ocr_review_page))
+        .route("/dashboard/ocr/{id}/apply", post(ocr::ocr_apply_submit))
+        .route("/dashboard/ocr/{id}/discard", post(ocr::ocr_discard_submit))
         .route("/admin", get(admin::admin_page))
         .route("/c/{slug}", get(public::serve_published_menu))
         .route("/c/{slug}/", get(public::serve_published_menu))
@@ -149,6 +161,7 @@ pub fn build_router(state: AppState) -> Router {
         .route("/readyz", get(health::readyz))
         .route("/static/i18n/{file}", get(health::serve_i18n_catalog))
         .merge(upload_routes)
+        .merge(ocr_upload_routes)
         .nest_service("/static", ServeDir::new(static_dir))
         .with_state(state)
         .layer(middleware::from_fn(security_headers_middleware))

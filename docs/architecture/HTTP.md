@@ -43,6 +43,9 @@ All `POST` routes verify `_csrf` against the server session's `csrf_token` in co
 | `GET`/`POST` | `/dashboard/products/new`, `/dashboard/products` | Create product (multipart max 6 MiB, upload rate limit 20/min). |
 | `GET`/`POST` | `/dashboard/products/{id}/edit`, `/dashboard/products/{id}` | Edit product, price, availability, photo, translations. |
 | `POST` | `/dashboard/products/{id}/toggle`, `/delete`, `/move` | Toggle sold-out status, delete, or reorder within category. |
+| `GET` | `/dashboard/ocr` | Menu OCR & PDF upload dropzone, manual text paste fallback, and recent import history. |
+| `POST` | `/dashboard/ocr/extract`, `/dashboard/ocr/text` | Extract menu draft from JPG/PNG/WebP/PDF (multipart max 16 MiB, rate limit 10/min) or pasted text. |
+| `GET`/`POST` | `/dashboard/ocr/{id}`, `/apply`, `/discard` | Staging review table, atomic bulk pre-registration into draft menu, or discard staging draft. |
 | `GET`/`POST` | `/dashboard/settings` | Update profile, brand color, EN/ES description; slug locked once published. |
 | `POST` | `/dashboard/settings/logo`, `/logo/remove` | Upload (max 2 MiB) or remove establishment logo. |
 | `GET` | `/dashboard/qr`, `/qr/print`, `/qr.svg`, `/qr.png` | Preview, printable card sheet, SVG download, 1024px PNG download. |

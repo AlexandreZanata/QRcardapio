@@ -37,6 +37,7 @@ In WAL mode, `NORMAL` avoids `fsync` on every transaction commit (flushing mainl
 - `products`: Ordered items (`price_centavos` integer >= 0, `is_available`, `is_visible`, optional EN/ES fields), indexed by `(establishment_id, category_id, position, id)` and `image_asset_id`.
 - `publications`: Append-only publication audit log (`version`, `status` in `'published'|'unpublished'|'failed'`, `html_bytes`, `duration_ms`), indexed by `(establishment_id, published_at DESC)`.
 - `password_reset_tokens`: Single-use hashed recovery tokens (`expires_at`, `used_at`).
+- `ocr_imports` (`migrations/20261123000002_ocr_imports.sql`): Staged photo/PDF/text menu extractions (`source_kind`, `status` in `'review'|'applied'|'discarded'`, `engine_info`, `page_count`, `raw_text`, `parsed_json`, `warnings_json`, `items_detected`, `items_imported`), indexed by `(establishment_id, created_at DESC)`.
 
 ## Backups, Migrations & When to Outgrow SQLite
 
