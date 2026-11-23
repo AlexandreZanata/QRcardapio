@@ -9,25 +9,79 @@ use axum::response::{IntoResponse, Response};
 use crate::app::AppState;
 use crate::domain::establishment::Slug;
 use crate::error::AppResult;
+use crate::http::handlers::seo::with_public_cache;
 use crate::http::middleware::auth::OptionalAuth;
-use crate::http::middleware::locale::RequestLocale;
+use crate::http::middleware::locale::{ExplicitRequestLocale, RequestLocale};
 use crate::http::responses::check_etag_not_modified;
+use crate::i18n::{Catalog, Locale};
 use crate::infrastructure::storage::resolve_safe_subpath;
 use crate::rendering::error_page::error_page;
 use crate::rendering::landing::LandingTemplate;
+use crate::rendering::seo::{guide_cards, segment_cards, tool_cards};
 use crate::rendering::{PageMeta, render_html};
+use crate::seo::SeoMeta;
+use crate::seo::faq::LANDING_FAQS;
+use crate::seo::routes::RouteCluster;
+use crate::seo::schema::landing_json_ld;
 
 pub async fn landing(
     State(state): State<AppState>,
-    RequestLocale(locale): RequestLocale,
+    ExplicitRequestLocale(explicit_locale): ExplicitRequestLocale,
     OptionalAuth(auth): OptionalAuth,
 ) -> AppResult<Response> {
+    let locale = explicit_locale.unwrap_or(Locale::PtBr);
+    render_landing(&state, locale, auth.is_some())
+}
+
+pub async fn landing_en(
+    State(state): State<AppState>,
+    OptionalAuth(auth): OptionalAuth,
+) -> AppResult<Response> {
+    render_landing(&state, Locale::En, auth.is_some())
+}
+
+pub async fn landing_es(
+    State(state): State<AppState>,
+    OptionalAuth(auth): OptionalAuth,
+) -> AppResult<Response> {
+    render_landing(&state, Locale::Es, auth.is_some())
+}
+
+fn render_landing(state: &AppState, locale: Locale, is_logged_in: bool) -> AppResult<Response> {
     let billing_enabled = state.asaas.is_some();
+    let show_plan = billing_enabled || local_plan_preview(&state.config.public_base_url);
+    let base = &state.config.public_base_url;
+    let cat = Catalog::global();
+    let cluster = RouteCluster::Home;
+    let canonical_path = cluster.path_for(locale);
+    let canonical = crate::seo::absolute_url(base, canonical_path);
+    let json_ld = landing_json_ld(
+        base,
+        locale,
+        &canonical,
+        cat.t(locale, "landing.page_title"),
+        cat.t(locale, "landing.meta_description"),
+        show_plan,
+        cat,
+    );
+    let seo = SeoMeta::indexable(
+        base,
+        locale,
+        canonical_path,
+        cluster.alternates(base),
+        None,
+        "landing.meta_description",
+        None,
+        "website",
+        cat.t(locale, "landing.og_image_alt").to_string(),
+        json_ld,
+    );
+
     let tpl = LandingTemplate {
-        page: PageMeta::new(locale, "landing.page_title", None),
-        is_logged_in: auth.is_some(),
+        page: PageMeta::with_seo(locale, "landing.page_title", None, seo),
+        is_logged_in,
         billing_enabled,
-        show_plan: billing_enabled || local_plan_preview(&state.config.public_base_url),
+        show_plan,
         mcp_enabled: state.config.mcp_enabled,
         mcp_endpoint: if state.config.mcp_enabled {
             format!("{}/mcp", state.config.public_base_url)
@@ -35,8 +89,19 @@ pub async fn landing(
             "https://qrcardapio.com.br/mcp".to_owned()
         },
         plans: crate::rendering::billing::PlanOffer::catalog(),
+        faqs: LANDING_FAQS,
+        segments: segment_cards(locale),
+        tools: tool_cards(locale),
+        guides: guide_cards(locale),
+        home_pt_url: cluster.path_for(Locale::PtBr),
+        home_en_url: cluster.path_for(Locale::En),
+        home_es_url: cluster.path_for(Locale::Es),
+        nav_home_url: canonical_path,
+        solutions_url: RouteCluster::SolutionsHub.path_for(locale),
+        tools_url: RouteCluster::ToolsHub.path_for(locale),
+        guides_url: RouteCluster::GuidesHub.path_for(locale),
     };
-    render_html(&tpl, StatusCode::OK)
+    with_public_cache(render_html(&tpl, StatusCode::OK)?, is_logged_in)
 }
 
 fn local_plan_preview(public_base_url: &str) -> bool {

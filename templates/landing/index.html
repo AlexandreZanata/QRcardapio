@@ -4,10 +4,14 @@
 {% import "landing/sections.html" as sections %}
 
 {% block head_extra %}
+<link rel="preload" as="image" href="/static/images/landing-dashboard.webp"
+      imagesrcset="/static/images/landing-dashboard.webp 768w, /static/images/landing-dashboard-1536.webp 1536w, /static/images/landing-dashboard-4k.webp 3840w"
+      imagesizes="(max-width: 53rem) min(76vw, 600px), (max-width: 100rem) 40vw, 600px">
 <link rel="stylesheet" href="/static/css/landing.css">
 <link rel="stylesheet" href="/static/css/landing-preview.css">
 <link rel="stylesheet" href="/static/css/landing-maps.css">
 <link rel="stylesheet" href="/static/css/landing-mcp.css">
+<link rel="stylesheet" href="/static/css/seo-pages.css">
 {% if show_plan %}
 <link rel="stylesheet" href="/static/css/panel-dialog.css">
 <link rel="stylesheet" href="/static/css/landing-plan.css">
@@ -18,7 +22,7 @@
 {% block header %}
 <header class="landing-header">
   <div class="landing-container landing-header-inner">
-    <a class="landing-brand" href="/">
+    <a class="landing-brand" href="{{ nav_home_url }}">
       <img src="/static/icons/favicon.svg" alt="" width="48" height="48">
       <span data-i18n="app.name">{{ page.t("app.name") }}</span>
     </a>
@@ -30,6 +34,9 @@
       {% if show_plan %}
       <a href="#plan" data-i18n="billing.nav_plan">{{ page.t("billing.nav_plan") }}</a>
       {% endif %}
+      <a href="{{ solutions_url }}" data-i18n="landing.nav_solutions">{{ page.t("landing.nav_solutions") }}</a>
+      <a href="{{ tools_url }}" data-i18n="landing.nav_tools">{{ page.t("landing.nav_tools") }}</a>
+      <a href="#faq" data-i18n="landing.nav_faq">{{ page.t("landing.nav_faq") }}</a>
     </nav>
     <div class="landing-account">
       {% if is_logged_in %}
@@ -39,7 +46,7 @@
       <a class="btn landing-button landing-button-pink" href="/register" data-i18n="landing.create_menu">{{ page.t("landing.create_menu") }}</a>
       {% endif %}
     </div>
-    {{ languages::picker(page.locale_code, page.t("lang.switcher_label")) }}
+    {{ languages::seo_picker(page.locale_code, page.t("lang.switcher_label"), home_pt_url, home_en_url, home_es_url, false) }}
   </div>
 </header>
 {% endblock %}
@@ -105,6 +112,10 @@
   {% include "landing/plan.html" %}
   {% endif %}
 
+  {% include "landing/segments_strip.html" %}
+
+  {% include "landing/faq.html" %}
+
   <section class="landing-container landing-final">
     <div class="landing-cta">
       <div>
@@ -122,14 +133,6 @@
 {% endblock %}
 
 {% block footer %}
-<footer class="landing-footer">
-  <div class="landing-container landing-footer-inner">
-    <a class="landing-brand" href="/">
-      <img src="/static/icons/favicon.svg" alt="" width="36" height="36">
-      <span data-i18n="app.name">{{ page.t("app.name") }}</span>
-    </a>
-    <span data-i18n="landing.footer_copy">{{ page.t("landing.footer_copy") }}</span>
-    <a href="#how-it-works" data-i18n="nav.features">{{ page.t("nav.features") }}</a>
-  </div>
-</footer>
+{% let home_url = nav_home_url %}
+{% include "landing/footer.html" %}
 {% endblock %}

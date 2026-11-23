@@ -45,10 +45,17 @@ O cadastro atribui links compactos a partir do nome do estabelecimento. Um códi
 
 - `cargo fmt --check`: Passed
 - `cargo clippy --all-targets --all-features -- -D warnings`: Passed (0 warnings)
-- `cargo test --locked`: Passed (19 unit tests + 13 integration tests across 9 integration suites, including real `pdftotext` + `tesseract` E2E OCR tests)
+- `cargo test --locked`: Passed (20 unit tests + 20 integration tests across 12 integration suites, including `tests/mcp.rs` and `tests/seo.rs`)
 - `cargo audit`: Passed (0 vulnerabilities; 2 unmaintained advisory notices: `basic-toml 0.1.10` transitive, `chrono 0.4.45`)
 - `cargo build --release --locked`: Passed
 - Live smoke test (`admin create`, `seed`, `backup.sh`, `restore.sh`, HTTP SSR + static `/c/cafe-da-praca`, `/dashboard/ocr`): Passed
+
+## Arquitetura de SEO e Crescimento Orgânico (GEO)
+
+Implementada em `src/seo/`, `src/http/handlers/seo/` e detalhada em [SEO Architecture](../architecture/SEO.md):
+- `robots.txt` (incluindo crawlers de busca por IA), `sitemap.xml` dinâmico com `hreflang` bidirecional (`pt-BR`, `en`, `es`, `x-default`) e cardápios publicados (`/c/{slug}`), `llms.txt`, `manifest.webmanifest`, `favicon.ico`, `apple-touch-icon.png` e cards sociais `og-{pt-BR,en,es}.png` 1200×630.
+- Rotas multilíngues `/`, `/en`, `/es` (com `301` de `/en/` e `/es/`), `JSON-LD @graph` (`Organization`, `WebSite`, `SoftwareApplication`, `HowTo`, `FAQPage`, `WebApplication`, `Article`, `BreadcrumbList`, além de `FoodEstablishment` + `Menu` nos cardápios publicados e `noindex` em rotas privadas/prévia).
+- Oito páginas programáticas por segmento gastronômico, três ferramentas gratuitas sem cadastro (Gerador QR SVG/PNG, Calculadora de CMV com aritmética em centavos e Criador de Placa QR imprimível) e quatro guias práticos com blocos Answer-First para motores de resposta e IA.
 
 ## Next Recommended Actions (Pilot Validation)
 

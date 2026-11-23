@@ -17,6 +17,7 @@ use crate::http::middleware::locale::RequestLocale;
 use crate::http::responses::{take_flash, with_flash_redirect};
 use crate::rendering::auth::{LoginTemplate, RegisterTemplate, ResetPasswordTemplate};
 use crate::rendering::{PageMeta, render_html};
+use crate::seo::SeoMeta;
 
 #[derive(Deserialize)]
 pub struct LoginForm {
@@ -63,7 +64,12 @@ pub async fn login_page(
     }
     let (jar, flash) = take_flash(jar);
     let tpl = LoginTemplate {
-        page: PageMeta::new(locale, "auth.login_title", flash),
+        page: PageMeta::with_seo(
+            locale,
+            "auth.login_title",
+            flash,
+            SeoMeta::noindex("auth.login_subtitle"),
+        ),
         plan_suffix,
         email_value: String::new(),
         error_key: None,
@@ -82,7 +88,12 @@ pub async fn login_submit(
     let plan_suffix = plan.suffix(&state);
     if state.rate_limiters.login_ip.check_key(&ip).is_err() {
         let tpl = LoginTemplate {
-            page: PageMeta::new(locale, "auth.login_title", None),
+            page: PageMeta::with_seo(
+                locale,
+                "auth.login_title",
+                None,
+                SeoMeta::noindex("auth.login_subtitle"),
+            ),
             plan_suffix,
             email_value: form.email,
             error_key: Some("error.rate_limited".to_string()),
@@ -108,7 +119,12 @@ pub async fn login_submit(
         }
         Err(err) => {
             let tpl = LoginTemplate {
-                page: PageMeta::new(locale, "auth.login_title", None),
+                page: PageMeta::with_seo(
+                    locale,
+                    "auth.login_title",
+                    None,
+                    SeoMeta::noindex("auth.login_subtitle"),
+                ),
                 plan_suffix,
                 email_value: form.email,
                 error_key: Some(err.i18n_key().to_string()),
@@ -136,7 +152,12 @@ pub async fn register_page(
     }
     let (jar, flash) = take_flash(jar);
     let tpl = RegisterTemplate {
-        page: PageMeta::new(locale, "auth.register_title", flash),
+        page: PageMeta::with_seo(
+            locale,
+            "auth.register_title",
+            flash,
+            SeoMeta::noindex("auth.register_subtitle"),
+        ),
         plan_suffix,
         email_value: String::new(),
         error_key: None,
@@ -160,7 +181,12 @@ pub async fn register_submit(
 
     if state.rate_limiters.register_ip.check_key(&ip).is_err() {
         let tpl = RegisterTemplate {
-            page: PageMeta::new(locale, "auth.register_title", None),
+            page: PageMeta::with_seo(
+                locale,
+                "auth.register_title",
+                None,
+                SeoMeta::noindex("auth.register_subtitle"),
+            ),
             plan_suffix,
             email_value: form.email,
             error_key: Some("error.rate_limited".to_string()),
@@ -192,7 +218,12 @@ pub async fn register_submit(
         Err(err) => {
             let status = err.status_code();
             let tpl = RegisterTemplate {
-                page: PageMeta::new(locale, "auth.register_title", None),
+                page: PageMeta::with_seo(
+                    locale,
+                    "auth.register_title",
+                    None,
+                    SeoMeta::noindex("auth.register_subtitle"),
+                ),
                 plan_suffix,
                 email_value: form.email,
                 error_key: Some(err.i18n_key().to_string()),
@@ -228,7 +259,12 @@ pub async fn reset_password_page(
 ) -> AppResult<Response> {
     let (jar, flash) = take_flash(jar);
     let tpl = ResetPasswordTemplate {
-        page: PageMeta::new(locale, "auth.reset_title", flash),
+        page: PageMeta::with_seo(
+            locale,
+            "auth.reset_title",
+            flash,
+            SeoMeta::noindex("auth.reset_subtitle"),
+        ),
         error_key: None,
     };
     Ok((jar, render_html(&tpl, StatusCode::OK)?).into_response())
@@ -243,7 +279,12 @@ pub async fn reset_password_submit(
 ) -> AppResult<Response> {
     if state.rate_limiters.reset_ip.check_key(&ip).is_err() {
         let tpl = ResetPasswordTemplate {
-            page: PageMeta::new(locale, "auth.reset_title", None),
+            page: PageMeta::with_seo(
+                locale,
+                "auth.reset_title",
+                None,
+                SeoMeta::noindex("auth.reset_subtitle"),
+            ),
             error_key: Some("error.rate_limited".to_string()),
         };
         return render_html(&tpl, StatusCode::TOO_MANY_REQUESTS);
@@ -267,7 +308,12 @@ pub async fn reset_password_submit(
         )),
         Err(err) => {
             let tpl = ResetPasswordTemplate {
-                page: PageMeta::new(locale, "auth.reset_title", None),
+                page: PageMeta::with_seo(
+                    locale,
+                    "auth.reset_title",
+                    None,
+                    SeoMeta::noindex("auth.reset_subtitle"),
+                ),
                 error_key: Some(err.i18n_key().to_string()),
             };
             render_html(&tpl, err.status_code())

@@ -5,6 +5,8 @@ use crate::domain::establishment::AccentColor;
 use crate::domain::publication::MenuSnapshot;
 use crate::error::{AppError, AppResult};
 use crate::i18n::{Catalog, Locale, format_price};
+use crate::seo::schema::public_menu_json_ld;
+use crate::seo::{absolute_url, normalized_base_url, og_image_url};
 
 pub struct PublicProductView {
     pub name: String,
@@ -63,6 +65,11 @@ pub struct PublicMenuTemplate {
     pub powered_by_text: String,
     pub categories: Vec<PublicCategoryView>,
     pub menu_i18n_json: String,
+    pub robots_meta: &'static str,
+    pub canonical_url: String,
+    pub meta_description: String,
+    pub og_image_url: String,
+    pub json_ld: String,
 }
 
 /// Generates a minimal external CSS stylesheet defining the establishment's brand accent variables.
@@ -90,6 +97,7 @@ pub fn render_public_menu_html(
     is_preview: bool,
     media_base_url: &str,
     theme_css_href: &str,
+    public_base_url: &str,
 ) -> AppResult<String> {
     let cat = Catalog::global();
     let est = &snapshot.establishment;
@@ -101,6 +109,33 @@ pub fn render_public_menu_html(
     let cover_url = snapshot
         .cover_image()
         .map(|cover| format!("{media_base_url}/{}", cover.filename_large));
+
+    let base = normalized_base_url(public_base_url);
+    let canonical_url = if is_preview {
+        String::new()
+    } else {
+        format!("{base}/c/{}", est.slug)
+    };
+    let robots_meta = if is_preview {
+        "noindex, nofollow"
+    } else {
+        "index, follow, max-image-preview:large, max-snippet:-1"
+    };
+    let meta_description = if !est.description.trim().is_empty() {
+        est.description.clone()
+    } else {
+        format!("{} — {}", est.name, cat.t(locale, "app.tagline"))
+    };
+    let og_image = cover_url
+        .as_deref()
+        .or(logo_url.as_deref())
+        .map(|rel| absolute_url(base, rel))
+        .unwrap_or_else(|| og_image_url(base, locale));
+    let json_ld = if is_preview {
+        String::new()
+    } else {
+        public_menu_json_ld(base, snapshot, cover_url.as_deref(), logo_url.as_deref())
+    };
 
     let categories = snapshot
         .categories
@@ -182,6 +217,11 @@ pub fn render_public_menu_html(
         powered_by_text: cat.t(locale, "public_menu.powered_by").to_string(),
         categories,
         menu_i18n_json: cat.public_menu_embedded_json().to_string(),
+        robots_meta,
+        canonical_url,
+        meta_description,
+        og_image_url: og_image,
+        json_ld,
     };
 
     tpl.render()

@@ -1,0 +1,52 @@
+<footer class="landing-footer seo-footer">
+  <div class="landing-container seo-footer-grid">
+    <div class="seo-footer-brand">
+      <a class="landing-brand" href="{{ home_url }}">
+        <img src="/static/icons/favicon.svg" alt="" width="36" height="36">
+        <span data-i18n="app.name">{{ page.t("app.name") }}</span>
+      </a>
+      <p data-i18n="landing.footer_copy">{{ page.t("landing.footer_copy") }}</p>
+      <nav class="seo-footer-langs" aria-label="{{ page.t("landing.footer_languages") }}" data-i18n-aria="landing.footer_languages">
+        <a href="{{ home_pt_url }}" hreflang="pt-BR" lang="pt-BR">Português (BR)</a>
+        <a href="{{ home_en_url }}" hreflang="en" lang="en">English</a>
+        <a href="{{ home_es_url }}" hreflang="es" lang="es">Español</a>
+      </nav>
+    </div>
+
+    <nav aria-label="{{ page.t("landing.footer_product") }}">
+      <p class="seo-footer-title" data-i18n="landing.footer_product">{{ page.t("landing.footer_product") }}</p>
+      <ul class="seo-footer-list">
+        <li><a href="{{ home_url }}#benefits" data-i18n="landing.nav_features">{{ page.t("landing.nav_features") }}</a></li>
+        <li><a href="{{ home_url }}#how-it-works" data-i18n="nav.features">{{ page.t("nav.features") }}</a></li>
+        <li><a href="{{ home_url }}#google-maps">Google Maps</a></li>
+        <li><a href="{{ home_url }}#faq" data-i18n="landing.nav_faq">{{ page.t("landing.nav_faq") }}</a></li>
+        <li><a href="/login" data-i18n="nav.login">{{ page.t("nav.login") }}</a></li>
+        <li><a href="/register" data-i18n="nav.register">{{ page.t("nav.register") }}</a></li>
+      </ul>
+    </nav>
+
+    <nav aria-label="{{ page.t("landing.footer_segments") }}">
+      <p class="seo-footer-title" data-i18n="landing.footer_segments">{{ page.t("landing.footer_segments") }}</p>
+      <ul class="seo-footer-list">
+        {% for seg in segments %}
+        <li><a href="{{ seg.href }}">{{ seg.name }}</a></li>
+        {% endfor %}
+        <li><a href="{{ solutions_url }}" data-i18n="landing.footer_all_segments">{{ page.t("landing.footer_all_segments") }}</a></li>
+      </ul>
+    </nav>
+
+    <nav aria-label="{{ page.t("landing.footer_resources") }}">
+      <p class="seo-footer-title" data-i18n="landing.footer_resources">{{ page.t("landing.footer_resources") }}</p>
+      <ul class="seo-footer-list">
+        {% for tool in tools %}
+        <li><a href="{{ tool.href }}">{{ tool.name }}</a></li>
+        {% endfor %}
+        {% for guide in guides %}
+        <li><a href="{{ guide.href }}">{{ guide.title }}</a></li>
+        {% endfor %}
+        <li><a href="{{ tools_url }}" data-i18n="landing.footer_all_tools">{{ page.t("landing.footer_all_tools") }}</a></li>
+        <li><a href="{{ guides_url }}" data-i18n="landing.footer_all_guides">{{ page.t("landing.footer_all_guides") }}</a></li>
+      </ul>
+    </nav>
+  </div>
+</footer>

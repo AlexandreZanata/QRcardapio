@@ -88,6 +88,11 @@
       document.title = applyTemplate(dict[titleKey], document.body.dataset.pageTitleArgs);
     }
 
+    const metaDesc = document.querySelector('meta[name="description"]');
+    if (metaDesc && titleKey === "landing.page_title" && dict["landing.meta_description"]) {
+      metaDesc.setAttribute("content", dict["landing.meta_description"]);
+    }
+
     document.querySelectorAll("[data-i18n]").forEach((el) => {
       const key = el.dataset.i18n;
       if (key && Object.prototype.hasOwnProperty.call(dict, key)) {
@@ -159,8 +164,17 @@
   document.addEventListener("click", (ev) => {
     const btn = ev.target.closest("[data-lang-btn]");
     if (!btn) return;
+    const next = normalizeLocale(btn.dataset.langBtn);
+    if (btn.dataset.langNav === "1") {
+      persistLocale(next);
+      return;
+    }
     ev.preventDefault();
-    switchLanguage(btn.dataset.langBtn);
+    if (btn.dataset.langUrl && window.history && window.history.replaceState) {
+      const targetUrl = btn.dataset.langUrl + (window.location.hash || "");
+      window.history.replaceState(null, "", targetUrl);
+    }
+    switchLanguage(next);
   });
 
   // Prime current dictionary silently so dynamic confirmations (e.g. copy toast / confirm) can read translated strings.
