@@ -42,6 +42,39 @@ impl PlanIntent {
 }
 
 #[derive(Deserialize)]
+pub struct OnboardingIntent {
+    #[serde(flatten)]
+    plan: PlanIntent,
+    mcp: Option<String>,
+}
+
+impl OnboardingIntent {
+    fn mcp(&self, state: &AppState) -> Option<uuid::Uuid> {
+        self.mcp
+            .as_deref()
+            .filter(|_| state.config.mcp_enabled)
+            .and_then(|id| uuid::Uuid::parse_str(id).ok())
+    }
+
+    fn suffix(&self, state: &AppState) -> String {
+        self.mcp(state)
+            .map_or_else(|| self.plan.suffix(state), |id| format!("?mcp={id}"))
+    }
+
+    fn destination(&self, state: &AppState, default: &str) -> String {
+        if let Some(id) = self.mcp(state) {
+            return format!("/mcp/oauth/consent?flow={id}");
+        }
+        let plan = self.plan.suffix(state);
+        if plan.is_empty() {
+            default.to_owned()
+        } else {
+            format!("{BILLING_PAGE}{plan}")
+        }
+    }
+}
+
+#[derive(Deserialize)]
 pub struct OnboardingForm {
     pub _csrf: String,
     pub name: String,
@@ -58,23 +91,20 @@ pub async fn onboarding_page(
     RequestLocale(locale): RequestLocale,
     auth: AuthContext,
     jar: CookieJar,
-    Query(plan): Query<PlanIntent>,
+    Query(intent): Query<OnboardingIntent>,
 ) -> AppResult<Response> {
-    let plan_suffix = plan.suffix(&state);
+    let continuation_suffix = intent.suffix(&state);
     if find_establishment_for_account(&state.pool, &auth.account.id)
         .await?
         .is_some()
     {
-        let destination = if plan_suffix.is_empty() {
-            "/dashboard".to_owned()
-        } else {
-            format!("{BILLING_PAGE}{plan_suffix}")
-        };
+        let destination = intent.destination(&state, "/dashboard");
         return Ok(Redirect::to(&destination).into_response());
     }
 
     let (jar, flash) = take_flash(jar);
     let tpl = OnboardingTemplate {
+        google_enabled: state.google.is_some(),
         page: PageMeta::new(locale, "onboarding.page_title", flash),
         brand_name: "QR Cardápio".to_string(),
         has_establishment: false,
@@ -82,7 +112,7 @@ pub async fn onboarding_page(
         is_admin: auth.account.role == AccountRole::Admin,
         active_nav: "",
         csrf_token: auth.csrf_token,
-        plan_suffix,
+        continuation_suffix,
         step: 2,
         base_host: state.config.public_base_url.clone(),
         name_value: String::new(),
@@ -99,11 +129,11 @@ pub async fn onboarding_submit(
     RequestLocale(locale): RequestLocale,
     auth: AuthContext,
     jar: CookieJar,
-    Query(plan): Query<PlanIntent>,
+    Query(intent): Query<OnboardingIntent>,
     Form(form): Form<OnboardingForm>,
 ) -> AppResult<Response> {
     verify_csrf(&auth, &form._csrf)?;
-    let plan_suffix = plan.suffix(&state);
+    let continuation_suffix = intent.suffix(&state);
 
     let res = create_establishment(
         &state.pool,
@@ -120,17 +150,14 @@ pub async fn onboarding_submit(
     match res {
         Ok(_) => Ok(with_flash_redirect(
             jar,
-            &if plan_suffix.is_empty() {
-                "/dashboard/menu".to_owned()
-            } else {
-                format!("{BILLING_PAGE}{plan_suffix}")
-            },
+            &intent.destination(&state, "/dashboard/menu"),
             false,
             "flash.establishment_created",
             state.config.cookie_secure,
         )),
         Err(err) => {
             let tpl = OnboardingTemplate {
+                google_enabled: state.google.is_some(),
                 page: PageMeta::new(locale, "onboarding.page_title", None),
                 brand_name: "QR Cardápio".to_string(),
                 has_establishment: false,
@@ -138,7 +165,7 @@ pub async fn onboarding_submit(
                 is_admin: auth.account.role == AccountRole::Admin,
                 active_nav: "",
                 csrf_token: auth.csrf_token,
-                plan_suffix,
+                continuation_suffix,
                 step: 2,
                 base_host: state.config.public_base_url.clone(),
                 name_value: form.name,

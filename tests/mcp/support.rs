@@ -58,6 +58,7 @@ pub(super) async fn setup(enabled: bool) -> (TempDir, SqlitePool, Router) {
         log_level: "warn".into(),
         asaas: None,
         mcp_enabled: enabled,
+        google: None,
     };
     let pool = init_pool(&config).await.unwrap();
     let app = build_router(AppState::new(config, pool.clone()));
@@ -221,6 +222,8 @@ pub(super) async fn authorize(
     assert_eq!(page.status(), StatusCode::OK);
     assert_eq!(page.headers()[header::REFERRER_POLICY], "no-referrer");
     let consent = body(page).await;
+    let uri = Url::parse(client.1).unwrap();
+    assert!(consent.contains(&format!("<strong>{}</strong>", uri.host_str().unwrap())));
     let fields = [
         ("flow", flow_id),
         ("_csrf", field(&consent, "name=\"_csrf\" value=\"")),

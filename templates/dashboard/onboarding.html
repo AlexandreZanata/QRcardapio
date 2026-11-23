@@ -14,7 +14,7 @@
     <div class="alert alert-error" role="alert" data-i18n="{{ err }}">{{ page.t(err) }}</div>
     {% endif %}
 
-    <form class="form-stack" method="post" action="/onboarding{{ plan_suffix }}">
+    <form class="form-stack" method="post" action="/onboarding{{ continuation_suffix }}">
       <input type="hidden" name="_csrf" value="{{ csrf_token }}">
 
       {{ fields::input("name", "onboarding.name_label", name_value, 100, guide_key="guide.business_name", required=true, placeholder_key="onboarding.name_placeholder") }}
@@ -24,6 +24,7 @@
 
       <button class="btn btn-primary" type="submit" {{ guide::hint("guide.setup") }} data-i18n="onboarding.submit">{{ page.t("onboarding.submit") }}</button>
     </form>
+    {% if google_enabled %}<p class="mt-4"><a href="/account/security" data-i18n="google.account">{{ page.t("google.account") }}</a></p>{% endif %}
   </section>
 </div>
 {% endblock %}

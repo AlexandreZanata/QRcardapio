@@ -71,6 +71,7 @@ pub async fn login_page(
             SeoMeta::noindex("auth.login_subtitle"),
         ),
         plan_suffix,
+        google_enabled: state.google.is_some(),
         email_value: String::new(),
         error_key: None,
     };
@@ -95,6 +96,7 @@ pub async fn login_submit(
                 SeoMeta::noindex("auth.login_subtitle"),
             ),
             plan_suffix,
+            google_enabled: state.google.is_some(),
             email_value: form.email,
             error_key: Some("error.rate_limited".to_string()),
         };
@@ -126,6 +128,7 @@ pub async fn login_submit(
                     SeoMeta::noindex("auth.login_subtitle"),
                 ),
                 plan_suffix,
+                google_enabled: state.google.is_some(),
                 email_value: form.email,
                 error_key: Some(err.i18n_key().to_string()),
             };
@@ -159,6 +162,7 @@ pub async fn register_page(
             SeoMeta::noindex("auth.register_subtitle"),
         ),
         plan_suffix,
+        google_enabled: state.google.is_some(),
         email_value: String::new(),
         error_key: None,
     };
@@ -188,6 +192,7 @@ pub async fn register_submit(
                 SeoMeta::noindex("auth.register_subtitle"),
             ),
             plan_suffix,
+            google_enabled: state.google.is_some(),
             email_value: form.email,
             error_key: Some("error.rate_limited".to_string()),
         };
@@ -225,6 +230,7 @@ pub async fn register_submit(
                     SeoMeta::noindex("auth.register_subtitle"),
                 ),
                 plan_suffix,
+                google_enabled: state.google.is_some(),
                 email_value: form.email,
                 error_key: Some(err.i18n_key().to_string()),
             };

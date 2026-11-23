@@ -8,6 +8,7 @@ pub struct LoginTemplate {
     pub page: PageMeta,
     pub email_value: String,
     pub plan_suffix: String,
+    pub google_enabled: bool,
     pub error_key: Option<String>,
 }
 
@@ -17,6 +18,7 @@ pub struct RegisterTemplate {
     pub page: PageMeta,
     pub email_value: String,
     pub plan_suffix: String,
+    pub google_enabled: bool,
     pub error_key: Option<String>,
 }
 

@@ -1,4 +1,7 @@
 {% extends "layouts/base.html" %}
+{% import "components/google_signin.html" as google %}
+
+{% block head_extra %}{% if google_enabled %}<link rel="stylesheet" href="/static/css/google-signin.css">{% endif %}{% endblock %}
 
 {% block nav_links %}
   <a class="nav-link" href="/login{{ plan_suffix }}" data-i18n="nav.login">{{ page.t("nav.login") }}</a>
@@ -41,6 +44,7 @@
 
         <button class="btn btn-primary btn-block" type="submit" data-i18n="auth.submit_register">{{ page.t("auth.submit_register") }}</button>
       </form>
+      {% if google_enabled %}{{ google::button("/auth/google/start" ~ plan_suffix) }}{% endif %}
 
       <p class="mt-4 text-muted">
         <span data-i18n="auth.has_account">{{ page.t("auth.has_account") }}</span>

@@ -1,0 +1,6 @@
+{% macro button(url) %}
+<a class="btn btn-block google-signin" href="{{ url }}" rel="noreferrer">
+  <img src="/static/icons/google-signin.png" width="18" height="18" alt="">
+  <span data-i18n="google.continue">{{ page.t("google.continue") }}</span>
+</a>
+{% endmacro %}

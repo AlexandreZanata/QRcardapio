@@ -38,3 +38,7 @@
 - Utilities: `clap 4.6.9`, `chrono 0.4.45`, `uuid 1.29.3`, `thiserror 2.0.21`, `tempfile 3.27.0`, `dotenvy 0.15.7`, `tracing 0.1.44`, `tracing-subscriber 0.3.23`
 
 - Integração Asaas: `reqwest 0.13.5` assíncrono com Rustls e features `json` e `query`. A serialização de valores de cobrança usa `serde_json` com precisão decimal preservada.
+
+## Login com o Google
+
+`reqwest` envia o formulário de troca OAuth e consulta o JWKS por HTTPS. `aws-lc-rs` valida assinaturas RS256 com o mesmo pacote já usado pelo transporte TLS. A integração evita uma segunda biblioteca criptográfica ou dependência de scripts do provedor nas páginas.

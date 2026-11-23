@@ -1,0 +1,19 @@
+{
+  "get_menu_draft": {
+    "scope": "menu.read",
+    "read_only": true,
+    "required": [],
+    "properties": ["category_id", "limit", "offset"]
+  },
+  "apply_menu_changes": {
+    "scope": "menu.write",
+    "read_only": false,
+    "required": ["operation_key"],
+    "properties": ["add_products", "category_updates", "new_categories", "operation_key", "product_updates"],
+    "integer_centavos": [
+      "/properties/new_categories/items/properties/products/items/properties/price_centavos",
+      "/properties/add_products/items/properties/products/items/properties/price_centavos",
+      "/properties/product_updates/items/properties/price_centavos"
+    ]
+  }
+}

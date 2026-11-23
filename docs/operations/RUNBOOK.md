@@ -100,3 +100,19 @@ Desabilitar a integração local interrompe o recebimento de eventos e remove a 
 Depois de autorizar, volte ao cliente pelo link na tela de confirmação. Na homologação, peça para listar o rascunho, criar uma categoria com um item de exemplo e modificar o preço. Confira o rascunho no painel, publique se desejar e valide a URL pública. Revogue a conexão nas **Integrações de IA** e verifique que a sessão do cliente deixa de acessar o rascunho.
 
 Para diagnosticar descoberta, consulte `/.well-known/oauth-protected-resource/mcp` e `/.well-known/oauth-authorization-server` na origem pública. Uma chamada sem credencial a `/mcp` deve retornar `401` com `WWW-Authenticate`. Se um cliente mostrar erro no callback, confira se usa a identidade publicada e a opção de autenticação OAuth indicada acima. O OAuth vincula credenciais à origem configurada. Alterações de domínio exigem nova conexão.
+
+## Habilitação do login com o Google
+
+1. No [Google Auth Platform](https://console.cloud.google.com/auth/overview), configure **Branding** com o nome QR Cardápio, e-mail de suporte, domínio autorizado, página inicial e política de privacidade pública do serviço. Em **Audience**, use a opção externa para atender estabelecimentos de qualquer organização. Durante os testes, inclua as contas piloto em **Test users**.
+2. Em **Clients**, crie um cliente **Web application**. Cadastre `https://qrcardapio.com.br/auth/google/callback` como URI de redirecionamento autorizada em produção. Ela deve corresponder exatamente a `PUBLIC_BASE_URL` mais `/auth/google/callback`. Use um cliente separado para desenvolvimento, com o retorno na origem local, como `http://localhost:3000/auth/google/callback`.
+3. No `.env` do servidor, preencha `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`. Em produção use `PUBLIC_BASE_URL=https://qrcardapio.com.br` e `COOKIE_SECURE=true`. Para HTTP em loopback no desenvolvimento, use `COOKIE_SECURE=false`. Mantenha o segredo no ambiente do servidor.
+4. Valide a configuração e recrie o aplicativo com a nova imagem. A migração é aplicada na inicialização. Com as duas credenciais vazias, as telas seguem com login por senha.
+
+```bash
+docker compose config --quiet
+docker compose up -d --build app
+```
+
+Em homologação, crie uma conta Google nova, termine o cadastro do estabelecimento, saia e volte a entrar. Teste também o vínculo usando uma conta existente com senha. Verifique a navegação do plano pago se o Asaas estiver habilitado e repita o login na tela de consentimento de cada conector MCP. Para abrir ao público, conclua as etapas de publicação, verificação de marca e domínio solicitadas pelo console.
+
+[Configuração OAuth para web](https://developers.google.com/identity/protocols/oauth2/web-server) · [Políticas de autenticação](https://developers.google.com/identity/verification/authentication-policy-compliance)

@@ -1,0 +1,31 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<main id="main-content" class="auth-wrap">
+  <div class="container">
+    <section class="card auth-card">
+      {% include "components/flash.html" %}
+      <h1 data-i18n="google.account">{{ page.t("google.account") }}</h1>
+      <p>{{ email }}</p>
+      {% if linked %}
+      <p data-i18n="google.linked">{{ page.t("google.linked") }}</p>
+      {% if has_password %}
+      <form method="post" action="/account/google/unlink">
+        <input type="hidden" name="_csrf" value="{{ csrf }}">
+        <button class="btn btn-secondary" type="submit" data-i18n="google.unlink">{{ page.t("google.unlink") }}</button>
+      </form>
+      {% else %}
+      <p data-i18n="google.unlink_requires_password">{{ page.t("google.unlink_requires_password") }}</p>
+      {% endif %}
+      {% else %}
+      <p data-i18n="google.same_email">{{ page.t("google.same_email") }}</p>
+      <form method="post" action="/auth/google/link">
+        <input type="hidden" name="_csrf" value="{{ csrf }}">
+        <button class="btn btn-primary" type="submit" data-i18n="google.link">{{ page.t("google.link") }}</button>
+      </form>
+      {% endif %}
+      <p class="mt-4"><a href="/dashboard" data-i18n="nav.overview">{{ page.t("nav.overview") }}</a></p>
+    </section>
+  </div>
+</main>
+{% endblock %}

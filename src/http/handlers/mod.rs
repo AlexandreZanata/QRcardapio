@@ -3,6 +3,7 @@ pub mod auth;
 pub mod billing;
 pub mod categories;
 pub mod dashboard;
+pub mod google;
 pub mod health;
 pub mod mcp;
 pub mod menu_editor;

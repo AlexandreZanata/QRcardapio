@@ -56,3 +56,9 @@ A migração `20261123000006_billing_plan_cycles.sql` registra os meses e o pre�
 ## OAuth e operações MCP
 
 A migração `20261123000005_mcp_oauth.sql` mantém solicitações de autorização com expiração, códigos de uso único, vínculos com hashes de acesso e renovação, e chaves de idempotência por conta e estabelecimento. Os vínculos referenciam o membro do estabelecimento. A transação de escrita valida o vínculo e aplica as mudanças em um único lote. A manutenção remove registros expirados por índice.
+
+## Identidade Google
+
+A migração `20261123000007_google_oidc.sql` cria `google_identities` e `google_oauth_flows`. A primeira tabela tem um `sub` único do Google por conta local. Cadastro e vínculo são transacionais. A segunda tabela registra o estado temporário por hash e o consome com `DELETE … RETURNING`, atrelado ao navegador, cliente e URI de retorno. A limpeza expira esses registros e as referências encerram fluxos ligados a sessões ou autorizações MCP excluídas.
+
+Uma conta criada via Google tem senha local vazia até cadastrar uma pelo processo de recuperação. O login por senha faz a verificação Argon2 de referência para essas contas. Tokens Google de identidade, acesso e renovação são descartados após o callback.

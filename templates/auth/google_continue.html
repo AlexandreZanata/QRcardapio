@@ -1,0 +1,17 @@
+{% extends "layouts/base.html" %}
+{% import "components/google_signin.html" as google %}
+
+{% block head_extra %}<link rel="stylesheet" href="/static/css/google-signin.css">{% endblock %}
+
+{% block content %}
+<main id="main-content" class="auth-wrap">
+  <div class="container">
+    <section class="card auth-card">
+      <h1 data-i18n="google.link">{{ page.t("google.link") }}</h1>
+      <p data-i18n="google.same_email">{{ page.t("google.same_email") }}</p>
+      {{ google::button(url) }}
+      <p class="mt-4"><a href="/account/security" data-i18n="google.account">{{ page.t("google.account") }}</a></p>
+    </section>
+  </div>
+</main>
+{% endblock %}

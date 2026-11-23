@@ -186,6 +186,7 @@ async fn run_server(config: Config) -> Result<(), Box<dyn std::error::Error>> {
 
     let maint_pool = pool.clone();
     let mcp_enabled = state.config.mcp_enabled;
+    let google_enabled = state.google.is_some();
     let maint_limiters = state.rate_limiters.clone();
     let maintenance = tokio::spawn(async move {
         let mut interval = tokio::time::interval(std::time::Duration::from_secs(3600));
@@ -201,6 +202,16 @@ async fn run_server(config: Config) -> Result<(), Box<dyn std::error::Error>> {
                     .await
             {
                 tracing::warn!(%error, "MCP cleanup failed");
+            }
+            if google_enabled
+                && let Err(error) =
+                    qrcardapio::infrastructure::database::queries::google::prune_flows(
+                        &maint_pool,
+                        chrono::Utc::now().timestamp(),
+                    )
+                    .await
+            {
+                tracing::warn!(%error, "Google OIDC cleanup failed");
             }
             maint_limiters.prune_stale();
         }
