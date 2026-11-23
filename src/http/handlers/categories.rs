@@ -1,9 +1,9 @@
-use axum::Form;
 use axum::extract::{Path, Query, State};
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, StatusCode, header::ACCEPT};
 use axum::response::{IntoResponse, Response};
+use axum::{Form, Json};
 use axum_extra::extract::CookieJar;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 use super::menu_editor::EditorPageQuery;
 use crate::app::AppState;
@@ -14,7 +14,7 @@ use crate::domain::account::AccountRole;
 use crate::error::{AppError, AppResult};
 use crate::http::middleware::auth::{TenantContext, verify_csrf};
 use crate::http::middleware::locale::RequestLocale;
-use crate::http::responses::with_flash_redirect;
+use crate::http::responses::{with_flash_cookie, with_flash_redirect};
 use crate::infrastructure::database::queries::find_category_for_est;
 use crate::rendering::menu_editor::CategoryFormTemplate;
 use crate::rendering::{PageMeta, render_html};
@@ -46,6 +46,12 @@ pub struct MoveForm {
 #[derive(Deserialize)]
 pub struct CsrfOnlyForm {
     pub _csrf: String,
+}
+
+#[derive(Serialize)]
+struct CategoryFormError {
+    key: &'static str,
+    message: &'static str,
 }
 
 pub async fn new_category_page(
@@ -81,10 +87,14 @@ pub async fn create_category_submit(
     tenant: TenantContext,
     Query(query): Query<EditorPageQuery>,
     jar: CookieJar,
+    headers: HeaderMap,
     Form(form): Form<CategoryForm>,
 ) -> AppResult<Response> {
     verify_csrf(&tenant.auth, &form._csrf)?;
     let visible = form.is_visible.is_some();
+    let dialog_submission = headers
+        .get(ACCEPT)
+        .is_some_and(|value| value == "application/json");
 
     match create_category(
         &state.pool,
@@ -101,6 +111,16 @@ pub async fn create_category_submit(
     )
     .await
     {
+        Ok(_) if dialog_submission => Ok((
+            with_flash_cookie(
+                jar,
+                false,
+                "flash.category_created",
+                state.config.cookie_secure,
+            ),
+            StatusCode::NO_CONTENT,
+        )
+            .into_response()),
         Ok(_) => Ok(with_flash_redirect(
             jar,
             &query.menu_url(),
@@ -108,6 +128,17 @@ pub async fn create_category_submit(
             "flash.category_created",
             state.config.cookie_secure,
         )),
+        Err(err) if dialog_submission => {
+            let key = err.i18n_key();
+            Ok((
+                err.status_code(),
+                Json(CategoryFormError {
+                    key,
+                    message: state.catalog.t(locale, key),
+                }),
+            )
+                .into_response())
+        }
         Err(err) => {
             let tpl = CategoryFormTemplate {
                 page: PageMeta::new(locale, "category_form.new_title", None),

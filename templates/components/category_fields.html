@@ -1,0 +1,21 @@
+{% import "components/form_fields.html" as field %}
+
+{% macro inputs(name_value, description_value, is_visible, name_en="", name_es="", description_en="", description_es="") %}
+{{ field::input("name", "category_form.name_label", name_value, 80, guide_key="guide.category_name", required=true, placeholder_key="category_form.name_placeholder") }}
+{{ field::textarea("description", "category_form.description_label", description_value, guide_key="guide.category_description", max_length=240, placeholder_key="category_form.description_placeholder") }}
+{{ field::checkbox("is_visible", "category_form.visible_label", is_visible, guide_key="guide.visible") }}
+
+<details class="details-box dashboard-translations">
+  <summary data-i18n="category_form.translations_toggle">{{ page.t("category_form.translations_toggle") }}</summary>
+  <div class="dashboard-field-pair">
+    <div class="form-stack">
+      {{ field::input("name_en", "category_form.name_en_label", name_en, 80, guide_key="guide.translate_en") }}
+      {{ field::textarea("description_en", "category_form.description_en_label", description_en, guide_key="guide.translate_en", max_length=240) }}
+    </div>
+    <div class="form-stack">
+      {{ field::input("name_es", "category_form.name_es_label", name_es, 80, guide_key="guide.translate_es") }}
+      {{ field::textarea("description_es", "category_form.description_es_label", description_es, guide_key="guide.translate_es", max_length=240) }}
+    </div>
+  </div>
+</details>
+{% endmacro %}

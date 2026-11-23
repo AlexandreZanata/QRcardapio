@@ -33,6 +33,8 @@ Settings groups business details, Google Maps links, and the current logo. Dashb
 
 Menu import separates file upload, pasted text, and illustrated tips. The menu editor and overview share the blue publication action, with the preview and live menu links grouped in the overview.
 
+The category creation dialog shares its fields with the standalone category form and shows validation without leaving the editor. The overview uses an illustrated, keyboard-accessible confirmation for taking a menu offline.
+
 The menu editor uses tenant-scoped pagination with 12 product or empty-category rows per page. The editor retains the active page through inline actions and edit forms. Mobile layouts preserve the landing Maps mockup composition, adapt dashboard tables into labeled rows, and scale the QR print preview to the screen.
 
 ## Verification Snapshot

@@ -39,7 +39,7 @@ All `POST` routes verify `_csrf` against the server session's `csrf_token` in co
 | `POST` | `/dashboard/publish` | Triggers atomic static snapshot build. |
 | `POST` | `/dashboard/unpublish` | Removes published static files and reverts to draft. |
 | `GET` | `/dashboard/menu?page=N` | Category and product management. Defaults to page 1 and displays up to 12 products or empty categories in menu order. |
-| `GET`/`POST` | `/dashboard/categories/new`, `/dashboard/categories` | Create category (optional EN/ES translations). |
+| `GET`/`POST` | `/dashboard/categories/new`, `/dashboard/categories` | Create category with optional EN/ES translations. The editor dialog posts the same form with `Accept: application/json` and receives `204` on success or a localized JSON validation error. |
 | `GET`/`POST` | `/dashboard/categories/{id}/edit`, `/dashboard/categories/{id}` | Edit category. |
 | `POST` | `/dashboard/categories/{id}/delete`, `/move` | Delete or reorder category. |
 | `GET`/`POST` | `/dashboard/products/new`, `/dashboard/products` | Create product (multipart max 6 MiB, upload rate limit 20/min). |

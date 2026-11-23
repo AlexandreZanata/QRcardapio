@@ -1,0 +1,40 @@
+{% import "components/guide_hint.html" as guide %}
+{% import "components/icons.html" as icons %}
+{% import "components/panel_dialog.html" as modal %}
+
+{% macro action(id, action, label_key, question_key, effect_key, recovery_key, icon, guide_key, art_url) %}
+<form id="{{ id }}-form" method="post" action="{{ action }}" hidden>
+  <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+</form>
+<div {{ guide::hint(guide_key) }}>
+  <details class="panel-confirm-fallback">
+    <summary class="btn btn-danger btn-sm" data-panel-dialog-open="{{ id }}">
+      {{ icons::panel(icon) }} <span data-i18n="{{ label_key }}">{{ page.t(label_key) }}</span>
+    </summary>
+    <div class="panel-confirm-fallback-body">
+      <p data-i18n="{{ effect_key }}">{{ page.t(effect_key) }}</p>
+      <p data-i18n="{{ recovery_key }}">{{ page.t(recovery_key) }}</p>
+      <button class="btn panel-action panel-action-danger" form="{{ id }}-form" type="submit">
+        {{ icons::panel(icon) }} <span data-i18n="{{ label_key }}">{{ page.t(label_key) }}</span>
+      </button>
+    </div>
+  </details>
+</div>
+
+<dialog class="panel-dialog panel-confirm-dialog" id="{{ id }}" aria-labelledby="{{ id }}-heading"
+        aria-describedby="{{ id }}-effect {{ id }}-recovery">
+  {{ modal::heading(id ~ "-heading", question_key, icon, tone="pink") }}
+  <div class="panel-dialog-body panel-confirm-body">
+    <div class="panel-confirm-art">
+      <img src="{{ art_url }}" width="384" height="288" loading="lazy" alt="">
+    </div>
+    <div class="panel-confirm-copy">
+      <p id="{{ id }}-effect" data-i18n="{{ effect_key }}">{{ page.t(effect_key) }}</p>
+      <p class="panel-confirm-recovery" id="{{ id }}-recovery">
+        {{ icons::panel("qr") }} <span data-i18n="{{ recovery_key }}">{{ page.t(recovery_key) }}</span>
+      </p>
+    </div>
+  </div>
+  {{ modal::actions(id ~ "-form", label_key, icon, danger=true) }}
+</dialog>
+{% endmacro %}

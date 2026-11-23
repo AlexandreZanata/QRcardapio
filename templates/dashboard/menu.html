@@ -11,6 +11,10 @@
 <link rel="stylesheet" href="/static/css/menu-editor.css">
 {% endblock %}
 
+{% block panel_dialogs %}
+{% include "components/category_dialog.html" %}
+{% endblock %}
+
 {% block content %}
 {% let page_suffix = pagination.query_suffix() %}
 <div class="page-top panel-page-top editor-page-top">
@@ -22,7 +26,7 @@
     {% if !categories.is_empty() %}
     {{ controls::link("/dashboard/products/new" ~ page_suffix, "menu_editor.new_product", "add", primary=true, guide_key="guide.add_product") }}
     {% endif %}
-    {{ controls::link("/dashboard/categories/new" ~ page_suffix, "menu_editor.new_category", "layers", guide_key="guide.add_category") }}
+    {{ controls::link("/dashboard/categories/new" ~ page_suffix, "menu_editor.new_category", "layers", guide_key="guide.add_category", dialog="new-category-dialog") }}
     {{ controls::link("/dashboard/ocr", "menu_editor.import_ocr", "scan", guide_key="guide.import_menu") }}
   </div>
 </div>
@@ -37,7 +41,7 @@
   <h2 data-i18n="menu_editor.empty_title">{{ page.t("menu_editor.empty_title") }}</h2>
   <p class="text-muted mb-4" data-i18n="menu_editor.empty_body">{{ page.t("menu_editor.empty_body") }}</p>
   <div class="panel-action-row">
-    {{ controls::link("/dashboard/categories/new" ~ page_suffix, "menu_editor.new_category", "layers", primary=true) }}
+    {{ controls::link("/dashboard/categories/new" ~ page_suffix, "menu_editor.new_category", "layers", primary=true, dialog="new-category-dialog") }}
     {{ controls::link("/dashboard/ocr", "menu_editor.import_ocr", "scan") }}
   </div>
 </section>

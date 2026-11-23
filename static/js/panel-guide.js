@@ -58,7 +58,8 @@ function initializeGuide(dialog, launchButton) {
 
   launchButton.hidden = false;
   launchButton.addEventListener("click", () => {
-    steps = [...document.querySelectorAll("[data-guide-key]")];
+    steps = [...document.querySelectorAll("[data-guide-key]")]
+      .filter((target) => !target.closest("dialog:not([open])"));
     if (steps.length === 0) return;
     scrollPosition = window.scrollY;
     dialog.showModal();

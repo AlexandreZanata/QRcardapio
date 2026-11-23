@@ -15,6 +15,19 @@ pub fn with_flash_redirect(
     key: &str,
     secure: bool,
 ) -> Response {
+    (
+        with_flash_cookie(jar, is_error, key, secure),
+        Redirect::to(to),
+    )
+        .into_response()
+}
+
+pub(crate) fn with_flash_cookie(
+    jar: CookieJar,
+    is_error: bool,
+    key: &str,
+    secure: bool,
+) -> CookieJar {
     let prefix = if is_error { "err:" } else { "ok:" };
     let val = format!("{prefix}{key}");
     let cookie = Cookie::build((FLASH_COOKIE_NAME, val))
@@ -23,7 +36,7 @@ pub fn with_flash_redirect(
         .same_site(SameSite::Lax)
         .secure(secure)
         .build();
-    (jar.add(cookie), Redirect::to(to)).into_response()
+    jar.add(cookie)
 }
 
 pub fn take_flash(jar: CookieJar) -> (CookieJar, Option<FlashMessage>) {

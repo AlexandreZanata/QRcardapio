@@ -25,6 +25,16 @@ For screens with a file field, include `components/file_picker.html` once in the
 
 Dashboard action links, submit buttons, icon tiles, section headings, and illustrated tips share `components/panel_controls.html`. The primary variant uses the landing's blue from `tokens.css`. Menu editing and the overview reuse the CSRF-protected form in `components/panel_publication.html`. The overview groups preview and live links below the publish action. Menu import uses the featured file field alongside a native disclosure for pasted text and a list of reading tips.
 
+### Dashboard dialogs
+
+`components/panel_dialog.html` provides a common heading, close control, and form actions. `panel-dialog.js` opens native dialogs, sets initial focus, and restores focus to the opener. Category creation uses the same fields as the standalone form, reports validation inside the dialog, and returns to the current editor page after saving. The editor link opens the standalone form when dialog support is unavailable.
+
+`components/panel_confirmation.html` uses the same dialog controls for actions that need explicit confirmation. The unpublish confirmation focuses Cancel by default and explains how republishing restores the same link and QR code. Its trigger exposes a confirmation disclosure when dialog support is unavailable.
+
+The unpublish artwork is saved in `static/images/unpublish-chef.webp`. It was generated with the built-in ImageGen tool and resized to a transparent 384 × 288 WebP.
+
+> Use case: stylized-concept. Original transparent sticker illustration for the QR Cardápio dashboard confirmation to temporarily unpublish a digital restaurant menu. A friendly young chef in a white toque and deep cobalt-blue apron calmly flips a small yellow storefront sign that shows a bold pause symbol (two bars, no text). Include a small intact black and cream QR menu placard nearby, clearly still usable after reopening. Single compact composition, centered, clearly legible at 180px. Match the brand's cream #fff9ee, cobalt #263be8, yellow #ffdc38, strawberry pink #ff5596 and bold dark navy #161721 outlines. Clean playful editorial sticker style, flat fills and subtle hand-drawn character warmth, similar to a contemporary Brazilian food SaaS landing page. Make the mood temporary and calm, not alarming. No lettering, words, brand symbols, drop shadows beyond the sticker, border, or background. Genuine alpha outside the sticker.
+
 ### Responsive dashboard tables
 
 The menu editor shows a single table with category headers separating product rows. Desktop aligns the product, price, availability, and actions in columns. Narrow layouts put the product and price on one line and the availability and actions below. Icon actions use translated accessible labels and tooltips. The page groups at most 12 products or empty categories, and keeps the current page through editor actions.

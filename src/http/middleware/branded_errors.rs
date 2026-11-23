@@ -18,12 +18,15 @@ pub async fn branded_errors(
         && !matches!(path, "/healthz" | "/readyz");
     let response = next.run(request).await;
     let status = response.status();
-    let already_html = response
+    let has_rendered_body = response
         .headers()
         .get(header::CONTENT_TYPE)
         .and_then(|value| value.to_str().ok())
-        .is_some_and(|value| value.starts_with("text/html"));
-    if !page_request || already_html || !(status.is_client_error() || status.is_server_error()) {
+        .is_some_and(|value| {
+            value.starts_with("text/html") || value.starts_with("application/json")
+        });
+    if !page_request || has_rendered_body || !(status.is_client_error() || status.is_server_error())
+    {
         return response;
     }
 
@@ -66,5 +69,34 @@ mod tests {
         assert!(body.contains("state-error.svg"));
         assert!(body.contains("Something went wrong"));
         assert!(!body.contains("private diagnostic"));
+    }
+
+    #[tokio::test]
+    async fn preserves_localized_json_errors() {
+        let router = Router::new()
+            .route(
+                "/fixture",
+                get(|| async {
+                    (
+                        StatusCode::UNPROCESSABLE_ENTITY,
+                        axum::Json(serde_json::json!({"key": "error.invalid_name"})),
+                    )
+                }),
+            )
+            .layer(axum::middleware::from_fn(branded_errors));
+        let response = router
+            .oneshot(
+                Request::builder()
+                    .uri("/fixture")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
+        assert_eq!(response.status(), StatusCode::UNPROCESSABLE_ENTITY);
+        assert_eq!(response.headers()[header::CONTENT_TYPE], "application/json");
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let body: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(body["key"], "error.invalid_name");
     }
 }

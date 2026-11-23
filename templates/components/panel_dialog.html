@@ -1,0 +1,31 @@
+{% import "components/icons.html" as icons %}
+{% import "components/panel_controls.html" as controls %}
+
+{% macro heading(id, title_key, icon, tone="blue", subtitle_key="") %}
+<header class="panel-dialog-heading">
+  {{ controls::tile(icon, tone) }}
+  <div class="panel-dialog-heading-copy">
+    <h2 id="{{ id }}" data-i18n="{{ title_key }}">{{ page.t(title_key) }}</h2>
+    {% if !subtitle_key.is_empty() %}
+    <p data-i18n="{{ subtitle_key }}">{{ page.t(subtitle_key) }}</p>
+    {% endif %}
+  </div>
+  <button class="panel-dialog-close" type="button" data-panel-dialog-close
+          aria-label="{{ page.t("common.close") }}" data-i18n-aria="common.close">
+    {{ icons::panel("close") }}
+  </button>
+</header>
+{% endmacro %}
+
+{% macro actions(form_id, label_key, icon, danger=false) %}
+<footer class="panel-dialog-actions">
+  <button class="btn panel-action" type="button" data-panel-dialog-close{% if danger %} data-panel-dialog-focus{% endif %}>
+    <span data-i18n="common.cancel">{{ page.t("common.cancel") }}</span>
+  </button>
+  <button class="btn panel-action {% if danger %}panel-action-danger{% else %}panel-action-primary{% endif %}"
+          type="submit" form="{{ form_id }}">
+    {{ icons::panel(icon) }}
+    <span data-i18n="{{ label_key }}">{{ page.t(label_key) }}</span>
+  </button>
+</footer>
+{% endmacro %}

@@ -1,40 +1,41 @@
 {% extends "layouts/dashboard.html" %}
-{% import "components/icons.html" as icons %}
 {% import "components/guide_hint.html" as guide %}
-{% import "components/form_fields.html" as fields %}
+{% import "components/panel_controls.html" as controls %}
+{% import "components/category_fields.html" as category %}
 
 {% block content %}
+{% let is_new = page.title_key == "category_form.new_title" %}
 <div class="container-narrow">
-  <div class="page-top">
-    <h1 data-i18n="{{ page.title_key }}">{{ page.t(page.title_key) }}</h1>
-    <a class="btn btn-secondary btn-sm" href="{{ menu_url }}">{{ icons::panel("back") }} <span data-i18n="common.back">{{ page.t("common.back") }}</span></a>
+  <div class="page-top panel-page-top">
+    <div>
+      {% if is_new %}
+      <h1 data-i18n="category_form.new_heading">{{ page.t("category_form.new_heading") }}</h1>
+      <p data-i18n="category_form.new_intro">{{ page.t("category_form.new_intro") }}</p>
+      {% else %}
+      <h1 data-i18n="category_form.edit_heading">{{ page.t("category_form.edit_heading") }}</h1>
+      {% endif %}
+    </div>
+    {{ controls::link(menu_url, "common.back", "back") }}
   </div>
 
-  <section class="card">
+  <section class="card" aria-labelledby="category-details-title">
+    {{ controls::section_heading("category-details-title", "category_form.details_heading", "layers", "blue") }}
+
     {% if let Some(err) = error_key %}
     <div class="alert alert-error" role="alert" data-i18n="{{ err }}">{{ page.t(err) }}</div>
     {% endif %}
 
-    <form class="form-stack" method="post" action="{{ form_action }}">
+    <form class="form-stack panel-category-fields" method="post" action="{{ form_action }}">
       <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      {{ category::inputs(name_value, description_value, is_visible, name_en, name_es, description_en, description_es) }}
 
-      {{ fields::input("name", "category_form.name_label", name_value, 80, guide_key="guide.category_name", required=true, placeholder_key="category_form.name_placeholder") }}
-      {{ fields::textarea("description", "category_form.description_label", description_value, guide_key="guide.category_description", max_length=240, placeholder_key="category_form.description_placeholder") }}
-      {{ fields::checkbox("is_visible", "category_form.visible_label", is_visible, guide_key="guide.visible") }}
-
-      <details class="details-box">
-        <summary data-i18n="category_form.translations_toggle">{{ page.t("category_form.translations_toggle") }}</summary>
-        <div class="form-stack">
-          {{ fields::input("name_en", "category_form.name_en_label", name_en, 80, guide_key="guide.translate_en") }}
-          {{ fields::input("name_es", "category_form.name_es_label", name_es, 80, guide_key="guide.translate_es") }}
-          {{ fields::textarea("description_en", "category_form.description_en_label", description_en, guide_key="guide.translate_en", max_length=240) }}
-          {{ fields::textarea("description_es", "category_form.description_es_label", description_es, guide_key="guide.translate_es", max_length=240) }}
-        </div>
-      </details>
-
-      <div class="inline-actions">
-        <button class="btn btn-primary" type="submit" {{ guide::hint("guide.save") }}>{{ icons::panel("check") }} <span data-i18n="common.save">{{ page.t("common.save") }}</span></button>
-        <a class="btn btn-secondary" href="{{ menu_url }}" data-i18n="common.cancel">{{ page.t("common.cancel") }}</a>
+      <div class="inline-actions" {{ guide::hint("guide.save") }}>
+        {% if is_new %}
+        {{ controls::submit("category_form.create_action", "check", primary=true) }}
+        {% else %}
+        {{ controls::submit("common.save", "check", primary=true) }}
+        {% endif %}
+        <a class="btn panel-action" href="{{ menu_url }}" data-i18n="common.cancel">{{ page.t("common.cancel") }}</a>
       </div>
     </form>
   </section>

@@ -5,6 +5,7 @@
 {% import "components/dashboard_metric.html" as metrics %}
 {% import "components/panel_controls.html" as controls %}
 {% import "components/panel_publication.html" as publication %}
+{% import "components/panel_confirmation.html" as confirmation %}
 
 {% block content %}
 <div class="page-top dashboard-overview-top">
@@ -72,12 +73,9 @@
         {% endif %}
       </p>
       {% if is_published %}
-      <form class="inline-form" method="post" action="/dashboard/unpublish" {{ guide::hint("guide.unpublish") }}
-            data-confirm-key="dashboard.confirm_unpublish"
-            data-confirm-fallback="{{ page.t("dashboard.confirm_unpublish") }}">
-        <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-        <button class="btn btn-danger btn-sm" type="submit">{{ icons::panel("pending") }} <span data-i18n="dashboard.action_unpublish">{{ page.t("dashboard.action_unpublish") }}</span></button>
-      </form>
+      {{ confirmation::action("unpublish-menu-dialog", "/dashboard/unpublish", "dashboard.action_unpublish",
+           "dashboard.unpublish_heading", "dashboard.unpublish_effect", "dashboard.unpublish_recovery",
+           "pending", "guide.unpublish", "/static/images/unpublish-chef.webp") }}
       {% endif %}
     </div>
   </section>

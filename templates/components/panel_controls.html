@@ -12,10 +12,11 @@
 </h2>
 {% endmacro %}
 
-{% macro link(url, label_key, icon, primary=false, guide_key="", new_tab=false) %}
+{% macro link(url, label_key, icon, primary=false, guide_key="", new_tab=false, dialog="") %}
 <a class="btn panel-action{% if primary %} panel-action-primary{% endif %}" href="{{ url }}"
    {% if !guide_key.is_empty() %}{{ guide::hint(guide_key) }}{% endif %}
-   {% if new_tab %}target="_blank" rel="noopener"{% endif %}>
+   {% if new_tab %}target="_blank" rel="noopener"{% endif %}
+   {% if !dialog.is_empty() %}data-panel-dialog-open="{{ dialog }}"{% endif %}>
   {{ icons::panel(icon) }} <span data-i18n="{{ label_key }}">{{ page.t(label_key) }}</span>
 </a>
 {% endmacro %}

@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="/static/css/app.css">
   <link rel="stylesheet" href="/static/css/dashboard.css">
   <link rel="stylesheet" href="/static/css/panel-controls.css">
+  <link rel="stylesheet" href="/static/css/panel-dialog.css">
   <link rel="stylesheet" href="/static/css/dashboard-tables.css">
   <link rel="stylesheet" href="/static/css/form-fields.css">
   <link rel="stylesheet" href="/static/css/file-picker.css">
@@ -102,8 +103,10 @@
   </div>
 
   {% include "components/panel_guide.html" %}
+  {% block panel_dialogs %}{% endblock %}
   {% block file_picker %}{% endblock %}
   <script src="/static/js/panel-guide.js" type="module"></script>
+  <script src="/static/js/panel-dialog.js" type="module"></script>
   <script src="/static/js/i18n.js" defer></script>
   <script src="/static/js/language-picker.js" type="module"></script>
   <script src="/static/js/app.js" defer></script>
