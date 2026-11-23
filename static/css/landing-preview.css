@@ -8,7 +8,7 @@
 
 .demo-stage {
   width: 100%;
-  aspect-ratio: 1.34;
+  aspect-ratio: 1.4;
   position: relative;
   isolation: isolate;
 }
@@ -21,22 +21,22 @@
 }
 
 .demo-stage::before {
-  inset: 6% 1% 12% 2%;
+  inset: 6% 3% 15% 2.5%;
   background: #263be8;
   border-radius: 15% 18% 14% 18%;
-  transform: skewX(-9deg) rotate(-3deg);
+  transform: skewX(-7deg) rotate(-3deg);
 }
 
 .demo-stage::after {
-  inset: 44% 1% 1% 23%;
+  inset: 44% 2.5% 4% 26%;
   background: var(--landing-pink);
-  border-radius: 19% 13% 19% 12%;
-  transform: skewX(-12deg) rotate(-4deg);
+  border-radius: 20% 14% 20% 12%;
+  transform: skewX(-10deg) rotate(-4deg);
 }
 
 .demo-burst {
   position: absolute;
-  width: 26%;
+  width: 24%;
   inset: -2% auto auto 43%;
   transform: rotate(-13deg);
 }
@@ -44,145 +44,118 @@
 .demo-burst svg { display: block; width: 100%; aspect-ratio: 120 / 96; }
 
 .demo-laptop {
-  width: 80%;
   position: absolute;
-  inset: 18% auto auto 4%;
-  padding: 1.15%;
-  border: clamp(2px, 0.48cqw, 4px) solid var(--landing-ink);
-  border-radius: 3.8cqw 3.8cqw 1cqw 1cqw;
-  background: #1c2031;
-  box-shadow: inset 0 0 0 1.5px #e6e6f0, 0.6cqw 1cqw 0 var(--landing-ink);
-  transform: rotate(-5deg);
+  inset: 17% auto auto 4%;
+  width: 84%;
+  padding: 1.5% 1.15% 1.25%;
+  border: clamp(2px, 0.46cqw, 4px) solid var(--landing-ink);
+  border-radius: 2.5cqw 2.5cqw 0.75cqw 0.75cqw;
+  background: #1b1e2b;
+  box-shadow: inset 0 0 0 1px #a5a8b5, 0.65cqw 0.8cqw 0 var(--landing-ink);
+}
+
+.demo-laptop::before {
+  content: "";
+  position: absolute;
+  top: 0.4cqw;
+  left: calc(50% - 0.28cqw);
+  width: 0.56cqw;
+  height: 0.56cqw;
+  border-radius: 50%;
+  background: #797e93;
 }
 
 .demo-laptop::after {
   content: "";
   position: absolute;
-  width: 108%;
-  height: 7%;
-  inset: 99% -4% auto;
-  border: clamp(2px, 0.4cqw, 4px) solid var(--landing-ink);
-  border-radius: 1cqw 1cqw 35% 35% / 1cqw 1cqw 70% 70%;
-  background: linear-gradient(#f4f5fc 0 48%, #9ca5ba 50%);
-  box-shadow: 0.42cqw 0.7cqw 0 var(--landing-ink);
+  width: 107%;
+  height: 6.5%;
+  inset: 99% -3.5% auto;
+  border: clamp(2px, 0.42cqw, 4px) solid var(--landing-ink);
+  border-radius: 0.75cqw 0.75cqw 36% 36% / 0.75cqw 0.75cqw 72% 72%;
+  background: linear-gradient(#f3f4fa 0 40%, #bfc5d2 40% 62%, #8890a6 62%);
+  box-shadow: 0.4cqw 0.65cqw 0 var(--landing-ink);
 }
 
-.demo-laptop-screen { overflow: hidden; border-radius: 2.5cqw 2.5cqw 0.4cqw 0.4cqw; background: #f5f6fb; }
-.demo-laptop-screen img { width: 100%; height: auto; aspect-ratio: 5 / 3; }
+.demo-laptop-screen {
+  overflow: hidden;
+  border-radius: 1.35cqw 1.35cqw 0.4cqw 0.4cqw;
+  background: #f5f6fb;
+}
+
+.demo-laptop-screen img,
+.demo-phone-inner img { display: block; width: 100%; height: auto; }
 
 .demo-phone {
-  width: 30%;
   position: absolute;
-  inset: 18% 2% auto auto;
-  padding: 0.85%;
-  border: clamp(2px, 0.52cqw, 4px) solid var(--landing-ink);
-  border-radius: 4.6cqw;
+  inset: 16% 2.2% auto auto;
+  width: 30%;
+  padding: 0.9%;
+  border: clamp(2px, 0.5cqw, 4px) solid var(--landing-ink);
+  border-radius: 4.2cqw;
   background: #181a25;
-  box-shadow: inset 0 0 0 1.5px #e6e6f0, 1cqw 0.95cqw 0 var(--landing-ink);
-  transform: rotate(8deg);
+  box-shadow: inset 0 0 0 1px #c4c5cd, 0.85cqw 0.85cqw 0 var(--landing-ink);
 }
 
 .demo-phone::before {
   content: "";
   position: absolute;
-  top: 2%;
-  left: 33%;
-  width: 34%;
-  height: 3.1%;
+  top: 2.4%;
+  left: 35%;
+  width: 30%;
+  height: 2.6%;
   background: #181a25;
   border-radius: 2cqw;
 }
 
-.demo-phone-inner { overflow: hidden; background: #fff9f6; border-radius: 3.6cqw; }
-
-.demo-cover { width: 100%; height: auto; aspect-ratio: 1.52; object-fit: cover; }
-.demo-restaurant-icon {
-  display: grid;
-  place-items: center;
-  position: relative;
-  margin: -3.2cqw auto 0;
-  width: 6cqw;
-  height: 6cqw;
-  border-radius: 1.3cqw;
-  border: 1.5px solid var(--landing-ink);
-  background: var(--landing-pink);
+.demo-phone-inner {
+  overflow: hidden;
+  border-radius: 3.35cqw;
+  background: #faf7f2;
 }
-
-.demo-restaurant-icon .ui-icon { width: 3.4cqw; height: 3.4cqw; fill: white; }
-.demo-menu { padding: 0.55cqw 1.55cqw 1.35cqw; }
-
-.demo-restaurant {
-  display: block;
-  text-align: center;
-  font-size: 2.7cqw;
-  font-weight: 900;
-  letter-spacing: -0.06em;
-  line-height: 1.1;
-  margin-top: 0.55cqw;
-}
-
-.demo-category {
-  display: inline-block;
-  font-size: 1.4cqw;
-  font-weight: 800;
-  background: var(--landing-yellow);
-  border-radius: 2cqw;
-  margin: 1.25cqw 0 0.3cqw;
-  padding: 0.32cqw 0.8cqw;
-}
-
-.demo-dishes { list-style: none; margin: 0; padding: 0; }
-
-.demo-dish {
-  display: grid;
-  grid-template-columns: 5.1cqw minmax(0, 1fr);
-  gap: 0.7cqw;
-  align-items: center;
-  padding: 0.6cqw 0;
-  font-size: 1.55cqw;
-  line-height: 1.13;
-}
-
-.demo-dish + .demo-dish { border-top: 1px solid #ecdde0; }
-.demo-dish img { width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; border-radius: 0.6cqw; }
-.demo-dish span { display: block; margin-top: 0.22cqw; color: #9f2250; font-weight: 800; }
 
 .demo-qr {
   position: absolute;
-  inset: auto auto 4% 40%;
-  width: 20%;
-  padding: 1.25cqw 1.25cqw 1.15cqw;
+  inset: auto auto 4% 39%;
+  width: 17.5%;
+  padding: 1.05cqw;
+  border: clamp(2px, 0.47cqw, 4px) solid var(--landing-ink);
+  border-radius: 1.85cqw 1.85cqw 0.7cqw 0.7cqw;
   background: var(--landing-yellow);
-  border: clamp(2px, 0.52cqw, 4px) solid var(--landing-ink);
-  border-radius: 2.3cqw 2.3cqw 0.85cqw 0.85cqw;
+  box-shadow: 0.6cqw 0.7cqw 0 var(--landing-ink);
   text-align: center;
-  font-size: 2cqw;
+  font-size: 1.72cqw;
   font-weight: 900;
   line-height: 1.05;
-  box-shadow: 0.75cqw 0.85cqw 0 var(--landing-ink);
   transform: rotate(7deg);
 }
 
-.demo-qr img { width: 100%; height: auto; border-radius: 0.5cqw; margin-top: 0.65cqw; }
+.demo-qr img { width: 100%; height: auto; border-radius: 0.45cqw; margin-top: 0.55cqw; }
 
 .landing-demo figcaption {
   color: #514b48;
-  margin-top: 0.5rem;
-  font-size: 0.81rem;
+  margin-top: 0.35rem;
+  font-size: 0.85rem;
   text-align: center;
+}
+
+.landing-demo-links {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0 1rem;
+}
+
+.landing-demo-links a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 0.17em;
 }
 
 @media (max-width: 36rem) {
   .demo-stage::before { inset-inline: 3%; }
   .demo-stage::after { inset-inline-end: 3%; }
-}
-
-.landing-demo figcaption a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 36px;
-  margin-inline: 0.35rem;
-  font-weight: 750;
-  text-decoration: underline;
-  text-underline-offset: 0.17em;
 }

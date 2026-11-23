@@ -18,7 +18,8 @@ data/published/
     ├── theme-{hash8}.css              # Content-hashed CSS variables for brand accent & contrast ink
     └── media/
         ├── {logo16}_192.png           # Content-addressed establishment logo
-        └── {item16}_400.jpg           # Content-addressed product thumbnails
+        ├── {item16}_400.jpg           # Content-addressed product thumbnails
+        └── {cover16}_800.jpg          # Optional cover from the first visible, available product with a photo
 ```
 
 ## Atomic Publication Lifecycle (`src/application/publishing.rs`)
@@ -28,11 +29,13 @@ data/published/
 3. Load `MenuSnapshot` in a single short SQLite read (`load_menu_snapshot(pool, est_id, false)`), filtering to `is_visible = 1` categories and products, then immediately release the DB connection.
 4. Generate `theme-{hash8}.css` (computing WCAG AA foreground ink color from `accent_color`).
 5. Render `index.html` using `PublicMenuTemplate` (Askama auto-escapes all user text; embeds ~1.6 KB `#qr-menu-i18n` JSON for zero-reload PT/EN/ES switching).
-6. Stage all referenced media files into `published/{slug}/media/` via `atomic_write_file` (`NamedTempFile::new_in(tmp_dir)` -> `write_all` -> `sync_all` -> `persist`).
+6. Stage all referenced media files into `published/{slug}/media/` via `atomic_write_file` (`NamedTempFile::new_in(tmp_dir)` -> `write_all` -> `sync_all` -> `persist`). Stage the large variant of the selected cover alongside the product thumbnails.
 7. Stage `theme-{hash8}.css` via `atomic_write_file`.
 8. Atomically replace `published/{slug}/index.html` via `atomic_write_file`.
 9. Update `establishments` (`is_published = 1`, `published_version += 1`, `has_unpublished_changes = 0`, `last_published_at`) and append a `'published'` row in `publications`.
 10. Clean up obsolete `theme-*.css` and unreferenced `media/*` files **only after** `index.html` is live.
+
+Already-published menus pick up the visual refresh through the shared stylesheet. They receive a photo cover during their next normal publication.
 
 ## Failure Recovery & Rollback
 

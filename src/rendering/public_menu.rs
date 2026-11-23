@@ -44,12 +44,14 @@ pub struct PublicMenuTemplate {
     pub establishment_description_es: String,
     pub establishment_display_description: String,
     pub logo_url: Option<String>,
+    pub cover_url: Option<String>,
     pub theme_css_href: String,
     pub is_preview: bool,
     pub skip_label: String,
     pub switcher_label: String,
     pub preview_banner_text: String,
     pub search_placeholder: String,
+    pub categories_label: String,
     pub all_categories_text: String,
     pub unavailable_text: String,
     pub empty_menu_text: String,
@@ -92,6 +94,9 @@ pub fn render_public_menu_html(
         .logo
         .as_ref()
         .map(|l| format!("{media_base_url}/{}", l.filename_thumb));
+    let cover_url = snapshot
+        .cover_image()
+        .map(|cover| format!("{media_base_url}/{}", cover.filename_large));
 
     let categories = snapshot
         .categories
@@ -147,12 +152,14 @@ pub fn render_public_menu_html(
         establishment_description_es: est.description_es.clone(),
         establishment_display_description: est.effective_description(locale).to_string(),
         logo_url,
+        cover_url,
         theme_css_href: theme_css_href.to_string(),
         is_preview,
         skip_label: cat.t(locale, "common.skip_to_content").to_string(),
         switcher_label: cat.t(locale, "lang.switcher_label").to_string(),
         preview_banner_text: cat.t(locale, "public_menu.preview_banner").to_string(),
         search_placeholder: cat.t(locale, "public_menu.search_placeholder").to_string(),
+        categories_label: cat.t(locale, "public_menu.categories_label").to_string(),
         all_categories_text: cat.t(locale, "public_menu.all_categories").to_string(),
         unavailable_text: cat.t(locale, "public_menu.unavailable_badge").to_string(),
         empty_menu_text: cat.t(locale, "public_menu.empty_menu").to_string(),

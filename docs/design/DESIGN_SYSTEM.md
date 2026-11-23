@@ -9,11 +9,15 @@
 
 ## Landing Page and Dashboard
 
-The landing page uses its own cream, blue, yellow, and pink palette. The screenshot in the device illustration comes from the authenticated owner dashboard running with a local fictional establishment. Keep personal information out of screenshots and regenerate the WebP when changes make the preview stale. The phone illustration uses translated Askama markup and local food photography. Its prices use the same integer centavos formatter as the dashboard.
+The landing page uses its own cream, blue, yellow, and pink palette. The device illustration uses real browser captures of the owner dashboard and public mobile menu for a fictional establishment. The enlarged WebP files are captured natively at 3840 × 2160 and 2160 × 3840 pixels. The landing selects smaller WebP derivatives through `srcset` and uses translated captions and alternative text. Keep personal information out of captures. The three original food photos under `static/images/` can be used to recreate the fictional menu.
 
 Dashboard pages share a dark sidebar, a workspace header with a language switcher, and an active link marked with `aria-current="page"`. On narrow screens, `static/js/app.js` enables a collapsible sidebar with keyboard dismissal. The navigation remains visible without JavaScript. The operations page adds shortcuts to its establishment and publication tables.
 
 The brand mark and icon sprites live under `static/icons/`. The landing's features and how-it-works sections share the illustrated SVG sprite, with bold outlines and fills from the landing palette. Keep decorative icons hidden from assistive technology when the adjacent text already names the action. Landing assets are served from `static/images/` and CSS stays scoped to the landing and dashboard layouts.
+
+## Public Menu
+
+The public menu uses a branded cover and a centered establishment identity. The cover uses the first visible, available product photo in menu order when the snapshot provides one. An illustrated cover uses the same brand color for menus without photos. The layout supports the shared static stylesheet on previously published snapshots, including empty menus and menus with no logo. A sticky search and category strip precedes product cards. Cards use one column on phones and two on wider screens.
 
 ## Zero Inline Scripts or Styles (Strict CSP)
 

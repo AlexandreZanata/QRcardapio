@@ -191,6 +191,25 @@ async fn atomic_publish_xss_escaping_zero_db_delivery_and_recovery() {
     assert!(html.contains("Beef Lasagna"));
     assert!(html.contains("Lasaña de Carne"));
 
+    let cover_asset =
+        find_media_asset_for_est(&pool, &est.id, prod.image_asset_id.as_deref().unwrap())
+            .await
+            .unwrap()
+            .unwrap();
+    let cover_url = format!("/c/cantina-bella/media/{}", cover_asset.filename_large);
+    assert!(html.contains(&format!("class=\"menu-cover\" src=\"{cover_url}\"")));
+    let cover_response = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .uri(cover_url)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(cover_response.status(), StatusCode::OK);
+
     // Conditional ETag -> 304 Not Modified
     let res_304 = app
         .clone()
@@ -259,7 +278,6 @@ async fn atomic_publish_xss_escaping_zero_db_delivery_and_recovery() {
         .unwrap()
         .unwrap();
     std::fs::remove_file(cfg.media_dir().join(&est.id).join(&asset2.filename_thumb)).unwrap();
-    let _ = &prod;
     let pub_fail = publish_establishment(&pool, &cfg, &locks, &est.id).await;
     assert!(
         pub_fail.is_err(),

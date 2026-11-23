@@ -50,12 +50,7 @@
   "landing.hero_cta_primary": "Empezar gratis",
   "landing.hero_cta_secondary": "Ver cómo funciona",
 
-  "landing.demo_badge": "Captura del panel con datos de demostración y ejemplo de menú móvil.",
-  "landing.demo_place": "Bistrô da Praça",
-  "landing.demo_cat_1": "Destacados",
-  "landing.demo_item_1": "Hamburguesa de la casa",
-  "landing.demo_item_2": "Pizza de calabresa",
-  "landing.demo_item_3": "Papas fritas",
+  "landing.demo_badge": "Pantallas del panel y del menú con datos de demostración.",
 
   "landing.how_title": "Del registro a la mesa en tres pasos",
   "landing.how_subtitle": "Crea, revisa y publica todo desde el panel.",
@@ -88,7 +83,9 @@
   "landing.proof_language": "En tres idiomas",
   "landing.demo_qr": "Ver el ejemplo",
   "landing.dashboard_alt": "Panel en portugués con navegación lateral, totales de productos y categorías y acciones de publicación.",
-  "landing.demo_expand": "Ampliar captura del panel",
+  "landing.demo_expand": "Ampliar panel en 4K",
+  "landing.demo_expand_menu": "Ampliar menú en 4K",
+  "landing.phone_alt": "Menú móvil en portugués de un bistró ficticio con foto de portada, categorías y precios.",
 
   "auth.login_title": "Iniciar sesión — QR Cardápio",
   "auth.login_heading": "Accede a tu panel",
@@ -243,6 +240,7 @@
 
   "public_menu.preview_banner": "Modo vista previa — cambios sin publicar. Solo tú ves esta página.",
   "public_menu.search_placeholder": "Buscar en el menú...",
+  "public_menu.categories_label": "Categorías del menú",
   "public_menu.all_categories": "Todo",
   "public_menu.unavailable_badge": "No disponible por ahora",
   "public_menu.empty_menu": "Este menú se está preparando.",

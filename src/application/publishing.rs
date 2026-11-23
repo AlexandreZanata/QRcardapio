@@ -131,6 +131,9 @@ pub async fn write_static_snapshot(
     if let Some(logo) = &snapshot.logo {
         keep_media.insert(logo.filename_thumb.clone());
     }
+    if let Some(cover) = snapshot.cover_image() {
+        keep_media.insert(cover.filename_large.clone());
+    }
     for sc in &snapshot.categories {
         for sp in &sc.products {
             if let Some(img) = &sp.image {

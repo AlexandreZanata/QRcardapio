@@ -50,12 +50,7 @@
   "landing.hero_cta_primary": "Start for free",
   "landing.hero_cta_secondary": "See how it works",
 
-  "landing.demo_badge": "Dashboard screenshot with sample data and an example mobile menu.",
-  "landing.demo_place": "Bistrô da Praça",
-  "landing.demo_cat_1": "Highlights",
-  "landing.demo_item_1": "House burger",
-  "landing.demo_item_2": "Calabresa pizza",
-  "landing.demo_item_3": "French fries",
+  "landing.demo_badge": "Dashboard and menu screens with sample data.",
 
   "landing.how_title": "From sign-up to table in three steps",
   "landing.how_subtitle": "Set up, review, and publish everything from your dashboard.",
@@ -88,7 +83,9 @@
   "landing.proof_language": "In three languages",
   "landing.demo_qr": "See the demo",
   "landing.dashboard_alt": "Portuguese dashboard with sidebar navigation, product and category totals, and publishing actions.",
-  "landing.demo_expand": "Enlarge dashboard screenshot",
+  "landing.demo_expand": "View dashboard in 4K",
+  "landing.demo_expand_menu": "View menu in 4K",
+  "landing.phone_alt": "Portuguese mobile menu for a fictional bistro with a cover photo, categories, and prices.",
 
   "auth.login_title": "Sign in — QR Cardápio",
   "auth.login_heading": "Sign in to your dashboard",
@@ -243,6 +240,7 @@
 
   "public_menu.preview_banner": "Preview mode — unpublished edits. Only visible to you.",
   "public_menu.search_placeholder": "Search the menu...",
+  "public_menu.categories_label": "Menu categories",
   "public_menu.all_categories": "All",
   "public_menu.unavailable_badge": "Currently unavailable",
   "public_menu.empty_menu": "This menu is currently being prepared.",

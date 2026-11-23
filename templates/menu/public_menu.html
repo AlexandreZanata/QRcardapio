@@ -21,10 +21,13 @@
 
   <div class="menu-shell">
     <header class="menu-hero">
+      {% if let Some(cover) = cover_url %}
+      <img class="menu-cover" src="{{ cover }}" alt="" fetchpriority="high">
+      {% endif %}
       <div class="menu-hero-top">
         <div class="menu-brand">
           {% if let Some(logo) = logo_url %}
-          <img class="menu-logo" src="{{ logo }}" alt="{{ establishment_name }}" width="64" height="64">
+          <img class="menu-logo" src="{{ logo }}" alt="" width="64" height="64">
           {% endif %}
           <div>
             <h1 class="menu-title">{{ establishment_name }}</h1>
@@ -57,7 +60,7 @@
                data-i18n-placeholder="public_menu.search_placeholder"
                data-i18n-aria="public_menu.search_placeholder">
 
-        <nav class="cat-pills" aria-label="Categories">
+        <nav class="cat-pills" aria-label="{{ categories_label }}" data-i18n-aria="public_menu.categories_label">
           <button type="button" class="cat-pill is-active" data-cat-filter="all" aria-pressed="true" data-i18n="public_menu.all_categories">{{ all_categories_text }}</button>
           {% for cat in categories %}
           <button type="button" class="cat-pill" data-cat-filter="{{ cat.id }}" aria-pressed="false"
@@ -99,7 +102,7 @@
               </div>
             </div>
             {% if let Some(img) = item.image_url %}
-            <img class="item-photo" src="{{ img }}" alt="{{ item.display_name }}" loading="lazy" width="92" height="92">
+            <img class="item-photo" src="{{ img }}" alt="" loading="lazy" width="112" height="112">
             {% endif %}
           </article>
           {% endfor %}
@@ -107,7 +110,7 @@
       </section>
       {% endfor %}
 
-      <div id="menu-no-results" class="empty-state is-hidden">
+      <div id="menu-no-results" class="empty-state is-hidden" role="status">
         <p data-i18n="public_menu.no_results">{{ no_results_text }}</p>
       </div>
       {% endif %}

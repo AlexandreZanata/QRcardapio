@@ -71,3 +71,14 @@ pub struct MenuSnapshot {
     pub logo: Option<MediaAsset>,
     pub categories: Vec<SnapshotCategory>,
 }
+
+impl MenuSnapshot {
+    pub fn cover_image(&self) -> Option<&MediaAsset> {
+        self.categories
+            .iter()
+            .filter(|section| section.category.is_visible)
+            .flat_map(|section| &section.products)
+            .filter(|item| item.product.is_visible && item.product.is_available)
+            .find_map(|item| item.image.as_ref())
+    }
+}

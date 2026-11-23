@@ -15,9 +15,11 @@ All 5 implementation phases of the **QR Cardápio MVP** (including full native z
 
 ## Landing and Panel Refresh
 
-The homepage now includes an illustration with a browser capture of the owner dashboard and a localized sample menu. The owner dashboard and operational administration share responsive side navigation. Operational tables include translated statuses and empty states.
+The homepage includes native 4K browser captures of the owner dashboard and public mobile menu, with responsive WebP variants on the landing. The owner dashboard and operational administration share responsive side navigation. Operational tables include translated statuses and empty states.
 
 The three how-it-works cards use custom storefront, menu book, and QR printer illustrations in the same style as the feature icons.
+
+The public menu uses a branded cover, sticky search and categories, and responsive product cards. The shared CSS updates published snapshots in place. A photo cover is staged during publication when the visible menu has an available product photo.
 
 ## Verification Snapshot
 

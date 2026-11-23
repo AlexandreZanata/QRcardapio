@@ -50,12 +50,7 @@
   "landing.hero_cta_primary": "Começar grátis",
   "landing.hero_cta_secondary": "Ver como funciona",
 
-  "landing.demo_badge": "Captura do painel com dados de demonstração e exemplo de cardápio no celular.",
-  "landing.demo_place": "Bistrô da Praça",
-  "landing.demo_cat_1": "Destaques",
-  "landing.demo_item_1": "Hambúrguer da casa",
-  "landing.demo_item_2": "Pizza calabresa",
-  "landing.demo_item_3": "Batata frita",
+  "landing.demo_badge": "Telas do painel e do cardápio com dados de demonstração.",
 
   "landing.how_title": "Do cadastro à mesa em três passos",
   "landing.how_subtitle": "Você pode montar, revisar e publicar tudo pelo próprio painel.",
@@ -88,7 +83,9 @@
   "landing.proof_language": "Em três idiomas",
   "landing.demo_qr": "Acesse o exemplo",
   "landing.dashboard_alt": "Painel do estabelecimento em português, com navegação lateral, totais de produtos e categorias e ações de publicação.",
-  "landing.demo_expand": "Ampliar captura do painel",
+  "landing.demo_expand": "Ampliar painel em 4K",
+  "landing.demo_expand_menu": "Ampliar cardápio em 4K",
+  "landing.phone_alt": "Versão em português do cardápio móvel de um bistrô fictício, com foto de capa, categorias e preços.",
 
   "auth.login_title": "Entrar no QR Cardápio",
   "auth.login_heading": "Acesse seu painel",
@@ -243,6 +240,7 @@
 
   "public_menu.preview_banner": "Modo prévia — alterações não publicadas. Apenas você vê esta página.",
   "public_menu.search_placeholder": "Buscar no cardápio...",
+  "public_menu.categories_label": "Categorias do cardápio",
   "public_menu.all_categories": "Tudo",
   "public_menu.unavailable_badge": "Indisponível no momento",
   "public_menu.empty_menu": "Este cardápio ainda está sendo preparado.",
