@@ -1,14 +1,23 @@
-<div class="lang-switcher" role="group" aria-label="{{ page.t("lang.switcher_label") }}" data-i18n-aria="lang.switcher_label">
-  <a href="?lang=pt-BR"
-     class="lang-btn {% if page.locale_code == "pt-BR" %}is-active{% endif %}"
-     data-lang-btn="pt-BR"
-     aria-pressed="{% if page.locale_code == "pt-BR" %}true{% else %}false{% endif %}">PT</a>
-  <a href="?lang=en"
-     class="lang-btn {% if page.locale_code == "en" %}is-active{% endif %}"
-     data-lang-btn="en"
-     aria-pressed="{% if page.locale_code == "en" %}true{% else %}false{% endif %}">EN</a>
-  <a href="?lang=es"
-     class="lang-btn {% if page.locale_code == "es" %}is-active{% endif %}"
-     data-lang-btn="es"
-     aria-pressed="{% if page.locale_code == "es" %}true{% else %}false{% endif %}">ES</a>
-</div>
+{% macro option(locale, code, key, active_locale) %}
+<a href="?lang={{ locale }}" hreflang="{{ locale }}" lang="{{ locale }}"
+   class="lang-choice{% if locale == active_locale %} is-active{% endif %}"
+   data-lang-btn="{{ locale }}" aria-current="{% if locale == active_locale %}true{% else %}false{% endif %}">
+  <span data-lang-icon="{{ locale }}" aria-hidden="true"></span>
+  <span data-i18n="{{ key }}">{{ code }}</span>
+</a>
+{% endmacro %}
+
+{% macro picker(active_locale, label) %}
+<details class="lang-picker">
+  <summary class="lang-trigger">
+    <span class="lang-trigger-label" data-i18n="lang.switcher_label">{{ label }}</span>
+    <span data-lang-icon="{{ active_locale }}" aria-hidden="true"></span>
+    <span class="lang-current-code">{% if active_locale == "en" %}EN{% else if active_locale == "es" %}ES{% else %}PT{% endif %}</span>
+  </summary>
+  <div class="lang-options">
+    {{ option("pt-BR", "PT", "lang.pt_br", active_locale) }}
+    {{ option("en", "EN", "lang.en", active_locale) }}
+    {{ option("es", "ES", "lang.es", active_locale) }}
+  </div>
+</details>
+{% endmacro %}

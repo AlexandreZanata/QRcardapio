@@ -76,7 +76,7 @@
     document.querySelectorAll("[data-lang-btn]").forEach((btn) => {
       const active = normalizeLocale(btn.dataset.langBtn) === locale;
       btn.classList.toggle("is-active", active);
-      btn.setAttribute("aria-pressed", active ? "true" : "false");
+      btn.setAttribute("aria-current", String(active));
     });
   }
 

@@ -156,8 +156,6 @@
 }
 
 .dashboard-context .ui-icon { color: #4956bd; }
-.dashboard-topbar .lang-switcher { flex: none; }
-.dashboard-topbar .lang-btn { min-height: 36px; }
 
 .dashboard-container {
   width: 100%;

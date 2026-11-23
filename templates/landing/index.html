@@ -1,5 +1,6 @@
 {% extends "layouts/base.html" %}
 {% import "components/icons.html" as icons %}
+{% import "components/lang_switcher.html" as languages %}
 {% import "landing/sections.html" as sections %}
 
 {% block head_extra %}
@@ -26,7 +27,7 @@
       <a class="btn landing-button landing-button-pink" href="/register" data-i18n="landing.create_menu">{{ page.t("landing.create_menu") }}</a>
       {% endif %}
     </div>
-    {% include "components/lang_switcher.html" %}
+    {{ languages::picker(page.locale_code, page.t("lang.switcher_label")) }}
   </div>
 </header>
 {% endblock %}

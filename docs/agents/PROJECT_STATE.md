@@ -21,6 +21,8 @@ The three how-it-works cards use custom storefront, menu book, and QR printer il
 
 The public menu uses a branded cover, sticky search and categories, and responsive product cards. The shared CSS updates published snapshots in place. A photo cover is staged during publication when the visible menu has an available product photo.
 
+The landing, dashboard, and public menu share an illustrated disclosure that shows the active language and opens the PT, EN, and ES choices. Previously-published menus gain the picker through their existing menu script.
+
 ## Verification Snapshot
 
 - `cargo fmt --check`: Passed

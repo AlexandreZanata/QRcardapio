@@ -84,7 +84,7 @@
     document.querySelectorAll("[data-lang-btn]").forEach((btn) => {
       const active = normalizeLocale(btn.dataset.langBtn) === locale;
       btn.classList.toggle("is-active", active);
-      btn.setAttribute("aria-pressed", active ? "true" : "false");
+      btn.setAttribute(btn.matches("a") ? "aria-current" : "aria-pressed", String(active));
     });
 
     if (persist) {
@@ -101,6 +101,8 @@
         "; Path=/; Max-Age=31536000; SameSite=Lax" +
         secure;
     }
+
+    window.dispatchEvent(new CustomEvent("qr:langchange", { detail: { locale, dict } }));
   }
 
   // Zero-reload instant language switcher inside static public menus
@@ -174,5 +176,9 @@
     }
   } catch {
     // Ignore storage access errors.
+  }
+
+  if (document.querySelector(".lang-switcher")) {
+    import("/static/js/language-picker.js").catch(() => {});
   }
 })();

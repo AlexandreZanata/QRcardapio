@@ -29,8 +29,9 @@ The public menu uses a branded cover and a centered establishment identity. The 
 
 1. **Server-Side Resolution (`src/http/middleware/locale.rs`)**: `?lang=` query > `qr_lang` cookie > `Accept-Language` quality header > `pt-BR` default. Every page renders SSR in the active locale with zero flash of untranslated text.
 2. **Dynamic Pages (`static/js/i18n.js`)**:
-   - Header `PT | EN | ES` controls intercept clicks (`ev.preventDefault()`), fetch `/static/i18n/{locale}.json?v={hash}` once (in-memory + immutable HTTP cache), update all `[data-i18n]`, `[data-i18n-placeholder]`, `[data-i18n-aria]`, `[data-i18n-title]`, `[data-price-centavos]`, `document.title`, and `<html lang>` **in place without reloading the page**, preserving unsaved form inputs and persisting `qr_lang` cookie + `localStorage`.
+   - The illustrated language picker shows the active language in a native disclosure. Choosing an option fetches `/static/i18n/{locale}.json?v={hash}` once and updates page text, prices, the document language, and the active icon in place. It preserves unsaved form inputs and stores the choice in the `qr_lang` cookie and local storage.
    - Without JS, links still resolve cleanly via `?lang={locale}`.
 3. **Static Public Menus (`/c/{slug}`, `static/js/menu.js`)**:
    - Published HTML embeds ~1.6 KB `#qr-menu-i18n` JSON for chrome strings and `data-pt` / `data-en` / `data-es` attributes for owner-provided translations.
-   - Switching `PT | EN | ES` updates both UI chrome, formatted BRL prices, and translated dishes **instantly with zero page reload and zero network requests**.
+   - Switching `PT | EN | ES` updates the interface, formatted BRL prices, and translated dishes in place from the embedded catalog.
+   - Existing snapshots adopt the same compact picker when `static/js/menu.js` enhances their previous language controls.

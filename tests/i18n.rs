@@ -115,6 +115,9 @@ async fn i18n_catalog_parity_and_http_zero_reload_contracts() {
     assert!(html_es.contains("Siempre a mano."));
     assert!(html_es.contains("data-i18n=\"landing.hero_title\""));
     assert!(html_es.contains("/static/js/i18n.js"));
+    assert!(html_es.contains("<details class=\"lang-picker\">"));
+    assert!(html_es.contains("class=\"lang-current-code\">ES</span>"));
+    assert!(html_es.contains("data-lang-btn=\"es\" aria-current=\"true\""));
     assert!(
         !html_es.contains("style=\""),
         "strict CSP forbids inline styles"

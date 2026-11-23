@@ -188,6 +188,8 @@ async fn atomic_publish_xss_escaping_zero_db_delivery_and_recovery() {
     assert!(!html.contains("<img src=x onerror="));
     assert!(!html.contains("<b>Frescas</b>"));
     assert!(html.contains("id=\"qr-menu-i18n\""));
+    assert!(html.contains("<details class=\"lang-picker\">"));
+    assert!(html.contains("class=\"lang-current-code\">PT</span>"));
     assert!(html.contains("Beef Lasagna"));
     assert!(html.contains("Lasaña de Carne"));
 

@@ -1,3 +1,4 @@
+{% import "components/lang_switcher.html" as languages -%}
 <!DOCTYPE html>
 <html lang="{{ page.locale_code }}" data-i18n-version="{{ page.i18n_version }}">
 <head>
@@ -8,6 +9,7 @@
   <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg">
   <link rel="stylesheet" href="/static/css/tokens.css">
   <link rel="stylesheet" href="/static/css/app.css">
+  <link rel="stylesheet" href="/static/css/language-picker.css">
   {% block head_extra %}{% endblock %}
 </head>
 <body data-page-title-key="{{ page.title_key }}">
@@ -22,7 +24,7 @@
       </a>
       <nav class="nav-group" aria-label="{{ page.t("nav.primary_label") }}" data-i18n-aria="nav.primary_label">
         {% block nav_links %}{% endblock %}
-        {% include "components/lang_switcher.html" %}
+        {{ languages::picker(page.locale_code, page.t("lang.switcher_label")) }}
       </nav>
     </div>
   </header>
@@ -39,6 +41,7 @@
   {% endblock %}
 
   <script src="/static/js/i18n.js" defer></script>
+  <script src="/static/js/language-picker.js" type="module"></script>
   <script src="/static/js/app.js" defer></script>
 </body>
 </html>

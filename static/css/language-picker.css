@@ -1,0 +1,102 @@
+.lang-picker {
+  position: relative;
+  flex: none;
+  justify-self: end;
+  color: #161721;
+  font-size: 0.88rem;
+  line-height: 1.15;
+}
+
+.lang-trigger,
+.lang-picker .lang-choice {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  box-sizing: border-box;
+  font: inherit;
+  font-weight: 800;
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+
+.lang-trigger {
+  padding: 0.32rem 0.6rem 0.32rem 0.42rem;
+  border: 1.5px solid #161721;
+  border-radius: 0.65rem;
+  background: #fff9ee;
+  box-shadow: 2px 2px 0 #161721;
+  list-style: none;
+}
+
+.lang-trigger::-webkit-details-marker { display: none; }
+.lang-trigger::marker { content: ""; }
+
+.lang-trigger::after {
+  content: "";
+  width: 0.42rem;
+  height: 0.42rem;
+  border-right: 1.6px solid currentColor;
+  border-bottom: 1.6px solid currentColor;
+  transform: translateY(-0.12rem) rotate(45deg);
+  margin-inline: 0.16rem 0.1rem;
+}
+
+.lang-picker[open] .lang-trigger::after { transform: translateY(0.1rem) rotate(225deg); }
+
+.lang-trigger-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.lang-options {
+  position: absolute;
+  z-index: 55;
+  inset-block-start: calc(100% + 0.45rem);
+  inset-inline-end: 0;
+  display: grid;
+  gap: 0.15rem;
+  min-width: 100%;
+  padding: 0.25rem;
+  border: 1.5px solid #161721;
+  border-radius: 0.75rem;
+  background: #fff9ee;
+  box-shadow: 3px 3px 0 #161721;
+}
+
+.lang-picker:not([open]) > .lang-options { display: none; }
+
+.lang-picker .lang-choice {
+  width: 100%;
+  border: 0;
+  border-radius: 0.48rem;
+  padding: 0.32rem 0.62rem 0.32rem 0.42rem;
+  background: transparent;
+  text-align: start;
+}
+
+.lang-picker .lang-choice:hover,
+.lang-picker .lang-choice:focus-visible { background: #f1e9d9; }
+.lang-picker .lang-choice.is-active { background: #ffdc38; }
+
+.lang-picker :focus-visible {
+  outline: 2px solid #161721;
+  outline-offset: 2px;
+}
+
+.lang-picker [data-lang-icon] {
+  display: block;
+  width: 1.72rem;
+  height: 1.72rem;
+  flex: none;
+  background: center / contain no-repeat;
+}
+
+.lang-picker [data-lang-icon="pt-BR"] { background-image: url("/static/icons/language-pt.svg"); }
+.lang-picker [data-lang-icon="en"] { background-image: url("/static/icons/language-en.svg"); }
+.lang-picker [data-lang-icon="es"] { background-image: url("/static/icons/language-es.svg"); }

@@ -62,7 +62,6 @@ body {
 }
 
 .menu-hero {
-  overflow: hidden;
   text-align: center;
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
@@ -75,6 +74,8 @@ body {
   display: block;
   width: 100%;
   height: clamp(9rem, 40vw, 17rem);
+  border-start-start-radius: inherit;
+  border-start-end-radius: inherit;
 }
 
 .menu-hero::before {
@@ -98,6 +99,9 @@ body {
   padding: 0 1.15rem 1.15rem;
   position: relative;
 }
+
+.menu-hero-top:has(.lang-picker[open]) { z-index: 21; }
+.menu-hero-top .lang-picker { justify-self: center; }
 
 .menu-brand {
   display: grid;

@@ -1,3 +1,4 @@
+{% import "components/lang_switcher.html" as languages -%}
 <!DOCTYPE html>
 <html lang="{{ locale_code }}">
 <head>
@@ -10,6 +11,7 @@
   <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg">
   <link rel="stylesheet" href="/static/css/tokens.css">
   <link rel="stylesheet" href="/static/css/menu.css">
+  <link rel="stylesheet" href="/static/css/language-picker.css">
   <link rel="stylesheet" href="{{ theme_css_href }}">
 </head>
 <body>
@@ -39,11 +41,7 @@
           </div>
         </div>
 
-        <div class="lang-switcher" role="group" aria-label="{{ switcher_label }}" data-i18n-aria="lang.switcher_label">
-          <button type="button" class="lang-btn {% if locale_code == "pt-BR" %}is-active{% endif %}" data-lang-btn="pt-BR" aria-pressed="{% if locale_code == "pt-BR" %}true{% else %}false{% endif %}">PT</button>
-          <button type="button" class="lang-btn {% if locale_code == "en" %}is-active{% endif %}" data-lang-btn="en" aria-pressed="{% if locale_code == "en" %}true{% else %}false{% endif %}">EN</button>
-          <button type="button" class="lang-btn {% if locale_code == "es" %}is-active{% endif %}" data-lang-btn="es" aria-pressed="{% if locale_code == "es" %}true{% else %}false{% endif %}">ES</button>
-        </div>
+        {{ languages::picker(locale_code, switcher_label) }}
       </div>
     </header>
 
@@ -123,5 +121,6 @@
 
   <script type="application/json" id="qr-menu-i18n">{{ menu_i18n_json|safe }}</script>
   <script src="/static/js/menu.js" defer></script>
+  <script src="/static/js/language-picker.js" type="module"></script>
 </body>
 </html>

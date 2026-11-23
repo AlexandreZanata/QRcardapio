@@ -69,10 +69,6 @@ body:has(.landing-page) {
   margin-inline-start: auto;
 }
 
-.landing-header .lang-switcher { background: transparent; border-color: var(--landing-rule); }
-.landing-header .lang-btn { min-height: 34px; padding-inline: 0.55rem; }
-.landing-header .lang-btn.is-active { background: var(--landing-ink); color: #fff; }
-
 .landing-button {
   background: var(--landing-paper);
   border: 2px solid var(--landing-ink);
@@ -270,7 +266,7 @@ body:has(.landing-page) {
 
 @media (max-width: 53rem) {
   .landing-header-inner { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
-  .landing-header .lang-switcher { grid-area: 1 / 2; }
+  .landing-header .lang-picker { grid-area: 1 / 2; }
   .landing-nav { grid-row: 2; border: 0; padding: 0; }
   .landing-hero { grid-template-columns: 1fr; gap: 1.5rem; }
   .landing-hero h1 { font-size: clamp(2.55rem, 8vw, 4.85rem); }
