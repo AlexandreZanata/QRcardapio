@@ -53,6 +53,18 @@ See the [guide to applying the landing style](GUIA_ESTILO_LANDING.md) for the vi
 
 The brand mark and icon sprites live under `static/icons/`. The landing's features and how-it-works sections share the illustrated SVG sprite, with bold outlines and fills from the landing palette. Keep decorative icons hidden from assistive technology when the adjacent text already names the action. Landing assets are served from `static/images/` and CSS stays scoped to the landing and dashboard layouts.
 
+### Integrações de IA na landing
+
+A seção `#integracoes-ia` explica as operações no rascunho, a revisão do proprietário e a ativação por MCP. Os cartões usam SVGs originais como identificação dos clientes. O Gemini aparece como opção de modelo dentro do Google Antigravity. O atalho para o painel depende de `MCP_ENABLED` e a área de ativação mostra o endereço do conector, o runbook e o estado da homologação.
+
+- [Ícone do ChatGPT](https://chatgpt.com/cdn/assets/favicon.6a33781f61.svg) e [guia da marca OpenAI](https://openai.com/brand/).
+- [Ícone oficial do Claude](https://platform.claude.com/docs/en/manage-claude/oauth-apps/branding-samples#download-the-logo).
+- [Kit do Google Antigravity](https://antigravity.google/press) e [SVG do Gemini](https://www.gstatic.com/lamda/images/gemini_sparkle_aurora_33f86dc0c0257da337c63.svg).
+
+A ilustração foi criada com o ImageGen integrado e exportada como WebP transparente em 620 e 1240 pixels de largura, em `static/images/landing-ai-menu-620.webp` e `static/images/landing-ai-menu-1240.webp`.
+
+> Use case: illustration-story. Asset type: original transparent hero illustration for the QR Cardápio landing section about MCP integrations. Draw a friendly Brazilian restaurant owner with a white chef hat, creamy shirt and cobalt-blue apron reviewing a digital menu draft on a tablet at a small counter. On the tablet, show a clean food photo thumbnail of a burger and abstract short rows with one pink edit accent. Beside it, show a clear printed yellow restaurant QR tabletop sign with a decorative QR-like pattern, plus a small separate cream review card with a bold blue check. The owner is actively reviewing the tablet before publishing. Medium shot, composition contained entirely in the center, generous clear silhouette, landscape 4:3, readable at 350 pixels wide. Match QR Cardápio's modern Brazilian editorial sticker illustration style: bold almost-black navy outlines #161721, warm cream #fff9ee, ultramarine #263be8, golden yellow #ffdc38, strawberry pink #ff5596. Flat filled shapes, a little screen-printed texture, subtle depth and white sticker highlights. Transparent outer background with true alpha, crisp edges. No letters, numbers, text, wordmarks, third-party logos, watermarks, or drawn interface from an existing app. Do not depict automatic publication.
+
 ## Public Menu
 
 The public menu uses a branded cover and a centered establishment identity. The cover uses the first visible, available product photo in menu order when the snapshot provides one. An illustrated cover uses the same brand color for menus without photos. The layout supports the shared static stylesheet on previously published snapshots, including empty menus and menus with no logo. A sticky search and category strip precedes product cards. Cards use one column on phones and two on wider screens.

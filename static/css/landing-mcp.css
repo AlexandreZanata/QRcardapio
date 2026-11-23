@@ -1,0 +1,201 @@
+.landing-mcp {
+  margin-block-start: clamp(2rem, 5vw, 4.5rem);
+  padding-block: clamp(2.3rem, 5vw, 4.6rem);
+  border-block: 1px solid var(--landing-rule);
+  background: #f8efdf;
+  scroll-margin-block-start: 1rem;
+}
+
+.landing-mcp-intro {
+  display: grid;
+  grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr);
+  gap: clamp(1.2rem, 4vw, 4rem);
+  align-items: center;
+}
+
+.landing-mcp-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 1rem;
+  padding: 0.38rem 0.72rem;
+  border: 2px solid var(--landing-ink);
+  border-radius: 0.65rem;
+  background: var(--landing-pink);
+  box-shadow: 2px 3px 0 var(--landing-ink);
+  font-weight: 850;
+}
+
+.landing-mcp h2 {
+  max-width: 12ch;
+  margin: 0 0 1.1rem;
+  font-size: clamp(2.5rem, 4.85vw, 4.75rem);
+  font-weight: 900;
+  line-height: 1.03;
+  letter-spacing: -0.065em;
+  text-wrap: balance;
+}
+
+.landing-mcp-capabilities {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0 0 1.3rem;
+  padding: 0;
+  list-style: none;
+}
+
+.landing-mcp-capabilities li { display: flex; align-items: flex-start; gap: 0.55rem; font-weight: 720; }
+.landing-mcp-capabilities .panel-icon { flex: none; }
+
+.landing-mcp-art {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  width: min(100%, 41rem);
+  margin: 0 auto;
+  padding: 0.2rem 0.65rem 0;
+}
+
+.landing-mcp-art::before,
+.landing-mcp-art::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.landing-mcp-art::before {
+  inset: 12% 2% 15% 10%;
+  border-radius: 44% 39% 30% 40% / 57% 51% 33% 34%;
+  background: var(--landing-blue);
+  transform: rotate(-5deg);
+}
+
+.landing-mcp-art::after {
+  inset: 46% 2% 12% 11%;
+  border-radius: 52% 36% 27% 38%;
+  background: var(--landing-pink);
+  transform: rotate(-5deg);
+}
+
+.landing-mcp-art > img { display: block; width: 100%; height: auto; }
+
+.landing-mcp-art figcaption {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  justify-self: center;
+  max-width: 100%;
+  margin-top: 0.55rem;
+  padding: 0.45rem 0.7rem;
+  border: 2px solid var(--landing-ink);
+  border-radius: 0.6rem;
+  background: var(--landing-yellow);
+  box-shadow: 2px 3px 0 var(--landing-ink);
+  font-size: 0.88rem;
+  line-height: 1.25;
+}
+
+.landing-mcp-art figcaption .panel-icon { flex: none; }
+
+.landing-mcp-connectors {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.8rem, 2vw, 1.3rem);
+  margin: clamp(1.6rem, 4vw, 3.15rem) 0 1.35rem;
+  padding: 0;
+  list-style: none;
+}
+
+.landing-mcp-connector {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-content: start;
+  align-items: start;
+  gap: clamp(0.65rem, 1.65vw, 1rem);
+  padding: clamp(0.8rem, 1.75vw, 1.15rem);
+  border: 2px solid var(--landing-ink);
+  border-radius: 0.9rem;
+  background: var(--landing-paper);
+  box-shadow: 3px 4px 0 var(--landing-ink);
+}
+
+.landing-mcp-logo {
+  display: grid;
+  width: 3.35rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid var(--landing-rule);
+  border-radius: 0.75rem;
+  background: #fff;
+}
+
+.landing-mcp-logo img { object-fit: contain; }
+.landing-mcp-connector h3 { margin: 0; font-size: clamp(1.02rem, 1.7vw, 1.42rem); line-height: 1.2; }
+
+.landing-mcp-connector a,
+.landing-mcp-setup a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #1a2aad;
+  font-size: 0.87rem;
+  font-weight: 760;
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
+.landing-mcp-connector .landing-mcp-model {
+  display: flex;
+  width: fit-content;
+  gap: 0.38rem;
+  margin: -0.3rem 0 0;
+  color: #46445a;
+  font-size: 0.81rem;
+}
+
+.landing-mcp-model img { flex: none; }
+
+.landing-mcp-setup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.48fr);
+  gap: 0.8rem 1.5rem;
+  align-items: start;
+  padding: clamp(0.95rem, 2.8vw, 1.75rem);
+  border: 1px solid var(--landing-rule);
+  border-radius: 0.85rem;
+  background: #fffdf8;
+  scroll-margin-block-start: 1rem;
+}
+
+.landing-mcp-setup h3 { margin: 0 0 0.42rem; font-size: clamp(1.15rem, 2vw, 1.45rem); }
+.landing-mcp-setup p { margin: 0 0 0.5rem; color: #3f3f51; font-size: 0.91rem; }
+
+.landing-mcp-address {
+  display: grid;
+  gap: 0.23rem;
+  padding: 0.58rem 0.72rem;
+  border: 1px solid #d5dafa;
+  border-radius: 0.55rem;
+  background: #eef0ff;
+  overflow-wrap: anywhere;
+}
+
+.landing-mcp-address span { font-weight: 760; }
+.landing-mcp-address code { color: #141d49; font-size: 0.89rem; }
+
+.landing-mcp-technical { grid-column: 1 / -1; border-top: 1px solid var(--landing-rule); }
+.landing-mcp-technical summary { min-height: 44px; padding-top: 0.55rem; cursor: pointer; font-weight: 760; }
+.landing-mcp-technical p { max-width: 85ch; }
+
+@media (max-width: 52rem) {
+  .landing-mcp-intro { grid-template-columns: minmax(0, 1fr); }
+  .landing-mcp-art { max-width: 32.5rem; }
+}
+
+@media (max-width: 43rem) {
+  .landing-mcp-connectors,
+  .landing-mcp-setup { grid-template-columns: minmax(0, 1fr); }
+  .landing-mcp-connector { align-items: center; }
+  .landing-mcp-actions .btn { min-height: 44px; }
+}

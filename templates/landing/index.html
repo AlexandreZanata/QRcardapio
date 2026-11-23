@@ -7,6 +7,7 @@
 <link rel="stylesheet" href="/static/css/landing.css">
 <link rel="stylesheet" href="/static/css/landing-preview.css">
 <link rel="stylesheet" href="/static/css/landing-maps.css">
+<link rel="stylesheet" href="/static/css/landing-mcp.css">
 {% if show_plan %}
 <link rel="stylesheet" href="/static/css/panel-dialog.css">
 <link rel="stylesheet" href="/static/css/landing-plan.css">
@@ -25,6 +26,7 @@
       <a href="#benefits" data-i18n="landing.nav_features">{{ page.t("landing.nav_features") }}</a>
       <a href="#how-it-works" data-i18n="nav.features">{{ page.t("nav.features") }}</a>
       <a href="#google-maps">Google Maps</a>
+      <a href="#integracoes-ia" data-i18n="landing.mcp_nav">{{ page.t("landing.mcp_nav") }}</a>
       {% if show_plan %}
       <a href="#plan" data-i18n="billing.nav_plan">{{ page.t("billing.nav_plan") }}</a>
       {% endif %}
@@ -97,6 +99,7 @@
   </section>
 
   {% include "landing/maps.html" %}
+  {% include "landing/mcp.html" %}
 
   {% if show_plan %}
   {% include "landing/plan.html" %}

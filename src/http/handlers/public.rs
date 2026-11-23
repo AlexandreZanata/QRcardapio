@@ -28,6 +28,12 @@ pub async fn landing(
         is_logged_in: auth.is_some(),
         billing_enabled,
         show_plan: billing_enabled || local_plan_preview(&state.config.public_base_url),
+        mcp_enabled: state.config.mcp_enabled,
+        mcp_endpoint: if state.config.mcp_enabled {
+            format!("{}/mcp", state.config.public_base_url)
+        } else {
+            "https://qrcardapio.com.br/mcp".to_owned()
+        },
         plans: crate::rendering::billing::PlanOffer::catalog(),
     };
     render_html(&tpl, StatusCode::OK)
