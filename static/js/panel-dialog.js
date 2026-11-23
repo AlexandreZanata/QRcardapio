@@ -1,5 +1,21 @@
 const openers = new WeakMap();
 
+function openDialog(dialog, trigger) {
+  const category = dialog.querySelector('select[name="category_id"]');
+  if (category && trigger.dataset.panelDialogCategory) category.value = trigger.dataset.panelDialogCategory;
+  openers.set(dialog, trigger);
+  dialog.showModal();
+  const focus = dialog.querySelector("[data-panel-dialog-focus]") || dialog.querySelector('input[type="text"]');
+  focus?.focus();
+}
+
+function returnUrl(form) {
+  const destination = new URL(form.dataset.returnUrl, window.location.href);
+  const lang = new URLSearchParams(window.location.search).get("lang");
+  if (lang) destination.searchParams.set("lang", document.documentElement.lang);
+  return destination;
+}
+
 for (const trigger of document.querySelectorAll("[data-panel-dialog-open]")) {
   const dialog = document.getElementById(trigger.dataset.panelDialogOpen);
   if (typeof dialog?.showModal !== "function") continue;
@@ -11,10 +27,7 @@ for (const trigger of document.querySelectorAll("[data-panel-dialog-open]")) {
     event.preventDefault();
     if (dialog.open) return;
 
-    openers.set(dialog, trigger);
-    dialog.showModal();
-    const focus = dialog.querySelector("[data-panel-dialog-focus]") || dialog.querySelector('input[type="text"]');
-    focus?.focus();
+    openDialog(dialog, trigger);
   });
 }
 
@@ -26,6 +39,14 @@ for (const dialog of document.querySelectorAll("dialog.panel-dialog")) {
 
   const form = dialog.querySelector("form[data-panel-dialog-form]");
   if (form) enableDialogForm(dialog, form);
+
+  if (form && dialog.hasAttribute("data-panel-dialog-auto-open") && typeof dialog.showModal === "function") {
+    const trigger = document.querySelector(`[data-panel-dialog-open="${dialog.id}"]`);
+    if (trigger) {
+      dialog.addEventListener("close", () => history.replaceState(history.state, "", returnUrl(form)), { once: true });
+      openDialog(dialog, trigger);
+    }
+  }
 }
 
 function enableDialogForm(dialog, form) {
@@ -54,6 +75,7 @@ function enableDialogForm(dialog, form) {
     form.reset();
     for (const details of form.querySelectorAll("details[open]")) details.open = false;
     for (const field of form.querySelectorAll("[data-character-count]")) field.dispatchEvent(new Event("input"));
+    for (const field of form.querySelectorAll('input[type="file"]')) field.dispatchEvent(new Event("change"));
     feedback.hidden = true;
   });
 
@@ -66,12 +88,14 @@ function enableDialogForm(dialog, form) {
     const lang = document.documentElement.lang;
     const endpoint = new URL(form.action);
     endpoint.searchParams.set("lang", lang);
+    const values = new FormData(form);
+    const body = form.enctype === "multipart/form-data" ? values : new URLSearchParams(values);
 
     try {
       const response = await fetch(endpoint, {
         method: form.method,
         headers: { Accept: "application/json" },
-        body: new URLSearchParams(new FormData(form)),
+        body,
       });
 
       if (response.redirected) {
@@ -79,9 +103,7 @@ function enableDialogForm(dialog, form) {
         return;
       }
       if (response.status === 204) {
-        const destination = new URL(form.dataset.returnUrl, window.location.href);
-        if (new URLSearchParams(window.location.search).has("lang")) destination.searchParams.set("lang", lang);
-        window.location.assign(destination);
+        window.location.assign(returnUrl(form));
         return;
       }
       if (response.headers.get("Content-Type")?.startsWith("application/json")) {

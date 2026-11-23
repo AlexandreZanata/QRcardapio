@@ -1,6 +1,6 @@
 use axum::extract::{Query, State};
 use axum::http::StatusCode;
-use axum::response::{IntoResponse, Response};
+use axum::response::{IntoResponse, Redirect, Response};
 use axum_extra::extract::CookieJar;
 use serde::Deserialize;
 
@@ -10,10 +10,12 @@ use crate::error::AppResult;
 use crate::http::middleware::auth::TenantContext;
 use crate::http::middleware::locale::RequestLocale;
 use crate::http::responses::take_flash;
-use crate::i18n::{format_price, pick_localized_text};
+use crate::i18n::{Locale, format_price, pick_localized_text};
+use crate::infrastructure::database::queries::list_categories_for_est;
 use crate::infrastructure::database::queries::menu_editor::list_page;
 use crate::rendering::menu_editor::{
-    EditorCategoryView, EditorPagination, EditorProductView, MenuEditorTemplate,
+    CategoryOptionView, EditorCategoryView, EditorPagination, EditorProductView,
+    MenuEditorTemplate, ProductFields,
 };
 use crate::rendering::{PageMeta, render_html};
 
@@ -52,7 +54,28 @@ pub async fn menu_editor_page(
     Query(query): Query<EditorPageQuery>,
     jar: CookieJar,
 ) -> AppResult<Response> {
+    render_editor(&state, locale, tenant, query, jar, None).await
+}
+
+pub(super) async fn render_editor(
+    state: &AppState,
+    locale: Locale,
+    tenant: TenantContext,
+    query: EditorPageQuery,
+    jar: CookieJar,
+    new_product_category: Option<&str>,
+) -> AppResult<Response> {
     let est = &tenant.establishment;
+    let category_options: Vec<_> = list_categories_for_est(&state.pool, &est.id)
+        .await?
+        .into_iter()
+        .map(CategoryOptionView::from)
+        .collect();
+    let open_new_product = new_product_category.is_some();
+    if open_new_product && category_options.is_empty() {
+        return Ok(Redirect::to("/dashboard/categories/new").into_response());
+    }
+    let product = ProductFields::new(&category_options, new_product_category);
     let page = list_page(&state.pool, &est.id, query.page_number()).await?;
     let categories = page
         .rows
@@ -115,6 +138,9 @@ pub async fn menu_editor_page(
         csrf_token: tenant.auth.csrf_token,
         has_unpublished_changes: est.has_unpublished_changes,
         categories,
+        category_options,
+        product,
+        open_new_product,
         pagination: EditorPagination {
             current: page.current,
             pages: page.pages,

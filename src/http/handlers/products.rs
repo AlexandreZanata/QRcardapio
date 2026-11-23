@@ -1,12 +1,12 @@
 use axum::Form;
 use axum::extract::{Multipart, Path, Query, State};
-use axum::http::StatusCode;
+use axum::http::{HeaderMap, StatusCode};
 use axum::response::{IntoResponse, Redirect, Response};
 use axum_extra::extract::CookieJar;
 use serde::Deserialize;
 
-use super::menu_editor::EditorPageQuery;
-use super::product_multipart::parse_product_multipart;
+use super::menu_editor::{EditorPageQuery, render_editor};
+use super::product_multipart::{ParsedProductMultipart, parse_product_multipart};
 use crate::app::AppState;
 use crate::application::menus::{
     ProductInput, create_product, delete_product, move_product, toggle_product_availability,
@@ -17,16 +17,20 @@ use crate::domain::product::format_price_input;
 use crate::error::{AppError, AppResult};
 use crate::http::middleware::auth::{TenantContext, verify_csrf};
 use crate::http::middleware::locale::RequestLocale;
-use crate::http::responses::with_flash_redirect;
+use crate::http::responses::{
+    dialog_error, dialog_saved, prefers_dialog_response, with_flash_redirect,
+};
 use crate::infrastructure::database::queries::{
     find_media_asset_for_est, find_product_for_est, list_categories_for_est,
 };
-use crate::rendering::menu_editor::{CategoryOptionView, ProductFormTemplate};
+use crate::rendering::menu_editor::{CategoryOptionView, ProductFields, ProductFormTemplate};
 use crate::rendering::{PageMeta, render_html};
 
 #[derive(Deserialize)]
 pub struct NewProductQuery {
     pub category_id: Option<String>,
+    #[serde(default)]
+    standalone: bool,
     #[serde(flatten)]
     editor: EditorPageQuery,
 }
@@ -47,24 +51,26 @@ pub async fn new_product_page(
     RequestLocale(locale): RequestLocale,
     tenant: TenantContext,
     Query(query): Query<NewProductQuery>,
+    jar: CookieJar,
 ) -> AppResult<Response> {
+    if !query.standalone {
+        return render_editor(
+            &state,
+            locale,
+            tenant,
+            query.editor,
+            jar,
+            Some(query.category_id.as_deref().unwrap_or_default()),
+        )
+        .await;
+    }
     let cats = list_categories_for_est(&state.pool, &tenant.establishment.id).await?;
     if cats.is_empty() {
         return Ok(Redirect::to("/dashboard/categories/new").into_response());
     }
     let editor = query.editor;
-    let selected = query
-        .category_id
-        .filter(|id| cats.iter().any(|c| &c.id == id))
-        .unwrap_or_else(|| cats[0].id.clone());
-
-    let category_options = cats
-        .into_iter()
-        .map(|c| CategoryOptionView {
-            id: c.id,
-            name: c.name,
-        })
-        .collect();
+    let category_options: Vec<_> = cats.into_iter().map(CategoryOptionView::from).collect();
+    let product = ProductFields::new(&category_options, query.category_id.as_deref());
 
     let tpl = ProductFormTemplate {
         page: PageMeta::new(locale, "product_form.new_title", None),
@@ -77,17 +83,7 @@ pub async fn new_product_page(
         form_action: editor.with_page("/dashboard/products"),
         menu_url: editor.menu_url(),
         category_options,
-        selected_category_id: selected,
-        name_value: String::new(),
-        name_en: String::new(),
-        name_es: String::new(),
-        price_value: String::new(),
-        description_value: String::new(),
-        description_en: String::new(),
-        description_es: String::new(),
-        existing_image_url: None,
-        is_available: true,
-        is_visible: true,
+        product,
         error_key: None,
     };
     render_html(&tpl, StatusCode::OK)
@@ -99,20 +95,15 @@ pub async fn create_product_submit(
     tenant: TenantContext,
     Query(editor): Query<EditorPageQuery>,
     jar: CookieJar,
+    headers: HeaderMap,
     multipart: Multipart,
 ) -> AppResult<Response> {
-    let parsed = parse_product_multipart(multipart).await?;
-    verify_csrf(&tenant.auth, &parsed.csrf)?;
-
-    if parsed.image_bytes.is_some()
-        && state
-            .rate_limiters
-            .upload_account
-            .check_key(&tenant.auth.account.id)
-            .is_err()
-    {
-        return Err(AppError::RateLimited);
-    }
+    let dialog_submission = prefers_dialog_response(&headers);
+    let mut parsed = match checked_product_multipart(&state, &tenant, multipart).await {
+        Ok(parsed) => parsed,
+        Err(err) if dialog_submission => return Ok(dialog_error(state.catalog, locale, &err)),
+        Err(err) => return Err(err),
+    };
 
     let res = create_product(
         &state.pool,
@@ -130,11 +121,16 @@ pub async fn create_product_submit(
             is_available: parsed.is_available,
             is_visible: parsed.is_visible,
         },
-        parsed.image_bytes,
+        parsed.image_bytes.take(),
     )
     .await;
 
     match res {
+        Ok(_) if dialog_submission => Ok(dialog_saved(
+            jar,
+            "flash.product_created",
+            state.config.cookie_secure,
+        )),
         Ok(_) => Ok(with_flash_redirect(
             jar,
             &editor.menu_url(),
@@ -142,15 +138,10 @@ pub async fn create_product_submit(
             "flash.product_created",
             state.config.cookie_secure,
         )),
+        Err(err) if dialog_submission => Ok(dialog_error(state.catalog, locale, &err)),
         Err(err) => {
             let cats = list_categories_for_est(&state.pool, &tenant.establishment.id).await?;
-            let category_options = cats
-                .into_iter()
-                .map(|c| CategoryOptionView {
-                    id: c.id,
-                    name: c.name,
-                })
-                .collect();
+            let category_options = cats.into_iter().map(CategoryOptionView::from).collect();
             let tpl = ProductFormTemplate {
                 page: PageMeta::new(locale, "product_form.new_title", None),
                 brand_name: tenant.establishment.name.clone(),
@@ -162,22 +153,31 @@ pub async fn create_product_submit(
                 form_action: editor.with_page("/dashboard/products"),
                 menu_url: editor.menu_url(),
                 category_options,
-                selected_category_id: parsed.category_id,
-                name_value: parsed.name,
-                name_en: parsed.name_en,
-                name_es: parsed.name_es,
-                price_value: parsed.price,
-                description_value: parsed.description,
-                description_en: parsed.description_en,
-                description_es: parsed.description_es,
-                existing_image_url: None,
-                is_available: parsed.is_available,
-                is_visible: parsed.is_visible,
+                product: parsed.into(),
                 error_key: Some(err.i18n_key().to_string()),
             };
             render_html(&tpl, err.status_code())
         }
     }
+}
+
+async fn checked_product_multipart(
+    state: &AppState,
+    tenant: &TenantContext,
+    multipart: Multipart,
+) -> AppResult<ParsedProductMultipart> {
+    let parsed = parse_product_multipart(multipart).await?;
+    verify_csrf(&tenant.auth, &parsed.csrf)?;
+    if parsed.image_bytes.is_some()
+        && state
+            .rate_limiters
+            .upload_account
+            .check_key(&tenant.auth.account.id)
+            .is_err()
+    {
+        return Err(AppError::RateLimited);
+    }
+    Ok(parsed)
 }
 
 pub async fn edit_product_page(
@@ -191,13 +191,7 @@ pub async fn edit_product_page(
         .await?
         .ok_or(AppError::NotFound("error.not_found"))?;
     let cats = list_categories_for_est(&state.pool, &tenant.establishment.id).await?;
-    let category_options = cats
-        .into_iter()
-        .map(|c| CategoryOptionView {
-            id: c.id,
-            name: c.name,
-        })
-        .collect();
+    let category_options = cats.into_iter().map(CategoryOptionView::from).collect();
 
     let existing_image_url = match &prod.image_asset_id {
         Some(aid) => find_media_asset_for_est(&state.pool, &tenant.establishment.id, aid)
@@ -217,17 +211,19 @@ pub async fn edit_product_page(
         form_action: editor.with_page(&format!("/dashboard/products/{}", prod.id)),
         menu_url: editor.menu_url(),
         category_options,
-        selected_category_id: prod.category_id,
-        name_value: prod.name,
-        name_en: prod.name_en,
-        name_es: prod.name_es,
-        price_value: format_price_input(prod.price_centavos),
-        description_value: prod.description,
-        description_en: prod.description_en,
-        description_es: prod.description_es,
-        existing_image_url,
-        is_available: prod.is_available,
-        is_visible: prod.is_visible,
+        product: ProductFields {
+            selected_category_id: prod.category_id,
+            name_value: prod.name,
+            name_en: prod.name_en,
+            name_es: prod.name_es,
+            price_value: format_price_input(prod.price_centavos),
+            description_value: prod.description,
+            description_en: prod.description_en,
+            description_es: prod.description_es,
+            existing_image_url,
+            is_available: prod.is_available,
+            is_visible: prod.is_visible,
+        },
         error_key: None,
     };
     render_html(&tpl, StatusCode::OK)
@@ -242,18 +238,7 @@ pub async fn update_product_submit(
     Path(prod_id): Path<String>,
     multipart: Multipart,
 ) -> AppResult<Response> {
-    let parsed = parse_product_multipart(multipart).await?;
-    verify_csrf(&tenant.auth, &parsed.csrf)?;
-
-    if parsed.image_bytes.is_some()
-        && state
-            .rate_limiters
-            .upload_account
-            .check_key(&tenant.auth.account.id)
-            .is_err()
-    {
-        return Err(AppError::RateLimited);
-    }
+    let mut parsed = checked_product_multipart(&state, &tenant, multipart).await?;
 
     let res = update_product(
         &state.pool,
@@ -272,7 +257,7 @@ pub async fn update_product_submit(
             is_available: parsed.is_available,
             is_visible: parsed.is_visible,
         },
-        parsed.image_bytes,
+        parsed.image_bytes.take(),
         parsed.remove_image,
     )
     .await;
@@ -287,13 +272,7 @@ pub async fn update_product_submit(
         )),
         Err(err) => {
             let cats = list_categories_for_est(&state.pool, &tenant.establishment.id).await?;
-            let category_options = cats
-                .into_iter()
-                .map(|c| CategoryOptionView {
-                    id: c.id,
-                    name: c.name,
-                })
-                .collect();
+            let category_options = cats.into_iter().map(CategoryOptionView::from).collect();
             let tpl = ProductFormTemplate {
                 page: PageMeta::new(locale, "product_form.edit_title", None),
                 brand_name: tenant.establishment.name.clone(),
@@ -305,17 +284,7 @@ pub async fn update_product_submit(
                 form_action: editor.with_page(&format!("/dashboard/products/{prod_id}")),
                 menu_url: editor.menu_url(),
                 category_options,
-                selected_category_id: parsed.category_id,
-                name_value: parsed.name,
-                name_en: parsed.name_en,
-                name_es: parsed.name_es,
-                price_value: parsed.price,
-                description_value: parsed.description,
-                description_en: parsed.description_en,
-                description_es: parsed.description_es,
-                existing_image_url: None,
-                is_available: parsed.is_available,
-                is_visible: parsed.is_visible,
+                product: parsed.into(),
                 error_key: Some(err.i18n_key().to_string()),
             };
             render_html(&tpl, err.status_code())

@@ -1,0 +1,16 @@
+{% import "components/panel_dialog.html" as modal %}
+
+<dialog class="panel-dialog" id="new-product-dialog" aria-labelledby="new-product-heading"
+        {% if open_new_product %}data-panel-dialog-auto-open{% endif %}>
+  {{ modal::heading("new-product-heading", "menu_editor.new_product", "box", subtitle_key="product_form.new_intro") }}
+  <div class="panel-dialog-body">
+    <form class="form-stack panel-product-fields" id="new-product-form" method="post" enctype="multipart/form-data"
+          action="/dashboard/products{{ pagination.query_suffix() }}" data-panel-dialog-form
+          data-return-url="/dashboard/menu{{ pagination.query_suffix() }}">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      {{ modal::feedback() }}
+      {% include "components/product_fields.html" %}
+    </form>
+  </div>
+  {{ modal::actions("new-product-form", "product_form.create_action", "check") }}
+</dialog>

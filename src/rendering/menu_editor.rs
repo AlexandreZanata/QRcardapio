@@ -1,6 +1,7 @@
 use askama::Template;
 
 use super::PageMeta;
+use crate::domain::category::Category;
 
 pub struct EditorProductView {
     pub id: String,
@@ -40,6 +41,46 @@ pub struct CategoryOptionView {
     pub name: String,
 }
 
+impl From<Category> for CategoryOptionView {
+    fn from(category: Category) -> Self {
+        Self {
+            id: category.id,
+            name: category.name,
+        }
+    }
+}
+
+#[derive(Default)]
+pub struct ProductFields {
+    pub selected_category_id: String,
+    pub name_value: String,
+    pub name_en: String,
+    pub name_es: String,
+    pub price_value: String,
+    pub description_value: String,
+    pub description_en: String,
+    pub description_es: String,
+    pub existing_image_url: Option<String>,
+    pub is_available: bool,
+    pub is_visible: bool,
+}
+
+impl ProductFields {
+    pub fn new(categories: &[CategoryOptionView], category_id: Option<&str>) -> Self {
+        let selected_category_id = category_id
+            .filter(|id| categories.iter().any(|category| category.id == *id))
+            .or_else(|| categories.first().map(|category| category.id.as_str()))
+            .unwrap_or_default()
+            .to_owned();
+        Self {
+            selected_category_id,
+            is_available: true,
+            is_visible: true,
+            ..Self::default()
+        }
+    }
+}
+
 #[derive(Template)]
 #[template(path = "dashboard/menu.html")]
 pub struct MenuEditorTemplate {
@@ -53,6 +94,9 @@ pub struct MenuEditorTemplate {
     pub has_unpublished_changes: bool,
     pub categories: Vec<EditorCategoryView>,
     pub pagination: EditorPagination,
+    pub category_options: Vec<CategoryOptionView>,
+    pub product: ProductFields,
+    pub open_new_product: bool,
 }
 
 #[derive(Template)]
@@ -90,16 +134,6 @@ pub struct ProductFormTemplate {
     pub form_action: String,
     pub menu_url: String,
     pub category_options: Vec<CategoryOptionView>,
-    pub selected_category_id: String,
-    pub name_value: String,
-    pub name_en: String,
-    pub name_es: String,
-    pub price_value: String,
-    pub description_value: String,
-    pub description_en: String,
-    pub description_es: String,
-    pub existing_image_url: Option<String>,
-    pub is_available: bool,
-    pub is_visible: bool,
+    pub product: ProductFields,
     pub error_key: Option<String>,
 }

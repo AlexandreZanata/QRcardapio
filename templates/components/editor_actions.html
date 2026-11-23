@@ -4,8 +4,10 @@
 {{ icons::panel(icon) }} <span class="editor-visually-hidden" data-i18n="{{ key }}">{{ page.t(key) }}</span>
 {% endmacro %}
 
-{% macro icon_link(url, icon, key) %}
-<a class="editor-icon-action" href="{{ url }}" title="{{ page.t(key) }}" data-i18n-title="{{ key }}">
+{% macro icon_link(url, icon, key, dialog="", category="") %}
+<a class="editor-icon-action" href="{{ url }}" title="{{ page.t(key) }}" data-i18n-title="{{ key }}"
+   {% if !dialog.is_empty() %}data-panel-dialog-open="{{ dialog }}"{% endif %}
+   {% if !category.is_empty() %}data-panel-dialog-category="{{ category }}"{% endif %}>
   {{ icon_label(icon, key) }}
 </a>
 {% endmacro %}

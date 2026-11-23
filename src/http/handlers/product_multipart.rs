@@ -2,6 +2,7 @@ use axum::extract::Multipart;
 
 use crate::error::{AppError, AppResult};
 use crate::infrastructure::assets::MAX_PRODUCT_UPLOAD_BYTES;
+use crate::rendering::menu_editor::ProductFields;
 
 #[derive(Default)]
 pub(super) struct ParsedProductMultipart {
@@ -18,6 +19,24 @@ pub(super) struct ParsedProductMultipart {
     pub is_visible: bool,
     pub remove_image: bool,
     pub image_bytes: Option<Vec<u8>>,
+}
+
+impl From<ParsedProductMultipart> for ProductFields {
+    fn from(parsed: ParsedProductMultipart) -> Self {
+        Self {
+            selected_category_id: parsed.category_id,
+            name_value: parsed.name,
+            name_en: parsed.name_en,
+            name_es: parsed.name_es,
+            price_value: parsed.price,
+            description_value: parsed.description,
+            description_en: parsed.description_en,
+            description_es: parsed.description_es,
+            existing_image_url: None,
+            is_available: parsed.is_available,
+            is_visible: parsed.is_visible,
+        }
+    }
 }
 
 pub(super) async fn parse_product_multipart(

@@ -2,7 +2,7 @@ use std::io::Cursor;
 use std::path::PathBuf;
 
 use axum::body::Body;
-use axum::http::header::{CONTENT_TYPE, COOKIE, LOCATION, SET_COOKIE};
+use axum::http::header::{ACCEPT, CONTENT_TYPE, COOKIE, LOCATION, SET_COOKIE};
 use axum::http::{Request, StatusCode};
 use http_body_util::BodyExt;
 use image::{DynamicImage, ImageEncoder, codecs::png::PngEncoder};
@@ -318,8 +318,57 @@ async fn complete_definition_of_done_e2e_flow_including_restart() {
     let c_start = menu_html.find(cat_marker).unwrap() + cat_marker.len();
     let c_end = menu_html[c_start..].find('/').unwrap();
     let cat_id = &menu_html[c_start..c_start + c_end];
+    assert!(menu_html.contains("id=\"new-product-dialog\""));
+    assert!(!menu_html.contains("data-panel-dialog-auto-open"));
+    assert!(menu_html.contains(&format!("data-panel-dialog-category=\"{cat_id}\"")));
 
-    // 6. Add product with image and price 24,90
+    let new_product = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .uri(format!("/dashboard/products/new?category_id={cat_id}"))
+                .header(COOKIE, &cookie1)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(new_product.status(), StatusCode::OK);
+    let new_html = body_string(new_product).await;
+    assert!(new_html.contains("data-panel-dialog-auto-open"));
+    assert!(new_html.contains(&format!("<option value=\"{cat_id}\" selected>")));
+
+    let invalid_product = app
+        .clone()
+        .oneshot(
+            Request::post("/dashboard/products?lang=en")
+                .header(COOKIE, &cookie1)
+                .header(ACCEPT, "application/json")
+                .header(
+                    CONTENT_TYPE,
+                    format!("multipart/form-data; boundary={boundary}"),
+                )
+                .body(Body::from(build_multipart_body(
+                    boundary,
+                    &[
+                        ("_csrf", &csrf1),
+                        ("category_id", cat_id),
+                        ("name", "Soup"),
+                        ("price", "invalid"),
+                    ],
+                    None,
+                )))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(invalid_product.status(), StatusCode::UNPROCESSABLE_ENTITY);
+    assert_eq!(invalid_product.headers()[CONTENT_TYPE], "application/json");
+    let error: serde_json::Value =
+        serde_json::from_str(&body_string(invalid_product).await).unwrap();
+    assert_eq!(error["key"], "error.invalid_price");
+
+    // 6. Add a product with an image through the modal's multipart submission.
     let prod_body = build_multipart_body(
         boundary,
         &[
@@ -342,6 +391,7 @@ async fn complete_definition_of_done_e2e_flow_including_restart() {
                 .method("POST")
                 .uri("/dashboard/products")
                 .header(COOKIE, &cookie1)
+                .header(ACCEPT, "application/json")
                 .header(
                     CONTENT_TYPE,
                     format!("multipart/form-data; boundary={boundary}"),
@@ -351,7 +401,13 @@ async fn complete_definition_of_done_e2e_flow_including_restart() {
         )
         .await
         .unwrap();
-    assert_eq!(prod_res.status(), StatusCode::SEE_OTHER);
+    assert_eq!(prod_res.status(), StatusCode::NO_CONTENT);
+    assert!(
+        prod_res.headers()[SET_COOKIE]
+            .to_str()
+            .unwrap()
+            .contains("flash.product_created")
+    );
 
     // 7. Draft preview works before publishing
     let preview = app

@@ -83,7 +83,8 @@
 
 .panel-dialog-feedback { margin: 0; }
 
-.panel-category-fields .dashboard-check input { accent-color: var(--qr-blue); }
+.panel-category-fields .dashboard-check input,
+.panel-product-fields .dashboard-check input { accent-color: var(--qr-blue); }
 
 .panel-action-danger {
   color: #fff;

@@ -17,6 +17,11 @@
 </header>
 {% endmacro %}
 
+{% macro feedback() %}
+<p class="alert alert-error panel-dialog-feedback" data-panel-dialog-error role="alert" tabindex="-1" hidden></p>
+<span data-panel-dialog-error-copy data-i18n="dialogs.save_error" hidden>{{ page.t("dialogs.save_error") }}</span>
+{% endmacro %}
+
 {% macro actions(form_id, label_key, icon, danger=false) %}
 <footer class="panel-dialog-actions">
   <button class="btn panel-action" type="button" data-panel-dialog-close{% if danger %} data-panel-dialog-focus{% endif %}>

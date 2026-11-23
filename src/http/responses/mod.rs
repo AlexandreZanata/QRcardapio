@@ -1,12 +1,48 @@
-use axum::http::header::{ETAG, IF_NONE_MATCH};
+use axum::Json;
+use axum::http::header::{ACCEPT, ETAG, IF_NONE_MATCH};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Redirect, Response};
 use axum_extra::extract::CookieJar;
 use axum_extra::extract::cookie::{Cookie, SameSite};
+use serde::Serialize;
 
+use crate::error::AppError;
+use crate::i18n::{Catalog, Locale};
 use crate::rendering::FlashMessage;
 
 const FLASH_COOKIE_NAME: &str = "qr_flash";
+
+#[derive(Serialize)]
+struct DialogError<'a> {
+    key: &'static str,
+    message: &'a str,
+}
+
+pub fn prefers_dialog_response(headers: &HeaderMap) -> bool {
+    headers
+        .get(ACCEPT)
+        .is_some_and(|value| value == "application/json")
+}
+
+pub fn dialog_error(catalog: &Catalog, locale: Locale, error: &AppError) -> Response {
+    let key = error.i18n_key();
+    (
+        error.status_code(),
+        Json(DialogError {
+            key,
+            message: catalog.t(locale, key),
+        }),
+    )
+        .into_response()
+}
+
+pub fn dialog_saved(jar: CookieJar, key: &str, secure: bool) -> Response {
+    (
+        with_flash_cookie(jar, false, key, secure),
+        StatusCode::NO_CONTENT,
+    )
+        .into_response()
+}
 
 pub fn with_flash_redirect(
     jar: CookieJar,

@@ -35,6 +35,8 @@ Menu import separates file upload, pasted text, and illustrated tips. The menu e
 
 The category creation dialog shares its fields with the standalone category form and shows validation without leaving the editor. The overview uses an illustrated, keyboard-accessible confirmation for taking a menu offline.
 
+The product dialog opens from the editor, a category row, or the product creation URL. It shares the standard fields and photo picker with the standalone form and edit page. Localized validation stays in the dialog, and a successful save returns to the same editor page.
+
 The menu editor uses tenant-scoped pagination with 12 product or empty-category rows per page. The editor retains the active page through inline actions and edit forms. Mobile layouts preserve the landing Maps mockup composition, adapt dashboard tables into labeled rows, and scale the QR print preview to the screen.
 
 O cadastro atribui links compactos a partir do nome do estabelecimento. Um código de quatro caracteres distingue nomes repetidos. Endereços personalizados continuam disponíveis no rascunho e o caminho publicado é protegido contra renomeação concorrente.

@@ -1,17 +1,24 @@
 {% extends "layouts/dashboard.html" %}
-{% import "components/icons.html" as icons %}
 {% import "components/guide_hint.html" as guide %}
-{% import "components/form_fields.html" as fields %}
+{% import "components/panel_controls.html" as controls %}
 
 {% block file_picker %}
 {% include "components/file_picker.html" %}
 {% endblock %}
 
 {% block content %}
+{% let is_new = page.title_key == "product_form.new_title" %}
 <div class="container-narrow">
-  <div class="page-top">
-    <h1 data-i18n="{{ page.title_key }}">{{ page.t(page.title_key) }}</h1>
-    <a class="btn btn-secondary btn-sm" href="{{ menu_url }}">{{ icons::panel("back") }} <span data-i18n="common.back">{{ page.t("common.back") }}</span></a>
+  <div class="page-top panel-page-top">
+    <div>
+      {% if is_new %}
+      <h1 data-i18n="menu_editor.new_product">{{ page.t("menu_editor.new_product") }}</h1>
+      <p data-i18n="product_form.new_intro">{{ page.t("product_form.new_intro") }}</p>
+      {% else %}
+      <h1 data-i18n="product_form.edit_heading">{{ page.t("product_form.edit_heading") }}</h1>
+      {% endif %}
+    </div>
+    {{ controls::link(menu_url, "common.back", "back") }}
   </div>
 
   <section class="card">
@@ -19,38 +26,17 @@
     <div class="alert alert-error" role="alert" data-i18n="{{ err }}">{{ page.t(err) }}</div>
     {% endif %}
 
-    <form class="form-stack" method="post" action="{{ form_action }}" enctype="multipart/form-data">
+    <form class="form-stack panel-product-fields" method="post" action="{{ form_action }}" enctype="multipart/form-data">
       <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      {% include "components/product_fields.html" %}
 
-      {{ fields::category_select("category_id", "product_form.category_label", category_options, selected_category_id, "guide.choose_category") }}
-      {{ fields::input("name", "product_form.name_label", name_value, 100, guide_key="guide.product_name", required=true, placeholder_key="product_form.name_placeholder") }}
-      {{ fields::input("price", "product_form.price_label", price_value, 0, guide_key="guide.price", required=true, placeholder_key="product_form.price_placeholder", input_mode="decimal") }}
-      {{ fields::textarea("description", "product_form.description_label", description_value, guide_key="guide.product_description", max_length=320, placeholder_key="product_form.description_placeholder") }}
-
-      {{ fields::file("image", "product_form.image_label", "product_form.image_hint", "guide.image") }}
-      {% if let Some(img) = existing_image_url %}
-      <div class="inline-actions">
-        <img class="product-thumb" src="{{ img }}" alt="{{ name_value }}" width="64" height="64">
-        {{ fields::checkbox("remove_image", "product_form.remove_image", false, guide_key="guide.remove_image") }}
-      </div>
-      {% endif %}
-
-      {{ fields::checkbox("is_available", "product_form.available_label", is_available, guide_key="guide.available") }}
-      {{ fields::checkbox("is_visible", "product_form.visible_label", is_visible, guide_key="guide.visible") }}
-
-      <details class="details-box">
-        <summary data-i18n="product_form.translations_toggle">{{ page.t("product_form.translations_toggle") }}</summary>
-        <div class="form-stack">
-          {{ fields::input("name_en", "product_form.name_en_label", name_en, 100, guide_key="guide.translate_en") }}
-          {{ fields::input("name_es", "product_form.name_es_label", name_es, 100, guide_key="guide.translate_es") }}
-          {{ fields::textarea("description_en", "product_form.description_en_label", description_en, guide_key="guide.translate_en", max_length=320) }}
-          {{ fields::textarea("description_es", "product_form.description_es_label", description_es, guide_key="guide.translate_es", max_length=320) }}
-        </div>
-      </details>
-
-      <div class="inline-actions">
-        <button class="btn btn-primary" type="submit" {{ guide::hint("guide.save") }}>{{ icons::panel("check") }} <span data-i18n="common.save">{{ page.t("common.save") }}</span></button>
-        <a class="btn btn-secondary" href="{{ menu_url }}" data-i18n="common.cancel">{{ page.t("common.cancel") }}</a>
+      <div class="inline-actions" {{ guide::hint("guide.save") }}>
+        {% if is_new %}
+        {{ controls::submit("product_form.create_action", "check", primary=true) }}
+        {% else %}
+        {{ controls::submit("common.save", "check", primary=true) }}
+        {% endif %}
+        <a class="btn panel-action" href="{{ menu_url }}" data-i18n="common.cancel">{{ page.t("common.cancel") }}</a>
       </div>
     </form>
   </section>

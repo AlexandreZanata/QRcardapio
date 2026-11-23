@@ -42,7 +42,8 @@ All `POST` routes verify `_csrf` against the server session's `csrf_token` in co
 | `GET`/`POST` | `/dashboard/categories/new`, `/dashboard/categories` | Create category with optional EN/ES translations. The editor dialog posts the same form with `Accept: application/json` and receives `204` on success or a localized JSON validation error. |
 | `GET`/`POST` | `/dashboard/categories/{id}/edit`, `/dashboard/categories/{id}` | Edit category. |
 | `POST` | `/dashboard/categories/{id}/delete`, `/move` | Delete or reorder category. |
-| `GET`/`POST` | `/dashboard/products/new`, `/dashboard/products` | Create product (multipart max 6 MiB, upload rate limit 20/min). |
+| `GET` | `/dashboard/products/new` | Opens the product dialog in the editor. Accepts `category_id` and `page`. `standalone=true` renders the same fields as a page for browsers without dialog support. |
+| `POST` | `/dashboard/products` | Creates a product (multipart max 6 MiB, upload rate limit 20/min). Dialog requests with `Accept: application/json` receive `204` on success or a localized JSON error. Standalone submissions redirect to the editor on success. |
 | `GET`/`POST` | `/dashboard/products/{id}/edit`, `/dashboard/products/{id}` | Edit product, price, availability, photo, translations. |
 | `POST` | `/dashboard/products/{id}/toggle`, `/delete`, `/move` | Toggle sold-out status, delete, or reorder within category. |
 | `GET` | `/dashboard/ocr` | Menu OCR & PDF upload dropzone, manual text paste fallback, and recent import history. |

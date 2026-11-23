@@ -29,6 +29,8 @@ Dashboard action links, submit buttons, icon tiles, section headings, and illust
 
 `components/panel_dialog.html` provides a common heading, close control, and form actions. `panel-dialog.js` opens native dialogs, sets initial focus, and restores focus to the opener. Category creation uses the same fields as the standalone form, reports validation inside the dialog, and returns to the current editor page after saving. The editor link opens the standalone form when dialog support is unavailable.
 
+Product creation uses the same dialog controls. `components/product_fields.html` shares the fields with the standalone form and product edit page. The category action preselects its category, and the standard file picker stages the photo within the product dialog. The dialog keeps save and cancel in the footer while the fields scroll. Validation keeps the user's inputs and photo in the form.
+
 `components/panel_confirmation.html` uses the same dialog controls for actions that need explicit confirmation. The unpublish confirmation focuses Cancel by default and explains how republishing restores the same link and QR code. Its trigger exposes a confirmation disclosure when dialog support is unavailable.
 
 The unpublish artwork is saved in `static/images/unpublish-chef.webp`. It was generated with the built-in ImageGen tool and resized to a transparent 384 × 288 WebP.

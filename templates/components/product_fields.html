@@ -1,0 +1,37 @@
+{% import "components/form_fields.html" as fields %}
+
+{{ fields::input("name", "product_form.name_label", product.name_value, 100, guide_key="guide.product_name", required=true, placeholder_key="product_form.name_placeholder") }}
+
+<div class="dashboard-field-pair">
+  {{ fields::category_select("category_id", "product_form.category_label", category_options, product.selected_category_id, "guide.choose_category") }}
+  {{ fields::input("price", "product_form.price_label", product.price_value, 0, guide_key="guide.price", required=true, placeholder_key="product_form.price_placeholder", input_mode="decimal") }}
+</div>
+
+{{ fields::textarea("description", "product_form.description_label", product.description_value, guide_key="guide.product_description", max_length=320, placeholder_key="product_form.description_placeholder") }}
+{{ fields::file("image", "product_form.image_label", "product_form.image_hint", "guide.image") }}
+
+{% if let Some(img) = product.existing_image_url %}
+<div class="inline-actions">
+  <img class="product-thumb" src="{{ img }}" alt="{{ product.name_value }}" width="64" height="64">
+  {{ fields::checkbox("remove_image", "product_form.remove_image", false, guide_key="guide.remove_image") }}
+</div>
+{% endif %}
+
+<div class="dashboard-field-pair">
+  {{ fields::checkbox("is_available", "product_form.available_label", product.is_available, guide_key="guide.available") }}
+  {{ fields::checkbox("is_visible", "product_form.visible_label", product.is_visible, guide_key="guide.visible") }}
+</div>
+
+<details class="details-box dashboard-translations">
+  <summary data-i18n="product_form.translations_toggle">{{ page.t("product_form.translations_toggle") }}</summary>
+  <div class="dashboard-field-pair">
+    <div class="form-stack">
+      {{ fields::input("name_en", "product_form.name_en_label", product.name_en, 100, guide_key="guide.translate_en") }}
+      {{ fields::textarea("description_en", "product_form.description_en_label", product.description_en, guide_key="guide.translate_en", max_length=320) }}
+    </div>
+    <div class="form-stack">
+      {{ fields::input("name_es", "product_form.name_es_label", product.name_es, 100, guide_key="guide.translate_es") }}
+      {{ fields::textarea("description_es", "product_form.description_es_label", product.description_es, guide_key="guide.translate_es", max_length=320) }}
+    </div>
+  </div>
+</details>
