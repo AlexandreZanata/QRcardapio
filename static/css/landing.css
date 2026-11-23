@@ -231,19 +231,13 @@ body:has(.landing-page) {
   padding: clamp(1rem, 2vw, 1.6rem);
 }
 
-.landing-step-icon {
-  display: grid;
-  place-items: center;
-  width: 2.65rem;
-  height: 2.65rem;
+.landing-step .landing-sticker {
+  display: block;
+  width: clamp(3.25rem, 4.5vw, 4rem);
+  height: auto;
+  aspect-ratio: 1;
   margin-bottom: 0.9rem;
-  border: 2px solid var(--landing-ink);
-  border-radius: 0.65rem;
 }
-
-.landing-step-yellow { background: var(--landing-yellow); }
-.landing-step-pink { background: #ff9cc3; }
-.landing-step-blue { background: #c7ccff; }
 
 .landing-final { padding-block: clamp(2rem, 5vw, 4.5rem); }
 

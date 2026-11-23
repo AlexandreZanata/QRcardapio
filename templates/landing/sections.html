@@ -10,9 +10,9 @@
 </article>
 {% endmacro %}
 
-{% macro step(icon, tone, title, body) %}
+{% macro step(icon, title, body) %}
 <li class="landing-step">
-  <span class="landing-step-icon landing-step-{{ tone }}">{{ icons::icon(icon) }}</span>
+  {{ icons::sticker(icon) }}
   <h3 data-i18n="{{ title }}">{{ page.t(title) }}</h3>
   <p data-i18n="{{ body }}">{{ page.t(body) }}</p>
 </li>

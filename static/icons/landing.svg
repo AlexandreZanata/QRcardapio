@@ -15,6 +15,33 @@
     <path d="M18 16h15l-4 22H13Z" fill="#fff" stroke="#161721" stroke-width="2.6" stroke-linejoin="round"/>
     <path d="M21 21h.1m5 0h.1m-6 5h.1m5 0h.1m-6 6h.1m5 0h.1" stroke="#161721" stroke-width="2.8" stroke-linecap="round"/>
   </symbol>
+  <symbol id="storefront" viewBox="0 0 56 56">
+    <g stroke="#161721" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 22v27h38V22Z" fill="#ffdc38"/>
+      <path d="M10 8h36l6 14v1a6 6 0 0 1-12 0 6 6 0 0 1-12 0 6 6 0 0 1-12 0 6 6 0 0 1-12 0v-1z" fill="#fff9ee"/>
+      <path d="m20 8-4 14m12-14v14m8-14 4 14M5 49h46" fill="none"/>
+      <rect x="15" y="34" width="10" height="8" rx="1" fill="#fff9ee"/>
+      <path d="M32 49V34h9v15" fill="#ffe893"/>
+    </g>
+  </symbol>
+  <symbol id="menu-book" viewBox="0 0 56 56">
+    <g stroke="#161721" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M28 13c-7-6-14-7-23-4v36c9-3 16-2 23 4 7-6 14-7 23-4V9c-9-3-16-2-23 4Z" fill="#fff9ee"/>
+      <path d="M28 13c-7-6-14-7-23-4v36c9-3 16-2 23 4Z" fill="#ff76aa"/>
+      <rect x="11" y="17" width="11" height="13" rx="1.5" fill="#fff9ee" stroke-width="2.6"/>
+      <path d="m12 27 4-4 5 4m-9 9h9m14-17h9m-9 7h9m-9 7h6" fill="none" stroke-width="2.8"/>
+    </g>
+  </symbol>
+  <symbol id="qr-printer" viewBox="0 0 56 56">
+    <g stroke="#161721" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M16 19V6h24v13" fill="#fff9ee"/>
+      <rect x="5" y="17" width="46" height="24" rx="6" fill="#5060ff"/>
+      <path d="M12 31h32" fill="none"/>
+      <path d="M15 31h26v19H15z" fill="#fff9ee"/>
+      <path d="M33 23h.1m5 0h.1m5 0h.1" stroke="#fff9ee" stroke-width="2.6"/>
+      <path d="M21 36h4v4h-4zm10 0h4v4h-4zM21 44h4m6 0h4v2" fill="none" stroke-width="2.2"/>
+    </g>
+  </symbol>
   <symbol id="burst" viewBox="0 0 120 96">
     <path d="m31 80-1-21-22-9 23-7L22 17l27 15L59 4l13 29 27-17-7 27 21 8-19 12 2 26-28-11-14 14-12-18z" fill="#ffdc38" stroke="#161721" stroke-width="4" stroke-linejoin="round"/>
   </symbol>

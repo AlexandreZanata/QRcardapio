@@ -17,6 +17,8 @@ All 5 implementation phases of the **QR Cardápio MVP** (including full native z
 
 The homepage now includes an illustration with a browser capture of the owner dashboard and a localized sample menu. The owner dashboard and operational administration share responsive side navigation. Operational tables include translated statuses and empty states.
 
+The three how-it-works cards use custom storefront, menu book, and QR printer illustrations in the same style as the feature icons.
+
 ## Verification Snapshot
 
 - `cargo fmt --check`: Passed
