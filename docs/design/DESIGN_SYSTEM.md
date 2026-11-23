@@ -84,6 +84,8 @@ A seção do Plano Essencial usa a mesma faixa de fundo de `.landing-how`. O car
 
 Cada selo tem uma coluna própria no cartão e mantém o percentual centralizado sobre a forma. Os contornos ficam nas bordas da arte para preservar a leitura do número.
 
+O modal de preços fecha pelo botão de fechar, pela tecla Escape ou por um clique no fundo escuro. O atributo `data-panel-dialog-backdrop-close` habilita o clique no fundo, e o foco volta ao botão que abriu o modal.
+
 O painel agrupa preço, situação da assinatura e ações. O proprietário inicia o checkout pelo formulário local do painel e segue por um link para o Asaas, preservando a diretiva `form-action 'self'`.
 
 ### Link do cardápio no cadastro

@@ -101,7 +101,8 @@
     <div class="landing-plan-inline" id="plan-options">{{ plan_choices() }}</div>
   </div>
 
-  <dialog class="panel-dialog landing-plan-dialog" id="landing-plan-dialog" aria-labelledby="landing-plan-dialog-title">
+  <dialog class="panel-dialog landing-plan-dialog" id="landing-plan-dialog" aria-labelledby="landing-plan-dialog-title"
+          data-panel-dialog-backdrop-close>
     <header class="landing-plan-dialog-header">
       <h2 id="landing-plan-dialog-title" class="landing-plan-name" tabindex="-1" data-panel-dialog-focus>
         {{ icons::sticker("plan-crown") }} <span data-i18n="landing.plan_dialog_title">{{ page.t("landing.plan_dialog_title") }}</span>

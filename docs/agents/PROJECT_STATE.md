@@ -62,6 +62,8 @@ O Plano Essencial usa o preço da integração na landing. O modal mantém a esc
 
 Os selos semestral e anual reservam espaço no canto dos cartões e exibem os percentuais centralizados.
 
+O seletor de planos pode ser fechado pelo fundo da página, pelo botão de fechar ou por Escape.
+
 A cobrança pode ser habilitada por ambiente. O modal compara os ciclos mensal, semestral com 5% e anual com 10%. O checkout e a cobertura usam o ciclo e o preço contratados. O proprietário contrata pelo checkout hospedado do Asaas, acompanha a cobrança no painel e pode cancelar a renovação. Webhooks autenticados e idempotentes sincronizam o acesso à publicação. Cardápios já publicados mantêm a entrega estática. A configuração e a homologação estão no [runbook](../operations/RUNBOOK.md#habilitação-do-asaas). A suíte local validou o ciclo financeiro com webhooks simulados. A validação na conta Sandbox do Asaas está pendente. Os [resultados de carga](../performance/PERFORMANCE.md#verificação-local-após-a-integração-asaas--23112026) incluem o proxy Caddy e a reentrega de webhooks a 1 vCPU.
 
 ## Integrações de IA

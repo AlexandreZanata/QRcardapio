@@ -16,6 +16,12 @@ function returnUrl(form) {
   return destination;
 }
 
+function hitsBackdrop(dialog, event) {
+  if (event.target !== dialog) return false;
+  const { left, right, top, bottom } = dialog.getBoundingClientRect();
+  return event.clientX < left || event.clientX >= right || event.clientY < top || event.clientY >= bottom;
+}
+
 for (const trigger of document.querySelectorAll("[data-panel-dialog-open]")) {
   const dialog = document.getElementById(trigger.dataset.panelDialogOpen);
   if (typeof dialog?.showModal !== "function") continue;
@@ -36,6 +42,17 @@ for (const dialog of document.querySelectorAll("dialog.panel-dialog")) {
     button.addEventListener("click", () => dialog.close());
   }
   dialog.addEventListener("close", () => openers.get(dialog)?.focus({ preventScroll: true }));
+
+  if (dialog.hasAttribute("data-panel-dialog-backdrop-close")) {
+    let pressedBackdrop = false;
+    dialog.addEventListener("pointerdown", (event) => {
+      pressedBackdrop = hitsBackdrop(dialog, event);
+    });
+    dialog.addEventListener("click", (event) => {
+      if (pressedBackdrop && hitsBackdrop(dialog, event)) dialog.close();
+      pressedBackdrop = false;
+    });
+  }
 
   const form = dialog.querySelector("form[data-panel-dialog-form]");
   if (form) enableDialogForm(dialog, form);
