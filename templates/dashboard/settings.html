@@ -1,9 +1,19 @@
 {% extends "layouts/dashboard.html" %}
 {% import "components/guide_hint.html" as guide %}
 {% import "components/icons.html" as icons %}
+{% import "components/form_fields.html" as fields %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="/static/css/settings.css">
+{% endblock %}
+
+{% block file_picker %}
+{% include "components/file_picker.html" %}
+{% endblock %}
 
 {% block content %}
-<div class="page-top">
+<div class="page-top settings-heading">
+  <span class="settings-heading-icon">{{ icons::panel("settings") }}</span>
   <div>
     <h1 data-i18n="settings.heading">{{ page.t("settings.heading") }}</h1>
     <p data-i18n="settings.subtitle">{{ page.t("settings.subtitle") }}</p>
@@ -14,99 +24,88 @@
 <div class="alert alert-error" role="alert" data-i18n="{{ err }}">{{ page.t(err) }}</div>
 {% endif %}
 
-<div class="grid-2">
-  <section class="card">
-    <form class="form-stack" method="post" action="/dashboard/settings">
-      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+<div class="settings-layout">
+  <form class="settings-profile" method="post" action="/dashboard/settings">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
 
-      <div class="field" {{ guide::hint("guide.business_name") }}>
-        <label for="name" data-i18n="onboarding.name_label">{{ page.t("onboarding.name_label") }}</label>
-        <input id="name" name="name" type="text" required maxlength="100" value="{{ name_value }}">
+    <section class="card settings-card" aria-labelledby="settings-profile-title">
+      <div class="settings-card-heading">
+        <span class="settings-card-icon settings-card-icon-blue">{{ icons::panel("store") }}</span>
+        <h2 id="settings-profile-title" data-i18n="settings.profile_section">{{ page.t("settings.profile_section") }}</h2>
       </div>
+      <div class="form-stack">
+        {{ fields::input("name", "onboarding.name_label", name_value, 100, guide_key="guide.business_name", required=true) }}
+        {{ fields::slug(base_host, slug_value, locked=slug_locked) }}
+        {{ fields::textarea("description", "onboarding.description_label", description_value, guide_key="guide.business_description", max_length=280) }}
 
-      <div class="field" {{ guide::hint("guide.slug") }}>
-        <label for="slug" data-i18n="onboarding.slug_label">{{ page.t("onboarding.slug_label") }}</label>
-        <div class="slug-input-group">
-          <span class="slug-prefix">{{ base_host }}/c/</span>
-          <input id="slug" name="slug" type="text" maxlength="64" value="{{ slug_value }}" {% if slug_locked %}readonly{% endif %}>
-        </div>
-        {% if slug_locked %}
-        <p class="field-hint" data-i18n="settings.slug_locked_note">{{ page.t("settings.slug_locked_note") }}</p>
-        {% else %}
-        <p class="field-hint" data-i18n="onboarding.slug_hint">{{ page.t("onboarding.slug_hint") }}</p>
-        {% endif %}
-      </div>
-
-      <div class="field" {{ guide::hint("guide.business_description") }}>
-        <label for="description" data-i18n="onboarding.description_label">{{ page.t("onboarding.description_label") }}</label>
-        <textarea id="description" name="description" maxlength="280">{{ description_value }}</textarea>
-      </div>
-
-      <details class="details-box">
-        <summary data-i18n="settings.translations_toggle">{{ page.t("settings.translations_toggle") }}</summary>
-        <div class="form-stack">
-          <div class="field" {{ guide::hint("guide.translate_en") }}>
-            <label for="description_en" data-i18n="settings.description_en_label">{{ page.t("settings.description_en_label") }}</label>
-            <textarea id="description_en" name="description_en" maxlength="280">{{ description_en }}</textarea>
+        <details class="details-box dashboard-translations">
+          <summary data-i18n="settings.translations_toggle">{{ page.t("settings.translations_toggle") }}</summary>
+          <div class="dashboard-field-pair">
+            {{ fields::textarea("description_en", "settings.description_en_label", description_en, guide_key="guide.translate_en", max_length=280) }}
+            {{ fields::textarea("description_es", "settings.description_es_label", description_es, guide_key="guide.translate_es", max_length=280) }}
           </div>
-          <div class="field" {{ guide::hint("guide.translate_es") }}>
-            <label for="description_es" data-i18n="settings.description_es_label">{{ page.t("settings.description_es_label") }}</label>
-            <textarea id="description_es" name="description_es" maxlength="280">{{ description_es }}</textarea>
-          </div>
-        </div>
-      </details>
+        </details>
 
-      <div class="field" {{ guide::hint("guide.color") }}>
-        <label for="accent_color" data-i18n="onboarding.color_label">{{ page.t("onboarding.color_label") }}</label>
-        <div class="color-picker-row">
-          <input id="accent_color" name="accent_color" type="color" value="{{ accent_color }}">
-          <button type="button" class="swatch-btn swatch-coral" data-swatch-hex="#D9532F" aria-label="#D9532F"></button>
-          <button type="button" class="swatch-btn swatch-olive" data-swatch-hex="#3F6212" aria-label="#3F6212"></button>
-          <button type="button" class="swatch-btn swatch-espresso" data-swatch-hex="#44403C" aria-label="#44403C"></button>
-          <button type="button" class="swatch-btn swatch-berry" data-swatch-hex="#9D174D" aria-label="#9D174D"></button>
-          <button type="button" class="swatch-btn swatch-ocean" data-swatch-hex="#1D4ED8" aria-label="#1D4ED8"></button>
-          <button type="button" class="swatch-btn swatch-amber" data-swatch-hex="#B45309" aria-label="#B45309"></button>
-        </div>
+        {{ fields::color(accent_color) }}
       </div>
+    </section>
 
-      <section class="settings-maps" id="google-maps">
-        <h2 class="dashboard-card-heading">{{ icons::panel("map") }} <span>Google Maps</span></h2>
-        <div class="field" {{ guide::hint("guide.google_profile") }}>
-          <label for="google_maps_url" data-i18n="settings.google_maps_url">{{ page.t("settings.google_maps_url") }}</label>
-          <input id="google_maps_url" name="google_maps_url" type="url" maxlength="2048" value="{{ google_maps_url }}" aria-describedby="google-maps-hint">
-          <p class="field-hint" id="google-maps-hint" data-i18n="settings.google_maps_hint">{{ page.t("settings.google_maps_hint") }}</p>
-        </div>
-        <div class="field" {{ guide::hint("guide.google_review") }}>
-          <label for="google_review_url" data-i18n="settings.google_review_url">{{ page.t("settings.google_review_url") }}</label>
-          <input id="google_review_url" name="google_review_url" type="url" maxlength="2048" value="{{ google_review_url }}" aria-describedby="google-review-hint">
-          <p class="field-hint" id="google-review-hint" data-i18n="settings.google_review_hint">{{ page.t("settings.google_review_hint") }}</p>
-          <a href="https://support.google.com/business/answer/16816815" target="_blank" rel="noopener noreferrer" data-i18n="settings.google_help">{{ page.t("settings.google_help") }}</a>
-        </div>
-      </section>
+    <section class="card settings-card settings-maps" id="google-maps" aria-labelledby="settings-maps-title">
+      <div class="settings-card-heading">
+        <span class="settings-card-icon settings-card-icon-yellow">{{ icons::panel("map") }}</span>
+        <h2 id="settings-maps-title">Google Maps</h2>
+      </div>
+      <div class="dashboard-field-pair">
+        {{ fields::input("google_maps_url", "settings.google_maps_url", google_maps_url, 2048, guide_key="guide.google_profile", hint_key="settings.google_maps_hint", kind="url") }}
+        {{ fields::input("google_review_url", "settings.google_review_url", google_review_url, 2048, guide_key="guide.google_review", hint_key="settings.google_review_hint", kind="url") }}
+      </div>
+      <a class="settings-help" href="https://support.google.com/business/answer/16816815" target="_blank" rel="noopener noreferrer">
+        {{ icons::panel("guide") }}
+        <span data-i18n="settings.google_help">{{ page.t("settings.google_help") }}</span>
+      </a>
+    </section>
 
-      <button class="btn btn-primary" type="submit" {{ guide::hint("guide.save") }}>{{ icons::panel("check") }} <span data-i18n="common.save">{{ page.t("common.save") }}</span></button>
-    </form>
-  </section>
+    <div class="settings-save">
+      <p data-i18n="settings.publish_hint">{{ page.t("settings.publish_hint") }}</p>
+      <button class="btn btn-primary" type="submit" {{ guide::hint("guide.save") }}>
+        {{ icons::panel("check") }} <span data-i18n="settings.save_profile">{{ page.t("settings.save_profile") }}</span>
+      </button>
+    </div>
+  </form>
 
-  <section class="card">
-    <h2 class="mb-3" data-i18n="settings.logo_label">{{ page.t("settings.logo_label") }}</h2>
+  <section class="card settings-card settings-logo" aria-labelledby="settings-logo-title">
+    <div class="settings-card-heading">
+      <span class="settings-card-icon settings-card-icon-pink">{{ icons::panel("image") }}</span>
+      <h2 id="settings-logo-title" data-i18n="settings.logo_label">{{ page.t("settings.logo_label") }}</h2>
+    </div>
 
-    {% if let Some(logo) = logo_url %}
-    <img class="logo-preview mb-3" src="{{ logo }}" alt="{{ name_value }}" width="88" height="88">
-    <form class="mb-4" method="post" action="/dashboard/settings/logo/remove">
-      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-      <button class="btn btn-danger btn-sm" type="submit">{{ icons::panel("delete") }} <span data-i18n="settings.remove_logo">{{ page.t("settings.remove_logo") }}</span></button>
-    </form>
-    {% endif %}
+    <div class="settings-logo-stage">
+      {% if let Some(logo) = logo_url %}
+      <img class="settings-logo-image" src="{{ logo }}" alt="{{ name_value }}" width="128" height="128">
+      {% else %}
+      <div class="settings-logo-placeholder">
+        {{ icons::panel("store") }}
+        <span data-i18n="settings.logo_empty">{{ page.t("settings.logo_empty") }}</span>
+      </div>
+      {% endif %}
+    </div>
 
     <form class="form-stack" method="post" action="/dashboard/settings/logo" enctype="multipart/form-data">
       <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-      <div class="field" {{ guide::hint("guide.logo") }}>
-        <input id="logo" name="logo" type="file" required accept="image/jpeg,image/png,image/webp">
-        <p class="field-hint" data-i18n="settings.logo_hint">{{ page.t("settings.logo_hint") }}</p>
-      </div>
-      <button class="btn btn-secondary" type="submit">{{ icons::panel("image") }} <span data-i18n="settings.upload_logo">{{ page.t("settings.upload_logo") }}</span></button>
+      {{ fields::file("logo", "settings.logo_file_label", "settings.logo_hint", "guide.logo", required=true, max_image_mb=2) }}
+      <button class="btn btn-secondary" type="submit">
+        {{ icons::panel("image") }} <span data-i18n="settings.upload_logo">{{ page.t("settings.upload_logo") }}</span>
+      </button>
     </form>
+
+    {% if logo_url.is_some() %}
+    <form method="post" action="/dashboard/settings/logo/remove">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <button class="btn btn-danger btn-sm" type="submit">
+        {{ icons::panel("delete") }} <span data-i18n="settings.remove_logo">{{ page.t("settings.remove_logo") }}</span>
+      </button>
+    </form>
+    {% endif %}
   </section>
 </div>
 {% endblock %}

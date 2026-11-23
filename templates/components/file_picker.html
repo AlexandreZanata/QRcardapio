@@ -1,0 +1,55 @@
+{% import "components/icons.html" as icons %}
+
+<dialog class="file-picker" id="dashboard-file-picker" aria-labelledby="file-picker-title" aria-describedby="file-picker-hint">
+  <div class="file-picker-heading">
+    <div>
+      <p class="file-picker-purpose" data-file-purpose></p>
+      <h2 id="file-picker-title" data-i18n="forms.choose_file">{{ page.t("forms.choose_file") }}</h2>
+    </div>
+    <button type="button" class="file-picker-close" data-file-close
+            aria-label="{{ page.t("common.close") }}" data-i18n-aria="common.close">
+      {{ icons::panel("close") }}
+    </button>
+  </div>
+
+  <div class="file-picker-body">
+    <div class="file-picker-art">
+      <img src="/static/images/file-picker-chef.webp" width="420" height="315" alt="" loading="lazy">
+    </div>
+
+    <div class="file-picker-options">
+      <div class="file-picker-drop" data-file-drop>
+        <input type="file" data-file-candidate hidden>
+        <button type="button" class="btn btn-secondary" data-file-browse>
+          {{ icons::panel("image") }}
+          <span data-i18n="forms.browse">{{ page.t("forms.browse") }}</span>
+        </button>
+        <p data-i18n="forms.drop">{{ page.t("forms.drop") }}</p>
+      </div>
+      <p class="dashboard-field-hint" id="file-picker-hint" data-file-hint></p>
+      <div class="file-picker-preview" data-file-preview hidden>
+        <img data-file-preview-image width="56" height="56" alt="" hidden>
+        <div>
+          <strong data-file-preview-name></strong>
+          <span data-file-preview-size></span>
+        </div>
+      </div>
+      <p class="file-picker-error" data-file-error role="alert" hidden></p>
+    </div>
+  </div>
+
+  <div class="file-picker-footer">
+    <button type="button" class="btn btn-secondary" data-file-close data-i18n="common.cancel">{{ page.t("common.cancel") }}</button>
+    <button type="button" class="btn file-picker-apply" data-file-apply disabled>
+      {{ icons::panel("check") }} <span data-i18n="forms.use_file">{{ page.t("forms.use_file") }}</span>
+    </button>
+  </div>
+
+  <div hidden>
+    <span data-file-message="one" data-i18n="forms.one_file">{{ page.t("forms.one_file") }}</span>
+    <span data-file-message="type" data-i18n="forms.invalid_type">{{ page.t("forms.invalid_type") }}</span>
+    <span data-file-message="size" data-i18n="forms.invalid_size">{{ page.t("forms.invalid_size") }}</span>
+    <span data-file-message="required" data-i18n="forms.file_required">{{ page.t("forms.file_required") }}</span>
+  </div>
+</dialog>
+<script src="/static/js/file-picker.js" type="module"></script>

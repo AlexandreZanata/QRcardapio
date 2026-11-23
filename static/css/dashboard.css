@@ -273,14 +273,3 @@
   .dashboard-metric-icon { width: 2rem; height: 2rem; }
   .dashboard-metric-icon .panel-icon { width: 1.15rem; height: 1.15rem; }
 }
-
-.settings-maps {
-  display: grid;
-  gap: 0.9rem;
-  border-top: 1px solid var(--dashboard-border);
-  padding-top: 1rem;
-  scroll-margin: 1rem;
-}
-
-.settings-maps .dashboard-card-heading { margin: 0; }
-.settings-maps a { text-decoration: underline; font-size: 0.9rem; }

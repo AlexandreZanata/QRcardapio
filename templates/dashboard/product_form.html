@@ -1,6 +1,11 @@
 {% extends "layouts/dashboard.html" %}
 {% import "components/icons.html" as icons %}
 {% import "components/guide_hint.html" as guide %}
+{% import "components/form_fields.html" as fields %}
+
+{% block file_picker %}
+{% include "components/file_picker.html" %}
+{% endblock %}
 
 {% block content %}
 <div class="container-narrow">
@@ -17,75 +22,29 @@
     <form class="form-stack" method="post" action="{{ form_action }}" enctype="multipart/form-data">
       <input type="hidden" name="_csrf" value="{{ csrf_token }}">
 
-      <div class="field" {{ guide::hint("guide.choose_category") }}>
-        <label for="category_id" data-i18n="product_form.category_label">{{ page.t("product_form.category_label") }}</label>
-        <select id="category_id" name="category_id" required>
-          {% for opt in category_options %}
-          <option value="{{ opt.id }}" {% if opt.id == selected_category_id %}selected{% endif %}>{{ opt.name }}</option>
-          {% endfor %}
-        </select>
+      {{ fields::category_select("category_id", "product_form.category_label", category_options, selected_category_id, "guide.choose_category") }}
+      {{ fields::input("name", "product_form.name_label", name_value, 100, guide_key="guide.product_name", required=true, placeholder_key="product_form.name_placeholder") }}
+      {{ fields::input("price", "product_form.price_label", price_value, 0, guide_key="guide.price", required=true, placeholder_key="product_form.price_placeholder", input_mode="decimal") }}
+      {{ fields::textarea("description", "product_form.description_label", description_value, guide_key="guide.product_description", max_length=320, placeholder_key="product_form.description_placeholder") }}
+
+      {{ fields::file("image", "product_form.image_label", "product_form.image_hint", "guide.image") }}
+      {% if let Some(img) = existing_image_url %}
+      <div class="inline-actions">
+        <img class="product-thumb" src="{{ img }}" alt="{{ name_value }}" width="64" height="64">
+        {{ fields::checkbox("remove_image", "product_form.remove_image", false, guide_key="guide.remove_image") }}
       </div>
+      {% endif %}
 
-      <div class="field" {{ guide::hint("guide.product_name") }}>
-        <label for="name" data-i18n="product_form.name_label">{{ page.t("product_form.name_label") }}</label>
-        <input id="name" name="name" type="text" required maxlength="100" value="{{ name_value }}"
-               placeholder="{{ page.t("product_form.name_placeholder") }}" data-i18n-placeholder="product_form.name_placeholder">
-      </div>
-
-      <div class="field" {{ guide::hint("guide.price") }}>
-        <label for="price" data-i18n="product_form.price_label">{{ page.t("product_form.price_label") }}</label>
-        <input id="price" name="price" type="text" required value="{{ price_value }}" inputmode="decimal"
-               placeholder="{{ page.t("product_form.price_placeholder") }}" data-i18n-placeholder="product_form.price_placeholder">
-      </div>
-
-      <div class="field" {{ guide::hint("guide.product_description") }}>
-        <label for="description" data-i18n="product_form.description_label">{{ page.t("product_form.description_label") }}</label>
-        <textarea id="description" name="description" maxlength="320"
-                  placeholder="{{ page.t("product_form.description_placeholder") }}" data-i18n-placeholder="product_form.description_placeholder">{{ description_value }}</textarea>
-      </div>
-
-      <div class="field" {{ guide::hint("guide.image") }}>
-        <label for="image" data-i18n="product_form.image_label">{{ page.t("product_form.image_label") }}</label>
-        {% if let Some(img) = existing_image_url %}
-        <img class="product-thumb mb-3" src="{{ img }}" alt="{{ name_value }}" width="64" height="64">
-        <label class="checkbox-row" {{ guide::hint("guide.remove_image") }}>
-          <input type="checkbox" name="remove_image" value="1">
-          <span data-i18n="product_form.remove_image">{{ page.t("product_form.remove_image") }}</span>
-        </label>
-        {% endif %}
-        <input id="image" name="image" type="file" accept="image/jpeg,image/png,image/webp">
-        <p class="field-hint" data-i18n="product_form.image_hint">{{ page.t("product_form.image_hint") }}</p>
-      </div>
-
-      <label class="checkbox-row" {{ guide::hint("guide.available") }}>
-        <input type="checkbox" name="is_available" value="1" {% if is_available %}checked{% endif %}>
-        <span data-i18n="product_form.available_label">{{ page.t("product_form.available_label") }}</span>
-      </label>
-
-      <label class="checkbox-row" {{ guide::hint("guide.visible") }}>
-        <input type="checkbox" name="is_visible" value="1" {% if is_visible %}checked{% endif %}>
-        <span data-i18n="product_form.visible_label">{{ page.t("product_form.visible_label") }}</span>
-      </label>
+      {{ fields::checkbox("is_available", "product_form.available_label", is_available, guide_key="guide.available") }}
+      {{ fields::checkbox("is_visible", "product_form.visible_label", is_visible, guide_key="guide.visible") }}
 
       <details class="details-box">
         <summary data-i18n="product_form.translations_toggle">{{ page.t("product_form.translations_toggle") }}</summary>
         <div class="form-stack">
-          <div class="field" {{ guide::hint("guide.translate_en") }}>
-            <label for="name_en" data-i18n="product_form.name_en_label">{{ page.t("product_form.name_en_label") }}</label>
-            <input id="name_en" name="name_en" type="text" maxlength="100" value="{{ name_en }}">
-          </div>
-          <div class="field" {{ guide::hint("guide.translate_es") }}>
-            <label for="name_es" data-i18n="product_form.name_es_label">{{ page.t("product_form.name_es_label") }}</label>
-            <input id="name_es" name="name_es" type="text" maxlength="100" value="{{ name_es }}">
-          </div>
-          <div class="field" {{ guide::hint("guide.translate_en") }}>
-            <label for="description_en" data-i18n="product_form.description_en_label">{{ page.t("product_form.description_en_label") }}</label>
-            <textarea id="description_en" name="description_en" maxlength="320">{{ description_en }}</textarea>
-          </div>
-          <div class="field" {{ guide::hint("guide.translate_es") }}>
-            <label for="description_es" data-i18n="product_form.description_es_label">{{ page.t("product_form.description_es_label") }}</label>
-            <textarea id="description_es" name="description_es" maxlength="320">{{ description_es }}</textarea>
-          </div>
+          {{ fields::input("name_en", "product_form.name_en_label", name_en, 100, guide_key="guide.translate_en") }}
+          {{ fields::input("name_es", "product_form.name_es_label", name_es, 100, guide_key="guide.translate_es") }}
+          {{ fields::textarea("description_en", "product_form.description_en_label", description_en, guide_key="guide.translate_en", max_length=320) }}
+          {{ fields::textarea("description_es", "product_form.description_es_label", description_es, guide_key="guide.translate_es", max_length=320) }}
         </div>
       </details>
 

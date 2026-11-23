@@ -1,0 +1,132 @@
+{% import "components/icons.html" as icons %}
+{% import "components/guide_hint.html" as guide %}
+
+{% macro label(id, key) %}
+<label class="dashboard-field-label" for="{{ id }}" data-i18n="{{ key }}">{{ page.t(key) }}</label>
+{% endmacro %}
+
+{% macro hint(id, key) %}
+{% if !key.is_empty() %}
+<p id="{{ id }}-hint" class="dashboard-field-hint" data-i18n="{{ key }}">{{ page.t(key) }}</p>
+{% endif %}
+{% endmacro %}
+
+{% macro input(id, label_key, value, max_length, guide_key="", hint_key="", kind="text", required=false, placeholder_key="", input_mode="", slug_source=false) %}
+<div class="dashboard-field" {% if !guide_key.is_empty() %}{{ guide::hint(guide_key) }}{% endif %}>
+  {{ label(id, label_key) }}
+  <input class="dashboard-control" id="{{ id }}" name="{{ id }}" type="{{ kind }}" value="{{ value }}"
+         {% if max_length > 0 %}maxlength="{{ max_length }}"{% endif %}
+         {% if required %}required{% endif %}
+         {% if !input_mode.is_empty() %}inputmode="{{ input_mode }}"{% endif %}
+         {% if !placeholder_key.is_empty() %}placeholder="{{ page.t(placeholder_key) }}" data-i18n-placeholder="{{ placeholder_key }}"{% endif %}
+         {% if !hint_key.is_empty() %}aria-describedby="{{ id }}-hint"{% endif %}
+         {% if slug_source %}data-slug-source{% endif %}>
+  {{ hint(id, hint_key) }}
+</div>
+{% endmacro %}
+
+{% macro textarea(id, label_key, value, guide_key="", max_length=0, rows=3, placeholder_key="", required=false) %}
+<div class="dashboard-field" {% if !guide_key.is_empty() %}{{ guide::hint(guide_key) }}{% endif %}>
+  {{ label(id, label_key) }}
+  <textarea class="dashboard-control" id="{{ id }}" name="{{ id }}" rows="{{ rows }}"
+            {% if max_length > 0 %}maxlength="{{ max_length }}" data-character-count{% endif %}
+            {% if required %}required{% endif %}
+            {% if !placeholder_key.is_empty() %}placeholder="{{ page.t(placeholder_key) }}" data-i18n-placeholder="{{ placeholder_key }}"{% endif %}>{{ value }}</textarea>
+  {% if max_length > 0 %}<span class="dashboard-field-count" data-character-output hidden></span>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro slug(prefix, value, locked=false, suggest=false) %}
+<div class="dashboard-field" {{ guide::hint("guide.slug") }}>
+  {{ label("slug", "onboarding.slug_label") }}
+  <div class="dashboard-address{% if locked %} dashboard-address-locked{% endif %}">
+    <span class="dashboard-address-prefix">{% if locked %}{{ icons::panel("lock") }}{% else %}{{ icons::panel("link") }}{% endif %} <span>{{ prefix }}/c/</span></span>
+    <input class="dashboard-control" id="slug" name="slug" type="text" maxlength="64" value="{{ value }}" aria-describedby="slug-hint"
+           {% if locked %}readonly{% endif %}{% if suggest %} required data-slug-target{% endif %}>
+  </div>
+  {% if locked %}
+  {{ hint("slug", "settings.slug_locked_note") }}
+  {% else %}
+  {{ hint("slug", "onboarding.slug_hint") }}
+  {% endif %}
+</div>
+{% endmacro %}
+
+{% macro color(value) %}
+<div class="dashboard-field" data-dashboard-color {{ guide::hint("guide.color") }}>
+  {{ label("accent_color", "onboarding.color_label") }}
+  <div class="dashboard-color-row">
+    <div class="dashboard-color-custom">
+      <input id="accent_color" name="accent_color" type="color" value="{{ value }}">
+      <output for="accent_color" data-color-value>{{ value }}</output>
+    </div>
+    <div class="dashboard-color-presets" role="group" aria-label="{{ page.t("forms.color_presets") }}" data-i18n-aria="forms.color_presets">
+      <button type="button" class="swatch-btn swatch-coral" data-swatch-hex="#D9532F" aria-label="#D9532F"></button>
+      <button type="button" class="swatch-btn swatch-olive" data-swatch-hex="#3F6212" aria-label="#3F6212"></button>
+      <button type="button" class="swatch-btn swatch-espresso" data-swatch-hex="#44403C" aria-label="#44403C"></button>
+      <button type="button" class="swatch-btn swatch-berry" data-swatch-hex="#9D174D" aria-label="#9D174D"></button>
+      <button type="button" class="swatch-btn swatch-ocean" data-swatch-hex="#1D4ED8" aria-label="#1D4ED8"></button>
+      <button type="button" class="swatch-btn swatch-amber" data-swatch-hex="#B45309" aria-label="#B45309"></button>
+    </div>
+  </div>
+</div>
+{% endmacro %}
+
+{% macro checkbox(name, label_key, checked, guide_key="") %}
+<label class="checkbox-row dashboard-check" {% if !guide_key.is_empty() %}{{ guide::hint(guide_key) }}{% endif %}>
+  <input type="checkbox" name="{{ name }}" value="1" {% if checked %}checked{% endif %}>
+  <span data-i18n="{{ label_key }}">{{ page.t(label_key) }}</span>
+</label>
+{% endmacro %}
+
+{% macro category_select(id, label_key, options, selected, guide_key) %}
+<div class="dashboard-field" {{ guide::hint(guide_key) }}>
+  {{ label(id, label_key) }}
+  <select class="dashboard-control" id="{{ id }}" name="{{ id }}" required>
+    {% for option in options %}
+    <option value="{{ option.id }}"{% if option.id.as_str() == selected.as_str() %} selected{% endif %}>{{ option.name }}</option>
+    {% endfor %}
+  </select>
+</div>
+{% endmacro %}
+
+{% macro file(id, label_key, hint_key, guide_key, required=false, max_image_mb=5, max_pdf_mb=0) %}
+<div class="dashboard-field file-field" data-file-field data-image-limit="{{ max_image_mb }}" data-pdf-limit="{{ max_pdf_mb }}" {{ guide::hint(guide_key) }}>
+  {{ label(id, label_key) }}
+  <input class="dashboard-control file-native" type="file" id="{{ id }}" name="{{ id }}"
+         accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp{% if max_pdf_mb > 0 %},application/pdf,.pdf{% endif %}"
+         aria-describedby="{{ id }}-hint" {% if required %}required{% endif %}>
+  <div class="file-field-actions">
+    <button class="file-trigger" type="button" aria-haspopup="dialog" aria-describedby="{{ id }}-hint" data-file-open hidden>
+      <span class="file-trigger-icon">{{ icons::panel("image") }}</span>
+      <span>
+        <strong data-i18n="forms.choose_file">{{ page.t("forms.choose_file") }}</strong>
+        <span class="file-trigger-name" data-file-name data-file-empty="{{ page.t("forms.no_file") }}"
+              data-i18n="forms.no_file">{{ page.t("forms.no_file") }}</span>
+      </span>
+    </button>
+    <button class="file-field-clear" type="button" aria-label="{{ page.t("forms.clear_file") }}" data-i18n-aria="forms.clear_file" data-file-clear hidden>
+      {{ icons::panel("close") }}
+    </button>
+  </div>
+  {{ hint(id, hint_key) }}
+</div>
+{% endmacro %}
+
+{% macro table_input(name, index, label_key, value, guide_key="", show_guide=false, max_length=0, list_id="", price=false, missing=false) %}
+<input type="text" class="dashboard-compact-control{% if price %} ocr-input-price{% endif %}{% if missing %} ocr-input-missing{% endif %}"
+       name="{{ name }}_{{ index }}" value="{{ value }}"
+       aria-label="{{ page.t(label_key) }}" data-i18n-aria="{{ label_key }}"
+       {% if show_guide %}{{ guide::hint(guide_key) }}{% endif %}
+       {% if max_length > 0 %}maxlength="{{ max_length }}"{% endif %}
+       {% if !list_id.is_empty() %}list="{{ list_id }}"{% endif %}
+       {% if price %}inputmode="decimal" placeholder="19,90"{% endif %}>
+{% endmacro %}
+
+{% macro table_check(name, index, label_key, checked, guide_key="", show_guide=false, include_row=false) %}
+<input type="checkbox" class="dashboard-compact-check" name="{{ name }}_{{ index }}" value="1"
+       aria-label="{{ page.t(label_key) }}" data-i18n-aria="{{ label_key }}"
+       {% if checked %}checked{% endif %}
+       {% if show_guide %}{{ guide::hint(guide_key) }}{% endif %}
+       {% if include_row %}data-ocr-row-include{% endif %}>
+{% endmacro %}

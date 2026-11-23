@@ -1,0 +1,139 @@
+.settings-heading {
+  justify-content: flex-start;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.settings-heading-icon,
+.settings-card-icon {
+  display: grid;
+  flex: none;
+  place-items: center;
+  color: #161721;
+}
+
+.settings-heading-icon {
+  width: 3.15rem;
+  height: 3.15rem;
+  border: 1.5px solid #161721;
+  border-radius: 0.9rem;
+  background: #ffdc38;
+  box-shadow: 2px 3px 0 #161721;
+}
+
+.settings-heading-icon .panel-icon { width: 1.7rem; height: 1.7rem; }
+
+.settings-layout {
+  display: grid;
+  align-items: start;
+  grid-template-columns: minmax(0, 1.65fr) minmax(16rem, 1fr);
+  gap: 1.15rem;
+}
+
+.settings-profile,
+.settings-logo {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.settings-card {
+  border: 1px solid #d6d8e5;
+  box-shadow: 0 3px 0 #e8e9f0;
+}
+
+.settings-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+}
+
+.settings-card-heading h2 {
+  margin: 0;
+  font-size: clamp(1.08rem, 2vw, 1.26rem);
+  letter-spacing: -0.02em;
+}
+
+.settings-card-icon {
+  width: 2.25rem;
+  height: 2.25rem;
+  border: 1.5px solid #161721;
+  border-radius: 0.62rem;
+}
+
+.settings-card-icon-blue { background: #dde3ff; }
+.settings-card-icon-yellow { background: #ffec9a; }
+.settings-card-icon-pink { background: #ffd1e1; }
+.settings-logo .settings-card-heading { margin: 0; }
+
+.settings-maps { scroll-margin-top: 1rem; }
+
+.settings-help {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 0.3rem;
+  margin-top: 0.45rem;
+  color: #293cc5;
+  font-size: 0.9rem;
+  font-weight: 750;
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+}
+
+.settings-help .panel-icon { width: 1.17rem; height: 1.17rem; }
+
+.settings-save {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  color: #454961;
+  background: #fff;
+  border: 1px solid #d6d8e5;
+  border-radius: 0.85rem;
+}
+
+.settings-save p { flex: 1 1 13rem; margin: 0; font-size: 0.89rem; }
+.settings-save .btn { min-height: 44px; }
+
+.settings-logo-stage {
+  display: grid;
+  place-items: center;
+  min-height: 9rem;
+  padding: 1rem;
+  border: 1px dashed #aab1dd;
+  border-radius: 0.85rem;
+  background:
+    radial-gradient(circle at center, #fff 0, transparent 75%),
+    #eef0ff;
+}
+
+.settings-logo-image {
+  width: min(100%, 8rem);
+  height: auto;
+  aspect-ratio: 1;
+  border: 1px solid #dcdfed;
+  border-radius: 0.8rem;
+  padding: 0.35rem;
+  object-fit: contain;
+  background: #fff;
+}
+
+.settings-logo-placeholder {
+  display: grid;
+  place-items: center;
+  gap: 0.7rem;
+  color: #454961;
+  font-size: 0.89rem;
+  font-weight: 700;
+}
+
+.settings-logo-placeholder .panel-icon { width: 3rem; height: 3rem; }
+
+@media (max-width: 62rem) {
+  .settings-layout { grid-template-columns: minmax(0, 1fr); }
+}

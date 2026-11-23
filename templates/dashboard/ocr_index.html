@@ -1,7 +1,12 @@
 {% extends "layouts/dashboard.html" %}
 {% import "components/icons.html" as icons %}
 {% import "components/guide_hint.html" as guide %}
+{% import "components/form_fields.html" as fields %}
 {% import "components/panel_empty.html" as empty %}
+
+{% block file_picker %}
+{% include "components/file_picker.html" %}
+{% endblock %}
 
 {% block content %}
 <div class="page-top">
@@ -25,16 +30,7 @@
     <form class="form-stack" method="post" action="/dashboard/ocr/extract" enctype="multipart/form-data" data-ocr-upload-form>
       <input type="hidden" name="_csrf" value="{{ csrf_token }}">
 
-      <div class="field" {{ guide::hint("guide.ocr_file") }}>
-        <label class="dropzone" for="menu_file" data-ocr-dropzone>
-          <span class="dropzone-title" data-i18n="ocr.upload_label">{{ page.t("ocr.upload_label") }}</span>
-          <span class="dropzone-hint" data-ocr-filename data-i18n="ocr.upload_drop_hint">{{ page.t("ocr.upload_drop_hint") }}</span>
-          <input id="menu_file" name="menu_file" type="file"
-                 accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf"
-                 required data-ocr-file-input>
-        </label>
-        <p class="field-hint" data-i18n="ocr.upload_formats">{{ page.t("ocr.upload_formats") }}</p>
-      </div>
+      {{ fields::file("menu_file", "ocr.upload_label", "ocr.upload_formats", "guide.ocr_file", required=true, max_image_mb=10, max_pdf_mb=15) }}
 
       <button class="btn btn-primary" type="submit" data-ocr-submit>
         <span data-i18n="ocr.submit_extract">{{ page.t("ocr.submit_extract") }}</span>
@@ -45,12 +41,7 @@
       <summary class="ocr-summary" data-i18n="ocr.paste_toggle">{{ page.t("ocr.paste_toggle") }}</summary>
       <form class="form-stack mt-3" method="post" action="/dashboard/ocr/text">
         <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-        <div class="field" {{ guide::hint("guide.ocr_text") }}>
-          <label for="raw_text" data-i18n="ocr.paste_label">{{ page.t("ocr.paste_label") }}</label>
-          <textarea id="raw_text" name="raw_text" rows="7" required
-                    placeholder="{{ page.t("ocr.paste_placeholder") }}"
-                    data-i18n-placeholder="ocr.paste_placeholder"></textarea>
-        </div>
+        {{ fields::textarea("raw_text", "ocr.paste_label", "", guide_key="guide.ocr_text", rows=7, placeholder_key="ocr.paste_placeholder", required=true) }}
         <button class="btn btn-secondary" type="submit">{{ icons::panel("scan") }} <span data-i18n="ocr.submit_text">{{ page.t("ocr.submit_text") }}</span></button>
       </form>
     </details>

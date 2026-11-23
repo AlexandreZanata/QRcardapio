@@ -15,6 +15,16 @@ Dashboard pages share a dark sidebar, a workspace header with a language switche
 
 The dashboard uses the original `static/icons/dashboard.svg` illustrations for navigation, metrics, and actions. The Guide button opens a keyboard-accessible dialog and highlights controls annotated by `components/guide_hint.html`. It scrolls each control into view, reveals collapsed fields for its explanation, and restores the previous view on close. The component reads translated instructions from the page catalog.
 
+### Dashboard forms
+
+Use the Askama macros in `templates/components/form_fields.html` for labeled text and URL fields, textareas, lists, checkboxes, and file inputs. Settings and onboarding also share the permanent address and brand color controls. Use the compact control variants for editable table rows. Pass catalog keys for labels, placeholders, and help text, and attach tutorial hints through `guide_key`.
+
+The field stylesheet defines control heights, focus states, hint placement, and responsive field pairs. Textareas with an explicit limit show a live count. Preset swatches update the native color input and its displayed hexadecimal value. The permanent address remains selectable when locked.
+
+For screens with a file field, include `components/file_picker.html` once in the dashboard layout's `file_picker` block. Set the accepted formats and limits on the field to match its server endpoint. The dialog stages one file and previews images locally using a data URL allowed by CSP. Applying the selection populates the form's native file input for its usual multipart submission. The native input remains available when JavaScript or dialog support is unavailable. The modal uses `static/images/file-picker-chef.webp`, an original illustration of a chef holding a yellow frame with a pink burger.
+
+### Landing page assets
+
 The Google Maps feature section shows the public profile fields for Brasa 128, a fictional hamburger restaurant. Its original storefront photo uses a cream façade, cobalt frames, and a yellow awning. The review comparison uses a simulated average, total count, and 1–5 star distribution. Profile views are an owner performance metric and sit outside the public profile demonstration. [Google Business Profile performance documentation](https://support.google.com/business/answer/9918094?hl=pt-BR)
 
 See the [guide to applying the landing style](GUIA_ESTILO_LANDING.md) for the visual tokens, page structure, and reusable examples for this repository and other projects.

@@ -1,0 +1,166 @@
+.dashboard-field {
+  position: relative;
+  display: grid;
+  gap: 0.42rem;
+  min-width: 0;
+}
+
+.dashboard-field-label {
+  display: block;
+  color: #171a2d;
+  font-size: 0.93rem;
+  font-weight: 770;
+}
+
+.dashboard-field-pair {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: 1rem;
+  align-items: start;
+}
+
+.dashboard-field-hint,
+.dashboard-field-count {
+  margin: 0;
+  color: #565d73;
+  font-size: 0.84rem;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.dashboard-field-count {
+  justify-self: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-field .dashboard-control,
+.dashboard-compact-control {
+  width: 100%;
+  min-width: 0;
+  min-height: 46px;
+  box-sizing: border-box;
+  padding: 0.66rem 0.78rem;
+  border: 1px solid #bfc5d7;
+  border-radius: 0.65rem;
+  color: #171a2d;
+  font: inherit;
+  font-size: 1rem;
+  background: #fafbff;
+}
+
+.dashboard-field textarea.dashboard-control { min-height: 5.15rem; resize: vertical; }
+.dashboard-field .dashboard-control:hover:not([readonly]),
+.dashboard-compact-control:hover { border-color: #7f8abb; }
+
+.dashboard-field .dashboard-control:focus,
+.dashboard-compact-control:focus {
+  outline: 2px solid #263be8;
+  outline-offset: -1px;
+  border-color: #263be8;
+  box-shadow: 0 0 0 3px #e2e6ff;
+  background: #fff;
+}
+
+.dashboard-address {
+  display: grid;
+  grid-template-columns: minmax(0, max-content) minmax(0, 1fr);
+  align-items: stretch;
+  border: 1px solid #bfc5d7;
+  border-radius: 0.65rem;
+  background: #fafbff;
+}
+
+.dashboard-address-prefix {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  min-width: 0;
+  gap: 0.35rem;
+  padding: 0.52rem 0.7rem;
+  border-inline-end: 1px solid #d9ddec;
+  border-radius: 0.58rem 0 0 0.58rem;
+  color: #454961;
+  background: #edf0fc;
+  font-size: 0.83rem;
+  font-family: var(--font-mono);
+}
+
+.dashboard-address-prefix span { overflow-wrap: anywhere; }
+.dashboard-address-prefix .panel-icon { width: 1.1rem; height: 1.1rem; }
+.dashboard-address .dashboard-control { border: 0; border-radius: 0 0.58rem 0.58rem 0; }
+.dashboard-address-locked .dashboard-control { color: #454961; background: #f1f2f8; }
+.dashboard-address-locked .dashboard-address-prefix { background: #fcf2ca; }
+
+.dashboard-translations {
+  border-color: #d7d9eb;
+  background: #f6f7fe;
+  color: #373f70;
+}
+
+.dashboard-translations summary { font-weight: 750; }
+.dashboard-translations summary:focus-visible { outline-offset: 4px; }
+
+.dashboard-color-row,
+.dashboard-color-presets,
+.dashboard-color-custom {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+}
+
+.dashboard-color-custom {
+  min-height: 44px;
+  padding: 0.15rem 0.55rem 0.15rem 0.25rem;
+  border: 1px solid #bfc5d7;
+  border-radius: 0.65rem;
+  background: #fafbff;
+}
+
+.dashboard-color-custom input { width: 42px; border: 0; background: transparent; }
+.dashboard-color-custom output { color: #454961; font-size: 0.86rem; font-family: var(--font-mono); }
+
+.dashboard-color-presets .swatch-btn {
+  width: 44px;
+  height: 44px;
+  border-width: 4px;
+}
+
+.dashboard-color-presets .swatch-btn[aria-pressed="true"] {
+  box-shadow: 0 0 0 2px #263be8;
+}
+
+.dashboard-check {
+  padding: 0.55rem 0.65rem;
+  border: 1px solid #dce0ee;
+  border-radius: 0.65rem;
+  background: #fafbff;
+}
+
+.dashboard-check input { flex: none; }
+
+.dashboard-compact-control {
+  min-width: 140px;
+  min-height: 44px;
+  padding: 0.45rem 0.65rem;
+  font-size: 0.92rem;
+}
+
+.dashboard-compact-control.ocr-input-price { min-width: 96px; }
+
+.dashboard-compact-control.ocr-input-missing:not(:focus) {
+  border-color: var(--status-danger-border);
+  background: var(--status-danger-bg);
+}
+
+.dashboard-compact-check {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--brand-accent);
+}
+
+@media (max-width: 39rem) {
+  .dashboard-address { grid-template-columns: minmax(0, 1fr); }
+  .dashboard-address-prefix { border-inline-end: 0; border-bottom: 1px solid #d9ddec; border-radius: 0.58rem 0.58rem 0 0; }
+  .dashboard-address .dashboard-control { border-radius: 0 0 0.58rem 0.58rem; }
+}

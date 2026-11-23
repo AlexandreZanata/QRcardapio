@@ -480,5 +480,21 @@
   "guide.ocr_apply": "Importa los productos seleccionados al borrador. Aún puedes revisar todo antes de publicar.",
   "guide.ocr_include": "Marca esta fila para importar el producto o desmárcala para omitirlo.",
   "guide.ocr_reuse": "Marca para reutilizar categorías existentes con el mismo nombre.",
-  "guide.unpublish": "Usa esta opción si necesitas retirar el menú. El mismo código QR vuelve a funcionar al publicar de nuevo."
+  "guide.unpublish": "Usa esta opción si necesitas retirar el menú. El mismo código QR vuelve a funcionar al publicar de nuevo.",
+  "settings.profile_section": "Datos del establecimiento",
+  "settings.publish_hint": "Publica el menú para mostrar estos cambios a los clientes.",
+  "settings.save_profile": "Guardar cambios",
+  "settings.logo_empty": "Sin logotipo",
+  "settings.logo_file_label": "Archivo del logotipo",
+  "forms.color_presets": "Colores sugeridos",
+  "forms.choose_file": "Seleccionar archivo",
+  "forms.no_file": "Ningún archivo seleccionado",
+  "forms.clear_file": "Limpiar selección del archivo",
+  "forms.browse": "Buscar en el dispositivo",
+  "forms.drop": "O arrastra el archivo aquí",
+  "forms.use_file": "Usar este archivo",
+  "forms.one_file": "Selecciona un archivo a la vez.",
+  "forms.invalid_type": "Elige un archivo en uno de los formatos indicados.",
+  "forms.invalid_size": "El archivo supera el límite de tamaño de este campo.",
+  "forms.file_required": "Selecciona un archivo para continuar."
 }

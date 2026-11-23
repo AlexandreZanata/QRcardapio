@@ -49,15 +49,36 @@
     });
   }
 
-  // Accent color swatches synchronized with native color input
-  const colorInput = document.querySelector('input[type="color"][name="accent_color"]');
-  if (colorInput) {
-    document.querySelectorAll("[data-swatch-hex]").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        colorInput.value = btn.dataset.swatchHex;
+  document.querySelectorAll("[data-dashboard-color]").forEach((field) => {
+    const input = field.querySelector('input[type="color"]');
+    const output = field.querySelector("[data-color-value]");
+    const swatches = field.querySelectorAll("[data-swatch-hex]");
+    function updateColor() {
+      const hex = input.value.toUpperCase();
+      output.value = hex;
+      swatches.forEach((swatch) => {
+        swatch.setAttribute("aria-pressed", String(swatch.dataset.swatchHex === hex));
+      });
+    }
+    swatches.forEach((swatch) => {
+      swatch.addEventListener("click", () => {
+        input.value = swatch.dataset.swatchHex;
+        input.dispatchEvent(new Event("input", { bubbles: true }));
       });
     });
-  }
+    input.addEventListener("input", updateColor);
+    updateColor();
+  });
+
+  document.querySelectorAll("[data-character-count]").forEach((input) => {
+    const output = input.closest(".dashboard-field").querySelector("[data-character-output]");
+    function updateCount() {
+      output.textContent = `${input.value.length} / ${input.maxLength}`;
+    }
+    input.addEventListener("input", updateCount);
+    updateCount();
+    output.hidden = false;
+  });
 
   // Copy public menu URL button
   document.querySelectorAll("[data-copy-target]").forEach((btn) => {

@@ -480,5 +480,21 @@
   "guide.ocr_apply": "Importe os itens selecionados para o rascunho. Você ainda pode revisar tudo antes de publicar.",
   "guide.ocr_include": "Marque esta linha para importar o produto e desmarque para ignorá-lo.",
   "guide.ocr_reuse": "Marque para usar categorias existentes com o mesmo nome.",
-  "guide.unpublish": "Use esta ação quando precisar retirar o cardápio do ar. O mesmo QR Code volta a funcionar assim que você publicar de novo."
+  "guide.unpublish": "Use esta ação quando precisar retirar o cardápio do ar. O mesmo QR Code volta a funcionar assim que você publicar de novo.",
+  "settings.profile_section": "Dados do estabelecimento",
+  "settings.publish_hint": "Publique o cardápio para exibir as alterações aos clientes.",
+  "settings.save_profile": "Salvar alterações",
+  "settings.logo_empty": "Nenhuma logo cadastrada",
+  "settings.logo_file_label": "Arquivo da logo",
+  "forms.color_presets": "Cores sugeridas",
+  "forms.choose_file": "Selecionar arquivo",
+  "forms.no_file": "Nenhum arquivo selecionado",
+  "forms.clear_file": "Limpar seleção do arquivo",
+  "forms.browse": "Buscar no dispositivo",
+  "forms.drop": "Ou arraste o arquivo para cá",
+  "forms.use_file": "Usar este arquivo",
+  "forms.one_file": "Selecione um arquivo por vez.",
+  "forms.invalid_type": "Escolha um arquivo em um dos formatos indicados.",
+  "forms.invalid_size": "O arquivo excede o tamanho permitido para este campo.",
+  "forms.file_required": "Selecione um arquivo para continuar."
 }

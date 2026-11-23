@@ -310,6 +310,31 @@ async fn complete_definition_of_done_e2e_flow_including_restart() {
         .unwrap();
     assert_eq!(pub_res.status(), StatusCode::SEE_OTHER);
 
+    let settings_page = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .uri("/dashboard/settings")
+                .header(COOKIE, &cookie1)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(settings_page.status(), StatusCode::OK);
+    let settings_html = body_string(settings_page).await;
+    assert!(settings_html.contains("class=\"dashboard-address dashboard-address-locked\""));
+    assert!(settings_html.contains("readonly"));
+    assert!(settings_html.contains("value=\"https://maps.app.goo.gl/example\""));
+    assert!(settings_html.contains("value=\"https://g.page/r/example/review\""));
+    assert!(settings_html.contains("type=\"file\" id=\"logo\" name=\"logo\""));
+    assert_eq!(
+        settings_html
+            .matches("id=\"dashboard-file-picker\"")
+            .count(),
+        1
+    );
+
     // 9. Public URL serves menu
     let public_res = app
         .clone()

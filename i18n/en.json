@@ -480,5 +480,21 @@
   "guide.ocr_apply": "Import selected items into the draft. You can still review changes before publishing.",
   "guide.ocr_include": "Check this row to import the product, or uncheck to skip it.",
   "guide.ocr_reuse": "Check to reuse existing categories with the same name.",
-  "guide.unpublish": "Use this when you need to take the menu offline. The same QR code works again after you republish."
+  "guide.unpublish": "Use this when you need to take the menu offline. The same QR code works again after you republish.",
+  "settings.profile_section": "Business details",
+  "settings.publish_hint": "Publish the menu to show these changes to customers.",
+  "settings.save_profile": "Save changes",
+  "settings.logo_empty": "No logo uploaded",
+  "settings.logo_file_label": "Logo file",
+  "forms.color_presets": "Suggested colors",
+  "forms.choose_file": "Choose a file",
+  "forms.no_file": "No file selected",
+  "forms.clear_file": "Clear file selection",
+  "forms.browse": "Browse device",
+  "forms.drop": "Or drag your file here",
+  "forms.use_file": "Use this file",
+  "forms.one_file": "Choose one file at a time.",
+  "forms.invalid_type": "Choose a file in one of the listed formats.",
+  "forms.invalid_size": "The file exceeds the size limit for this field.",
+  "forms.file_required": "Choose a file to continue."
 }

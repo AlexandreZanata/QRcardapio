@@ -16,6 +16,9 @@
   <link rel="stylesheet" href="/static/css/tokens.css">
   <link rel="stylesheet" href="/static/css/app.css">
   <link rel="stylesheet" href="/static/css/dashboard.css">
+  <link rel="stylesheet" href="/static/css/form-fields.css">
+  <link rel="stylesheet" href="/static/css/file-picker.css">
+  {% block page_styles %}{% endblock %}
   <link rel="stylesheet" href="/static/css/panel-guide.css">
   <link rel="stylesheet" href="/static/css/language-picker.css">
   {% if has_theme %}
@@ -97,6 +100,7 @@
   </div>
 
   {% include "components/panel_guide.html" %}
+  {% block file_picker %}{% endblock %}
   <script src="/static/js/panel-guide.js" type="module"></script>
   <script src="/static/js/i18n.js" defer></script>
   <script src="/static/js/language-picker.js" type="module"></script>

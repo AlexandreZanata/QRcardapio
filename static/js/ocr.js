@@ -1,50 +1,10 @@
 (() => {
   "use strict";
 
-  // 1. OCR Upload Dropzone & Submit Feedback
+  // 1. OCR upload submit feedback
   const uploadForm = document.querySelector("[data-ocr-upload-form]");
   if (uploadForm) {
-    const dropzone = uploadForm.querySelector("[data-ocr-dropzone]");
-    const fileInput = uploadForm.querySelector("[data-ocr-file-input]");
-    const fileLabel = uploadForm.querySelector("[data-ocr-filename]");
     const submitBtn = uploadForm.querySelector("[data-ocr-submit]");
-
-    const showFilename = (files) => {
-      if (!fileLabel || !files || files.length === 0) return;
-      fileLabel.removeAttribute("data-i18n");
-      fileLabel.textContent = files[0].name;
-    };
-
-    if (fileInput) {
-      fileInput.addEventListener("change", () => showFilename(fileInput.files));
-    }
-
-    if (dropzone && fileInput) {
-      ["dragenter", "dragover"].forEach((evt) => {
-        dropzone.addEventListener(evt, (ev) => {
-          ev.preventDefault();
-          dropzone.classList.add("is-dragover");
-        });
-      });
-
-      ["dragleave", "drop"].forEach((evt) => {
-        dropzone.addEventListener(evt, (ev) => {
-          ev.preventDefault();
-          dropzone.classList.remove("is-dragover");
-        });
-      });
-
-      dropzone.addEventListener("drop", (ev) => {
-        const dt = ev.dataTransfer;
-        if (!dt || !dt.files || dt.files.length === 0) return;
-        try {
-          fileInput.files = dt.files;
-        } catch {
-          // Fallback for browsers with read-only FileList
-        }
-        showFilename(dt.files);
-      });
-    }
 
     uploadForm.addEventListener("submit", () => {
       if (!submitBtn) return;

@@ -1,6 +1,7 @@
 {% extends "layouts/dashboard.html" %}
 {% import "components/icons.html" as icons %}
 {% import "components/guide_hint.html" as guide %}
+{% import "components/form_fields.html" as fields %}
 {% import "components/panel_empty.html" as empty %}
 
 {% block content %}
@@ -63,7 +64,7 @@
 
     <div class="ocr-toolbar" {{ guide::hint("guide.ocr_select") }}>
       <label class="checkbox-row">
-        <input type="checkbox" data-ocr-select-all checked>
+        <input type="checkbox" class="dashboard-compact-check" data-ocr-select-all checked>
         <span data-i18n="ocr.select_all">{{ page.t("ocr.select_all") }}</span>
       </label>
       <button type="button" class="btn btn-secondary btn-sm" data-ocr-add-row>{{ icons::panel("add") }} <span data-i18n="ocr.add_row">{{ page.t("ocr.add_row") }}</span></button>
@@ -92,29 +93,22 @@
           <tr data-ocr-row>
             <td class="ocr-cell-check">
               <input type="hidden" name="row_idx" value="{{ row.idx }}">
-              <input type="checkbox" name="include_{{ row.idx }}" {% if loop.first %}{{ guide::hint("guide.ocr_include") }}{% endif %} value="1" {% if row.include %}checked{% endif %}
-                     aria-label="{{ page.t("ocr.col_include") }}" data-ocr-row-include>
+              {{ fields::table_check("include", row.idx, "ocr.col_include", row.include, show_guide=loop.first, guide_key="guide.ocr_include", include_row=true) }}
             </td>
             <td>
-              <input type="text" class="ocr-input" name="category_{{ row.idx }}" {% if loop.first %}{{ guide::hint("guide.choose_category") }}{% endif %} value="{{ row.category_name }}"
-                     list="ocr-cat-suggestions" maxlength="80" aria-label="{{ page.t("ocr.col_category") }}">
+              {{ fields::table_input("category", row.idx, "ocr.col_category", row.category_name, show_guide=loop.first, guide_key="guide.choose_category", max_length=80, list_id="ocr-cat-suggestions") }}
             </td>
             <td>
-              <input type="text" class="ocr-input" name="name_{{ row.idx }}" {% if loop.first %}{{ guide::hint("guide.product_name") }}{% endif %} value="{{ row.name }}"
-                     maxlength="100" aria-label="{{ page.t("ocr.col_product") }}">
+              {{ fields::table_input("name", row.idx, "ocr.col_product", row.name, show_guide=loop.first, guide_key="guide.product_name", max_length=100) }}
             </td>
             <td>
-              <input type="text" class="ocr-input ocr-input-price{% if row.missing_price %} ocr-input-missing{% endif %}"
-                     name="price_{{ row.idx }}" {% if loop.first %}{{ guide::hint("guide.price") }}{% endif %} value="{{ row.price_value }}" inputmode="decimal"
-                     placeholder="19,90" aria-label="{{ page.t("ocr.col_price") }}">
+              {{ fields::table_input("price", row.idx, "ocr.col_price", row.price_value, show_guide=loop.first, guide_key="guide.price", price=true, missing=row.missing_price) }}
             </td>
             <td>
-              <input type="text" class="ocr-input" name="description_{{ row.idx }}" {% if loop.first %}{{ guide::hint("guide.product_description") }}{% endif %} value="{{ row.description }}"
-                     maxlength="320" aria-label="{{ page.t("ocr.col_description") }}">
+              {{ fields::table_input("description", row.idx, "ocr.col_description", row.description, show_guide=loop.first, guide_key="guide.product_description", max_length=320) }}
             </td>
             <td class="ocr-cell-check">
-              <input type="checkbox" name="available_{{ row.idx }}" {% if loop.first %}{{ guide::hint("guide.available") }}{% endif %} value="1" {% if row.is_available %}checked{% endif %}
-                     aria-label="{{ page.t("ocr.col_available") }}">
+              {{ fields::table_check("available", row.idx, "ocr.col_available", row.is_available, show_guide=loop.first, guide_key="guide.available") }}
             </td>
             <td>
               <span class="badge {{ row.confidence_badge_class }}" data-i18n="{{ row.confidence_key }}">{{ page.t(row.confidence_key) }}</span>
@@ -129,14 +123,8 @@
     </div>
 
     <div class="ocr-options" {{ guide::hint("guide.ocr_options") }}>
-      <label class="checkbox-row" {{ guide::hint("guide.ocr_reuse") }}>
-        <input type="checkbox" name="reuse_existing_categories" value="1" {% if reuse_existing_categories %}checked{% endif %}>
-        <span data-i18n="ocr.opt_reuse_categories">{{ page.t("ocr.opt_reuse_categories") }}</span>
-      </label>
-      <label class="checkbox-row" {{ guide::hint("guide.visible") }}>
-        <input type="checkbox" name="mark_visible" value="1" {% if mark_visible %}checked{% endif %}>
-        <span data-i18n="ocr.opt_mark_visible">{{ page.t("ocr.opt_mark_visible") }}</span>
-      </label>
+      {{ fields::checkbox("reuse_existing_categories", "ocr.opt_reuse_categories", reuse_existing_categories, guide_key="guide.ocr_reuse") }}
+      {{ fields::checkbox("mark_visible", "ocr.opt_mark_visible", mark_visible, guide_key="guide.visible") }}
     </div>
 
     <div class="inline-actions">
@@ -155,28 +143,22 @@
     <tr data-ocr-row>
       <td class="ocr-cell-check">
         <input type="hidden" name="row_idx" value="__IDX__">
-        <input type="checkbox" name="include___IDX__" value="1" checked
-               aria-label="{{ page.t("ocr.col_include") }}" data-ocr-row-include>
+        {{ fields::table_check("include", "__IDX__", "ocr.col_include", true, include_row=true) }}
       </td>
       <td>
-        <input type="text" class="ocr-input" name="category___IDX__" value="{{ page.t("ocr.default_category") }}"
-               list="ocr-cat-suggestions" maxlength="80" aria-label="{{ page.t("ocr.col_category") }}">
+        {{ fields::table_input("category", "__IDX__", "ocr.col_category", page.t("ocr.default_category"), max_length=80, list_id="ocr-cat-suggestions") }}
       </td>
       <td>
-        <input type="text" class="ocr-input" name="name___IDX__" value=""
-               maxlength="100" aria-label="{{ page.t("ocr.col_product") }}">
+        {{ fields::table_input("name", "__IDX__", "ocr.col_product", "", max_length=100) }}
       </td>
       <td>
-        <input type="text" class="ocr-input ocr-input-price" name="price___IDX__" value="" inputmode="decimal"
-               placeholder="19,90" aria-label="{{ page.t("ocr.col_price") }}">
+        {{ fields::table_input("price", "__IDX__", "ocr.col_price", "", price=true) }}
       </td>
       <td>
-        <input type="text" class="ocr-input" name="description___IDX__" value=""
-               maxlength="320" aria-label="{{ page.t("ocr.col_description") }}">
+        {{ fields::table_input("description", "__IDX__", "ocr.col_description", "", max_length=320) }}
       </td>
       <td class="ocr-cell-check">
-        <input type="checkbox" name="available___IDX__" value="1" checked
-               aria-label="{{ page.t("ocr.col_available") }}">
+        {{ fields::table_check("available", "__IDX__", "ocr.col_available", true) }}
       </td>
       <td>
         <span class="badge badge-success" data-i18n="ocr.conf_high">{{ page.t("ocr.conf_high") }}</span>
