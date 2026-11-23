@@ -37,6 +37,8 @@ data/published/
 
 Already-published menus pick up the visual refresh through the shared stylesheet. They receive a photo cover during their next normal publication.
 
+An optional Google review invitation is rendered into the static HTML on publication. The direct review link takes precedence over the general Google Maps profile link. Removing both links and publishing removes the invitation. Public scans do not fetch any Google data or open the Google link until the visitor chooses it.
+
 ## Failure Recovery & Rollback
 
 - If any error occurs before step 8's atomic rename (e.g., missing source media file or full disk), temporary files remain isolated in `.tmp/` or unused, a `'failed'` audit row is logged, and **the previous live `index.html` and its assets remain completely intact and serving**.

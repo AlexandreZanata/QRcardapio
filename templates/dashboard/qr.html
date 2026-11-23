@@ -1,4 +1,6 @@
 {% extends "layouts/dashboard.html" %}
+{% import "components/icons.html" as icons %}
+{% import "components/guide_hint.html" as guide %}
 
 {% block content %}
 <div class="page-top">
@@ -11,7 +13,7 @@
 {% if !is_published %}
 <div class="alert alert-warn" role="status">
   <span data-i18n="qr.not_published_warning">{{ page.t("qr.not_published_warning") }}</span>
-  <form class="inline-form" method="post" action="/dashboard/publish">
+  <form class="inline-form" method="post" action="/dashboard/publish" {{ guide::hint("guide.publish") }}>
     <input type="hidden" name="_csrf" value="{{ csrf_token }}">
     <button class="btn btn-primary btn-sm" type="submit" data-i18n="dashboard.action_publish">{{ page.t("dashboard.action_publish") }}</button>
   </form>
@@ -20,12 +22,13 @@
 
 <div class="grid-2">
   <section class="card">
-    <div class="qr-preview-box mb-4">
+    <div class="qr-preview-box mb-4" {{ guide::hint("guide.qr_code") }}>
       {{ qr_svg|safe }}
     </div>
-    <div class="url-box">
+    <div class="url-box" {{ guide::hint("guide.public_link") }}>
       <code id="qr-target-url" class="url-code">{{ public_url }}</code>
       <button type="button" class="btn btn-secondary btn-sm" data-copy-target="qr-target-url">
+        {{ icons::panel("link") }}
         <span data-i18n="common.copy">{{ page.t("common.copy") }}</span>
       </button>
     </div>
@@ -33,9 +36,9 @@
 
   <section class="card">
     <div class="form-stack">
-      <a class="btn btn-primary" href="/dashboard/qr.svg" download data-i18n="qr.download_svg">{{ page.t("qr.download_svg") }}</a>
-      <a class="btn btn-secondary" href="/dashboard/qr.png" download data-i18n="qr.download_png">{{ page.t("qr.download_png") }}</a>
-      <a class="btn btn-secondary" href="/dashboard/qr/print" target="_blank" rel="noopener" data-i18n="qr.open_print">{{ page.t("qr.open_print") }}</a>
+      <a class="btn btn-primary" href="/dashboard/qr.svg" {{ guide::hint("guide.svg") }} download>{{ icons::panel("download") }} <span data-i18n="qr.download_svg">{{ page.t("qr.download_svg") }}</span></a>
+      <a class="btn btn-secondary" href="/dashboard/qr.png" {{ guide::hint("guide.png") }} download>{{ icons::panel("download") }} <span data-i18n="qr.download_png">{{ page.t("qr.download_png") }}</span></a>
+      <a class="btn btn-secondary" href="/dashboard/qr/print" {{ guide::hint("guide.print") }} target="_blank" rel="noopener">{{ icons::panel("print") }} <span data-i18n="qr.open_print">{{ page.t("qr.open_print") }}</span></a>
     </div>
 
     <h2 class="mt-5 mb-3" data-i18n="qr.tips_title">{{ page.t("qr.tips_title") }}</h2>

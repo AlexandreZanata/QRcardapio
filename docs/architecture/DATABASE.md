@@ -31,6 +31,7 @@ In WAL mode, `NORMAL` avoids `fsync` on every transaction commit (flushing mainl
 - `accounts`: Owner and admin credentials (`email` unique `COLLATE NOCASE`, Argon2id hash, `role`, `preferred_locale`).
 - `sessions`: Server-side opaque session hashes (`token_hash` unique, `csrf_token`, `expires_at`), indexed by `account_id` and `expires_at`.
 - `establishments`: Tenant root (`slug` unique, brand metadata, optional `description_{en,es}`, `accent_color`, `logo_asset_id`, `is_published`, `published_version`, `has_unpublished_changes`).
+- `20261123000003_google_maps_links.sql` adds nullable `google_maps_url` and `google_review_url` to the tenant root. Saving the profile validates HTTPS links against recognized Google Maps and Business Profile hosts. Omitted fields preserve the stored links and submitting a blank field clears that link.
 - `establishment_members`: Join table linking `accounts` and `establishments` (`PK (establishment_id, account_id)`, indexed by `account_id`).
 - `media_assets`: Content-addressed image variants (`kind`, `content_hash`, dimensions, `filename_large`, `filename_thumb`), indexed by `(establishment_id, kind)`.
 - `categories`: Ordered tenant categories (`position`, `is_visible`, optional EN/ES fields), indexed by `(establishment_id, position, id)`.

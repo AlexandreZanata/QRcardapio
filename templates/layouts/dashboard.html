@@ -2,7 +2,7 @@
 {% import "components/lang_switcher.html" as languages %}
 {% macro sidebar_link(path, key, icon, section) %}
 <a class="sidebar-link" href="{{ path }}"{% if active_nav == section %} aria-current="page"{% endif %}>
-  {{ icons::icon(icon) }}
+  {{ icons::panel(icon) }}
   <span data-i18n="{{ key }}">{{ page.t(key) }}</span>
 </a>
 {% endmacro %}
@@ -16,6 +16,7 @@
   <link rel="stylesheet" href="/static/css/tokens.css">
   <link rel="stylesheet" href="/static/css/app.css">
   <link rel="stylesheet" href="/static/css/dashboard.css">
+  <link rel="stylesheet" href="/static/css/panel-guide.css">
   <link rel="stylesheet" href="/static/css/language-picker.css">
   {% if has_theme %}
   <link rel="stylesheet" href="/dashboard/theme.css">
@@ -31,7 +32,7 @@
         <span data-i18n="app.name">{{ page.t("app.name") }}</span>
       </a>
       <button class="sidebar-toggle" type="button" aria-controls="dashboard-navigation" aria-expanded="false" data-sidebar-toggle>
-        {{ icons::icon("bars") }}
+        {{ icons::panel("bars") }}
         <span data-i18n="nav.panel_menu">{{ page.t("nav.panel_menu") }}</span>
       </button>
     </div>
@@ -58,7 +59,7 @@
       <form class="sidebar-logout" method="post" action="/logout">
         <input type="hidden" name="_csrf" value="{{ csrf_token }}">
         <button class="sidebar-link" type="submit">
-          {{ icons::icon("exit") }}
+          {{ icons::panel("exit") }}
           <span data-i18n="nav.logout">{{ page.t("nav.logout") }}</span>
         </button>
       </form>
@@ -69,17 +70,23 @@
     <header class="dashboard-topbar">
       <div class="dashboard-context">
         {% if active_nav == "admin" %}
-          {{ icons::icon("activity") }}
+          {{ icons::panel("activity") }}
           <span data-i18n="nav.platform">{{ page.t("nav.platform") }}</span>
         {% else if has_establishment %}
-          {{ icons::icon("store") }}
+          {{ icons::panel("store") }}
           <span>{{ brand_name }}</span>
         {% else %}
-          {{ icons::icon("store") }}
+          {{ icons::panel("store") }}
           <span data-i18n="nav.setup">{{ page.t("nav.setup") }}</span>
         {% endif %}
       </div>
-      {{ languages::picker(page.locale_code, page.t("lang.switcher_label")) }}
+      <div class="dashboard-topbar-actions">
+        <button class="btn btn-secondary panel-guide-start" type="button" data-guide-start hidden>
+          {{ icons::panel("guide") }}
+          <span data-i18n="guide.title">{{ page.t("guide.title") }}</span>
+        </button>
+        {{ languages::picker(page.locale_code, page.t("lang.switcher_label")) }}
+      </div>
     </header>
     <main id="main-content" class="dash-main">
       <div class="container dashboard-container">
@@ -89,6 +96,8 @@
     </main>
   </div>
 
+  {% include "components/panel_guide.html" %}
+  <script src="/static/js/panel-guide.js" type="module"></script>
   <script src="/static/js/i18n.js" defer></script>
   <script src="/static/js/language-picker.js" type="module"></script>
   <script src="/static/js/app.js" defer></script>

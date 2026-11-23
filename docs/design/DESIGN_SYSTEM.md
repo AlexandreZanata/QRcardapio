@@ -13,11 +13,19 @@ The landing page uses its own cream, blue, yellow, and pink palette. The device 
 
 Dashboard pages share a dark sidebar, a workspace header with a language switcher, and an active link marked with `aria-current="page"`. On narrow screens, `static/js/app.js` enables a collapsible sidebar with keyboard dismissal. The navigation remains visible without JavaScript. The operations page adds shortcuts to its establishment and publication tables.
 
+The dashboard uses the original `static/icons/dashboard.svg` illustrations for navigation, metrics, and actions. The Guide button opens a keyboard-accessible dialog and highlights controls annotated by `components/guide_hint.html`. It scrolls each control into view, reveals collapsed fields for its explanation, and restores the previous view on close. The component reads translated instructions from the page catalog.
+
+The Google Maps landing section compares two simulated 30-day periods for the fictional Café Pingo. It uses an original storefront photo generated from the brief for a Brazilian café with cream walls, cobalt window frames, and a yellow awning. The comparison illustrates review and profile-visit counts without presenting them as measured results.
+
 The brand mark and icon sprites live under `static/icons/`. The landing's features and how-it-works sections share the illustrated SVG sprite, with bold outlines and fills from the landing palette. Keep decorative icons hidden from assistive technology when the adjacent text already names the action. Landing assets are served from `static/images/` and CSS stays scoped to the landing and dashboard layouts.
 
 ## Public Menu
 
 The public menu uses a branded cover and a centered establishment identity. The cover uses the first visible, available product photo in menu order when the snapshot provides one. An illustrated cover uses the same brand color for menus without photos. The layout supports the shared static stylesheet on previously published snapshots, including empty menus and menus with no logo. A sticky search and category strip precedes product cards. Cards use one column on phones and two on wider screens.
+
+## Illustrated States
+
+Menu editing, import history, and operations show an illustrated empty state when there are no records. The error page uses the same chef character and the artwork for missing pages, restricted access, or service failures. The status code remains visible and the text is translated through the existing catalog.
 
 ## Zero Inline Scripts or Styles (Strict CSP)
 

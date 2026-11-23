@@ -1,4 +1,4 @@
-{% import "components/lang_switcher.html" as languages -%}
+{% import "components/lang_switcher.html" as languages %}{% import "components/icons.html" as icons -%}
 <!DOCTYPE html>
 <html lang="{{ locale_code }}">
 <head>
@@ -113,6 +113,19 @@
       </div>
       {% endif %}
     </main>
+
+    {% if let Some(review_url) = google_review_target %}
+    <aside class="menu-review" aria-labelledby="menu-review-heading">
+      <div>
+        <h2 id="menu-review-heading" data-i18n="public_menu.google_review_heading">{{ google_review_heading }}</h2>
+        <p data-i18n="public_menu.google_review_body">{{ google_review_body }}</p>
+      </div>
+      <a href="{{ review_url }}" target="_blank" rel="noopener noreferrer">
+        {{ icons::panel("map") }}
+        <span data-i18n="public_menu.google_review_action">{{ google_review_action }}</span>
+      </a>
+    </aside>
+    {% endif %}
 
     <footer class="menu-footer">
       <a href="/" data-i18n="public_menu.powered_by">{{ powered_by_text }}</a>

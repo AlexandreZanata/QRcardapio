@@ -1,6 +1,7 @@
+{% import "components/icons.html" as icons %}
 {% if let Some(flash) = page.flash %}
 <div class="alert {% if flash.is_error %}alert-error{% else %}alert-success{% endif %}" role="status" aria-live="polite">
   <span data-i18n="{{ flash.key }}">{{ page.t(flash.key) }}</span>
-  <button type="button" class="alert-dismiss" data-dismiss-alert aria-label="{{ page.t("common.close") }}" data-i18n-aria="common.close">×</button>
+  <button type="button" class="alert-dismiss" data-dismiss-alert aria-label="{{ page.t("common.close") }}" data-i18n-aria="common.close">{{ icons::panel("close") }}</button>
 </div>
 {% endif %}

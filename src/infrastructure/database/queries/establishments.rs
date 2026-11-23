@@ -112,12 +112,17 @@ pub async fn update_establishment_profile(
     description_en: &str,
     description_es: &str,
     accent_color: &str,
+    google_maps_url: Option<Option<&str>>,
+    google_review_url: Option<Option<&str>>,
     now: &str,
 ) -> AppResult<()> {
     sqlx::query(
         "UPDATE establishments
          SET slug = ?, name = ?, description = ?, description_en = ?, description_es = ?,
-             accent_color = ?, has_unpublished_changes = 1, updated_at = ?
+             accent_color = ?,
+             google_maps_url = CASE WHEN ? THEN ? ELSE google_maps_url END,
+             google_review_url = CASE WHEN ? THEN ? ELSE google_review_url END,
+             has_unpublished_changes = 1, updated_at = ?
          WHERE id = ?",
     )
     .bind(slug)
@@ -126,6 +131,10 @@ pub async fn update_establishment_profile(
     .bind(description_en)
     .bind(description_es)
     .bind(accent_color)
+    .bind(google_maps_url.is_some())
+    .bind(google_maps_url.flatten())
+    .bind(google_review_url.is_some())
+    .bind(google_review_url.flatten())
     .bind(now)
     .bind(est_id)
     .execute(pool)

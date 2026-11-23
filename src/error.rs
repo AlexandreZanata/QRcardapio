@@ -1,6 +1,9 @@
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 
+#[derive(Clone)]
+pub struct ErrorDetail(pub &'static str);
+
 /// Domain, infrastructure, and HTTP error type.
 /// Public error responses always resolve through i18n keys without exposing internal details.
 #[derive(Debug, thiserror::Error)]
@@ -70,7 +73,10 @@ impl IntoResponse for AppError {
         } else {
             tracing::debug!(error = %self, status = %status, "request rejected");
         }
-        (status, self.i18n_key()).into_response()
+        let key = self.i18n_key();
+        let mut response = (status, key).into_response();
+        response.extensions_mut().insert(ErrorDetail(key));
+        response
     }
 }
 

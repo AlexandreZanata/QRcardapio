@@ -1,11 +1,13 @@
 {% extends "layouts/print.html" %}
+{% import "components/lang_switcher.html" as languages %}
+{% import "components/icons.html" as icons %}
 
 {% block content %}
 <div class="print-toolbar no-print">
   <a class="btn btn-secondary btn-sm" href="/dashboard/qr" data-i18n="common.back">{{ page.t("common.back") }}</a>
   <div class="inline-actions">
-    {% include "components/lang_switcher.html" %}
-    <button type="button" class="btn btn-primary" data-action="print" data-i18n="print.button">{{ page.t("print.button") }}</button>
+    {{ languages::picker(page.locale_code, page.t("lang.switcher_label")) }}
+    <button type="button" class="btn btn-primary" data-action="print">{{ icons::panel("print") }} <span data-i18n="print.button">{{ page.t("print.button") }}</span></button>
   </div>
 </div>
 

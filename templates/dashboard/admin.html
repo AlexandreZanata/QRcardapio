@@ -1,14 +1,16 @@
 {% extends "layouts/dashboard.html" %}
+{% import "components/guide_hint.html" as guide %}
+{% import "components/panel_empty.html" as empty %}
 {% import "components/icons.html" as icons %}
 {% import "components/dashboard_metric.html" as metrics %}
 
 {% block sidebar_sections %}
 <a class="sidebar-link sidebar-section" href="#establishments">
-  {{ icons::icon("store") }}
+  {{ icons::panel("store") }}
   <span data-i18n="admin.stat_establishments">{{ page.t("admin.stat_establishments") }}</span>
 </a>
 <a class="sidebar-link sidebar-section" href="#publications">
-  {{ icons::icon("history") }}
+  {{ icons::panel("history") }}
   <span data-i18n="admin.stat_publications">{{ page.t("admin.stat_publications") }}</span>
 </a>
 {% endblock %}
@@ -24,20 +26,20 @@
   </span>
 </div>
 
-<div class="stats-grid">
+<div class="stats-grid" {{ guide::hint("guide.admin_stats") }}>
   {{ metrics::metric("users", "violet", "admin.stat_accounts", account_count) }}
   {{ metrics::metric("store", "pink", "admin.stat_establishments", establishment_count) }}
   {{ metrics::metric("globe", "yellow", "admin.stat_published", published_count) }}
   {{ metrics::metric("history", "green", "admin.stat_publications", publication_count) }}
 </div>
 
-<section class="card dashboard-table-card mb-4" id="establishments" aria-labelledby="establishments-heading" tabindex="-1">
+<section class="card dashboard-table-card mb-4" id="establishments" {{ guide::hint("guide.admin_businesses") }} aria-labelledby="establishments-heading" tabindex="-1">
   <h2 class="dashboard-card-heading" id="establishments-heading">
-    {{ icons::icon("store") }}
+    {{ icons::panel("store") }}
     <span data-i18n="admin.recent_establishments">{{ page.t("admin.recent_establishments") }}</span>
   </h2>
   {% if establishments.is_empty() %}
-  <p class="text-muted" data-i18n="admin.no_establishments">{{ page.t("admin.no_establishments") }}</p>
+  {{ empty::message("admin.no_establishments") }}
   {% else %}
   <div class="table-wrap" role="region" aria-labelledby="establishments-heading" tabindex="0">
     <table>
@@ -72,13 +74,13 @@
   {% endif %}
 </section>
 
-<section class="card dashboard-table-card" id="publications" aria-labelledby="publications-heading" tabindex="-1">
+<section class="card dashboard-table-card" id="publications" {{ guide::hint("guide.admin_publications") }} aria-labelledby="publications-heading" tabindex="-1">
   <h2 class="dashboard-card-heading" id="publications-heading">
-    {{ icons::icon("history") }}
+    {{ icons::panel("history") }}
     <span data-i18n="admin.recent_publications">{{ page.t("admin.recent_publications") }}</span>
   </h2>
   {% if publications.is_empty() %}
-  <p class="text-muted" data-i18n="admin.no_publications">{{ page.t("admin.no_publications") }}</p>
+  {{ empty::message("admin.no_publications") }}
   {% else %}
   <div class="table-wrap" role="region" aria-labelledby="publications-heading" tabindex="0">
     <table>

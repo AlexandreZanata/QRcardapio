@@ -45,6 +45,10 @@ pub struct PublicMenuTemplate {
     pub establishment_display_description: String,
     pub logo_url: Option<String>,
     pub cover_url: Option<String>,
+    pub google_review_target: Option<String>,
+    pub google_review_heading: String,
+    pub google_review_body: String,
+    pub google_review_action: String,
     pub theme_css_href: String,
     pub is_preview: bool,
     pub skip_label: String,
@@ -153,6 +157,17 @@ pub fn render_public_menu_html(
         establishment_display_description: est.effective_description(locale).to_string(),
         logo_url,
         cover_url,
+        google_review_target: est
+            .google_review_url
+            .clone()
+            .or_else(|| est.google_maps_url.clone()),
+        google_review_heading: cat
+            .t(locale, "public_menu.google_review_heading")
+            .to_string(),
+        google_review_body: cat.t(locale, "public_menu.google_review_body").to_string(),
+        google_review_action: cat
+            .t(locale, "public_menu.google_review_action")
+            .to_string(),
         theme_css_href: theme_css_href.to_string(),
         is_preview,
         skip_label: cat.t(locale, "common.skip_to_content").to_string(),

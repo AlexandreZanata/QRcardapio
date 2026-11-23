@@ -15,6 +15,7 @@ use crate::config::Config;
 use crate::http::handlers::{
     admin, auth, categories, dashboard, health, ocr, onboarding, products, public, qr, settings,
 };
+use crate::http::middleware::branded_errors::branded_errors;
 use crate::http::middleware::security_headers::security_headers_middleware;
 use crate::i18n::Catalog;
 use crate::infrastructure::assets::AssetProcessor;
@@ -164,6 +165,7 @@ pub fn build_router(state: AppState) -> Router {
         .merge(ocr_upload_routes)
         .nest_service("/static", ServeDir::new(static_dir))
         .with_state(state)
+        .layer(middleware::from_fn(branded_errors))
         .layer(middleware::from_fn(security_headers_middleware))
         .layer(CompressionLayer::new())
         .layer(TraceLayer::new_for_http())

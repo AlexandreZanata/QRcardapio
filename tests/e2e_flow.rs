@@ -162,6 +162,23 @@ async fn complete_definition_of_done_e2e_flow_including_restart() {
     assert_eq!(onb_post.status(), StatusCode::SEE_OTHER);
     assert_eq!(onb_post.headers().get(LOCATION).unwrap(), "/dashboard/menu");
 
+    let settings = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method("POST")
+                .uri("/dashboard/settings")
+                .header(COOKIE, &cookie1)
+                .header(CONTENT_TYPE, "application/x-www-form-urlencoded")
+                .body(Body::from(format!(
+                    "_csrf={csrf1}&name=Bistr%C3%B4+do+Sol&slug=bistro-do-sol&description=Comida+caseira&accent_color=%23D9532F&google_maps_url=https%3A%2F%2Fmaps.app.goo.gl%2Fexample&google_review_url=https%3A%2F%2Fg.page%2Fr%2Fexample%2Freview"
+                )))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(settings.status(), StatusCode::SEE_OTHER);
+
     // 4. Upload logo via multipart
     let boundary = "qrboundary123";
     let logo_body = build_multipart_body(
@@ -308,6 +325,26 @@ async fn complete_definition_of_done_e2e_flow_including_restart() {
     let public_html = body_string(public_res).await;
     assert!(public_html.contains("Bistrô do Sol"));
     assert!(public_html.contains("R$ 24,90"));
+    assert!(public_html.contains("href=\"https://g.page/r/example/review\""));
+    assert!(public_html.contains("Avalie-nos no Google Maps"));
+
+    let restricted = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .uri("/admin")
+                .header(COOKIE, &cookie1)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(restricted.status(), StatusCode::FORBIDDEN);
+    assert!(
+        body_string(restricted)
+            .await
+            .contains("state-forbidden.svg")
+    );
 
     // 10. QR SVG, PNG, and Print endpoints work
     let qr_svg = app

@@ -1,6 +1,7 @@
 pub mod admin;
 pub mod auth;
 pub mod dashboard;
+pub mod error_page;
 pub mod landing;
 pub mod menu_editor;
 pub mod ocr;

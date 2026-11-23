@@ -1,0 +1,19 @@
+{% extends "layouts/base.html" %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/status.css">
+{% endblock %}
+
+{% block content %}
+<main id="main-content" class="status-shell">
+  <div class="status-card">
+    <img class="status-art" src="/static/images/state-{{ artwork }}.svg" width="480" height="330" alt="">
+    <div class="status-copy">
+      <span class="status-code">{{ status }}</span>
+      <h1 data-i18n="{{ page.title_key }}">{{ page.t(page.title_key) }}</h1>
+      <p data-i18n="{{ body_key }}">{{ page.t(body_key) }}</p>
+      <a class="btn status-action" href="{{ action_path }}" data-i18n="{{ action_key }}">{{ page.t(action_key) }}</a>
+    </div>
+  </div>
+</main>
+{% endblock %}

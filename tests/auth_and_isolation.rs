@@ -383,6 +383,8 @@ async fn strict_multi_tenant_isolation_and_slug_locking() {
             description_en: "New desc",
             description_es: "Nueva desc",
             accent_color: "#D9532F",
+            google_maps_url: None,
+            google_review_url: None,
         },
     )
     .await
@@ -407,6 +409,8 @@ async fn strict_multi_tenant_isolation_and_slug_locking() {
             description_en: "",
             description_es: "",
             accent_color: "#D9532F",
+            google_maps_url: None,
+            google_review_url: None,
         },
     )
     .await;

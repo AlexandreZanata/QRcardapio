@@ -60,5 +60,7 @@ pub struct SettingsTemplate {
     pub description_es: String,
     pub accent_color: String,
     pub logo_url: Option<String>,
+    pub google_maps_url: String,
+    pub google_review_url: String,
     pub error_key: Option<String>,
 }

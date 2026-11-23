@@ -1,4 +1,5 @@
 {% extends "layouts/dashboard.html" %}
+{% import "components/guide_hint.html" as guide %}
 
 {% import "components/icons.html" as icons %}
 {% import "components/dashboard_metric.html" as metrics %}
@@ -24,7 +25,7 @@
   </div>
 </div>
 
-<div class="stats-grid">
+<div class="stats-grid" {{ guide::hint("guide.overview_counts") }}>
   {{ metrics::metric("layers", "violet", "dashboard.stat_categories", category_count) }}
   {{ metrics::metric("box", "pink", "dashboard.stat_products", product_count) }}
   {{ metrics::metric("globe", "yellow", "dashboard.stat_version", published_version, "v") }}
@@ -33,18 +34,19 @@
 <div class="grid-2 dashboard-overview-grid">
   <section class="card">
     <h2 class="dashboard-card-heading">
-      {{ icons::icon("link") }}
+      {{ icons::panel("link") }}
       <span data-i18n="dashboard.public_url_label">{{ page.t("dashboard.public_url_label") }}</span>
     </h2>
-    <div class="url-box mb-4">
+    <div class="url-box mb-4" {{ guide::hint("guide.public_link") }}>
       <code id="public-menu-url" class="url-code">{{ public_url }}</code>
       <button type="button" class="btn btn-secondary btn-sm" data-copy-target="public-menu-url">
+        {{ icons::panel("link") }}
         <span data-i18n="common.copy">{{ page.t("common.copy") }}</span>
       </button>
     </div>
 
     <div class="inline-actions">
-      <form class="inline-form" method="post" action="/dashboard/publish">
+      <form class="inline-form" method="post" action="/dashboard/publish" {{ guide::hint("guide.publish") }}>
         <input type="hidden" name="_csrf" value="{{ csrf_token }}">
         <button class="btn btn-primary" type="submit"
                 data-i18n="{% if is_published %}dashboard.action_republish{% else %}dashboard.action_publish{% endif %}">
@@ -52,15 +54,15 @@
         </button>
       </form>
 
-      <a class="btn btn-secondary" href="/dashboard/preview" target="_blank" rel="noopener" data-i18n="dashboard.action_preview">{{ page.t("dashboard.action_preview") }}</a>
+      <a class="btn btn-secondary" href="/dashboard/preview" {{ guide::hint("guide.preview") }} target="_blank" rel="noopener">{{ icons::panel("menu") }} <span data-i18n="dashboard.action_preview">{{ page.t("dashboard.action_preview") }}</span></a>
 
       {% if is_published %}
-      <a class="btn btn-secondary" href="/c/{{ slug }}" target="_blank" rel="noopener" data-i18n="nav.public_menu">{{ page.t("nav.public_menu") }}</a>
-      <form class="inline-form" method="post" action="/dashboard/unpublish"
+      <a class="btn btn-secondary" href="/c/{{ slug }}" target="_blank" rel="noopener">{{ icons::panel("globe") }} <span data-i18n="nav.public_menu">{{ page.t("nav.public_menu") }}</span></a>
+      <form class="inline-form" method="post" action="/dashboard/unpublish" {{ guide::hint("guide.unpublish") }}
             data-confirm-key="dashboard.confirm_unpublish"
             data-confirm-fallback="{{ page.t("dashboard.confirm_unpublish") }}">
         <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-        <button class="btn btn-danger btn-sm" type="submit" data-i18n="dashboard.action_unpublish">{{ page.t("dashboard.action_unpublish") }}</button>
+        <button class="btn btn-danger btn-sm" type="submit">{{ icons::panel("pending") }} <span data-i18n="dashboard.action_unpublish">{{ page.t("dashboard.action_unpublish") }}</span></button>
       </form>
       {% endif %}
     </div>
@@ -77,31 +79,31 @@
 
   <section class="card">
     <h2 class="dashboard-card-heading">
-      {{ icons::icon("check") }}
+      {{ icons::panel("check") }}
       <span data-i18n="dashboard.checklist_title">{{ page.t("dashboard.checklist_title") }}</span>
     </h2>
-    <ul class="checklist">
+    <ul class="checklist" {{ guide::hint("guide.checklist") }}>
       <li>
-        <span class="check-dot is-done">✓</span>
+        <span class="check-dot is-done">{{ icons::panel("check") }}</span>
         <span data-i18n="dashboard.checklist_place">{{ page.t("dashboard.checklist_place") }}</span>
       </li>
       <li>
-        <span class="check-dot {% if category_count > 0 %}is-done{% endif %}">{% if category_count > 0 %}✓{% else %}2{% endif %}</span>
+        <span class="check-dot {% if category_count > 0 %}is-done{% endif %}">{% if category_count > 0 %}{{ icons::panel("check") }}{% else %}{{ icons::panel("pending") }}{% endif %}</span>
         <span data-i18n="dashboard.checklist_category">{{ page.t("dashboard.checklist_category") }}</span>
       </li>
       <li>
-        <span class="check-dot {% if product_count > 0 %}is-done{% endif %}">{% if product_count > 0 %}✓{% else %}3{% endif %}</span>
+        <span class="check-dot {% if product_count > 0 %}is-done{% endif %}">{% if product_count > 0 %}{{ icons::panel("check") }}{% else %}{{ icons::panel("pending") }}{% endif %}</span>
         <span data-i18n="dashboard.checklist_product">{{ page.t("dashboard.checklist_product") }}</span>
       </li>
       <li>
-        <span class="check-dot {% if is_published %}is-done{% endif %}">{% if is_published %}✓{% else %}4{% endif %}</span>
+        <span class="check-dot {% if is_published %}is-done{% endif %}">{% if is_published %}{{ icons::panel("check") }}{% else %}{{ icons::panel("pending") }}{% endif %}</span>
         <span data-i18n="dashboard.checklist_publish">{{ page.t("dashboard.checklist_publish") }}</span>
       </li>
     </ul>
 
     <div class="inline-actions mt-4">
-      <a class="btn btn-secondary" href="/dashboard/menu" data-i18n="dashboard.action_edit_menu">{{ page.t("dashboard.action_edit_menu") }}</a>
-      <a class="btn btn-secondary" href="/dashboard/qr" data-i18n="dashboard.action_qr">{{ page.t("dashboard.action_qr") }}</a>
+      <a class="btn btn-secondary" href="/dashboard/menu">{{ icons::panel("edit") }} <span data-i18n="dashboard.action_edit_menu">{{ page.t("dashboard.action_edit_menu") }}</span></a>
+      <a class="btn btn-secondary" href="/dashboard/qr">{{ icons::panel("qr") }} <span data-i18n="dashboard.action_qr">{{ page.t("dashboard.action_qr") }}</span></a>
     </div>
   </section>
 </div>

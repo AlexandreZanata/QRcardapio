@@ -1,4 +1,7 @@
 {% extends "layouts/dashboard.html" %}
+{% import "components/icons.html" as icons %}
+{% import "components/guide_hint.html" as guide %}
+{% import "components/panel_empty.html" as empty %}
 
 {% block content %}
 <div class="page-top">
@@ -9,11 +12,11 @@
   </div>
   <div class="inline-actions">
     <a class="btn btn-secondary btn-sm" href="/dashboard/ocr" data-i18n="ocr.new_upload_btn">{{ page.t("ocr.new_upload_btn") }}</a>
-    <a class="btn btn-ghost btn-sm" href="/dashboard/menu" data-i18n="common.back">{{ page.t("common.back") }}</a>
+    <a class="btn btn-ghost btn-sm" href="/dashboard/menu">{{ icons::panel("back") }} <span data-i18n="common.back">{{ page.t("common.back") }}</span></a>
   </div>
 </div>
 
-<section class="stats-grid">
+<section class="stats-grid" {{ guide::hint("guide.ocr_stats") }}>
   <div class="stat-card">
     <div class="stat-label" data-i18n="ocr.stat_source">{{ page.t("ocr.stat_source") }}</div>
     <div class="stat-value stat-value-sm" data-i18n="{{ source_kind_key }}">{{ page.t(source_kind_key) }}</div>
@@ -58,19 +61,19 @@
   <form method="post" action="/dashboard/ocr/{{ import_id }}/apply" class="form-stack">
     <input type="hidden" name="_csrf" value="{{ csrf_token }}">
 
-    <div class="ocr-toolbar">
+    <div class="ocr-toolbar" {{ guide::hint("guide.ocr_select") }}>
       <label class="checkbox-row">
         <input type="checkbox" data-ocr-select-all checked>
         <span data-i18n="ocr.select_all">{{ page.t("ocr.select_all") }}</span>
       </label>
-      <button type="button" class="btn btn-secondary btn-sm" data-ocr-add-row data-i18n="ocr.add_row">{{ page.t("ocr.add_row") }}</button>
+      <button type="button" class="btn btn-secondary btn-sm" data-ocr-add-row>{{ icons::panel("add") }} <span data-i18n="ocr.add_row">{{ page.t("ocr.add_row") }}</span></button>
     </div>
 
     {% if rows.is_empty() %}
-    <p class="field-hint" data-ocr-empty-hint data-i18n="ocr.no_rows_hint">{{ page.t("ocr.no_rows_hint") }}</p>
+    <div data-ocr-empty-hint>{{ empty::message("ocr.no_rows_hint") }}</div>
     {% endif %}
 
-    <div class="table-wrap">
+    <div class="table-wrap" {{ guide::hint("guide.ocr_rows") }}>
       <table class="ocr-table">
         <thead>
           <tr>
@@ -89,35 +92,35 @@
           <tr data-ocr-row>
             <td class="ocr-cell-check">
               <input type="hidden" name="row_idx" value="{{ row.idx }}">
-              <input type="checkbox" name="include_{{ row.idx }}" value="1" {% if row.include %}checked{% endif %}
+              <input type="checkbox" name="include_{{ row.idx }}" {% if loop.first %}{{ guide::hint("guide.ocr_include") }}{% endif %} value="1" {% if row.include %}checked{% endif %}
                      aria-label="{{ page.t("ocr.col_include") }}" data-ocr-row-include>
             </td>
             <td>
-              <input type="text" class="ocr-input" name="category_{{ row.idx }}" value="{{ row.category_name }}"
+              <input type="text" class="ocr-input" name="category_{{ row.idx }}" {% if loop.first %}{{ guide::hint("guide.choose_category") }}{% endif %} value="{{ row.category_name }}"
                      list="ocr-cat-suggestions" maxlength="80" aria-label="{{ page.t("ocr.col_category") }}">
             </td>
             <td>
-              <input type="text" class="ocr-input" name="name_{{ row.idx }}" value="{{ row.name }}"
+              <input type="text" class="ocr-input" name="name_{{ row.idx }}" {% if loop.first %}{{ guide::hint("guide.product_name") }}{% endif %} value="{{ row.name }}"
                      maxlength="100" aria-label="{{ page.t("ocr.col_product") }}">
             </td>
             <td>
               <input type="text" class="ocr-input ocr-input-price{% if row.missing_price %} ocr-input-missing{% endif %}"
-                     name="price_{{ row.idx }}" value="{{ row.price_value }}" inputmode="decimal"
+                     name="price_{{ row.idx }}" {% if loop.first %}{{ guide::hint("guide.price") }}{% endif %} value="{{ row.price_value }}" inputmode="decimal"
                      placeholder="19,90" aria-label="{{ page.t("ocr.col_price") }}">
             </td>
             <td>
-              <input type="text" class="ocr-input" name="description_{{ row.idx }}" value="{{ row.description }}"
+              <input type="text" class="ocr-input" name="description_{{ row.idx }}" {% if loop.first %}{{ guide::hint("guide.product_description") }}{% endif %} value="{{ row.description }}"
                      maxlength="320" aria-label="{{ page.t("ocr.col_description") }}">
             </td>
             <td class="ocr-cell-check">
-              <input type="checkbox" name="available_{{ row.idx }}" value="1" {% if row.is_available %}checked{% endif %}
+              <input type="checkbox" name="available_{{ row.idx }}" {% if loop.first %}{{ guide::hint("guide.available") }}{% endif %} value="1" {% if row.is_available %}checked{% endif %}
                      aria-label="{{ page.t("ocr.col_available") }}">
             </td>
             <td>
               <span class="badge {{ row.confidence_badge_class }}" data-i18n="{{ row.confidence_key }}">{{ page.t(row.confidence_key) }}</span>
             </td>
             <td>
-              <button type="button" class="btn btn-ghost btn-sm" data-ocr-remove-row data-i18n="ocr.remove_row">{{ page.t("ocr.remove_row") }}</button>
+              <button type="button" class="btn btn-ghost btn-sm" data-ocr-remove-row>{{ icons::panel("delete") }} <span data-i18n="ocr.remove_row">{{ page.t("ocr.remove_row") }}</span></button>
             </td>
           </tr>
           {% endfor %}
@@ -125,19 +128,19 @@
       </table>
     </div>
 
-    <div class="ocr-options">
-      <label class="checkbox-row">
+    <div class="ocr-options" {{ guide::hint("guide.ocr_options") }}>
+      <label class="checkbox-row" {{ guide::hint("guide.ocr_reuse") }}>
         <input type="checkbox" name="reuse_existing_categories" value="1" {% if reuse_existing_categories %}checked{% endif %}>
         <span data-i18n="ocr.opt_reuse_categories">{{ page.t("ocr.opt_reuse_categories") }}</span>
       </label>
-      <label class="checkbox-row">
+      <label class="checkbox-row" {{ guide::hint("guide.visible") }}>
         <input type="checkbox" name="mark_visible" value="1" {% if mark_visible %}checked{% endif %}>
         <span data-i18n="ocr.opt_mark_visible">{{ page.t("ocr.opt_mark_visible") }}</span>
       </label>
     </div>
 
     <div class="inline-actions">
-      <button class="btn btn-primary" type="submit" data-i18n="ocr.submit_apply">{{ page.t("ocr.submit_apply") }}</button>
+      <button class="btn btn-primary" type="submit" data-i18n="ocr.submit_apply" {{ guide::hint("guide.ocr_apply") }}>{{ page.t("ocr.submit_apply") }}</button>
     </div>
   </form>
 
@@ -145,7 +148,7 @@
         data-confirm-key="ocr.confirm_discard"
         data-confirm-fallback="{{ page.t("ocr.confirm_discard") }}">
     <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-    <button class="btn btn-danger btn-sm" type="submit" data-i18n="ocr.discard_btn">{{ page.t("ocr.discard_btn") }}</button>
+    <button class="btn btn-danger btn-sm" type="submit">{{ icons::panel("delete") }} <span data-i18n="ocr.discard_btn">{{ page.t("ocr.discard_btn") }}</span></button>
   </form>
 
   <template id="ocr-row-template">
@@ -179,7 +182,7 @@
         <span class="badge badge-success" data-i18n="ocr.conf_high">{{ page.t("ocr.conf_high") }}</span>
       </td>
       <td>
-        <button type="button" class="btn btn-ghost btn-sm" data-ocr-remove-row data-i18n="ocr.remove_row">{{ page.t("ocr.remove_row") }}</button>
+        <button type="button" class="btn btn-ghost btn-sm" data-ocr-remove-row>{{ icons::panel("delete") }} <span data-i18n="ocr.remove_row">{{ page.t("ocr.remove_row") }}</span></button>
       </td>
     </tr>
   </template>

@@ -1,4 +1,7 @@
 {% extends "layouts/dashboard.html" %}
+{% import "components/icons.html" as icons %}
+{% import "components/guide_hint.html" as guide %}
+{% import "components/panel_empty.html" as empty %}
 
 {% block content %}
 <div class="page-top">
@@ -7,7 +10,7 @@
     <p data-i18n="ocr.subtitle">{{ page.t("ocr.subtitle") }}</p>
   </div>
   <div class="inline-actions">
-    <a class="btn btn-secondary btn-sm" href="/dashboard/menu" data-i18n="common.back">{{ page.t("common.back") }}</a>
+    <a class="btn btn-secondary btn-sm" href="/dashboard/menu">{{ icons::panel("back") }} <span data-i18n="common.back">{{ page.t("common.back") }}</span></a>
   </div>
 </div>
 
@@ -22,7 +25,7 @@
     <form class="form-stack" method="post" action="/dashboard/ocr/extract" enctype="multipart/form-data" data-ocr-upload-form>
       <input type="hidden" name="_csrf" value="{{ csrf_token }}">
 
-      <div class="field">
+      <div class="field" {{ guide::hint("guide.ocr_file") }}>
         <label class="dropzone" for="menu_file" data-ocr-dropzone>
           <span class="dropzone-title" data-i18n="ocr.upload_label">{{ page.t("ocr.upload_label") }}</span>
           <span class="dropzone-hint" data-ocr-filename data-i18n="ocr.upload_drop_hint">{{ page.t("ocr.upload_drop_hint") }}</span>
@@ -42,13 +45,13 @@
       <summary class="ocr-summary" data-i18n="ocr.paste_toggle">{{ page.t("ocr.paste_toggle") }}</summary>
       <form class="form-stack mt-3" method="post" action="/dashboard/ocr/text">
         <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-        <div class="field">
+        <div class="field" {{ guide::hint("guide.ocr_text") }}>
           <label for="raw_text" data-i18n="ocr.paste_label">{{ page.t("ocr.paste_label") }}</label>
           <textarea id="raw_text" name="raw_text" rows="7" required
                     placeholder="{{ page.t("ocr.paste_placeholder") }}"
                     data-i18n-placeholder="ocr.paste_placeholder"></textarea>
         </div>
-        <button class="btn btn-secondary" type="submit" data-i18n="ocr.submit_text">{{ page.t("ocr.submit_text") }}</button>
+        <button class="btn btn-secondary" type="submit">{{ icons::panel("scan") }} <span data-i18n="ocr.submit_text">{{ page.t("ocr.submit_text") }}</span></button>
       </form>
     </details>
   </section>
@@ -66,7 +69,7 @@
 <section class="card mt-5">
   <h2 class="ocr-card-title" data-i18n="ocr.history_title">{{ page.t("ocr.history_title") }}</h2>
   {% if imports.is_empty() %}
-  <p class="text-muted" data-i18n="ocr.history_empty">{{ page.t("ocr.history_empty") }}</p>
+  {{ empty::message("ocr.history_empty") }}
   {% else %}
   <div class="table-wrap">
     <table>
@@ -92,7 +95,7 @@
           <td>{{ imp.items_imported }}</td>
           <td><span class="badge {{ imp.status_badge_class }}" data-i18n="{{ imp.status_key }}">{{ page.t(imp.status_key) }}</span></td>
           <td>
-            <a class="btn btn-secondary btn-sm" href="/dashboard/ocr/{{ imp.id }}" data-i18n="ocr.open_review">{{ page.t("ocr.open_review") }}</a>
+            <a class="btn btn-secondary btn-sm" href="/dashboard/ocr/{{ imp.id }}">{{ icons::panel("edit") }} <span data-i18n="ocr.open_review">{{ page.t("ocr.open_review") }}</span></a>
           </td>
         </tr>
         {% endfor %}

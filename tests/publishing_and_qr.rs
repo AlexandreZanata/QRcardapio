@@ -144,6 +144,10 @@ async fn atomic_publish_xss_escaping_zero_db_delivery_and_recovery() {
         .await
         .unwrap();
     assert_eq!(res_404.status(), StatusCode::NOT_FOUND);
+    assert!(
+        String::from_utf8_lossy(&res_404.into_body().collect().await.unwrap().to_bytes())
+            .contains("state-missing.svg")
+    );
 
     // Publish v1
     let out1 = publish_establishment(&pool, &cfg, &locks, &est.id)

@@ -1,0 +1,41 @@
+{% import "components/icons.html" as icons %}
+
+<section id="google-maps" class="landing-container landing-maps" aria-labelledby="landing-maps-title">
+  <div class="landing-maps-content">
+    <div class="landing-section-heading">
+      <h2 id="landing-maps-title" data-i18n="maps.heading">{{ page.t("maps.heading") }}</h2>
+      <p data-i18n="maps.subtitle">{{ page.t("maps.subtitle") }}</p>
+    </div>
+    <div class="landing-maps-action">
+      {{ icons::panel("map") }}
+      <span data-i18n="public_menu.google_review_action">{{ page.t("public_menu.google_review_action") }}</span>
+    </div>
+    <a class="btn landing-button landing-button-blue" href="{% if is_logged_in %}/dashboard/settings#google-maps{% else %}/register{% endif %}" data-i18n="maps.cta">{{ page.t("maps.cta") }}</a>
+  </div>
+
+  <figure class="maps-example">
+    <img src="/static/images/cafe-pingo.webp" alt="" width="960" height="640" loading="lazy">
+    <div class="maps-example-content">
+      <figcaption>
+        <strong>Café Pingo</strong>
+        <span data-i18n="maps.example">{{ page.t("maps.example") }}</span>
+      </figcaption>
+      <div class="maps-comparison">
+        <div class="maps-period">
+          <h3 data-i18n="maps.before">{{ page.t("maps.before") }}</h3>
+          <dl>
+            <div><dt data-i18n="maps.reviews">{{ page.t("maps.reviews") }}</dt><dd>12</dd></div>
+            <div><dt data-i18n="maps.visits">{{ page.t("maps.visits") }}</dt><dd>180</dd></div>
+          </dl>
+        </div>
+        <div class="maps-period maps-period-highlight">
+          <h3 data-i18n="maps.after">{{ page.t("maps.after") }}</h3>
+          <dl>
+            <div><dt data-i18n="maps.reviews">{{ page.t("maps.reviews") }}</dt><dd>87</dd></div>
+            <div><dt data-i18n="maps.visits">{{ page.t("maps.visits") }}</dt><dd>540</dd></div>
+          </dl>
+        </div>
+      </div>
+    </div>
+  </figure>
+</section>

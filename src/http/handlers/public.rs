@@ -12,7 +12,8 @@ use crate::http::middleware::auth::OptionalAuth;
 use crate::http::middleware::locale::RequestLocale;
 use crate::http::responses::check_etag_not_modified;
 use crate::infrastructure::storage::resolve_safe_subpath;
-use crate::rendering::landing::{LandingTemplate, NotFoundTemplate};
+use crate::rendering::error_page::error_page;
+use crate::rendering::landing::LandingTemplate;
 use crate::rendering::{PageMeta, render_html};
 
 pub async fn landing(
@@ -126,9 +127,9 @@ pub async fn serve_published_file_from_disk(
 }
 
 fn render_public_404(locale: crate::i18n::Locale) -> Response {
-    let tpl = NotFoundTemplate {
-        page: PageMeta::new(locale, "public_menu.not_found_title", None),
-    };
-    render_html(&tpl, StatusCode::NOT_FOUND)
-        .unwrap_or_else(|_| StatusCode::NOT_FOUND.into_response())
+    error_page(
+        locale,
+        StatusCode::NOT_FOUND,
+        Some("public_menu.not_found_body"),
+    )
 }

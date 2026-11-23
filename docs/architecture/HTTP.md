@@ -2,6 +2,8 @@
 
 All routes use Axum 0.8 `{param}` syntax and emit strict security headers via `security_headers_middleware`.
 
+Browser errors without an HTML body use a localized illustrated response with the original status. Health and static asset responses retain their machine-readable behavior. Caddy serves existing public snapshots directly and forwards missing public paths for the localized response. Its own upstream failures use a static illustrated fallback.
+
 ## Public Routes
 
 | Method | Path | Auth | Notes |
@@ -46,7 +48,7 @@ All `POST` routes verify `_csrf` against the server session's `csrf_token` in co
 | `GET` | `/dashboard/ocr` | Menu OCR & PDF upload dropzone, manual text paste fallback, and recent import history. |
 | `POST` | `/dashboard/ocr/extract`, `/dashboard/ocr/text` | Extract menu draft from JPG/PNG/WebP/PDF (multipart max 16 MiB, rate limit 10/min) or pasted text. |
 | `GET`/`POST` | `/dashboard/ocr/{id}`, `/apply`, `/discard` | Staging review table, atomic bulk pre-registration into draft menu, or discard staging draft. |
-| `GET`/`POST` | `/dashboard/settings` | Update profile, brand color, EN/ES description; slug locked once published. |
+| `GET`/`POST` | `/dashboard/settings` | Update profile, brand color, EN/ES description, and optional Google Maps and review links. The slug locks after publication. |
 | `POST` | `/dashboard/settings/logo`, `/logo/remove` | Upload (max 2 MiB) or remove establishment logo. |
 | `GET` | `/dashboard/qr`, `/qr/print`, `/qr.svg`, `/qr.png` | Preview, printable card sheet, SVG download, 1024px PNG download. |
 

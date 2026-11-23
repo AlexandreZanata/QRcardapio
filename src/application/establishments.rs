@@ -6,6 +6,7 @@ use crate::application::auth::is_unique_violation;
 use crate::domain::establishment::{
     AccentColor, Establishment, Slug, sanitize_optional_text, validate_non_empty_name,
 };
+use crate::domain::google_maps::validate_google_maps_link;
 use crate::domain::publication::{MediaAsset, MediaKind};
 use crate::error::{AppError, AppResult};
 use crate::infrastructure::assets::AssetProcessor;
@@ -29,6 +30,8 @@ pub struct UpdateEstablishmentInput<'a> {
     pub description_en: &'a str,
     pub description_es: &'a str,
     pub accent_color: &'a str,
+    pub google_maps_url: Option<&'a str>,
+    pub google_review_url: Option<&'a str>,
 }
 
 pub async fn create_establishment(
@@ -68,6 +71,8 @@ pub async fn create_establishment(
         description_es: String::new(),
         accent_color: color.as_str().to_string(),
         logo_asset_id: None,
+        google_maps_url: None,
+        google_review_url: None,
         is_published: false,
         published_version: 0,
         has_unpublished_changes: true,
@@ -97,6 +102,15 @@ pub async fn update_profile(
     let description_en = sanitize_optional_text(input.description_en, 280);
     let description_es = sanitize_optional_text(input.description_es, 280);
 
+    let google_maps_url = input
+        .google_maps_url
+        .map(validate_google_maps_link)
+        .transpose()?;
+    let google_review_url = input
+        .google_review_url
+        .map(validate_google_maps_link)
+        .transpose()?;
+
     let new_slug = if est.published_version > 0 {
         let requested = Slug::from_input(input.slug)?;
         if requested.as_str() != est.slug {
@@ -123,6 +137,8 @@ pub async fn update_profile(
         &description_en,
         &description_es,
         color.as_str(),
+        google_maps_url,
+        google_review_url,
         &now,
     )
     .await?;

@@ -14,13 +14,29 @@
 	handle_path /c/* {
 		root * /srv/published
 
-		@immutable path */media/* */theme-*.css
-		header @immutable Cache-Control "public, max-age=31536000, immutable"
+		@published file {
+			try_files {path} {path}/index.html
+		}
+		handle @published {
+			@immutable path */media/* */theme-*.css
+			header @immutable Cache-Control "public, max-age=31536000, immutable"
 
-		@html not path */media/* */theme-*.css
-		header @html Cache-Control "public, max-age=60, stale-while-revalidate=300"
+			@html not path */media/* */theme-*.css
+			header @html Cache-Control "public, max-age=60, stale-while-revalidate=300"
 
-		try_files {path} {path}/index.html
+			rewrite * {http.matchers.file.relative}
+			file_server
+		}
+		handle {
+			rewrite * /c{path}
+			reverse_proxy app:8080
+		}
+	}
+
+	handle_errors 5xx {
+		root * /srv/static
+		header Cache-Control "no-store"
+		rewrite * /errors/unavailable.html
 		file_server
 	}
 

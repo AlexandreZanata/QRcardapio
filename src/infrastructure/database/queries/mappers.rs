@@ -31,6 +31,8 @@ pub(crate) fn row_to_establishment(r: &SqliteRow) -> Establishment {
         description_es: r.get("description_es"),
         accent_color: r.get("accent_color"),
         logo_asset_id: r.get("logo_asset_id"),
+        google_maps_url: r.get("google_maps_url"),
+        google_review_url: r.get("google_review_url"),
         is_published: r.get::<i64, _>("is_published") == 1,
         published_version: r.get("published_version"),
         has_unpublished_changes: r.get::<i64, _>("has_unpublished_changes") == 1,

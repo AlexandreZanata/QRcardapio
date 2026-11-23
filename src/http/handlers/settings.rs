@@ -31,6 +31,8 @@ pub struct SettingsForm {
     #[serde(default)]
     pub description_es: String,
     pub accent_color: String,
+    pub google_maps_url: Option<String>,
+    pub google_review_url: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -75,6 +77,8 @@ pub async fn settings_page(
         description_en: est.description_en.clone(),
         description_es: est.description_es.clone(),
         accent_color: est.accent_color.clone(),
+        google_maps_url: est.google_maps_url.clone().unwrap_or_default(),
+        google_review_url: est.google_review_url.clone().unwrap_or_default(),
         logo_url,
         error_key: None,
     };
@@ -100,6 +104,8 @@ pub async fn settings_submit(
             description_en: &form.description_en,
             description_es: &form.description_es,
             accent_color: &form.accent_color,
+            google_maps_url: form.google_maps_url.as_deref(),
+            google_review_url: form.google_review_url.as_deref(),
         },
     )
     .await
@@ -129,6 +135,14 @@ pub async fn settings_submit(
                 description_en: form.description_en,
                 description_es: form.description_es,
                 accent_color: form.accent_color,
+                google_maps_url: form
+                    .google_maps_url
+                    .or_else(|| tenant.establishment.google_maps_url.clone())
+                    .unwrap_or_default(),
+                google_review_url: form
+                    .google_review_url
+                    .or_else(|| tenant.establishment.google_review_url.clone())
+                    .unwrap_or_default(),
                 logo_url,
                 error_key: Some(err.i18n_key().to_string()),
             };

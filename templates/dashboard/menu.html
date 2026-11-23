@@ -1,4 +1,7 @@
 {% extends "layouts/dashboard.html" %}
+{% import "components/icons.html" as icons %}
+{% import "components/guide_hint.html" as guide %}
+{% import "components/panel_empty.html" as empty %}
 
 {% block content %}
 <div class="page-top">
@@ -7,10 +10,10 @@
     <p data-i18n="menu_editor.subtitle">{{ page.t("menu_editor.subtitle") }}</p>
   </div>
   <div class="inline-actions">
-    <a class="btn btn-secondary" href="/dashboard/ocr" data-i18n="menu_editor.import_ocr">{{ page.t("menu_editor.import_ocr") }}</a>
-    <a class="btn btn-secondary" href="/dashboard/categories/new" data-i18n="menu_editor.new_category">{{ page.t("menu_editor.new_category") }}</a>
+    <a class="btn btn-secondary" href="/dashboard/ocr" {{ guide::hint("guide.import_menu") }}>{{ icons::panel("scan") }} <span data-i18n="menu_editor.import_ocr">{{ page.t("menu_editor.import_ocr") }}</span></a>
+    <a class="btn btn-secondary" href="/dashboard/categories/new" {{ guide::hint("guide.add_category") }}>{{ icons::panel("layers") }} <span data-i18n="menu_editor.new_category">{{ page.t("menu_editor.new_category") }}</span></a>
     {% if !categories.is_empty() %}
-    <a class="btn btn-primary" href="/dashboard/products/new" data-i18n="menu_editor.new_product">{{ page.t("menu_editor.new_product") }}</a>
+    <a class="btn btn-primary" href="/dashboard/products/new" {{ guide::hint("guide.add_product") }}>{{ icons::panel("add") }} <span data-i18n="menu_editor.new_product">{{ page.t("menu_editor.new_product") }}</span></a>
     {% endif %}
   </div>
 </div>
@@ -27,16 +30,17 @@
 
 {% if categories.is_empty() %}
 <section class="card">
+  <img class="panel-empty-art" src="/static/images/state-empty.svg" width="240" height="165" alt="">
   <h2 data-i18n="menu_editor.empty_title">{{ page.t("menu_editor.empty_title") }}</h2>
   <p class="text-muted mb-4" data-i18n="menu_editor.empty_body">{{ page.t("menu_editor.empty_body") }}</p>
   <div class="inline-actions">
-    <a class="btn btn-primary" href="/dashboard/categories/new" data-i18n="menu_editor.new_category">{{ page.t("menu_editor.new_category") }}</a>
-    <a class="btn btn-secondary" href="/dashboard/ocr" data-i18n="menu_editor.import_ocr">{{ page.t("menu_editor.import_ocr") }}</a>
+    <a class="btn btn-primary" href="/dashboard/categories/new">{{ icons::panel("layers") }} <span data-i18n="menu_editor.new_category">{{ page.t("menu_editor.new_category") }}</span></a>
+    <a class="btn btn-secondary" href="/dashboard/ocr">{{ icons::panel("scan") }} <span data-i18n="menu_editor.import_ocr">{{ page.t("menu_editor.import_ocr") }}</span></a>
   </div>
 </section>
 {% else %}
   {% for cat in categories %}
-  <section class="category-block">
+  <section class="category-block" {% if loop.first %}{{ guide::hint("guide.edit_menu") }}{% endif %}>
     <div class="category-head">
       <div class="category-title">
         <h2>{{ cat.name }}</h2>
@@ -52,26 +56,26 @@
         <form class="inline-form" method="post" action="/dashboard/categories/{{ cat.id }}/move">
           <input type="hidden" name="_csrf" value="{{ csrf_token }}">
           <input type="hidden" name="direction" value="up">
-          <button class="btn btn-ghost btn-sm" type="submit" aria-label="{{ page.t("menu_editor.move_up") }}" data-i18n="menu_editor.move_up">{{ page.t("menu_editor.move_up") }}</button>
+          <button class="btn btn-ghost btn-sm" type="submit" aria-label="{{ page.t("menu_editor.move_up") }}">{{ icons::panel("up") }} <span data-i18n="menu_editor.move_up">{{ page.t("menu_editor.move_up") }}</span></button>
         </form>
         <form class="inline-form" method="post" action="/dashboard/categories/{{ cat.id }}/move">
           <input type="hidden" name="_csrf" value="{{ csrf_token }}">
           <input type="hidden" name="direction" value="down">
-          <button class="btn btn-ghost btn-sm" type="submit" aria-label="{{ page.t("menu_editor.move_down") }}" data-i18n="menu_editor.move_down">{{ page.t("menu_editor.move_down") }}</button>
+          <button class="btn btn-ghost btn-sm" type="submit" aria-label="{{ page.t("menu_editor.move_down") }}">{{ icons::panel("down") }} <span data-i18n="menu_editor.move_down">{{ page.t("menu_editor.move_down") }}</span></button>
         </form>
-        <a class="btn btn-secondary btn-sm" href="/dashboard/categories/{{ cat.id }}/edit" data-i18n="common.edit">{{ page.t("common.edit") }}</a>
+        <a class="btn btn-secondary btn-sm" href="/dashboard/categories/{{ cat.id }}/edit">{{ icons::panel("edit") }} <span data-i18n="common.edit">{{ page.t("common.edit") }}</span></a>
         <form class="inline-form" method="post" action="/dashboard/categories/{{ cat.id }}/delete"
               data-confirm-key="menu_editor.confirm_delete_category"
               data-confirm-fallback="{{ page.t("menu_editor.confirm_delete_category") }}">
           <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-          <button class="btn btn-danger btn-sm" type="submit" data-i18n="common.delete">{{ page.t("common.delete") }}</button>
+          <button class="btn btn-danger btn-sm" type="submit">{{ icons::panel("delete") }} <span data-i18n="common.delete">{{ page.t("common.delete") }}</span></button>
         </form>
       </div>
     </div>
 
     {% if cat.products.is_empty() %}
     <div class="product-row">
-      <span class="text-muted" data-i18n="menu_editor.empty_products">{{ page.t("menu_editor.empty_products") }}</span>
+      {{ empty::message("menu_editor.empty_products") }}
     </div>
     {% else %}
       {% for prod in cat.products %}
@@ -110,19 +114,19 @@
           <form class="inline-form" method="post" action="/dashboard/products/{{ prod.id }}/move">
             <input type="hidden" name="_csrf" value="{{ csrf_token }}">
             <input type="hidden" name="direction" value="up">
-            <button class="btn btn-ghost btn-sm" type="submit" data-i18n="menu_editor.move_up">{{ page.t("menu_editor.move_up") }}</button>
+            <button class="btn btn-ghost btn-sm" type="submit">{{ icons::panel("up") }} <span data-i18n="menu_editor.move_up">{{ page.t("menu_editor.move_up") }}</span></button>
           </form>
           <form class="inline-form" method="post" action="/dashboard/products/{{ prod.id }}/move">
             <input type="hidden" name="_csrf" value="{{ csrf_token }}">
             <input type="hidden" name="direction" value="down">
-            <button class="btn btn-ghost btn-sm" type="submit" data-i18n="menu_editor.move_down">{{ page.t("menu_editor.move_down") }}</button>
+            <button class="btn btn-ghost btn-sm" type="submit">{{ icons::panel("down") }} <span data-i18n="menu_editor.move_down">{{ page.t("menu_editor.move_down") }}</span></button>
           </form>
-          <a class="btn btn-secondary btn-sm" href="/dashboard/products/{{ prod.id }}/edit" data-i18n="common.edit">{{ page.t("common.edit") }}</a>
+          <a class="btn btn-secondary btn-sm" href="/dashboard/products/{{ prod.id }}/edit">{{ icons::panel("edit") }} <span data-i18n="common.edit">{{ page.t("common.edit") }}</span></a>
           <form class="inline-form" method="post" action="/dashboard/products/{{ prod.id }}/delete"
                 data-confirm-key="menu_editor.confirm_delete_product"
                 data-confirm-fallback="{{ page.t("menu_editor.confirm_delete_product") }}">
             <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-            <button class="btn btn-danger btn-sm" type="submit" data-i18n="common.delete">{{ page.t("common.delete") }}</button>
+            <button class="btn btn-danger btn-sm" type="submit">{{ icons::panel("delete") }} <span data-i18n="common.delete">{{ page.t("common.delete") }}</span></button>
           </form>
         </div>
       </div>

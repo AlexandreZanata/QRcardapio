@@ -5,3 +5,7 @@
 {% macro sticker(name) %}
 <svg class="landing-sticker" aria-hidden="true" focusable="false"><use href="/static/icons/landing.svg#{{ name }}"></use></svg>
 {% endmacro %}
+
+{% macro panel(name) %}
+<svg class="panel-icon" width="24" height="24" aria-hidden="true" focusable="false"><use href="/static/icons/dashboard.svg#{{ name }}"></use></svg>
+{% endmacro %}

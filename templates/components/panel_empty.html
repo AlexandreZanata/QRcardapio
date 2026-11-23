@@ -1,0 +1,6 @@
+{% macro message(key) %}
+<div class="panel-empty">
+  <img src="/static/images/state-empty.svg" width="240" height="165" alt="" loading="lazy">
+  <p data-i18n="{{ key }}">{{ page.t(key) }}</p>
+</div>
+{% endmacro %}

@@ -196,6 +196,8 @@ pub struct Establishment {
     pub description_es: String,
     pub accent_color: String,
     pub logo_asset_id: Option<String>,
+    pub google_maps_url: Option<String>,
+    pub google_review_url: Option<String>,
     pub is_published: bool,
     pub published_version: i64,
     pub has_unpublished_changes: bool,

@@ -18,16 +18,34 @@
 
 .dashboard-shell :focus-visible { outline-color: #4657e7; }
 
-.dashboard-shell .ui-icon {
-  width: 1.25rem;
-  height: 1.25rem;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+.panel-icon {
+  display: block;
   flex: none;
 }
+
+.panel-empty {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.15rem;
+  padding: 0.9rem clamp(0.8rem, 2vw, 1.3rem);
+  background: #fff9ee;
+  color: var(--dashboard-muted);
+  border: 1px dashed #dac9a8;
+  border-radius: 0.85rem;
+}
+
+.panel-empty img,
+.panel-empty-art {
+  display: block;
+  width: min(100%, 9.5rem);
+  height: auto;
+}
+
+.panel-empty p { margin: 0; }
+.panel-empty-art { margin-bottom: 0.55rem; }
+.dashboard-shell .check-dot { background: transparent; }
+.dashboard-shell .check-dot.is-done { background: transparent; }
 
 .dashboard-sidebar {
   position: sticky;
@@ -119,6 +137,7 @@
 .sidebar-link[aria-current="page"] {
   --icon-fill: var(--dashboard-nav-active);
   background: var(--dashboard-nav-active);
+  box-shadow: inset 3px 0 #ffdc38;
   color: #fff;
   font-weight: 750;
 }
@@ -155,7 +174,6 @@
   overflow-wrap: anywhere;
 }
 
-.dashboard-context .ui-icon { color: #4956bd; }
 
 .dashboard-container {
   width: 100%;
@@ -217,7 +235,6 @@
   letter-spacing: -0.015em;
 }
 
-.dashboard-card-heading .ui-icon { color: #4956bd; }
 
 .dashboard-table-card { scroll-margin-top: 1rem; }
 .dashboard-table-card .table-wrap { border: 1px solid var(--dashboard-border); border-radius: 0.65rem; }
@@ -242,7 +259,6 @@
   }
 
   .dashboard-shell[data-sidebar-ready] .sidebar-toggle { display: flex; }
-  .dashboard-shell[data-sidebar-ready] .sidebar-toggle svg { width: 1.05rem; }
   .dashboard-shell[data-sidebar-ready] .dashboard-sidebar:not(.is-open) .sidebar-navigation { display: none; }
 
   .sidebar-navigation { padding-top: 0.6rem; }
@@ -255,5 +271,16 @@
 @media (max-width: 27rem) {
   .dashboard-metric { gap: 0.55rem; padding: 0.75rem; }
   .dashboard-metric-icon { width: 2rem; height: 2rem; }
-  .dashboard-metric-icon .ui-icon { width: 1rem; }
+  .dashboard-metric-icon .panel-icon { width: 1.15rem; height: 1.15rem; }
 }
+
+.settings-maps {
+  display: grid;
+  gap: 0.9rem;
+  border-top: 1px solid var(--dashboard-border);
+  padding-top: 1rem;
+  scroll-margin: 1rem;
+}
+
+.settings-maps .dashboard-card-heading { margin: 0; }
+.settings-maps a { text-decoration: underline; font-size: 0.9rem; }

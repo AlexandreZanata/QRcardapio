@@ -1,4 +1,6 @@
 {% extends "layouts/dashboard.html" %}
+{% import "components/guide_hint.html" as guide %}
+{% import "components/icons.html" as icons %}
 
 {% block content %}
 <div class="page-top">
@@ -17,12 +19,12 @@
     <form class="form-stack" method="post" action="/dashboard/settings">
       <input type="hidden" name="_csrf" value="{{ csrf_token }}">
 
-      <div class="field">
+      <div class="field" {{ guide::hint("guide.business_name") }}>
         <label for="name" data-i18n="onboarding.name_label">{{ page.t("onboarding.name_label") }}</label>
         <input id="name" name="name" type="text" required maxlength="100" value="{{ name_value }}">
       </div>
 
-      <div class="field">
+      <div class="field" {{ guide::hint("guide.slug") }}>
         <label for="slug" data-i18n="onboarding.slug_label">{{ page.t("onboarding.slug_label") }}</label>
         <div class="slug-input-group">
           <span class="slug-prefix">{{ base_host }}/c/</span>
@@ -35,7 +37,7 @@
         {% endif %}
       </div>
 
-      <div class="field">
+      <div class="field" {{ guide::hint("guide.business_description") }}>
         <label for="description" data-i18n="onboarding.description_label">{{ page.t("onboarding.description_label") }}</label>
         <textarea id="description" name="description" maxlength="280">{{ description_value }}</textarea>
       </div>
@@ -43,18 +45,18 @@
       <details class="details-box">
         <summary data-i18n="settings.translations_toggle">{{ page.t("settings.translations_toggle") }}</summary>
         <div class="form-stack">
-          <div class="field">
+          <div class="field" {{ guide::hint("guide.translate_en") }}>
             <label for="description_en" data-i18n="settings.description_en_label">{{ page.t("settings.description_en_label") }}</label>
             <textarea id="description_en" name="description_en" maxlength="280">{{ description_en }}</textarea>
           </div>
-          <div class="field">
+          <div class="field" {{ guide::hint("guide.translate_es") }}>
             <label for="description_es" data-i18n="settings.description_es_label">{{ page.t("settings.description_es_label") }}</label>
             <textarea id="description_es" name="description_es" maxlength="280">{{ description_es }}</textarea>
           </div>
         </div>
       </details>
 
-      <div class="field">
+      <div class="field" {{ guide::hint("guide.color") }}>
         <label for="accent_color" data-i18n="onboarding.color_label">{{ page.t("onboarding.color_label") }}</label>
         <div class="color-picker-row">
           <input id="accent_color" name="accent_color" type="color" value="{{ accent_color }}">
@@ -67,7 +69,22 @@
         </div>
       </div>
 
-      <button class="btn btn-primary" type="submit" data-i18n="common.save">{{ page.t("common.save") }}</button>
+      <section class="settings-maps" id="google-maps">
+        <h2 class="dashboard-card-heading">{{ icons::panel("map") }} <span>Google Maps</span></h2>
+        <div class="field" {{ guide::hint("guide.google_profile") }}>
+          <label for="google_maps_url" data-i18n="settings.google_maps_url">{{ page.t("settings.google_maps_url") }}</label>
+          <input id="google_maps_url" name="google_maps_url" type="url" maxlength="2048" value="{{ google_maps_url }}" aria-describedby="google-maps-hint">
+          <p class="field-hint" id="google-maps-hint" data-i18n="settings.google_maps_hint">{{ page.t("settings.google_maps_hint") }}</p>
+        </div>
+        <div class="field" {{ guide::hint("guide.google_review") }}>
+          <label for="google_review_url" data-i18n="settings.google_review_url">{{ page.t("settings.google_review_url") }}</label>
+          <input id="google_review_url" name="google_review_url" type="url" maxlength="2048" value="{{ google_review_url }}" aria-describedby="google-review-hint">
+          <p class="field-hint" id="google-review-hint" data-i18n="settings.google_review_hint">{{ page.t("settings.google_review_hint") }}</p>
+          <a href="https://support.google.com/business/answer/16816815" target="_blank" rel="noopener noreferrer" data-i18n="settings.google_help">{{ page.t("settings.google_help") }}</a>
+        </div>
+      </section>
+
+      <button class="btn btn-primary" type="submit" {{ guide::hint("guide.save") }}>{{ icons::panel("check") }} <span data-i18n="common.save">{{ page.t("common.save") }}</span></button>
     </form>
   </section>
 
@@ -78,17 +95,17 @@
     <img class="logo-preview mb-3" src="{{ logo }}" alt="{{ name_value }}" width="88" height="88">
     <form class="mb-4" method="post" action="/dashboard/settings/logo/remove">
       <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-      <button class="btn btn-danger btn-sm" type="submit" data-i18n="settings.remove_logo">{{ page.t("settings.remove_logo") }}</button>
+      <button class="btn btn-danger btn-sm" type="submit">{{ icons::panel("delete") }} <span data-i18n="settings.remove_logo">{{ page.t("settings.remove_logo") }}</span></button>
     </form>
     {% endif %}
 
     <form class="form-stack" method="post" action="/dashboard/settings/logo" enctype="multipart/form-data">
       <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-      <div class="field">
+      <div class="field" {{ guide::hint("guide.logo") }}>
         <input id="logo" name="logo" type="file" required accept="image/jpeg,image/png,image/webp">
         <p class="field-hint" data-i18n="settings.logo_hint">{{ page.t("settings.logo_hint") }}</p>
       </div>
-      <button class="btn btn-secondary" type="submit" data-i18n="settings.upload_logo">{{ page.t("settings.upload_logo") }}</button>
+      <button class="btn btn-secondary" type="submit">{{ icons::panel("image") }} <span data-i18n="settings.upload_logo">{{ page.t("settings.upload_logo") }}</span></button>
     </form>
   </section>
 </div>

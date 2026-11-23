@@ -23,11 +23,13 @@ The public menu uses a branded cover, sticky search and categories, and responsi
 
 The landing, dashboard, and public menu share an illustrated disclosure that shows the active language and opens the PT, EN, and ES choices. Previously-published menus gain the picker through their existing menu script.
 
+The dashboard uses original icons and a contextual tutorial on the owner and platform workflows. Empty collections and browser error pages use coordinated illustrations. Owners can save a Google Maps profile or direct review link and publish an optional review invitation in their menu. The landing comparison uses labeled synthetic data and a fictional café.
+
 ## Verification Snapshot
 
 - `cargo fmt --check`: Passed
 - `cargo clippy --all-targets --all-features -- -D warnings`: Passed (0 warnings)
-- `cargo test --locked`: Passed (15 unit tests + 11 integration tests across 8 integration suites, including real `pdftotext` + `tesseract` E2E OCR tests)
+- `cargo test --locked`: Passed (17 unit tests + 11 integration tests across 8 integration suites, including real `pdftotext` + `tesseract` E2E OCR tests)
 - `cargo audit`: Passed (0 vulnerabilities; 2 unmaintained advisory notices: `basic-toml 0.1.10` transitive, `chrono 0.4.45`)
 - `cargo build --release --locked`: Passed
 - Live smoke test (`admin create`, `seed`, `backup.sh`, `restore.sh`, HTTP SSR + static `/c/cafe-da-praca`, `/dashboard/ocr`): Passed
