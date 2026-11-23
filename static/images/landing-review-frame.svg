@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="2160" height="3840" viewBox="0 0 216 384">
+  <defs>
+    <linearGradient id="rail" x1="0" x2="216" y1="80" y2="184" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#15182d"/>
+      <stop offset=".08" stop-color="#596587"/>
+      <stop offset=".17" stop-color="#222843"/>
+      <stop offset=".83" stop-color="#171d35"/>
+      <stop offset=".94" stop-color="#657297"/>
+      <stop offset="1" stop-color="#191d32"/>
+    </linearGradient>
+    <linearGradient id="rim" x1="0" x2="152" y1="0" y2="250" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#eef0ff"/>
+      <stop offset=".25" stop-color="#8b96bc"/>
+      <stop offset=".61" stop-color="#3e496c"/>
+      <stop offset="1" stop-color="#b0bcf0"/>
+    </linearGradient>
+    <linearGradient id="display" x1="14" x2="178" y1="9" y2="370" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ecefff"/>
+      <stop offset=".38" stop-color="#f9f6fa"/>
+      <stop offset="1" stop-color="#fff8e8"/>
+    </linearGradient>
+    <radialGradient id="lens">
+      <stop stop-color="#b3caff"/>
+      <stop offset=".38" stop-color="#515e86"/>
+      <stop offset="1" stop-color="#141827"/>
+    </radialGradient>
+  </defs>
+  <g stroke="#131624" stroke-width="1.35">
+    <rect x="3.6" y="67" width="4.75" height="14" rx="1.75" fill="#4e5b80"/>
+    <rect x="2.8" y="91" width="5.65" height="26" rx="2" fill="#394463"/>
+    <rect x="2.8" y="122" width="5.65" height="26" rx="2" fill="#394463"/>
+    <rect x="207.5" y="106" width="5.65" height="36" rx="2" fill="#7180af"/>
+  </g>
+  <rect x="6.15" y="2.2" width="203.7" height="379.6" rx="34" fill="url(#rail)" stroke="#111321" stroke-width="2.65"/>
+  <rect x="8.6" y="4.6" width="198.8" height="374.8" rx="31.5" fill="none" stroke="url(#rim)" stroke-width="1.15"/>
+  <path d="M24 12.2C29 8.4 34 7.7 42 7.7M198 351c-.7 9-6.1 15.5-13.6 19" fill="none" stroke="#d9e1ff" stroke-opacity=".6" stroke-width="1.05" stroke-linecap="round"/>
+  <rect x="11.8" y="8.3" width="192.4" height="367.4" rx="28.3" fill="#161a2c" stroke="#0d101d" stroke-width="1.4"/>
+  <rect x="15.9" y="12.45" width="184.2" height="359.1" rx="24.75" fill="url(#display)" stroke="#7d89ad" stroke-width=".55"/>
+  <rect x="77" y="18.6" width="62" height="9.5" rx="4.75" fill="#171b2c"/>
+  <path d="M86 21.85h12" stroke="#444965" stroke-width="1" stroke-linecap="round"/>
+  <circle cx="132" cy="23.35" r="2.75" fill="url(#lens)"/>
+  <rect x="74.5" y="360.35" width="67" height="2.7" rx="1.35" fill="#222338" opacity=".62"/>
+</svg>

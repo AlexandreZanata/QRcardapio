@@ -139,22 +139,6 @@
   text-align: center;
 }
 
-.landing-demo-links {
-  display: flex;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: 0 1rem;
-}
-
-.landing-demo-links a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  font-weight: 750;
-  text-decoration: underline;
-  text-underline-offset: 0.17em;
-}
-
 @media (max-width: 36rem) {
   .demo-stage::before { inset-inline: 3%; }
   .demo-stage::after { inset-inline-end: 3%; }

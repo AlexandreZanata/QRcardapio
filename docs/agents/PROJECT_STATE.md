@@ -27,6 +27,8 @@ The dashboard uses original icons and a contextual tutorial on the owner and pla
 
 The Google Maps landing section layers the fictional business profile and the mobile review invitation above the ratings comparison. Its example link navigates to the responsive demonstration.
 
+The Google Maps phone uses responsive 4K frame artwork with translated HTML content. The complete Portuguese mockup is available as a transparent 2160 × 3840 WebP. The homepage hero displays its responsive device images and their demo caption.
+
 Settings groups business details, Google Maps links, and the current logo. Dashboard forms share translated Askama field components for settings, onboarding, categories, products, and menu import and review. Logo, product photo, and menu imports share an illustrated file picker with image preview, local format and size checks, and a native input fallback.
 
 Menu import separates file upload, pasted text, and illustrated tips. The menu editor and overview share the blue publication action, with the preview and live menu links grouped in the overview.

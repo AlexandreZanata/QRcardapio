@@ -110,6 +110,9 @@ async fn complete_definition_of_done_e2e_flow_including_restart() {
     assert!(landing_html.contains("Seu cardápio."));
     assert!(landing_html.contains("href=\"#how-it-works\""));
     assert!(landing_html.contains("/static/images/landing-dashboard.webp"));
+    assert!(landing_html.contains("/static/images/landing-review-frame-4k.webp 2160w"));
+    assert!(!landing_html.contains("href=\"/static/images/landing-dashboard-4k.webp\""));
+    assert!(!landing_html.contains("href=\"/static/images/landing-menu-4k.webp\""));
 
     // 2. Register Owner 1
     let reg_res = app
