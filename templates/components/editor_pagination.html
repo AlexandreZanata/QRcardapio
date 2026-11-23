@@ -1,0 +1,32 @@
+{% import "components/icons.html" as icons %}
+
+{% macro pager(current, pages) %}
+{% if pages > 1 %}
+<nav class="editor-pagination" aria-label="{{ page.t("menu_editor.pagination") }}" data-i18n-aria="menu_editor.pagination">
+  {% if current > 1 %}
+  <a class="btn panel-action" rel="prev" href="/dashboard/menu?page={{ current - 1 }}#editor-list">
+    {{ icons::panel("back") }} <span data-i18n="menu_editor.previous_page">{{ page.t("menu_editor.previous_page") }}</span>
+  </a>
+  {% else %}
+  <button class="btn panel-action" type="button" disabled>
+    {{ icons::panel("back") }} <span data-i18n="menu_editor.previous_page">{{ page.t("menu_editor.previous_page") }}</span>
+  </button>
+  {% endif %}
+  <p>
+    <span data-i18n="menu_editor.page">{{ page.t("menu_editor.page") }}</span>
+    <strong aria-current="page">{{ current }}</strong>
+    <span data-i18n="menu_editor.page_of">{{ page.t("menu_editor.page_of") }}</span>
+    {{ pages }}
+  </p>
+  {% if current < pages %}
+  <a class="btn panel-action" rel="next" href="/dashboard/menu?page={{ current + 1 }}#editor-list">
+    <span data-i18n="menu_editor.next_page">{{ page.t("menu_editor.next_page") }}</span> {{ icons::panel("next") }}
+  </a>
+  {% else %}
+  <button class="btn panel-action" type="button" disabled>
+    <span data-i18n="menu_editor.next_page">{{ page.t("menu_editor.next_page") }}</span> {{ icons::panel("next") }}
+  </button>
+  {% endif %}
+</nav>
+{% endif %}
+{% endmacro %}

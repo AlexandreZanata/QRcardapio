@@ -35,3 +35,7 @@
   </div>
 </li>
 {% endmacro %}
+
+{% macro mobile_cell_label(key) %}
+<span class="mobile-table-label" data-i18n="{{ key }}" aria-hidden="true">{{ page.t(key) }}</span>
+{% endmacro %}

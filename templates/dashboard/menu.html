@@ -1,21 +1,28 @@
 {% extends "layouts/dashboard.html" %}
 {% import "components/icons.html" as icons %}
 {% import "components/guide_hint.html" as guide %}
-{% import "components/panel_empty.html" as empty %}
+
 {% import "components/panel_controls.html" as controls %}
 {% import "components/panel_publication.html" as publication %}
+{% import "components/editor_actions.html" as editor %}
+{% import "components/editor_pagination.html" as pagination_controls %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="/static/css/menu-editor.css">
+{% endblock %}
 
 {% block content %}
-<div class="page-top panel-page-top">
+{% let page_suffix = pagination.query_suffix() %}
+<div class="page-top panel-page-top editor-page-top">
   <div>
     <h1 data-i18n="menu_editor.heading">{{ page.t("menu_editor.heading") }}</h1>
     <p data-i18n="menu_editor.subtitle">{{ page.t("menu_editor.subtitle") }}</p>
   </div>
   <div class="panel-action-row" role="group" aria-label="{{ page.t("menu_editor.actions_label") }}" data-i18n-aria="menu_editor.actions_label">
     {% if !categories.is_empty() %}
-    {{ controls::link("/dashboard/products/new", "menu_editor.new_product", "add", primary=true, guide_key="guide.add_product") }}
+    {{ controls::link("/dashboard/products/new" ~ page_suffix, "menu_editor.new_product", "add", primary=true, guide_key="guide.add_product") }}
     {% endif %}
-    {{ controls::link("/dashboard/categories/new", "menu_editor.new_category", "layers", guide_key="guide.add_category") }}
+    {{ controls::link("/dashboard/categories/new" ~ page_suffix, "menu_editor.new_category", "layers", guide_key="guide.add_category") }}
     {{ controls::link("/dashboard/ocr", "menu_editor.import_ocr", "scan", guide_key="guide.import_menu") }}
   </div>
 </div>
@@ -30,105 +37,97 @@
   <h2 data-i18n="menu_editor.empty_title">{{ page.t("menu_editor.empty_title") }}</h2>
   <p class="text-muted mb-4" data-i18n="menu_editor.empty_body">{{ page.t("menu_editor.empty_body") }}</p>
   <div class="panel-action-row">
-    {{ controls::link("/dashboard/categories/new", "menu_editor.new_category", "layers", primary=true) }}
+    {{ controls::link("/dashboard/categories/new" ~ page_suffix, "menu_editor.new_category", "layers", primary=true) }}
     {{ controls::link("/dashboard/ocr", "menu_editor.import_ocr", "scan") }}
   </div>
 </section>
 {% else %}
-  {% for cat in categories %}
-  <section class="category-block" {% if loop.first %}{{ guide::hint("guide.edit_menu") }}{% endif %}>
-    <div class="category-head">
-      <div class="category-title">
-        <h2>{{ cat.name }}</h2>
-        {% if cat.is_visible %}
-        <span class="badge badge-success" data-i18n="menu_editor.visible">{{ page.t("menu_editor.visible") }}</span>
-        {% else %}
-        <span class="badge badge-neutral" data-i18n="menu_editor.hidden">{{ page.t("menu_editor.hidden") }}</span>
-        {% endif %}
-      </div>
-
-      <div class="inline-actions">
-        <a class="btn btn-secondary btn-sm" href="/dashboard/products/new?category_id={{ cat.id }}" data-i18n="menu_editor.add_product_here">{{ page.t("menu_editor.add_product_here") }}</a>
-        <form class="inline-form" method="post" action="/dashboard/categories/{{ cat.id }}/move">
-          <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-          <input type="hidden" name="direction" value="up">
-          <button class="btn btn-ghost btn-sm" type="submit" aria-label="{{ page.t("menu_editor.move_up") }}">{{ icons::panel("up") }} <span data-i18n="menu_editor.move_up">{{ page.t("menu_editor.move_up") }}</span></button>
-        </form>
-        <form class="inline-form" method="post" action="/dashboard/categories/{{ cat.id }}/move">
-          <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-          <input type="hidden" name="direction" value="down">
-          <button class="btn btn-ghost btn-sm" type="submit" aria-label="{{ page.t("menu_editor.move_down") }}">{{ icons::panel("down") }} <span data-i18n="menu_editor.move_down">{{ page.t("menu_editor.move_down") }}</span></button>
-        </form>
-        <a class="btn btn-secondary btn-sm" href="/dashboard/categories/{{ cat.id }}/edit">{{ icons::panel("edit") }} <span data-i18n="common.edit">{{ page.t("common.edit") }}</span></a>
-        <form class="inline-form" method="post" action="/dashboard/categories/{{ cat.id }}/delete"
-              data-confirm-key="menu_editor.confirm_delete_category"
-              data-confirm-fallback="{{ page.t("menu_editor.confirm_delete_category") }}">
-          <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-          <button class="btn btn-danger btn-sm" type="submit">{{ icons::panel("delete") }} <span data-i18n="common.delete">{{ page.t("common.delete") }}</span></button>
-        </form>
-      </div>
-    </div>
-
-    {% if cat.products.is_empty() %}
-    <div class="product-row">
-      {{ empty::message("menu_editor.empty_products") }}
-    </div>
-    {% else %}
-      {% for prod in cat.products %}
-      <div class="product-row">
-        <div class="product-main">
-          {% if let Some(img) = prod.thumb_url %}
-          <img class="product-thumb" src="{{ img }}" alt="{{ prod.name }}" width="64" height="64" loading="lazy">
-          {% endif %}
-          <div>
-            <strong>{{ prod.name }}</strong>
-            {% if !prod.description.is_empty() %}
-            <p class="field-hint">{{ prod.description }}</p>
-            {% endif %}
-            <div class="inline-actions mt-2">
-              <strong data-price-centavos="{{ prod.price_centavos }}">{{ prod.price_display }}</strong>
-              {% if prod.is_available %}
-              <span class="badge badge-success" data-i18n="menu_editor.available">{{ page.t("menu_editor.available") }}</span>
+<section class="editor-list" id="editor-list" aria-label="{{ page.t("menu_editor.list_label") }}"
+         data-i18n-aria="menu_editor.list_label" tabindex="-1" {{ guide::hint("guide.edit_menu") }}>
+  <table class="editor-table" role="table">
+    <caption class="editor-visually-hidden" data-i18n="menu_editor.list_label">{{ page.t("menu_editor.list_label") }}</caption>
+    <colgroup>
+      <col>
+      <col class="editor-price-column">
+      <col class="editor-status-column">
+      <col class="editor-actions-column">
+    </colgroup>
+    <thead role="rowgroup">
+      <tr role="row">
+        <th scope="col" role="columnheader" data-i18n="menu_editor.col_product">{{ page.t("menu_editor.col_product") }}</th>
+        <th scope="col" role="columnheader" data-i18n="menu_editor.col_price">{{ page.t("menu_editor.col_price") }}</th>
+        <th scope="col" role="columnheader" data-i18n="menu_editor.col_status">{{ page.t("menu_editor.col_status") }}</th>
+        <th scope="col" role="columnheader" data-i18n="menu_editor.col_action">{{ page.t("menu_editor.col_action") }}</th>
+      </tr>
+    </thead>
+    {% for cat in categories %}
+    {% let category_url = "/dashboard/categories/" ~ cat.id %}
+    <tbody role="rowgroup">
+      <tr class="editor-category" role="row">
+        <th colspan="4" scope="rowgroup" role="rowheader">
+          <div class="editor-category-bar">
+            <div class="editor-category-label">
+              <span class="editor-category-icon">{{ icons::panel("layers") }}</span>
+              <h2>{{ cat.name }}</h2>
+              {% if cat.is_visible %}
+              <span class="badge badge-neutral" data-i18n="menu_editor.visible">{{ page.t("menu_editor.visible") }}</span>
               {% else %}
-              <span class="badge badge-danger" data-i18n="menu_editor.unavailable">{{ page.t("menu_editor.unavailable") }}</span>
+              <span class="badge badge-warn" data-i18n="menu_editor.hidden">{{ page.t("menu_editor.hidden") }}</span>
               {% endif %}
-              {% if !prod.is_visible %}
-              <span class="badge badge-neutral" data-i18n="menu_editor.hidden">{{ page.t("menu_editor.hidden") }}</span>
+            </div>
+            <div class="editor-row-actions">
+              {% if pagination.current > 1 %}
+              {% let add_url = "/dashboard/products/new?category_id=" ~ cat.id ~ "&page=" ~ pagination.current %}
+              {{ editor::icon_link(add_url, "add", "menu_editor.add_product_here") }}
+              {% else %}
+              {{ editor::icon_link("/dashboard/products/new?category_id=" ~ cat.id, "add", "menu_editor.add_product_here") }}
+              {% endif %}
+              {{ editor::manage(category_url, page_suffix, "menu_editor.confirm_delete_category") }}
+            </div>
+          </div>
+        </th>
+      </tr>
+      {% for prod in cat.products %}
+      {% let product_url = "/dashboard/products/" ~ prod.id %}
+      <tr class="editor-product" role="row">
+        <td class="editor-product-cell" role="cell">
+          <div class="editor-product-name">
+            {% if let Some(img) = prod.thumb_url %}
+            <img class="editor-product-thumb" src="{{ img }}" alt="" width="44" height="44" loading="lazy">
+            {% else %}
+            <span class="editor-product-thumb editor-product-placeholder">{{ icons::panel("image") }}</span>
+            {% endif %}
+            <div>
+              <strong>{{ prod.name }}</strong>
+              {% if !prod.description.is_empty() %}
+              <p>{{ prod.description }}</p>
               {% endif %}
             </div>
           </div>
-        </div>
-
-        <div class="inline-actions">
-          <form class="inline-form" method="post" action="/dashboard/products/{{ prod.id }}/toggle">
-            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-            <button class="btn btn-secondary btn-sm" type="submit"
-                    data-i18n="{% if prod.is_available %}menu_editor.unavailable{% else %}menu_editor.available{% endif %}">
-              {% if prod.is_available %}{{ page.t("menu_editor.unavailable") }}{% else %}{{ page.t("menu_editor.available") }}{% endif %}
-            </button>
-          </form>
-          <form class="inline-form" method="post" action="/dashboard/products/{{ prod.id }}/move">
-            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-            <input type="hidden" name="direction" value="up">
-            <button class="btn btn-ghost btn-sm" type="submit">{{ icons::panel("up") }} <span data-i18n="menu_editor.move_up">{{ page.t("menu_editor.move_up") }}</span></button>
-          </form>
-          <form class="inline-form" method="post" action="/dashboard/products/{{ prod.id }}/move">
-            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-            <input type="hidden" name="direction" value="down">
-            <button class="btn btn-ghost btn-sm" type="submit">{{ icons::panel("down") }} <span data-i18n="menu_editor.move_down">{{ page.t("menu_editor.move_down") }}</span></button>
-          </form>
-          <a class="btn btn-secondary btn-sm" href="/dashboard/products/{{ prod.id }}/edit">{{ icons::panel("edit") }} <span data-i18n="common.edit">{{ page.t("common.edit") }}</span></a>
-          <form class="inline-form" method="post" action="/dashboard/products/{{ prod.id }}/delete"
-                data-confirm-key="menu_editor.confirm_delete_product"
-                data-confirm-fallback="{{ page.t("menu_editor.confirm_delete_product") }}">
-            <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-            <button class="btn btn-danger btn-sm" type="submit">{{ icons::panel("delete") }} <span data-i18n="common.delete">{{ page.t("common.delete") }}</span></button>
-          </form>
-        </div>
-      </div>
+        </td>
+        <td class="editor-price-cell" role="cell"><strong data-price-centavos="{{ prod.price_centavos }}">{{ prod.price_display }}</strong></td>
+        <td class="editor-status-cell" role="cell">
+          {{ editor::availability(product_url, page_suffix, prod.is_available) }}
+          {% if !prod.is_visible %}
+          <span class="badge badge-warn" data-i18n="menu_editor.hidden">{{ page.t("menu_editor.hidden") }}</span>
+          {% endif %}
+        </td>
+        <td class="editor-actions-cell" role="cell">
+          <div class="editor-row-actions">{{ editor::manage(product_url, page_suffix, "menu_editor.confirm_delete_product") }}</div>
+        </td>
+      </tr>
+      {% else %}
+      <tr class="editor-category-empty" role="row">
+        <td colspan="4" role="cell">
+          {{ icons::panel("box") }}
+          <span data-i18n="menu_editor.empty_products">{{ page.t("menu_editor.empty_products") }}</span>
+        </td>
+      </tr>
       {% endfor %}
-    {% endif %}
-  </section>
-  {% endfor %}
+    </tbody>
+    {% endfor %}
+  </table>
+  {{ pagination_controls::pager(pagination.current, pagination.pages) }}
+</section>
 {% endif %}
 {% endblock %}

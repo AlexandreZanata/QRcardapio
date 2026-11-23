@@ -25,9 +25,15 @@ For screens with a file field, include `components/file_picker.html` once in the
 
 Dashboard action links, submit buttons, icon tiles, section headings, and illustrated tips share `components/panel_controls.html`. The primary variant uses the landing's blue from `tokens.css`. Menu editing and the overview reuse the CSRF-protected form in `components/panel_publication.html`. The overview groups preview and live links below the publish action. Menu import uses the featured file field alongside a native disclosure for pasted text and a list of reading tips.
 
+### Responsive dashboard tables
+
+The menu editor shows a single table with category headers separating product rows. Desktop aligns the product, price, availability, and actions in columns. Narrow layouts put the product and price on one line and the availability and actions below. Icon actions use translated accessible labels and tooltips. The page groups at most 12 products or empty categories, and keeps the current page through editor actions.
+
+Operational records, OCR history, and OCR review use the mobile table labels in `dashboard-tables.css`. Narrow screens show each row with its field labels so values and inputs can be read without horizontal scrolling. The QR sheet scales its symbol within the available screen width and keeps a separate print layout.
+
 ### Landing page assets
 
-The Google Maps section pairs the landing's highlighted headline and buttons with two HTML mockups. The profile shows Brasa 128, a fictional hamburger restaurant with a cream façade, cobalt frames, and a yellow awning. The phone illustrates the review invitation shown in a published menu. The comparison beneath both frames labels its simulated averages, totals, and 1–5 star distributions. The layout stacks on narrow screens. Profile views are an owner performance metric and sit outside the public profile demonstration. [Google Business Profile performance documentation](https://support.google.com/business/answer/9918094?hl=pt-BR)
+The Google Maps section pairs the landing's highlighted headline and buttons with two HTML mockups. The profile shows Brasa 128, a fictional hamburger restaurant with a cream façade, cobalt frames, and a yellow awning. The phone illustrates the review invitation shown in a published menu. The comparison beneath both frames labels its simulated averages, totals, and 1–5 star distributions. The profile, phone frame, and side-by-side ratings keep the same composition on narrow screens. Profile views are an owner performance metric and sit outside the public profile demonstration. [Google Business Profile performance documentation](https://support.google.com/business/answer/9918094?hl=pt-BR)
 
 See the [guide to applying the landing style](GUIA_ESTILO_LANDING.md) for the visual tokens, page structure, and reusable examples for this repository and other projects.
 

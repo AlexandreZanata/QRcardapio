@@ -72,30 +72,52 @@
   {{ empty::message("ocr.history_empty") }}
   {% else %}
   <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th data-i18n="ocr.col_file">{{ page.t("ocr.col_file") }}</th>
-          <th data-i18n="ocr.col_source">{{ page.t("ocr.col_source") }}</th>
-          <th data-i18n="ocr.col_detected">{{ page.t("ocr.col_detected") }}</th>
-          <th data-i18n="ocr.col_imported">{{ page.t("ocr.col_imported") }}</th>
-          <th data-i18n="ocr.col_status">{{ page.t("ocr.col_status") }}</th>
-          <th data-i18n="ocr.col_action">{{ page.t("ocr.col_action") }}</th>
+    <table class="mobile-table" role="table">
+      <thead role="rowgroup">
+        <tr role="row">
+          <th scope="col" role="columnheader" data-i18n="ocr.col_file">{{ page.t("ocr.col_file") }}</th>
+          <th scope="col" role="columnheader" data-i18n="ocr.col_source">{{ page.t("ocr.col_source") }}</th>
+          <th scope="col" role="columnheader" data-i18n="ocr.col_detected">{{ page.t("ocr.col_detected") }}</th>
+          <th scope="col" role="columnheader" data-i18n="ocr.col_imported">{{ page.t("ocr.col_imported") }}</th>
+          <th scope="col" role="columnheader" data-i18n="ocr.col_status">{{ page.t("ocr.col_status") }}</th>
+          <th scope="col" role="columnheader" data-i18n="ocr.col_action">{{ page.t("ocr.col_action") }}</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody role="rowgroup">
         {% for imp in imports %}
-        <tr>
-          <td>
-            <strong>{{ imp.source_filename }}</strong>
-            <div class="field-hint">{{ imp.created_at }}</div>
+        <tr role="row">
+          <td role="cell">
+            {{ controls::mobile_cell_label("ocr.col_file") }}
+            <div class="mobile-table-value">
+              <strong>{{ imp.source_filename }}</strong>
+              <div class="field-hint">{{ imp.created_at }}</div>
+            </div>
           </td>
-          <td><span class="badge badge-neutral" data-i18n="{{ imp.source_kind_key }}">{{ page.t(imp.source_kind_key) }}</span></td>
-          <td>{{ imp.items_detected }}</td>
-          <td>{{ imp.items_imported }}</td>
-          <td><span class="badge {{ imp.status_badge_class }}" data-i18n="{{ imp.status_key }}">{{ page.t(imp.status_key) }}</span></td>
-          <td>
-            <a class="btn btn-secondary btn-sm" href="/dashboard/ocr/{{ imp.id }}">{{ icons::panel("edit") }} <span data-i18n="ocr.open_review">{{ page.t("ocr.open_review") }}</span></a>
+          <td role="cell">
+            {{ controls::mobile_cell_label("ocr.col_source") }}
+            <div class="mobile-table-value">
+              <span class="badge badge-neutral" data-i18n="{{ imp.source_kind_key }}">{{ page.t(imp.source_kind_key) }}</span>
+            </div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("ocr.col_detected") }}
+            <div class="mobile-table-value">{{ imp.items_detected }}</div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("ocr.col_imported") }}
+            <div class="mobile-table-value">{{ imp.items_imported }}</div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("ocr.col_status") }}
+            <div class="mobile-table-value">
+              <span class="badge {{ imp.status_badge_class }}" data-i18n="{{ imp.status_key }}">{{ page.t(imp.status_key) }}</span>
+            </div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("ocr.col_action") }}
+            <div class="mobile-table-value">
+              <a class="btn btn-secondary btn-sm" href="/dashboard/ocr/{{ imp.id }}">{{ icons::panel("edit") }} <span data-i18n="ocr.open_review">{{ page.t("ocr.open_review") }}</span></a>
+            </div>
           </td>
         </tr>
         {% endfor %}

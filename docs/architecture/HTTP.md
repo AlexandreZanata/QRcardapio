@@ -38,7 +38,7 @@ All `POST` routes verify `_csrf` against the server session's `csrf_token` in co
 | `GET` | `/dashboard/media/{filename}` | Tenant-isolated private media preview (scoped to `establishment_id`). |
 | `POST` | `/dashboard/publish` | Triggers atomic static snapshot build. |
 | `POST` | `/dashboard/unpublish` | Removes published static files and reverts to draft. |
-| `GET` | `/dashboard/menu` | Category and product management board. |
+| `GET` | `/dashboard/menu?page=N` | Category and product management. Defaults to page 1 and displays up to 12 products or empty categories in menu order. |
 | `GET`/`POST` | `/dashboard/categories/new`, `/dashboard/categories` | Create category (optional EN/ES translations). |
 | `GET`/`POST` | `/dashboard/categories/{id}/edit`, `/dashboard/categories/{id}` | Edit category. |
 | `POST` | `/dashboard/categories/{id}/delete`, `/move` | Delete or reorder category. |

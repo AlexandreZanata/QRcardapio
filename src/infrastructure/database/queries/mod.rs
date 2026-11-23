@@ -4,6 +4,7 @@ pub mod categories;
 pub mod establishments;
 pub(crate) mod mappers;
 pub mod media;
+pub mod menu_editor;
 pub mod ocr_imports;
 pub mod products;
 pub mod publications;

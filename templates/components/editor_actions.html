@@ -1,0 +1,54 @@
+{% import "components/icons.html" as icons %}
+
+{% macro icon_label(icon, key) %}
+{{ icons::panel(icon) }} <span class="editor-visually-hidden" data-i18n="{{ key }}">{{ page.t(key) }}</span>
+{% endmacro %}
+
+{% macro icon_link(url, icon, key) %}
+<a class="editor-icon-action" href="{{ url }}" title="{{ page.t(key) }}" data-i18n-title="{{ key }}">
+  {{ icon_label(icon, key) }}
+</a>
+{% endmacro %}
+
+{% macro reorder(resource, page_suffix, direction, icon, key) %}
+<form method="post" action="{{ resource }}/move{{ page_suffix }}">
+  <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+  <input type="hidden" name="direction" value="{{ direction }}">
+  <button class="editor-icon-action" type="submit" title="{{ page.t(key) }}" data-i18n-title="{{ key }}">
+    {{ icon_label(icon, key) }}
+  </button>
+</form>
+{% endmacro %}
+
+{% macro manage(resource, page_suffix, confirm_key) %}
+{{ reorder(resource, page_suffix, "up", "up", "menu_editor.move_up") }}
+{{ reorder(resource, page_suffix, "down", "down", "menu_editor.move_down") }}
+{{ icon_link(resource ~ "/edit" ~ page_suffix, "edit", "common.edit") }}
+<form method="post" action="{{ resource }}/delete{{ page_suffix }}" data-confirm-key="{{ confirm_key }}"
+      data-confirm-fallback="{{ page.t(confirm_key) }}">
+  <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+  <button class="editor-icon-action editor-icon-danger" type="submit" title="{{ page.t("common.delete") }}" data-i18n-title="common.delete">
+    {{ icon_label("delete", "common.delete") }}
+  </button>
+</form>
+{% endmacro %}
+
+{% macro availability(resource, page_suffix, available) %}
+{% if available %}
+{{ stock_form(resource, page_suffix, true, "menu_editor.available", "menu_editor.mark_unavailable") }}
+{% else %}
+{{ stock_form(resource, page_suffix, false, "menu_editor.unavailable", "menu_editor.mark_available") }}
+{% endif %}
+{% endmacro %}
+
+{% macro stock_form(resource, page_suffix, available, status_key, action_key) %}
+<form method="post" action="{{ resource }}/toggle{{ page_suffix }}">
+  <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+  <button type="submit" class="editor-stock{% if available %} editor-stock-available{% endif %}"
+          title="{{ page.t(action_key) }}" data-i18n-title="{{ action_key }}">
+    <span class="editor-stock-dot" aria-hidden="true"></span>
+    <span data-i18n="{{ status_key }}">{{ page.t(status_key) }}</span>
+    <span class="editor-visually-hidden" data-i18n="{{ action_key }}">{{ page.t(action_key) }}</span>
+  </button>
+</form>
+{% endmacro %}

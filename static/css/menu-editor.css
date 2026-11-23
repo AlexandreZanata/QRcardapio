@@ -1,0 +1,254 @@
+.editor-page-top { gap: 0.65rem 1rem; }
+
+.editor-page-top + .panel-publish-notice {
+  margin-bottom: 0.78rem;
+  padding: 0.65rem 0.75rem;
+}
+
+.editor-page-top + .panel-publish-notice .panel-icon-tile {
+  width: 2rem;
+  height: 2rem;
+}
+
+.editor-page-top + .panel-publish-notice .panel-icon-tile .panel-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.editor-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.editor-list {
+  border: 1px solid #d8deee;
+  border-radius: 0.82rem;
+  background: #fff;
+  box-shadow: 0 2px 0 #e9ebf4;
+  scroll-margin-block-start: 0.75rem;
+}
+
+.editor-table { table-layout: fixed; }
+.editor-price-column { width: 16%; }
+.editor-status-column { width: 20%; }
+.editor-actions-column { width: 13.05rem; }
+
+.editor-table th,
+.editor-table td {
+  padding: 0.48rem clamp(0.55rem, 1.1vw, 0.92rem);
+  vertical-align: middle;
+  border-color: #e7eaf3;
+  overflow-wrap: anywhere;
+}
+
+.editor-table thead th {
+  color: #525a75;
+  font-size: 0.78rem;
+  font-weight: 780;
+}
+
+.editor-table thead th:last-child { text-align: end; }
+.editor-icon-action:focus-visible { outline-offset: -2px; }
+
+.editor-category th {
+  color: var(--dashboard-ink);
+  background: #edf0ff;
+  font-weight: 700;
+}
+
+.editor-category-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.4rem 0.75rem;
+}
+
+.editor-category-label,
+.editor-product-name {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 0.58rem;
+}
+
+.editor-category-label { flex-wrap: wrap; }
+.editor-category-label h2 { margin: 0; font-size: 1rem; line-height: 1.23; }
+.editor-category-label .badge { padding-block: 0.1rem; }
+
+.editor-category-icon,
+.editor-product-placeholder {
+  display: grid;
+  place-items: center;
+}
+
+.editor-category-icon {
+  flex: none;
+  width: 1.75rem;
+  height: 1.75rem;
+  border: 1px solid #cfd6f3;
+  border-radius: 0.46rem;
+  background: #fff;
+}
+
+.editor-category-icon .panel-icon { width: 1.04rem; height: 1.04rem; }
+.editor-product:hover { background: #fafbff; }
+
+.editor-product-thumb {
+  flex: none;
+  width: 2.75rem;
+  height: 2.75rem;
+  border: 1px solid #e1e4ef;
+  border-radius: 0.56rem;
+  object-fit: cover;
+  background: #f3f5fd;
+}
+
+.editor-product-placeholder .panel-icon { width: 1.25rem; height: 1.25rem; }
+.editor-product-name > div { min-width: 0; }
+.editor-product-name strong { display: block; line-height: 1.26; }
+.editor-product-name p {
+  margin: 0.16rem 0 0;
+  color: var(--dashboard-muted);
+  font-size: 0.82rem;
+  line-height: 1.3;
+}
+
+.editor-price-cell strong { font-variant-numeric: tabular-nums; }
+.editor-status-cell .badge { margin-top: 0.18rem; }
+
+.editor-row-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.22rem;
+}
+
+.editor-icon-action {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #d5dbee;
+  border-radius: 0.52rem;
+  background: #fff;
+  color: var(--dashboard-ink);
+  cursor: pointer;
+}
+
+.editor-icon-action:hover { border-color: #9ea9db; background: #f1f3ff; }
+.editor-icon-danger:hover { border-color: #e8a6ab; background: #fff0f1; }
+.editor-icon-action .panel-icon { width: 1.1rem; height: 1.1rem; }
+
+.editor-stock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.32rem;
+  min-height: 34px;
+  padding: 0.13rem 0.46rem;
+  border: 1px solid #ecd7c1;
+  border-radius: 0.48rem;
+  background: #fcf2e8;
+  color: #73431a;
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 750;
+  text-align: start;
+  cursor: pointer;
+}
+
+.editor-stock-dot {
+  flex: none;
+  width: 0.42rem;
+  height: 0.42rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.editor-stock-available { border-color: #ccd6fa; background: #eef2ff; color: #273ba5; }
+.editor-stock:hover { box-shadow: inset 0 0 0 1px currentColor; }
+
+.editor-category-empty td {
+  color: var(--dashboard-muted);
+  font-size: 0.85rem;
+}
+
+.editor-category-empty .panel-icon {
+  display: inline-block;
+  width: 1.06rem;
+  height: 1.06rem;
+  margin-inline-end: 0.28rem;
+  vertical-align: middle;
+}
+
+.editor-list tbody:last-of-type tr:last-child > * { border-bottom: 0; }
+
+.editor-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 0.42rem 0.68rem;
+  padding: 0.62rem 0.55rem;
+  border-top: 1px solid #e7eaf3;
+}
+
+.editor-pagination p { margin: 0; color: var(--dashboard-muted); font-size: 0.86rem; }
+.editor-pagination .panel-action { padding-inline: 0.58rem; font-size: 0.84rem; }
+.editor-pagination .panel-action:disabled { opacity: 0.5; cursor: default; }
+
+@media (pointer: coarse) {
+  .editor-icon-action { width: 44px; height: 44px; }
+  .editor-stock { min-height: 44px; }
+}
+
+@media (max-width: 60rem) {
+  .editor-table,
+  .editor-table tbody,
+  .editor-category,
+  .editor-category th,
+  .editor-category-empty,
+  .editor-category-empty td { display: block; }
+
+  .editor-table colgroup { display: none; }
+  .editor-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .editor-product {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.35rem;
+    align-items: center;
+    padding: 0.55rem 0.62rem;
+    border-bottom: 1px solid #e7eaf3;
+  }
+
+  .editor-table .editor-product td { padding: 0; border: 0; }
+  .editor-product-cell { flex: 1 1 69%; min-width: 0; }
+  .editor-price-cell { flex: 1 1 26%; text-align: end; }
+  .editor-status-cell { flex: 1 0 auto; }
+  .editor-actions-cell { margin-inline-start: auto; }
+  .editor-product-name { gap: 0.42rem; }
+  .editor-product-thumb { width: 2.4rem; height: 2.4rem; }
+  .editor-category-bar .editor-row-actions { margin-inline-start: auto; }
+  .editor-list tbody:last-of-type .editor-product:last-child { border-bottom: 0; }
+}
+
+@media (max-width: 24rem) {
+  .editor-pagination p { order: -1; width: 100%; text-align: center; }
+  .editor-pagination .panel-action { flex: 1; }
+  .editor-row-actions { gap: 0.12rem; }
+  .editor-icon-action { width: 2.55rem; height: 44px; }
+}

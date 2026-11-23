@@ -10,18 +10,19 @@ body.print-body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 1rem;
-  max-width: 540px;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  width: min(100%, 540px);
   margin: 0 auto 1.5rem;
 }
 
 .print-sheet {
-  max-width: 520px;
+  width: min(100%, 520px);
   margin: 0 auto;
   background: #FFFFFF;
   border: 2px solid var(--ink-primary);
   border-radius: 24px;
-  padding: 2.5rem 2rem;
+  padding: clamp(1.05rem, 5vw, 2.5rem) clamp(0.8rem, 4vw, 2rem);
   text-align: center;
   box-shadow: var(--shadow-md);
 }
@@ -38,6 +39,7 @@ body.print-body {
   margin: 0 0 0.4rem;
   font-size: 2rem;
   letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
 }
 
 .print-cta {
@@ -49,15 +51,17 @@ body.print-body {
 
 .print-qr-frame {
   background: #FFFFFF;
-  padding: 16px;
-  display: inline-block;
+  padding: clamp(0.48rem, 3vw, 1rem);
+  width: min(100%, 314px);
+  margin-inline: auto;
   border-radius: 16px;
   border: 1px solid var(--border-subtle);
 }
 
 .print-qr-frame svg {
-  width: 280px;
-  height: 280px;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
   display: block;
 }
 
@@ -81,6 +85,11 @@ body.print-body {
   text-align: center;
   color: var(--ink-secondary);
   font-size: 0.9rem;
+}
+
+@media (max-width: 30rem) {
+  body.print-body { padding: 0.75rem; }
+  .print-title { font-size: 1.55rem; }
 }
 
 @media print {

@@ -20,6 +20,21 @@ pub struct EditorCategoryView {
     pub products: Vec<EditorProductView>,
 }
 
+pub struct EditorPagination {
+    pub current: i64,
+    pub pages: i64,
+}
+
+impl EditorPagination {
+    pub fn query_suffix(&self) -> String {
+        if self.current > 1 {
+            format!("?page={}", self.current)
+        } else {
+            String::new()
+        }
+    }
+}
+
 pub struct CategoryOptionView {
     pub id: String,
     pub name: String,
@@ -37,6 +52,7 @@ pub struct MenuEditorTemplate {
     pub csrf_token: String,
     pub has_unpublished_changes: bool,
     pub categories: Vec<EditorCategoryView>,
+    pub pagination: EditorPagination,
 }
 
 #[derive(Template)]
@@ -50,6 +66,7 @@ pub struct CategoryFormTemplate {
     pub active_nav: &'static str,
     pub csrf_token: String,
     pub form_action: String,
+    pub menu_url: String,
     pub name_value: String,
     pub name_en: String,
     pub name_es: String,
@@ -71,6 +88,7 @@ pub struct ProductFormTemplate {
     pub active_nav: &'static str,
     pub csrf_token: String,
     pub form_action: String,
+    pub menu_url: String,
     pub category_options: Vec<CategoryOptionView>,
     pub selected_category_id: String,
     pub name_value: String,

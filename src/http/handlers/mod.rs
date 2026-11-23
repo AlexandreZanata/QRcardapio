@@ -3,6 +3,7 @@ pub mod auth;
 pub mod categories;
 pub mod dashboard;
 pub mod health;
+pub mod menu_editor;
 pub mod ocr;
 pub mod ocr_form;
 pub mod onboarding;

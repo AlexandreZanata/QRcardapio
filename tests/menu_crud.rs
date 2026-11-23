@@ -336,3 +336,99 @@ async fn concurrent_owner_edits_succeed_without_sqlite_busy() {
 
     pool.close().await;
 }
+
+#[tokio::test]
+async fn editor_paginates_products_in_category_order_and_keeps_empty_categories() {
+    use qrcardapio::infrastructure::database::queries::menu_editor::list_page;
+
+    let dir = TempDir::new().unwrap();
+    let cfg = test_config(&dir);
+    let pool = init_pool(&cfg).await.unwrap();
+    let assets = AssetProcessor::new(cfg.media_dir());
+    let owner = register_owner(
+        &pool,
+        &PasswordService::new(),
+        "editor-pages@example.invalid",
+        "SenhaForte123",
+        "SenhaForte123",
+        Locale::PtBr,
+    )
+    .await
+    .unwrap();
+    let est = create_establishment(
+        &pool,
+        &owner.account.id,
+        CreateEstablishmentInput {
+            name: "Padaria das Páginas",
+            slug: "",
+            description: "",
+            accent_color: "#D9532F",
+        },
+    )
+    .await
+    .unwrap();
+
+    let empty_page = list_page(&pool, &est.id, 2).await.unwrap();
+    assert_eq!(empty_page.current, 1);
+    assert!(empty_page.rows.is_empty());
+
+    let mut category_ids = Vec::new();
+    for name in ["Lanches", "Bebidas"] {
+        let category = create_category(
+            &pool,
+            &est.id,
+            CategoryInput {
+                name,
+                name_en: "",
+                name_es: "",
+                description: "",
+                description_en: "",
+                description_es: "",
+                is_visible: true,
+            },
+        )
+        .await
+        .unwrap();
+        category_ids.push(category.id);
+    }
+
+    for index in 1..=13 {
+        create_product(
+            &pool,
+            &assets,
+            &est.id,
+            ProductInput {
+                category_id: &category_ids[0],
+                name: &format!("Lanche {index}"),
+                name_en: "",
+                name_es: "",
+                description: "",
+                description_en: "",
+                description_es: "",
+                price_raw: "12,00",
+                is_available: index != 13,
+                is_visible: index != 13,
+            },
+            None,
+        )
+        .await
+        .unwrap();
+    }
+
+    let first = list_page(&pool, &est.id, 0).await.unwrap();
+    assert_eq!((first.current, first.pages, first.rows.len()), (1, 2, 12));
+    assert_eq!(first.rows[0].product_name, "Lanche 1");
+    assert_eq!(first.rows[11].product_name, "Lanche 12");
+
+    let last = list_page(&pool, &est.id, i64::MAX).await.unwrap();
+    assert_eq!((last.current, last.pages, last.rows.len()), (2, 2, 2));
+    assert_eq!(last.rows[0].category_id, category_ids[0]);
+    assert_eq!(last.rows[0].product_name, "Lanche 13");
+    assert!(!last.rows[0].is_available);
+    assert!(!last.rows[0].is_visible);
+    assert_eq!(last.rows[1].category_id, category_ids[1]);
+    assert!(last.rows[1].product_id.is_none());
+
+    let outside_tenant = list_page(&pool, "other-establishment", 1).await.unwrap();
+    assert!(outside_tenant.rows.is_empty());
+}

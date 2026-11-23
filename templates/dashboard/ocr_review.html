@@ -1,5 +1,6 @@
 {% extends "layouts/dashboard.html" %}
 {% import "components/icons.html" as icons %}
+{% import "components/panel_controls.html" as controls %}
 {% import "components/guide_hint.html" as guide %}
 {% import "components/form_fields.html" as fields %}
 {% import "components/panel_empty.html" as empty %}
@@ -75,46 +76,70 @@
     {% endif %}
 
     <div class="table-wrap" {{ guide::hint("guide.ocr_rows") }}>
-      <table class="ocr-table">
-        <thead>
-          <tr>
-            <th data-i18n="ocr.col_include">{{ page.t("ocr.col_include") }}</th>
-            <th data-i18n="ocr.col_category">{{ page.t("ocr.col_category") }}</th>
-            <th data-i18n="ocr.col_product">{{ page.t("ocr.col_product") }}</th>
-            <th data-i18n="ocr.col_price">{{ page.t("ocr.col_price") }}</th>
-            <th data-i18n="ocr.col_description">{{ page.t("ocr.col_description") }}</th>
-            <th data-i18n="ocr.col_available">{{ page.t("ocr.col_available") }}</th>
-            <th data-i18n="ocr.col_confidence">{{ page.t("ocr.col_confidence") }}</th>
-            <th data-i18n="ocr.col_action">{{ page.t("ocr.col_action") }}</th>
+      <table class="ocr-table mobile-table" role="table">
+        <thead role="rowgroup">
+          <tr role="row">
+            <th scope="col" role="columnheader" data-i18n="ocr.col_include">{{ page.t("ocr.col_include") }}</th>
+            <th scope="col" role="columnheader" data-i18n="ocr.col_category">{{ page.t("ocr.col_category") }}</th>
+            <th scope="col" role="columnheader" data-i18n="ocr.col_product">{{ page.t("ocr.col_product") }}</th>
+            <th scope="col" role="columnheader" data-i18n="ocr.col_price">{{ page.t("ocr.col_price") }}</th>
+            <th scope="col" role="columnheader" data-i18n="ocr.col_description">{{ page.t("ocr.col_description") }}</th>
+            <th scope="col" role="columnheader" data-i18n="ocr.col_available">{{ page.t("ocr.col_available") }}</th>
+            <th scope="col" role="columnheader" data-i18n="ocr.col_confidence">{{ page.t("ocr.col_confidence") }}</th>
+            <th scope="col" role="columnheader" data-i18n="ocr.col_action">{{ page.t("ocr.col_action") }}</th>
           </tr>
         </thead>
-        <tbody data-ocr-rows>
+        <tbody role="rowgroup" data-ocr-rows>
           {% for row in rows %}
-          <tr data-ocr-row>
-            <td class="ocr-cell-check">
-              <input type="hidden" name="row_idx" value="{{ row.idx }}">
-              {{ fields::table_check("include", row.idx, "ocr.col_include", row.include, show_guide=loop.first, guide_key="guide.ocr_include", include_row=true) }}
+          <tr role="row" data-ocr-row>
+            <td role="cell" class="ocr-cell-check">
+              {{ controls::mobile_cell_label("ocr.col_include") }}
+              <div class="mobile-table-value">
+                <input type="hidden" name="row_idx" value="{{ row.idx }}">
+                {{ fields::table_check("include", row.idx, "ocr.col_include", row.include, show_guide=loop.first, guide_key="guide.ocr_include", include_row=true) }}
+              </div>
             </td>
-            <td>
-              {{ fields::table_input("category", row.idx, "ocr.col_category", row.category_name, show_guide=loop.first, guide_key="guide.choose_category", max_length=80, list_id="ocr-cat-suggestions") }}
+            <td role="cell">
+              {{ controls::mobile_cell_label("ocr.col_category") }}
+              <div class="mobile-table-value">
+                {{ fields::table_input("category", row.idx, "ocr.col_category", row.category_name, show_guide=loop.first, guide_key="guide.choose_category", max_length=80, list_id="ocr-cat-suggestions") }}
+              </div>
             </td>
-            <td>
-              {{ fields::table_input("name", row.idx, "ocr.col_product", row.name, show_guide=loop.first, guide_key="guide.product_name", max_length=100) }}
+            <td role="cell">
+              {{ controls::mobile_cell_label("ocr.col_product") }}
+              <div class="mobile-table-value">
+                {{ fields::table_input("name", row.idx, "ocr.col_product", row.name, show_guide=loop.first, guide_key="guide.product_name", max_length=100) }}
+              </div>
             </td>
-            <td>
-              {{ fields::table_input("price", row.idx, "ocr.col_price", row.price_value, show_guide=loop.first, guide_key="guide.price", price=true, missing=row.missing_price) }}
+            <td role="cell">
+              {{ controls::mobile_cell_label("ocr.col_price") }}
+              <div class="mobile-table-value">
+                {{ fields::table_input("price", row.idx, "ocr.col_price", row.price_value, show_guide=loop.first, guide_key="guide.price", price=true, missing=row.missing_price) }}
+              </div>
             </td>
-            <td>
-              {{ fields::table_input("description", row.idx, "ocr.col_description", row.description, show_guide=loop.first, guide_key="guide.product_description", max_length=320) }}
+            <td role="cell">
+              {{ controls::mobile_cell_label("ocr.col_description") }}
+              <div class="mobile-table-value">
+                {{ fields::table_input("description", row.idx, "ocr.col_description", row.description, show_guide=loop.first, guide_key="guide.product_description", max_length=320) }}
+              </div>
             </td>
-            <td class="ocr-cell-check">
-              {{ fields::table_check("available", row.idx, "ocr.col_available", row.is_available, show_guide=loop.first, guide_key="guide.available") }}
+            <td role="cell" class="ocr-cell-check">
+              {{ controls::mobile_cell_label("ocr.col_available") }}
+              <div class="mobile-table-value">
+                {{ fields::table_check("available", row.idx, "ocr.col_available", row.is_available, show_guide=loop.first, guide_key="guide.available") }}
+              </div>
             </td>
-            <td>
-              <span class="badge {{ row.confidence_badge_class }}" data-i18n="{{ row.confidence_key }}">{{ page.t(row.confidence_key) }}</span>
+            <td role="cell">
+              {{ controls::mobile_cell_label("ocr.col_confidence") }}
+              <div class="mobile-table-value">
+                <span class="badge {{ row.confidence_badge_class }}" data-i18n="{{ row.confidence_key }}">{{ page.t(row.confidence_key) }}</span>
+              </div>
             </td>
-            <td>
-              <button type="button" class="btn btn-ghost btn-sm" data-ocr-remove-row>{{ icons::panel("delete") }} <span data-i18n="ocr.remove_row">{{ page.t("ocr.remove_row") }}</span></button>
+            <td role="cell">
+              {{ controls::mobile_cell_label("ocr.col_action") }}
+              <div class="mobile-table-value">
+                <button type="button" class="btn btn-ghost btn-sm" data-ocr-remove-row>{{ icons::panel("delete") }} <span data-i18n="ocr.remove_row">{{ page.t("ocr.remove_row") }}</span></button>
+              </div>
             </td>
           </tr>
           {% endfor %}
@@ -140,31 +165,45 @@
   </form>
 
   <template id="ocr-row-template">
-    <tr data-ocr-row>
-      <td class="ocr-cell-check">
-        <input type="hidden" name="row_idx" value="__IDX__">
-        {{ fields::table_check("include", "__IDX__", "ocr.col_include", true, include_row=true) }}
+    <tr role="row" data-ocr-row>
+      <td role="cell" class="ocr-cell-check">
+        {{ controls::mobile_cell_label("ocr.col_include") }}
+        <div class="mobile-table-value">
+          <input type="hidden" name="row_idx" value="__IDX__">
+          {{ fields::table_check("include", "__IDX__", "ocr.col_include", true, include_row=true) }}
+        </div>
       </td>
-      <td>
-        {{ fields::table_input("category", "__IDX__", "ocr.col_category", page.t("ocr.default_category"), max_length=80, list_id="ocr-cat-suggestions") }}
+      <td role="cell">
+        {{ controls::mobile_cell_label("ocr.col_category") }}
+        <div class="mobile-table-value">
+          {{ fields::table_input("category", "__IDX__", "ocr.col_category", page.t("ocr.default_category"), max_length=80, list_id="ocr-cat-suggestions") }}
+        </div>
       </td>
-      <td>
-        {{ fields::table_input("name", "__IDX__", "ocr.col_product", "", max_length=100) }}
+      <td role="cell">
+        {{ controls::mobile_cell_label("ocr.col_product") }}
+        <div class="mobile-table-value">{{ fields::table_input("name", "__IDX__", "ocr.col_product", "", max_length=100) }}</div>
       </td>
-      <td>
-        {{ fields::table_input("price", "__IDX__", "ocr.col_price", "", price=true) }}
+      <td role="cell">
+        {{ controls::mobile_cell_label("ocr.col_price") }}
+        <div class="mobile-table-value">{{ fields::table_input("price", "__IDX__", "ocr.col_price", "", price=true) }}</div>
       </td>
-      <td>
-        {{ fields::table_input("description", "__IDX__", "ocr.col_description", "", max_length=320) }}
+      <td role="cell">
+        {{ controls::mobile_cell_label("ocr.col_description") }}
+        <div class="mobile-table-value">{{ fields::table_input("description", "__IDX__", "ocr.col_description", "", max_length=320) }}</div>
       </td>
-      <td class="ocr-cell-check">
-        {{ fields::table_check("available", "__IDX__", "ocr.col_available", true) }}
+      <td role="cell" class="ocr-cell-check">
+        {{ controls::mobile_cell_label("ocr.col_available") }}
+        <div class="mobile-table-value">{{ fields::table_check("available", "__IDX__", "ocr.col_available", true) }}</div>
       </td>
-      <td>
-        <span class="badge badge-success" data-i18n="ocr.conf_high">{{ page.t("ocr.conf_high") }}</span>
+      <td role="cell">
+        {{ controls::mobile_cell_label("ocr.col_confidence") }}
+        <div class="mobile-table-value"><span class="badge badge-success" data-i18n="ocr.conf_high">{{ page.t("ocr.conf_high") }}</span></div>
       </td>
-      <td>
-        <button type="button" class="btn btn-ghost btn-sm" data-ocr-remove-row>{{ icons::panel("delete") }} <span data-i18n="ocr.remove_row">{{ page.t("ocr.remove_row") }}</span></button>
+      <td role="cell">
+        {{ controls::mobile_cell_label("ocr.col_action") }}
+        <div class="mobile-table-value">
+          <button type="button" class="btn btn-ghost btn-sm" data-ocr-remove-row>{{ icons::panel("delete") }} <span data-i18n="ocr.remove_row">{{ page.t("ocr.remove_row") }}</span></button>
+        </div>
       </td>
     </tr>
   </template>
@@ -172,22 +211,34 @@
 {% else %}
 <section class="card">
   <div class="table-wrap">
-    <table>
-      <thead>
-        <tr>
-          <th data-i18n="ocr.col_category">{{ page.t("ocr.col_category") }}</th>
-          <th data-i18n="ocr.col_product">{{ page.t("ocr.col_product") }}</th>
-          <th data-i18n="ocr.col_price">{{ page.t("ocr.col_price") }}</th>
-          <th data-i18n="ocr.col_description">{{ page.t("ocr.col_description") }}</th>
+    <table class="mobile-table" role="table">
+      <thead role="rowgroup">
+        <tr role="row">
+          <th scope="col" role="columnheader" data-i18n="ocr.col_category">{{ page.t("ocr.col_category") }}</th>
+          <th scope="col" role="columnheader" data-i18n="ocr.col_product">{{ page.t("ocr.col_product") }}</th>
+          <th scope="col" role="columnheader" data-i18n="ocr.col_price">{{ page.t("ocr.col_price") }}</th>
+          <th scope="col" role="columnheader" data-i18n="ocr.col_description">{{ page.t("ocr.col_description") }}</th>
         </tr>
       </thead>
-      <tbody>
+      <tbody role="rowgroup">
         {% for row in rows %}
-        <tr>
-          <td>{{ row.category_name }}</td>
-          <td><strong>{{ row.name }}</strong></td>
-          <td>{{ row.price_value }}</td>
-          <td>{{ row.description }}</td>
+        <tr role="row">
+          <td role="cell">
+            {{ controls::mobile_cell_label("ocr.col_category") }}
+            <div class="mobile-table-value">{{ row.category_name }}</div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("ocr.col_product") }}
+            <div class="mobile-table-value"><strong>{{ row.name }}</strong></div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("ocr.col_price") }}
+            <div class="mobile-table-value">{{ row.price_value }}</div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("ocr.col_description") }}
+            <div class="mobile-table-value">{{ row.description }}</div>
+          </td>
         </tr>
         {% endfor %}
       </tbody>

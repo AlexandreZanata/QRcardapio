@@ -5,6 +5,7 @@ use axum::response::{IntoResponse, Redirect, Response};
 use axum_extra::extract::CookieJar;
 use serde::Deserialize;
 
+use super::menu_editor::EditorPageQuery;
 use super::product_multipart::parse_product_multipart;
 use crate::app::AppState;
 use crate::application::menus::{
@@ -26,6 +27,8 @@ use crate::rendering::{PageMeta, render_html};
 #[derive(Deserialize)]
 pub struct NewProductQuery {
     pub category_id: Option<String>,
+    #[serde(flatten)]
+    editor: EditorPageQuery,
 }
 
 #[derive(Deserialize)]
@@ -49,6 +52,7 @@ pub async fn new_product_page(
     if cats.is_empty() {
         return Ok(Redirect::to("/dashboard/categories/new").into_response());
     }
+    let editor = query.editor;
     let selected = query
         .category_id
         .filter(|id| cats.iter().any(|c| &c.id == id))
@@ -70,7 +74,8 @@ pub async fn new_product_page(
         is_admin: tenant.auth.account.role == AccountRole::Admin,
         active_nav: "menu",
         csrf_token: tenant.auth.csrf_token,
-        form_action: "/dashboard/products".to_string(),
+        form_action: editor.with_page("/dashboard/products"),
+        menu_url: editor.menu_url(),
         category_options,
         selected_category_id: selected,
         name_value: String::new(),
@@ -92,6 +97,7 @@ pub async fn create_product_submit(
     State(state): State<AppState>,
     RequestLocale(locale): RequestLocale,
     tenant: TenantContext,
+    Query(editor): Query<EditorPageQuery>,
     jar: CookieJar,
     multipart: Multipart,
 ) -> AppResult<Response> {
@@ -131,7 +137,7 @@ pub async fn create_product_submit(
     match res {
         Ok(_) => Ok(with_flash_redirect(
             jar,
-            "/dashboard/menu",
+            &editor.menu_url(),
             false,
             "flash.product_created",
             state.config.cookie_secure,
@@ -153,7 +159,8 @@ pub async fn create_product_submit(
                 is_admin: tenant.auth.account.role == AccountRole::Admin,
                 active_nav: "menu",
                 csrf_token: tenant.auth.csrf_token,
-                form_action: "/dashboard/products".to_string(),
+                form_action: editor.with_page("/dashboard/products"),
+                menu_url: editor.menu_url(),
                 category_options,
                 selected_category_id: parsed.category_id,
                 name_value: parsed.name,
@@ -177,6 +184,7 @@ pub async fn edit_product_page(
     State(state): State<AppState>,
     RequestLocale(locale): RequestLocale,
     tenant: TenantContext,
+    Query(editor): Query<EditorPageQuery>,
     Path(prod_id): Path<String>,
 ) -> AppResult<Response> {
     let prod = find_product_for_est(&state.pool, &tenant.establishment.id, &prod_id)
@@ -206,7 +214,8 @@ pub async fn edit_product_page(
         is_admin: tenant.auth.account.role == AccountRole::Admin,
         active_nav: "menu",
         csrf_token: tenant.auth.csrf_token,
-        form_action: format!("/dashboard/products/{}", prod.id),
+        form_action: editor.with_page(&format!("/dashboard/products/{}", prod.id)),
+        menu_url: editor.menu_url(),
         category_options,
         selected_category_id: prod.category_id,
         name_value: prod.name,
@@ -228,6 +237,7 @@ pub async fn update_product_submit(
     State(state): State<AppState>,
     RequestLocale(locale): RequestLocale,
     tenant: TenantContext,
+    Query(editor): Query<EditorPageQuery>,
     jar: CookieJar,
     Path(prod_id): Path<String>,
     multipart: Multipart,
@@ -270,7 +280,7 @@ pub async fn update_product_submit(
     match res {
         Ok(()) => Ok(with_flash_redirect(
             jar,
-            "/dashboard/menu",
+            &editor.menu_url(),
             false,
             "flash.product_updated",
             state.config.cookie_secure,
@@ -292,7 +302,8 @@ pub async fn update_product_submit(
                 is_admin: tenant.auth.account.role == AccountRole::Admin,
                 active_nav: "menu",
                 csrf_token: tenant.auth.csrf_token,
-                form_action: format!("/dashboard/products/{prod_id}"),
+                form_action: editor.with_page(&format!("/dashboard/products/{prod_id}")),
+                menu_url: editor.menu_url(),
                 category_options,
                 selected_category_id: parsed.category_id,
                 name_value: parsed.name,
@@ -315,17 +326,19 @@ pub async fn update_product_submit(
 pub async fn toggle_product_submit(
     State(state): State<AppState>,
     tenant: TenantContext,
+    Query(editor): Query<EditorPageQuery>,
     Path(prod_id): Path<String>,
     Form(form): Form<CsrfOnlyForm>,
 ) -> AppResult<Response> {
     verify_csrf(&tenant.auth, &form._csrf)?;
     toggle_product_availability(&state.pool, &tenant.establishment.id, &prod_id).await?;
-    Ok(Redirect::to("/dashboard/menu").into_response())
+    Ok(Redirect::to(&editor.menu_url()).into_response())
 }
 
 pub async fn delete_product_submit(
     State(state): State<AppState>,
     tenant: TenantContext,
+    Query(editor): Query<EditorPageQuery>,
     jar: CookieJar,
     Path(prod_id): Path<String>,
     Form(form): Form<CsrfOnlyForm>,
@@ -340,7 +353,7 @@ pub async fn delete_product_submit(
     .await?;
     Ok(with_flash_redirect(
         jar,
-        "/dashboard/menu",
+        &editor.menu_url(),
         false,
         "flash.product_deleted",
         state.config.cookie_secure,
@@ -350,11 +363,12 @@ pub async fn delete_product_submit(
 pub async fn move_product_submit(
     State(state): State<AppState>,
     tenant: TenantContext,
+    Query(editor): Query<EditorPageQuery>,
     Path(prod_id): Path<String>,
     Form(form): Form<MoveProductForm>,
 ) -> AppResult<Response> {
     verify_csrf(&tenant.auth, &form._csrf)?;
     let move_up = form.direction == "up";
     move_product(&state.pool, &tenant.establishment.id, &prod_id, move_up).await?;
-    Ok(Redirect::to("/dashboard/menu").into_response())
+    Ok(Redirect::to(&editor.menu_url()).into_response())
 }

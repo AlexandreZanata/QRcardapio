@@ -13,7 +13,8 @@ use tower_http::trace::TraceLayer;
 use crate::application::publishing::PublishLocks;
 use crate::config::Config;
 use crate::http::handlers::{
-    admin, auth, categories, dashboard, health, ocr, onboarding, products, public, qr, settings,
+    admin, auth, categories, dashboard, health, menu_editor, ocr, onboarding, products, public, qr,
+    settings,
 };
 use crate::http::middleware::branded_errors::branded_errors;
 use crate::http::middleware::security_headers::security_headers_middleware;
@@ -95,7 +96,7 @@ pub fn build_router(state: AppState) -> Router {
         )
         .route("/dashboard/publish", post(dashboard::publish_submit))
         .route("/dashboard/unpublish", post(dashboard::unpublish_submit))
-        .route("/dashboard/menu", get(categories::menu_editor_page))
+        .route("/dashboard/menu", get(menu_editor::menu_editor_page))
         .route(
             "/dashboard/categories/new",
             get(categories::new_category_page),

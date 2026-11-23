@@ -31,11 +31,13 @@ Settings groups business details, Google Maps links, and the current logo. Dashb
 
 Menu import separates file upload, pasted text, and illustrated tips. The menu editor and overview share the blue publication action, with the preview and live menu links grouped in the overview.
 
+The menu editor uses tenant-scoped pagination with 12 product or empty-category rows per page. The editor retains the active page through inline actions and edit forms. Mobile layouts preserve the landing Maps mockup composition, adapt dashboard tables into labeled rows, and scale the QR print preview to the screen.
+
 ## Verification Snapshot
 
 - `cargo fmt --check`: Passed
 - `cargo clippy --all-targets --all-features -- -D warnings`: Passed (0 warnings)
-- `cargo test --locked`: Passed (17 unit tests + 11 integration tests across 8 integration suites, including real `pdftotext` + `tesseract` E2E OCR tests)
+- `cargo test --locked`: Passed (17 unit tests + 12 integration tests across 8 integration suites, including real `pdftotext` + `tesseract` E2E OCR tests)
 - `cargo audit`: Passed (0 vulnerabilities; 2 unmaintained advisory notices: `basic-toml 0.1.10` transitive, `chrono 0.4.45`)
 - `cargo build --release --locked`: Passed
 - Live smoke test (`admin create`, `seed`, `backup.sh`, `restore.sh`, HTTP SSR + static `/c/cafe-da-praca`, `/dashboard/ocr`): Passed
