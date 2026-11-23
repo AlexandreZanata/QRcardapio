@@ -13,6 +13,10 @@ All 5 implementation phases of the **QR Cardápio MVP** (including full native z
 - **Phase 5 — Operations, Benchmarks & AI-First Docs**: Complete & verified (`Dockerfile`, `compose.yaml`, `Caddyfile`, `scripts/{dev,backup,restore,bench_run}.sh`, full `AGENTS.md` + `docs/` + 6 ADRs, real benchmarks at 100..100k establishments).
 - **Phase 6 — Local Hybrid OCR & PDF Menu Pre-Registration**: Complete & verified (`migrations/20261123000002_ocr_imports.sql`, pure-Rust menu parser under `src/domain/ocr_parser/`, hybrid `pdftotext` -> `pdftoppm` + pure-Rust image preprocessing + `tesseract` engine under `src/infrastructure/ocr/` with `Semaphore(1)` and timeouts, `ocr_imports` staging persistence, `/dashboard/ocr` upload/paste/review/bulk-apply/discard flow with full `pt-BR`/`en`/`es` i18n and strict multi-tenant + CSRF + rate-limit protection, ADR-006).
 
+## Landing and Panel Refresh
+
+The homepage now includes an illustration with a browser capture of the owner dashboard and a localized sample menu. The owner dashboard and operational administration share responsive side navigation. Operational tables include translated statuses and empty states.
+
 ## Verification Snapshot
 
 - `cargo fmt --check`: Passed

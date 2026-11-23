@@ -13,26 +13,30 @@
 <body data-page-title-key="{{ page.title_key }}">
   <a class="skip-link" href="#main-content" data-i18n="common.skip_to_content">{{ page.t("common.skip_to_content") }}</a>
 
+  {% block header %}
   <header class="site-header">
     <div class="container header-inner">
       <a class="brand-mark" href="/">
-        <span class="brand-badge">QR</span>
+        <img src="/static/icons/favicon.svg" width="36" height="36" alt="">
         <span data-i18n="app.name">{{ page.t("app.name") }}</span>
       </a>
-      <nav class="nav-group" aria-label="Main navigation">
+      <nav class="nav-group" aria-label="{{ page.t("nav.primary_label") }}" data-i18n-aria="nav.primary_label">
         {% block nav_links %}{% endblock %}
         {% include "components/lang_switcher.html" %}
       </nav>
     </div>
   </header>
+  {% endblock %}
 
   {% block content %}{% endblock %}
 
+  {% block footer %}
   <footer class="site-footer">
     <div class="container">
       <span data-i18n="landing.footer_copy">{{ page.t("landing.footer_copy") }}</span>
     </div>
   </footer>
+  {% endblock %}
 
   <script src="/static/js/i18n.js" defer></script>
   <script src="/static/js/app.js" defer></script>

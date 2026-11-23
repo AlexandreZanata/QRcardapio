@@ -1,3 +1,10 @@
+{% import "components/icons.html" as icons %}
+{% macro sidebar_link(path, key, icon, section) %}
+<a class="sidebar-link" href="{{ path }}"{% if active_nav == section %} aria-current="page"{% endif %}>
+  {{ icons::icon(icon) }}
+  <span data-i18n="{{ key }}">{{ page.t(key) }}</span>
+</a>
+{% endmacro %}
 <!DOCTYPE html>
 <html lang="{{ page.locale_code }}" data-i18n-version="{{ page.i18n_version }}">
 <head>
@@ -7,46 +14,78 @@
   <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg">
   <link rel="stylesheet" href="/static/css/tokens.css">
   <link rel="stylesheet" href="/static/css/app.css">
+  <link rel="stylesheet" href="/static/css/dashboard.css">
   {% if has_theme %}
   <link rel="stylesheet" href="/dashboard/theme.css">
   {% endif %}
 </head>
-<body data-page-title-key="{{ page.title_key }}">
+<body class="dashboard-shell" data-page-title-key="{{ page.title_key }}">
   <a class="skip-link" href="#main-content" data-i18n="common.skip_to_content">{{ page.t("common.skip_to_content") }}</a>
 
-  <header class="site-header">
-    <div class="container header-inner">
-      <a class="brand-mark" href="/dashboard">
-        <span class="brand-badge">QR</span>
-        <span>{{ brand_name }}</span>
+  <aside class="dashboard-sidebar">
+    <div class="sidebar-header">
+      <a class="sidebar-brand" href="{% if active_nav == "admin" %}/admin{% else if has_establishment %}/dashboard{% else %}/onboarding{% endif %}">
+        <img src="/static/icons/favicon.svg" alt="" width="40" height="40">
+        <span data-i18n="app.name">{{ page.t("app.name") }}</span>
       </a>
+      <button class="sidebar-toggle" type="button" aria-controls="dashboard-navigation" aria-expanded="false" data-sidebar-toggle>
+        {{ icons::icon("bars") }}
+        <span data-i18n="nav.panel_menu">{{ page.t("nav.panel_menu") }}</span>
+      </button>
+    </div>
 
-      <nav class="nav-group" aria-label="Dashboard navigation">
+    <div class="sidebar-navigation" id="dashboard-navigation">
+      <nav class="sidebar-links" aria-label="{{ page.t("nav.panel_label") }}" data-i18n-aria="nav.panel_label">
         {% if has_establishment %}
-        <a class="nav-link {% if active_nav == "overview" %}is-active{% endif %}" href="/dashboard" data-i18n="nav.overview">{{ page.t("nav.overview") }}</a>
-        <a class="nav-link {% if active_nav == "menu" %}is-active{% endif %}" href="/dashboard/menu" data-i18n="nav.menu">{{ page.t("nav.menu") }}</a>
-        <a class="nav-link {% if active_nav == "ocr" %}is-active{% endif %}" href="/dashboard/ocr" data-i18n="nav.ocr">{{ page.t("nav.ocr") }}</a>
-        <a class="nav-link {% if active_nav == "qr" %}is-active{% endif %}" href="/dashboard/qr" data-i18n="nav.qr">{{ page.t("nav.qr") }}</a>
-        <a class="nav-link {% if active_nav == "settings" %}is-active{% endif %}" href="/dashboard/settings" data-i18n="nav.settings">{{ page.t("nav.settings") }}</a>
+        <span class="sidebar-label" data-i18n="nav.workspace">{{ page.t("nav.workspace") }}</span>
+        {{ sidebar_link("/dashboard", "nav.overview", "home", "overview") }}
+        {{ sidebar_link("/dashboard/menu", "nav.menu", "menu", "menu") }}
+        {{ sidebar_link("/dashboard/ocr", "nav.ocr", "scan", "ocr") }}
+        {{ sidebar_link("/dashboard/qr", "nav.qr", "qr", "qr") }}
+        {{ sidebar_link("/dashboard/settings", "nav.settings", "settings", "settings") }}
+        {% else if active_nav != "admin" %}
+        {{ sidebar_link("/onboarding", "nav.setup", "store", "") }}
         {% endif %}
-        {% if is_admin %}
-        <a class="nav-link {% if active_nav == "admin" %}is-active{% endif %}" href="/admin" data-i18n="nav.admin">{{ page.t("nav.admin") }}</a>
-        {% endif %}
-        {% include "components/lang_switcher.html" %}
-        <form class="inline-form" method="post" action="/logout">
-          <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-          <button class="btn btn-ghost btn-sm" type="submit" data-i18n="nav.logout">{{ page.t("nav.logout") }}</button>
-        </form>
-      </nav>
-    </div>
-  </header>
 
-  <main id="main-content" class="dash-main">
-    <div class="container">
-      {% include "components/flash.html" %}
-      {% block content %}{% endblock %}
+        {% if is_admin %}
+        <span class="sidebar-label" data-i18n="nav.platform">{{ page.t("nav.platform") }}</span>
+        {{ sidebar_link("/admin", "nav.admin", "activity", "admin") }}
+        {% block sidebar_sections %}{% endblock %}
+        {% endif %}
+      </nav>
+      <form class="sidebar-logout" method="post" action="/logout">
+        <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+        <button class="sidebar-link" type="submit">
+          {{ icons::icon("exit") }}
+          <span data-i18n="nav.logout">{{ page.t("nav.logout") }}</span>
+        </button>
+      </form>
     </div>
-  </main>
+  </aside>
+
+  <div class="dashboard-workspace">
+    <header class="dashboard-topbar">
+      <div class="dashboard-context">
+        {% if active_nav == "admin" %}
+          {{ icons::icon("activity") }}
+          <span data-i18n="nav.platform">{{ page.t("nav.platform") }}</span>
+        {% else if has_establishment %}
+          {{ icons::icon("store") }}
+          <span>{{ brand_name }}</span>
+        {% else %}
+          {{ icons::icon("store") }}
+          <span data-i18n="nav.setup">{{ page.t("nav.setup") }}</span>
+        {% endif %}
+      </div>
+      {% include "components/lang_switcher.html" %}
+    </header>
+    <main id="main-content" class="dash-main">
+      <div class="container dashboard-container">
+        {% include "components/flash.html" %}
+        {% block content %}{% endblock %}
+      </div>
+    </main>
+  </div>
 
   <script src="/static/js/i18n.js" defer></script>
   <script src="/static/js/app.js" defer></script>

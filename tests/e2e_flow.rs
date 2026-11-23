@@ -107,7 +107,9 @@ async fn complete_definition_of_done_e2e_flow_including_restart() {
         .unwrap();
     assert_eq!(landing.status(), StatusCode::OK);
     let landing_html = body_string(landing).await;
-    assert!(landing_html.contains("Crie um cardápio digital bonito"));
+    assert!(landing_html.contains("Seu cardápio."));
+    assert!(landing_html.contains("href=\"#how-it-works\""));
+    assert!(landing_html.contains("/static/images/landing-dashboard.webp"));
 
     // 2. Register Owner 1
     let reg_res = app
@@ -523,6 +525,9 @@ async fn complete_definition_of_done_e2e_flow_including_restart() {
     let dash_html = body_string(after_restart_dash).await;
     assert!(dash_html.contains("Bistrô do Sol"));
     assert!(dash_html.contains("v2"));
+    assert!(dash_html.contains("aria-controls=\"dashboard-navigation\""));
+    assert!(dash_html.contains("href=\"/dashboard\" aria-current=\"page\""));
+    assert!(!dash_html.contains("href=\"/admin\""));
 
     let after_restart_pub = app2
         .oneshot(

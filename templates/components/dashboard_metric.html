@@ -1,0 +1,10 @@
+{% import "components/icons.html" as icons %}
+{% macro metric(icon, tone, label, value, prefix="") %}
+<article class="stat-card dashboard-metric dashboard-metric-{{ tone }}">
+  <span class="dashboard-metric-icon">{{ icons::icon(icon) }}</span>
+  <div>
+    <div class="stat-label" data-i18n="{{ label }}">{{ page.t(label) }}</div>
+    <div class="stat-value">{{ prefix }}{{ value }}</div>
+  </div>
+</article>
+{% endmacro %}

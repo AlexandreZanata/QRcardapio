@@ -1,83 +1,111 @@
 {% extends "layouts/dashboard.html" %}
+{% import "components/icons.html" as icons %}
+{% import "components/dashboard_metric.html" as metrics %}
+
+{% block sidebar_sections %}
+<a class="sidebar-link sidebar-section" href="#establishments">
+  {{ icons::icon("store") }}
+  <span data-i18n="admin.stat_establishments">{{ page.t("admin.stat_establishments") }}</span>
+</a>
+<a class="sidebar-link sidebar-section" href="#publications">
+  {{ icons::icon("history") }}
+  <span data-i18n="admin.stat_publications">{{ page.t("admin.stat_publications") }}</span>
+</a>
+{% endblock %}
 
 {% block content %}
-<div class="page-top">
+<div class="page-top dashboard-overview-top">
   <div>
     <h1 data-i18n="admin.heading">{{ page.t("admin.heading") }}</h1>
     <p data-i18n="admin.subtitle">{{ page.t("admin.subtitle") }}</p>
   </div>
   <span class="badge badge-neutral">
-    <span data-i18n="admin.sqlite_version">{{ page.t("admin.sqlite_version") }}</span>: {{ sqlite_version }}
+    <span data-i18n="admin.sqlite_version">{{ page.t("admin.sqlite_version") }}</span> · {{ sqlite_version }}
   </span>
 </div>
 
 <div class="stats-grid">
-  <div class="stat-card">
-    <div class="stat-label" data-i18n="admin.stat_accounts">{{ page.t("admin.stat_accounts") }}</div>
-    <div class="stat-value">{{ account_count }}</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label" data-i18n="admin.stat_establishments">{{ page.t("admin.stat_establishments") }}</div>
-    <div class="stat-value">{{ establishment_count }}</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label" data-i18n="admin.stat_published">{{ page.t("admin.stat_published") }}</div>
-    <div class="stat-value">{{ published_count }}</div>
-  </div>
-  <div class="stat-card">
-    <div class="stat-label" data-i18n="admin.stat_publications">{{ page.t("admin.stat_publications") }}</div>
-    <div class="stat-value">{{ publication_count }}</div>
-  </div>
+  {{ metrics::metric("users", "violet", "admin.stat_accounts", account_count) }}
+  {{ metrics::metric("store", "pink", "admin.stat_establishments", establishment_count) }}
+  {{ metrics::metric("globe", "yellow", "admin.stat_published", published_count) }}
+  {{ metrics::metric("history", "green", "admin.stat_publications", publication_count) }}
 </div>
 
-<section class="card mb-4">
-  <h2 class="mb-3" data-i18n="admin.recent_establishments">{{ page.t("admin.recent_establishments") }}</h2>
-  <div class="table-wrap">
+<section class="card dashboard-table-card mb-4" id="establishments" aria-labelledby="establishments-heading" tabindex="-1">
+  <h2 class="dashboard-card-heading" id="establishments-heading">
+    {{ icons::icon("store") }}
+    <span data-i18n="admin.recent_establishments">{{ page.t("admin.recent_establishments") }}</span>
+  </h2>
+  {% if establishments.is_empty() %}
+  <p class="text-muted" data-i18n="admin.no_establishments">{{ page.t("admin.no_establishments") }}</p>
+  {% else %}
+  <div class="table-wrap" role="region" aria-labelledby="establishments-heading" tabindex="0">
     <table>
       <thead>
         <tr>
-          <th data-i18n="admin.col_name">{{ page.t("admin.col_name") }}</th>
-          <th data-i18n="admin.col_slug">{{ page.t("admin.col_slug") }}</th>
-          <th data-i18n="admin.col_status">{{ page.t("admin.col_status") }}</th>
-          <th data-i18n="admin.col_version">{{ page.t("admin.col_version") }}</th>
-          <th data-i18n="admin.col_created">{{ page.t("admin.col_created") }}</th>
+          <th scope="col" data-i18n="admin.col_name">{{ page.t("admin.col_name") }}</th>
+          <th scope="col" data-i18n="admin.col_slug">{{ page.t("admin.col_slug") }}</th>
+          <th scope="col" data-i18n="admin.col_status">{{ page.t("admin.col_status") }}</th>
+          <th scope="col" data-i18n="admin.col_version">{{ page.t("admin.col_version") }}</th>
+          <th scope="col" data-i18n="admin.col_created">{{ page.t("admin.col_created") }}</th>
         </tr>
       </thead>
       <tbody>
         {% for e in establishments %}
         <tr>
-          <td>{{ e.name }}</td>
+          <td><strong>{{ e.name }}</strong></td>
           <td><code>{{ e.slug }}</code></td>
-          <td>{% if e.is_published %}published{% else %}draft{% endif %}</td>
+          <td>
+            {% if e.is_published %}
+            <span class="badge badge-success" data-i18n="admin.status_published">{{ page.t("admin.status_published") }}</span>
+            {% else %}
+            <span class="badge badge-neutral" data-i18n="admin.status_draft">{{ page.t("admin.status_draft") }}</span>
+            {% endif %}
+          </td>
           <td>v{{ e.published_version }}</td>
-          <td>{{ e.created_at }}</td>
+          <td><time datetime="{{ e.created_at }}">{{ page.timestamp(e.created_at) }}</time></td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+  {% endif %}
 </section>
 
-<section class="card">
-  <h2 class="mb-3" data-i18n="admin.recent_publications">{{ page.t("admin.recent_publications") }}</h2>
-  <div class="table-wrap">
+<section class="card dashboard-table-card" id="publications" aria-labelledby="publications-heading" tabindex="-1">
+  <h2 class="dashboard-card-heading" id="publications-heading">
+    {{ icons::icon("history") }}
+    <span data-i18n="admin.recent_publications">{{ page.t("admin.recent_publications") }}</span>
+  </h2>
+  {% if publications.is_empty() %}
+  <p class="text-muted" data-i18n="admin.no_publications">{{ page.t("admin.no_publications") }}</p>
+  {% else %}
+  <div class="table-wrap" role="region" aria-labelledby="publications-heading" tabindex="0">
     <table>
       <thead>
         <tr>
-          <th data-i18n="admin.col_name">{{ page.t("admin.col_name") }}</th>
-          <th data-i18n="admin.col_slug">{{ page.t("admin.col_slug") }}</th>
-          <th data-i18n="admin.col_status">{{ page.t("admin.col_status") }}</th>
-          <th data-i18n="admin.col_version">{{ page.t("admin.col_version") }}</th>
-          <th data-i18n="admin.col_bytes">{{ page.t("admin.col_bytes") }}</th>
-          <th data-i18n="admin.col_duration">{{ page.t("admin.col_duration") }}</th>
+          <th scope="col" data-i18n="admin.col_name">{{ page.t("admin.col_name") }}</th>
+          <th scope="col" data-i18n="admin.col_slug">{{ page.t("admin.col_slug") }}</th>
+          <th scope="col" data-i18n="admin.col_status">{{ page.t("admin.col_status") }}</th>
+          <th scope="col" data-i18n="admin.col_version">{{ page.t("admin.col_version") }}</th>
+          <th scope="col" data-i18n="admin.col_bytes">{{ page.t("admin.col_bytes") }}</th>
+          <th scope="col" data-i18n="admin.col_duration">{{ page.t("admin.col_duration") }}</th>
         </tr>
       </thead>
       <tbody>
         {% for p in publications %}
         <tr>
-          <td>{{ p.est_name }}</td>
+          <td><strong>{{ p.est_name }}</strong></td>
           <td><code>{{ p.est_slug }}</code></td>
-          <td>{{ p.status }}</td>
+          <td>
+            {% if p.status == "published" %}
+            <span class="badge badge-success" data-i18n="admin.status_published">{{ page.t("admin.status_published") }}</span>
+            {% else if p.status == "unpublished" %}
+            <span class="badge badge-neutral" data-i18n="admin.status_unpublished">{{ page.t("admin.status_unpublished") }}</span>
+            {% else %}
+            <span class="badge badge-danger" data-i18n="admin.status_failed">{{ page.t("admin.status_failed") }}</span>
+            {% endif %}
+          </td>
           <td>v{{ p.version }}</td>
           <td>{{ p.html_bytes }} B</td>
           <td>{{ p.duration_ms }}</td>
@@ -86,5 +114,6 @@
       </tbody>
     </table>
   </div>
+  {% endif %}
 </section>
 {% endblock %}

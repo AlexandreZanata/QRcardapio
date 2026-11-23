@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="bolt" viewBox="0 0 56 56">
+    <path d="M25 5h19L33 24h13L13 52l9-21H10z" fill="#ffdc38" stroke="#161721" stroke-width="3.6" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="palette" viewBox="0 0 56 56">
+    <path d="M51 27a23 23 0 1 0-24 24c7 0 8-5 5-8-2-3 0-7 4-7h5c7 0 10-3 10-9Z" fill="#ff76aa" stroke="#161721" stroke-width="3.6"/>
+    <path d="M17 18h.1m11-5h.1m12 8h.1M13 30h.1m6 11h.1" stroke="#161721" stroke-width="5.5" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="refresh" viewBox="0 0 56 56">
+    <path d="M7 24a21 21 0 0 1 37-10l5-5 2 17-17-2 5-5a14 14 0 0 0-25 6Zm42 8a21 21 0 0 1-37 10l-5 5-2-17 17 2-5 5a14 14 0 0 0 25-6Z" fill="#5060ff" stroke="#161721" stroke-width="3.4" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="placard" viewBox="0 0 56 56">
+    <path d="M15 7h27l10 42H6Z" fill="#ffdc38" stroke="#161721" stroke-width="3.6" stroke-linejoin="round"/>
+    <path d="M42 7l-8 42h18Z" fill="#ffe893" stroke="#161721" stroke-width="3.6" stroke-linejoin="round"/>
+    <path d="M18 16h15l-4 22H13Z" fill="#fff" stroke="#161721" stroke-width="2.6" stroke-linejoin="round"/>
+    <path d="M21 21h.1m5 0h.1m-6 5h.1m5 0h.1m-6 6h.1m5 0h.1" stroke="#161721" stroke-width="2.8" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="burst" viewBox="0 0 120 96">
+    <path d="m31 80-1-21-22-9 23-7L22 17l27 15L59 4l13 29 27-17-7 27 21 8-19 12 2 26-28-11-14 14-12-18z" fill="#ffdc38" stroke="#161721" stroke-width="4" stroke-linejoin="round"/>
+  </symbol>
+</svg>

@@ -11,6 +11,29 @@
       .slice(0, 64);
   }
 
+  const sidebarToggle = document.querySelector("[data-sidebar-toggle]");
+  if (sidebarToggle) {
+    const sidebar = sidebarToggle.closest(".dashboard-sidebar");
+    const setSidebarOpen = (open) => {
+      sidebar.classList.toggle("is-open", open);
+      sidebarToggle.setAttribute("aria-expanded", String(open));
+    };
+
+    document.body.dataset.sidebarReady = "";
+    sidebarToggle.addEventListener("click", () => {
+      setSidebarOpen(sidebarToggle.getAttribute("aria-expanded") === "false");
+    });
+    sidebar.addEventListener("keydown", (event) => {
+      if (event.key === "Escape" && sidebar.classList.contains("is-open")) {
+        setSidebarOpen(false);
+        sidebarToggle.focus();
+      }
+    });
+    sidebar.querySelectorAll(".sidebar-section").forEach((link) => {
+      link.addEventListener("click", () => setSidebarOpen(false));
+    });
+  }
+
   // Onboarding automatic slug suggestion
   const nameInput = document.querySelector("[data-slug-source]");
   const slugInput = document.querySelector("[data-slug-target]");

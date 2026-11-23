@@ -44,7 +44,6 @@ pub async fn overview_page(
         is_admin: tenant.auth.account.role == AccountRole::Admin,
         active_nav: "overview",
         csrf_token: tenant.auth.csrf_token,
-        est_name: est.name.clone(),
         slug: est.slug.clone(),
         public_url: state.config.public_menu_url(&est.slug),
         is_published: est.is_published,

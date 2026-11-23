@@ -1,0 +1,19 @@
+{% import "components/icons.html" as icons %}
+
+{% macro benefit(icon, title, body) %}
+<article class="landing-benefit">
+  {{ icons::sticker(icon) }}
+  <div>
+    <h2 data-i18n="{{ title }}">{{ page.t(title) }}</h2>
+    <p data-i18n="{{ body }}">{{ page.t(body) }}</p>
+  </div>
+</article>
+{% endmacro %}
+
+{% macro step(icon, tone, title, body) %}
+<li class="landing-step">
+  <span class="landing-step-icon landing-step-{{ tone }}">{{ icons::icon(icon) }}</span>
+  <h3 data-i18n="{{ title }}">{{ page.t(title) }}</h3>
+  <p data-i18n="{{ body }}">{{ page.t(body) }}</p>
+</li>
+{% endmacro %}

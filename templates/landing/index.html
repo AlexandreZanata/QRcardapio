@@ -1,120 +1,113 @@
 {% extends "layouts/base.html" %}
+{% import "components/icons.html" as icons %}
+{% import "landing/sections.html" as sections %}
 
-{% block nav_links %}
-  <a class="nav-link" href="#how-it-works" data-i18n="nav.features">{{ page.t("nav.features") }}</a>
-  <a class="nav-link" href="#benefits" data-i18n="nav.benefits">{{ page.t("nav.benefits") }}</a>
-  {% if is_logged_in %}
-  <a class="btn btn-primary btn-sm" href="/dashboard" data-i18n="nav.overview">{{ page.t("nav.overview") }}</a>
-  {% else %}
-  <a class="nav-link" href="/login" data-i18n="nav.login">{{ page.t("nav.login") }}</a>
-  <a class="btn btn-primary btn-sm" href="/register" data-i18n="nav.register">{{ page.t("nav.register") }}</a>
-  {% endif %}
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/landing.css">
+<link rel="stylesheet" href="/static/css/landing-preview.css">
+{% endblock %}
+
+{% block header %}
+<header class="landing-header">
+  <div class="landing-container landing-header-inner">
+    <a class="landing-brand" href="/">
+      <img src="/static/icons/favicon.svg" alt="" width="48" height="48">
+      <span data-i18n="app.name">{{ page.t("app.name") }}</span>
+    </a>
+    <nav class="landing-nav" aria-label="{{ page.t("nav.primary_label") }}" data-i18n-aria="nav.primary_label">
+      <a href="#benefits" data-i18n="landing.nav_features">{{ page.t("landing.nav_features") }}</a>
+      <a href="#how-it-works" data-i18n="nav.features">{{ page.t("nav.features") }}</a>
+    </nav>
+    <div class="landing-account">
+      {% if is_logged_in %}
+      <a class="btn landing-button landing-button-pink" href="/dashboard" data-i18n="landing.open_panel">{{ page.t("landing.open_panel") }}</a>
+      {% else %}
+      <a class="btn landing-button landing-login" href="/login" data-i18n="nav.login">{{ page.t("nav.login") }}</a>
+      <a class="btn landing-button landing-button-pink" href="/register" data-i18n="landing.create_menu">{{ page.t("landing.create_menu") }}</a>
+      {% endif %}
+    </div>
+    {% include "components/lang_switcher.html" %}
+  </div>
+</header>
 {% endblock %}
 
 {% block content %}
-<main id="main-content">
-  <section class="hero">
-    <div class="container hero-grid">
-      <div>
-        <span class="eyebrow" data-i18n="landing.hero_eyebrow">{{ page.t("landing.hero_eyebrow") }}</span>
-        <h1 data-i18n="landing.hero_title">{{ page.t("landing.hero_title") }}</h1>
-        <p class="hero-subtitle" data-i18n="landing.hero_subtitle">{{ page.t("landing.hero_subtitle") }}</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="/register" data-i18n="landing.hero_cta_primary">{{ page.t("landing.hero_cta_primary") }}</a>
-          <a class="btn btn-secondary" href="/login" data-i18n="landing.hero_cta_secondary">{{ page.t("landing.hero_cta_secondary") }}</a>
-        </div>
-        <p class="hero-note" data-i18n="landing.hero_note">{{ page.t("landing.hero_note") }}</p>
+<main id="main-content" class="landing-page">
+  <section class="landing-container landing-hero" aria-labelledby="hero-heading">
+    <div class="landing-hero-copy">
+      <h1 id="hero-heading">
+        <span class="hero-line"><span data-i18n="landing.hero_title">{{ page.t("landing.hero_title") }}</span></span>
+        <span class="hero-line"><span class="hero-highlight hero-highlight-yellow" data-i18n="landing.hero_line_simple">{{ page.t("landing.hero_line_simple") }}</span></span>
+        <span class="hero-line"><span class="hero-highlight hero-highlight-pink" data-i18n="landing.hero_line_table">{{ page.t("landing.hero_line_table") }}</span></span>
+      </h1>
+      <p class="landing-hero-description" data-i18n="landing.hero_subtitle">{{ page.t("landing.hero_subtitle") }}</p>
+      <div class="landing-actions">
+        {% if is_logged_in %}
+        <a class="btn landing-button landing-button-blue" href="/dashboard" data-i18n="landing.open_panel">{{ page.t("landing.open_panel") }}</a>
+        {% else %}
+        <a class="btn landing-button landing-button-blue" href="/register" data-i18n="landing.hero_cta_primary">{{ page.t("landing.hero_cta_primary") }}</a>
+        {% endif %}
+        <a class="btn landing-button" href="#how-it-works">
+          {{ icons::icon("play") }}
+          <span data-i18n="landing.hero_cta_secondary">{{ page.t("landing.hero_cta_secondary") }}</span>
+        </a>
       </div>
-
-      <div>
-        <div class="phone-frame" aria-label="{{ page.t("landing.demo_badge") }}">
-          <div class="phone-screen">
-            <div class="phone-header">
-              <span class="phone-title" data-i18n="landing.demo_place">{{ page.t("landing.demo_place") }}</span>
-              <span class="badge badge-neutral" data-i18n="landing.demo_badge">{{ page.t("landing.demo_badge") }}</span>
-            </div>
-            <div class="phone-cat" data-i18n="landing.demo_cat_1">{{ page.t("landing.demo_cat_1") }}</div>
-            <div class="phone-item">
-              <div>
-                <strong data-i18n="landing.demo_item_1">{{ page.t("landing.demo_item_1") }}</strong>
-                <span data-i18n="landing.demo_item_1_desc">{{ page.t("landing.demo_item_1_desc") }}</span>
-              </div>
-              <div class="phone-price" data-price-centavos="850">{{ page.price(850) }}</div>
-            </div>
-            <div class="phone-item">
-              <div>
-                <strong data-i18n="landing.demo_item_2">{{ page.t("landing.demo_item_2") }}</strong>
-                <span data-i18n="landing.demo_item_2_desc">{{ page.t("landing.demo_item_2_desc") }}</span>
-              </div>
-              <div class="phone-price" data-price-centavos="1490">{{ page.price(1490) }}</div>
-            </div>
-            <div class="phone-cat" data-i18n="landing.demo_cat_2">{{ page.t("landing.demo_cat_2") }}</div>
-            <div class="phone-item">
-              <div>
-                <strong data-i18n="landing.demo_item_3">{{ page.t("landing.demo_item_3") }}</strong>
-                <span data-i18n="landing.demo_item_3_desc">{{ page.t("landing.demo_item_3_desc") }}</span>
-              </div>
-              <div class="phone-price" data-price-centavos="900">{{ page.price(900) }}</div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ul class="landing-proof">
+        <li>{{ icons::icon("check") }} <span data-i18n="landing.proof_no_app">{{ page.t("landing.proof_no_app") }}</span></li>
+        <li>{{ icons::icon("check") }} <span data-i18n="landing.proof_qr">{{ page.t("landing.proof_qr") }}</span></li>
+        <li>{{ icons::icon("check") }} <span data-i18n="landing.proof_language">{{ page.t("landing.proof_language") }}</span></li>
+      </ul>
     </div>
+
+    {% include "landing/preview.html" %}
   </section>
 
-  <section id="how-it-works" class="section">
-    <div class="container">
-      <div class="section-header">
+  <section id="benefits" class="landing-container landing-benefits" aria-label="{{ page.t("landing.nav_features") }}" data-i18n-aria="landing.nav_features">
+    {{ sections::benefit("bolt", "landing.benefit1_title", "landing.benefit1_body") }}
+    {{ sections::benefit("palette", "landing.benefit2_title", "landing.benefit2_body") }}
+    {{ sections::benefit("refresh", "landing.benefit3_title", "landing.benefit3_body") }}
+    {{ sections::benefit("placard", "landing.benefit4_title", "landing.benefit4_body") }}
+  </section>
+
+  <section id="how-it-works" class="landing-how">
+    <div class="landing-container">
+      <div class="landing-section-heading">
         <h2 data-i18n="landing.how_title">{{ page.t("landing.how_title") }}</h2>
         <p data-i18n="landing.how_subtitle">{{ page.t("landing.how_subtitle") }}</p>
       </div>
-      <div class="grid-3">
-        <article class="card">
-          <h3 data-i18n="landing.step1_title">{{ page.t("landing.step1_title") }}</h3>
-          <p class="text-muted" data-i18n="landing.step1_body">{{ page.t("landing.step1_body") }}</p>
-        </article>
-        <article class="card">
-          <h3 data-i18n="landing.step2_title">{{ page.t("landing.step2_title") }}</h3>
-          <p class="text-muted" data-i18n="landing.step2_body">{{ page.t("landing.step2_body") }}</p>
-        </article>
-        <article class="card">
-          <h3 data-i18n="landing.step3_title">{{ page.t("landing.step3_title") }}</h3>
-          <p class="text-muted" data-i18n="landing.step3_body">{{ page.t("landing.step3_body") }}</p>
-        </article>
-      </div>
+      <ol class="landing-step-grid">
+        {{ sections::step("store", "yellow", "landing.step1_title", "landing.step1_body") }}
+        {{ sections::step("menu", "pink", "landing.step2_title", "landing.step2_body") }}
+        {{ sections::step("qr", "blue", "landing.step3_title", "landing.step3_body") }}
+      </ol>
     </div>
   </section>
 
-  <section id="benefits" class="section">
-    <div class="container">
-      <div class="section-header">
-        <h2 data-i18n="landing.benefits_title">{{ page.t("landing.benefits_title") }}</h2>
-      </div>
-      <div class="grid-2">
-        <article class="card">
-          <h3 data-i18n="landing.benefit1_title">{{ page.t("landing.benefit1_title") }}</h3>
-          <p class="text-muted" data-i18n="landing.benefit1_body">{{ page.t("landing.benefit1_body") }}</p>
-        </article>
-        <article class="card">
-          <h3 data-i18n="landing.benefit2_title">{{ page.t("landing.benefit2_title") }}</h3>
-          <p class="text-muted" data-i18n="landing.benefit2_body">{{ page.t("landing.benefit2_body") }}</p>
-        </article>
-        <article class="card">
-          <h3 data-i18n="landing.benefit3_title">{{ page.t("landing.benefit3_title") }}</h3>
-          <p class="text-muted" data-i18n="landing.benefit3_body">{{ page.t("landing.benefit3_body") }}</p>
-        </article>
-        <article class="card">
-          <h3 data-i18n="landing.benefit4_title">{{ page.t("landing.benefit4_title") }}</h3>
-          <p class="text-muted" data-i18n="landing.benefit4_body">{{ page.t("landing.benefit4_body") }}</p>
-        </article>
-      </div>
-
-      <div class="cta-band mt-5">
+  <section class="landing-container landing-final">
+    <div class="landing-cta">
+      <div>
         <h2 data-i18n="landing.cta_title">{{ page.t("landing.cta_title") }}</h2>
         <p data-i18n="landing.cta_subtitle">{{ page.t("landing.cta_subtitle") }}</p>
-        <a class="btn btn-primary" href="/register" data-i18n="landing.cta_button">{{ page.t("landing.cta_button") }}</a>
       </div>
+      {% if is_logged_in %}
+      <a class="btn landing-button landing-button-yellow" href="/dashboard" data-i18n="landing.open_panel">{{ page.t("landing.open_panel") }}</a>
+      {% else %}
+      <a class="btn landing-button landing-button-yellow" href="/register" data-i18n="landing.create_menu">{{ page.t("landing.create_menu") }}</a>
+      {% endif %}
     </div>
   </section>
 </main>
+{% endblock %}
+
+{% block footer %}
+<footer class="landing-footer">
+  <div class="landing-container landing-footer-inner">
+    <a class="landing-brand" href="/">
+      <img src="/static/icons/favicon.svg" alt="" width="36" height="36">
+      <span data-i18n="app.name">{{ page.t("app.name") }}</span>
+    </a>
+    <span data-i18n="landing.footer_copy">{{ page.t("landing.footer_copy") }}</span>
+    <a href="#how-it-works" data-i18n="nav.features">{{ page.t("nav.features") }}</a>
+  </div>
+</footer>
 {% endblock %}

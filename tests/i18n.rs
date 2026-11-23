@@ -111,7 +111,8 @@ async fn i18n_catalog_parity_and_http_zero_reload_contracts() {
     )
     .unwrap();
     assert!(html_es.contains("<html lang=\"es\""));
-    assert!(html_es.contains("Crea un menú digital atractivo"));
+    assert!(html_es.contains("Tu menú."));
+    assert!(html_es.contains("Siempre a mano."));
     assert!(html_es.contains("data-i18n=\"landing.hero_title\""));
     assert!(html_es.contains("/static/js/i18n.js"));
     assert!(

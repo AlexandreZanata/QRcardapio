@@ -7,6 +7,14 @@
 - **Typography**: System UI sans-serif stack for instant first paint, zero external font requests, and crisp legibility on budget Android smartphones.
 - **Touch Targets & Accessibility**: Interactive controls enforce `min-height: 44px`, keyboard `:focus-visible` outlines, skip links, semantic landmarks (`<header>`, `<main>`, `<nav>`, `<footer>`), and `aria-live="polite"` alerts.
 
+## Landing Page and Dashboard
+
+The landing page uses its own cream, blue, yellow, and pink palette. The screenshot in the device illustration comes from the authenticated owner dashboard running with a local fictional establishment. Keep personal information out of screenshots and regenerate the WebP when changes make the preview stale. The phone illustration uses translated Askama markup and local food photography. Its prices use the same integer centavos formatter as the dashboard.
+
+Dashboard pages share a dark sidebar, a workspace header with a language switcher, and an active link marked with `aria-current="page"`. On narrow screens, `static/js/app.js` enables a collapsible sidebar with keyboard dismissal. The navigation remains visible without JavaScript. The operations page adds shortcuts to its establishment and publication tables.
+
+The brand mark and icon sprites live under `static/icons/`. Keep decorative icons hidden from assistive technology when the adjacent text already names the action. Landing assets are served from `static/images/` and CSS stays scoped to the landing and dashboard layouts.
+
 ## Zero Inline Scripts or Styles (Strict CSP)
 
 `Content-Security-Policy` sets `script-src 'self'; style-src 'self'`. Consequently:

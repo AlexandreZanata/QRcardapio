@@ -31,7 +31,6 @@ pub struct OverviewTemplate {
     pub is_admin: bool,
     pub active_nav: &'static str,
     pub csrf_token: String,
-    pub est_name: String,
     pub slug: String,
     pub public_url: String,
     pub is_published: bool,

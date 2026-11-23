@@ -47,6 +47,13 @@ impl PageMeta {
         self.catalog.t(self.locale, key)
     }
 
+    pub fn timestamp(&self, timestamp: &str) -> String {
+        chrono::DateTime::parse_from_rfc3339(timestamp).map_or_else(
+            |_| timestamp.to_owned(),
+            |date| date.to_utc().format("%Y-%m-%d %H:%M UTC").to_string(),
+        )
+    }
+
     pub fn price(&self, centavos: i64) -> String {
         format_price(centavos, self.locale)
     }

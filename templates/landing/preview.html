@@ -1,0 +1,46 @@
+{% import "components/icons.html" as icons %}
+
+{% macro dish(image, key, price) %}
+<li class="demo-dish">
+  <img src="/static/images/landing-{{ image }}.webp" width="36" height="36" alt="">
+  <div>
+    <strong data-i18n="{{ key }}">{{ page.t(key) }}</strong>
+    <span data-price-centavos="{{ price }}">{{ page.price(*price) }}</span>
+  </div>
+</li>
+{% endmacro %}
+
+<figure class="landing-demo" id="demonstracao">
+  <div class="demo-stage">
+    <div class="demo-burst">{{ icons::sticker("burst") }}</div>
+    <div class="demo-laptop">
+      <div class="demo-laptop-screen">
+        <img src="/static/images/landing-dashboard.webp" width="1200" height="720"
+             alt="{{ page.t("landing.dashboard_alt") }}" data-i18n-aria="landing.dashboard_alt" fetchpriority="high">
+      </div>
+    </div>
+    <div class="demo-phone">
+      <div class="demo-phone-inner">
+        <img class="demo-cover" src="/static/images/landing-burger.webp" alt="" width="720" height="405">
+        <span class="demo-restaurant-icon">{{ icons::icon("chef") }}</span>
+        <div class="demo-menu">
+          <strong class="demo-restaurant" data-i18n="landing.demo_place">{{ page.t("landing.demo_place") }}</strong>
+          <span class="demo-category" data-i18n="landing.demo_cat_1">{{ page.t("landing.demo_cat_1") }}</span>
+          <ul class="demo-dishes">
+            {{ dish("burger", "landing.demo_item_1", 3290) }}
+            {{ dish("pizza", "landing.demo_item_2", 4990) }}
+            {{ dish("fries", "landing.demo_item_3", 1990) }}
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div class="demo-qr" aria-hidden="true">
+      <span data-i18n="landing.demo_qr">{{ page.t("landing.demo_qr") }}</span>
+      <img src="/static/images/landing-demo-qr.svg" alt="" width="90" height="90">
+    </div>
+  </div>
+  <figcaption>
+    <span data-i18n="landing.demo_badge">{{ page.t("landing.demo_badge") }}</span>
+    <a href="/static/images/landing-dashboard.webp" data-i18n="landing.demo_expand">{{ page.t("landing.demo_expand") }}</a>
+  </figcaption>
+</figure>
