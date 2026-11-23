@@ -34,6 +34,7 @@ async fn concurrent_onboarding_gives_identical_names_distinct_short_public_links
     let dir = TempDir::new().unwrap();
     let config = Config {
         asaas: None,
+        mcp_enabled: false,
         bind_addr: "127.0.0.1:0".parse().unwrap(),
         public_base_url: "https://qrcardapio.com.br".into(),
         data_dir: dir.path().join("data"),

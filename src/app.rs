@@ -13,8 +13,8 @@ use tower_http::trace::TraceLayer;
 use crate::application::publishing::PublishLocks;
 use crate::config::Config;
 use crate::http::handlers::{
-    admin, auth, billing, categories, dashboard, health, menu_editor, ocr, onboarding, products,
-    public, qr, settings,
+    admin, auth, billing, categories, dashboard, health, mcp, menu_editor, ocr, onboarding,
+    products, public, qr, settings,
 };
 use crate::http::middleware::branded_errors::branded_errors;
 use crate::http::middleware::security_headers::security_headers_middleware;
@@ -58,6 +58,7 @@ impl AppState {
 
 pub fn build_router(state: AppState) -> Router {
     let static_dir = state.config.static_dir.clone();
+    let mcp_routes = mcp::routes(state.config.mcp_enabled);
 
     let upload_routes = Router::new()
         .route("/dashboard/products", post(products::create_product_submit))
@@ -177,12 +178,15 @@ pub fn build_router(state: AppState) -> Router {
         .merge(upload_routes)
         .merge(ocr_upload_routes)
         .merge(billing_webhook)
+        .merge(mcp_routes)
         .nest_service("/static", ServeDir::new(static_dir))
         .with_state(state)
         .layer(middleware::from_fn(branded_errors))
         .layer(middleware::from_fn(security_headers_middleware))
         .layer(CompressionLayer::new())
-        .layer(TraceLayer::new_for_http())
+        .layer(TraceLayer::new_for_http().make_span_with(|request: &axum::extract::Request| {
+            tracing::debug_span!("http.request", method = %request.method(), path = %request.uri().path())
+        }))
         .layer(PropagateRequestIdLayer::x_request_id())
         .layer(SetRequestIdLayer::x_request_id(MakeRequestUuid))
 }

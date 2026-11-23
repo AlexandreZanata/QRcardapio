@@ -1,0 +1,13 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<main id="main-content" class="auth-wrap">
+  <div class="container">
+    <section class="card auth-card">
+      <h1 data-i18n="{{ page.title_key }}">{{ page.t(page.title_key) }}</h1>
+      <p><strong>{{ provider }}</strong></p>
+      <a class="btn btn-primary" href="{{ callback }}" referrerpolicy="no-referrer" data-i18n="mcp.return_action">{{ page.t("mcp.return_action") }}</a>
+    </section>
+  </div>
+</main>
+{% endblock %}

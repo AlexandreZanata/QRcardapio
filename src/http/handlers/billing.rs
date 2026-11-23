@@ -16,7 +16,7 @@ use crate::http::middleware::auth::{TenantContext, verify_csrf};
 use crate::http::middleware::locale::RequestLocale;
 use crate::http::responses::{take_flash, with_flash_redirect};
 use crate::infrastructure::asaas::{AsaasClient, BILLING_PATH, Webhook};
-use crate::infrastructure::database::queries::billing as queries;
+use crate::infrastructure::database::queries::{billing as queries, is_establishment_owner};
 use crate::infrastructure::security::constant_time_eq;
 use crate::rendering::billing::{BillingTemplate, plan_price};
 use crate::rendering::{PageMeta, render_html};
@@ -30,7 +30,7 @@ pub async fn page(
     let client = configured_client(&state)?;
     let env = client.config().environment.as_str();
     let est = &tenant.establishment.id;
-    let is_owner = queries::is_owner(&state.pool, est, &tenant.auth.account.id).await?;
+    let is_owner = is_establishment_owner(&state.pool, est, &tenant.auth.account.id).await?;
     let (current, paid_through) = tokio::try_join!(
         queries::current_checkout(&state.pool, env, est),
         queries::paid_through(&state.pool, env, est, billing_now().date_naive()),
@@ -180,7 +180,7 @@ fn configured_client(state: &AppState) -> AppResult<&AsaasClient> {
 }
 
 async fn authorize_mutation(state: &AppState, tenant: &TenantContext) -> AppResult<()> {
-    if !queries::is_owner(
+    if !is_establishment_owner(
         &state.pool,
         &tenant.establishment.id,
         &tenant.auth.account.id,

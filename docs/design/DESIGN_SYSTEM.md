@@ -87,3 +87,7 @@ O painel agrupa preço, situação da assinatura e ações. O proprietário inic
 ### Link do cardápio no cadastro
 
 O campo de endereço inicial mostra o prefixo `/c/` e explica a geração automática quando o campo está vazio. O endereço atribuído pode receber um código curto para nomes repetidos. Antes de publicar, o proprietário pode escolher um endereço personalizado. Após publicar, o painel exibe o endereço como somente leitura.
+
+### Integrações de IA
+
+Configurações oferece acesso a **Integrações de IA** quando o MCP está habilitado. A página reaproveita os controles de copiar endereço e os cards do painel. As telas de autorização reutilizam o layout de login e exibem o aplicativo, o estabelecimento e o acesso solicitado nos três idiomas do produto.

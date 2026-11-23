@@ -1,4 +1,4 @@
-use sqlx::{Row, SqlitePool};
+use sqlx::{Row, SqliteConnection, SqlitePool};
 
 use super::mappers::row_to_category;
 use crate::domain::category::Category;
@@ -32,11 +32,28 @@ pub async fn find_category_for_est(
 
 pub async fn insert_category(pool: &SqlitePool, cat: &Category) -> AppResult<()> {
     let mut tx = begin_immediate(pool).await?;
+    insert_category_in(&mut tx, cat).await?;
+    sqlx::query(
+        "UPDATE establishments SET has_unpublished_changes = 1, updated_at = ? WHERE id = ?",
+    )
+    .bind(&cat.updated_at)
+    .bind(&cat.establishment_id)
+    .execute(&mut *tx)
+    .await?;
+
+    tx.commit().await?;
+    Ok(())
+}
+
+pub(super) async fn insert_category_in(
+    conn: &mut SqliteConnection,
+    cat: &Category,
+) -> AppResult<()> {
     let next_pos: i64 = sqlx::query_scalar(
         "SELECT COALESCE(MAX(position), 0) + 1 FROM categories WHERE establishment_id = ?",
     )
     .bind(&cat.establishment_id)
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut *conn)
     .await?;
 
     sqlx::query(
@@ -58,18 +75,8 @@ pub async fn insert_category(pool: &SqlitePool, cat: &Category) -> AppResult<()>
     .bind(i64::from(cat.is_visible))
     .bind(&cat.created_at)
     .bind(&cat.updated_at)
-    .execute(&mut *tx)
+    .execute(&mut *conn)
     .await?;
-
-    sqlx::query(
-        "UPDATE establishments SET has_unpublished_changes = 1, updated_at = ? WHERE id = ?",
-    )
-    .bind(&cat.updated_at)
-    .bind(&cat.establishment_id)
-    .execute(&mut *tx)
-    .await?;
-
-    tx.commit().await?;
     Ok(())
 }
 

@@ -61,3 +61,7 @@ O cadastro atribui links compactos a partir do nome do estabelecimento. Um códi
 O Plano Essencial usa o preço da integração na landing. O modal mantém a escolha do visitante ao criar uma conta ou entrar e leva o proprietário à assinatura após a configuração do estabelecimento. A prévia local exibe o cartão e o modal quando o Asaas está desabilitado.
 
 O plano mensal de R$ 29,90 pode ser habilitado por ambiente. O proprietário contrata pelo checkout hospedado do Asaas, acompanha a cobrança no painel e pode cancelar a renovação. Webhooks autenticados e idempotentes sincronizam o acesso à publicação. Cardápios já publicados mantêm a entrega estática. A configuração e a homologação estão no [runbook](../operations/RUNBOOK.md#habilitação-do-asaas). A suíte local validou o ciclo financeiro com webhooks simulados. A validação na conta Sandbox do Asaas está pendente. Os [resultados de carga](../performance/PERFORMANCE.md#verificação-local-após-a-integração-asaas--23112026) incluem o proxy Caddy e a reentrega de webhooks a 1 vCPU.
+
+## Integrações de IA
+
+O endpoint MCP remoto usa OAuth com PKCE e vincula ChatGPT, Claude e Antigravity ao estabelecimento autorizado pelo proprietário. As ferramentas consultam e editam o rascunho em lotes atômicos, com idempotência e verificação da versão dos itens. A publicação continua no painel. A integração é configurada com `MCP_ENABLED=true` e HTTPS. Veja [Arquitetura MCP](../architecture/MCP.md) e [configuração dos clientes](../operations/RUNBOOK.md#integrar-chatgpt-claude-e-antigravity).

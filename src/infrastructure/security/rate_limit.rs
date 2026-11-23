@@ -11,6 +11,8 @@ type KeyedLimiter<K> = RateLimiter<K, DashMapStateStore<K>, DefaultClock>;
 /// Bounded per-IP and per-account GCRA rate limiters for abuse-sensitive endpoints.
 #[derive(Clone)]
 pub struct AppRateLimiters {
+    pub mcp_oauth_ip: Arc<KeyedLimiter<IpAddr>>,
+    pub mcp_establishment: Arc<KeyedLimiter<String>>,
     pub login_ip: Arc<KeyedLimiter<IpAddr>>,
     pub register_ip: Arc<KeyedLimiter<IpAddr>>,
     pub reset_ip: Arc<KeyedLimiter<IpAddr>>,
@@ -28,6 +30,12 @@ impl Default for AppRateLimiters {
 impl AppRateLimiters {
     pub fn new() -> Self {
         Self {
+            mcp_oauth_ip: Arc::new(RateLimiter::dashmap(Quota::per_minute(
+                NonZeroU32::new(120).expect("non-zero"),
+            ))),
+            mcp_establishment: Arc::new(RateLimiter::dashmap(Quota::per_minute(
+                NonZeroU32::new(120).expect("non-zero"),
+            ))),
             login_ip: Arc::new(RateLimiter::dashmap(Quota::per_minute(
                 NonZeroU32::new(10).expect("non-zero"),
             ))),
@@ -51,6 +59,10 @@ impl AppRateLimiters {
 
     /// Reclaims stale limiter buckets so memory stays bounded on small VPS hosts.
     pub fn prune_stale(&self) {
+        self.mcp_oauth_ip.retain_recent();
+        self.mcp_oauth_ip.shrink_to_fit();
+        self.mcp_establishment.retain_recent();
+        self.mcp_establishment.shrink_to_fit();
         self.login_ip.retain_recent();
         self.login_ip.shrink_to_fit();
         self.register_ip.retain_recent();

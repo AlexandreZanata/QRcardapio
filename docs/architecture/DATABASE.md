@@ -50,3 +50,7 @@ In WAL mode, `NORMAL` avoids `fsync` on every transaction commit (flushing mainl
 ## SQLite e assinatura Asaas
 
 A migração `20261123000004_asaas_billing.sql` cria `billing_checkouts` por estabelecimento, `billing_payments` por cobrança do provedor e `billing_webhook_events` para deduplicação. As chaves do provedor incluem o ambiente para isolar Sandbox e produção. Os eventos e as alterações de cobrança são confirmados na mesma transação de escrita. A publicação lê apenas a cobertura vigente vinculada ao estabelecimento. O snapshot público continua independente do SQLite.
+
+## OAuth e operações MCP
+
+A migração `20261123000005_mcp_oauth.sql` mantém solicitações de autorização com expiração, códigos de uso único, vínculos com hashes de acesso e renovação, e chaves de idempotência por conta e estabelecimento. Os vínculos referenciam o membro do estabelecimento. A transação de escrita valida o vínculo e aplica as mudanças em um único lote. A manutenção remove registros expirados por índice.

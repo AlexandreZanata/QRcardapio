@@ -2,6 +2,7 @@ use std::net::SocketAddr;
 use std::path::PathBuf;
 
 mod billing;
+mod mcp;
 pub use billing::{AsaasConfig, AsaasEnvironment};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -50,6 +51,7 @@ pub struct Config {
     pub log_format: LogFormat,
     pub log_level: String,
     pub asaas: Option<AsaasConfig>,
+    pub mcp_enabled: bool,
 }
 
 impl Config {
@@ -89,6 +91,10 @@ impl Config {
         let log_level =
             std::env::var("LOG_LEVEL").unwrap_or_else(|_| "info,qrcardapio=debug".to_string());
         let asaas = AsaasConfig::from_env(&public_base_url, cookie_secure)?;
+        let mcp_enabled = parse_bool_env("MCP_ENABLED", false);
+        if mcp_enabled {
+            mcp::validate_origin(&public_base_url, cookie_secure)?;
+        }
 
         Ok(Self {
             bind_addr,
@@ -102,6 +108,7 @@ impl Config {
             log_format,
             log_level,
             asaas,
+            mcp_enabled,
         })
     }
 

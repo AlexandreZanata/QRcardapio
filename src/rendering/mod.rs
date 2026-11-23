@@ -4,6 +4,7 @@ pub mod billing;
 pub mod dashboard;
 pub mod error_page;
 pub mod landing;
+pub mod mcp;
 pub mod menu_editor;
 pub mod ocr;
 pub mod public_menu;

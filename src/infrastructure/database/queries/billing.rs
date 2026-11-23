@@ -12,17 +12,6 @@ pub struct Checkout {
     pub subscription_status: String,
 }
 
-pub async fn is_owner(pool: &SqlitePool, est: &str, account: &str) -> AppResult<bool> {
-    Ok(sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM establishment_members
-         WHERE account_id = ? AND establishment_id = ? AND member_role = 'owner')",
-    )
-    .bind(account)
-    .bind(est)
-    .fetch_one(pool)
-    .await?)
-}
-
 pub async fn current_checkout(
     pool: &SqlitePool,
     env: &str,

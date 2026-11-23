@@ -47,6 +47,7 @@ pub struct OverviewTemplate {
 #[derive(Template)]
 #[template(path = "dashboard/settings.html")]
 pub struct SettingsTemplate {
+    pub mcp_enabled: bool,
     pub page: PageMeta,
     pub brand_name: String,
     pub has_establishment: bool,

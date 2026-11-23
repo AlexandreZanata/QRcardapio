@@ -5,6 +5,21 @@ use crate::domain::establishment::Establishment;
 use crate::error::{AppError, AppResult};
 use crate::infrastructure::database::begin_immediate;
 
+pub async fn is_establishment_owner(
+    pool: &SqlitePool,
+    est: &str,
+    account: &str,
+) -> AppResult<bool> {
+    Ok(sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM establishment_members
+         WHERE account_id = ? AND establishment_id = ? AND member_role = 'owner')",
+    )
+    .bind(account)
+    .bind(est)
+    .fetch_one(pool)
+    .await?)
+}
+
 pub async fn find_establishment_for_account<'e>(
     executor: impl SqliteExecutor<'e>,
     account_id: &str,

@@ -185,12 +185,23 @@ async fn run_server(config: Config) -> Result<(), Box<dyn std::error::Error>> {
     let state = AppState::new(config, pool.clone());
 
     let maint_pool = pool.clone();
+    let mcp_enabled = state.config.mcp_enabled;
     let maint_limiters = state.rate_limiters.clone();
     let maintenance = tokio::spawn(async move {
         let mut interval = tokio::time::interval(std::time::Duration::from_secs(3600));
         loop {
             interval.tick().await;
             let _ = cleanup_expired_sessions(&maint_pool).await;
+            if mcp_enabled
+                && let Err(error) =
+                    qrcardapio::infrastructure::database::queries::mcp_oauth::cleanup(
+                        &maint_pool,
+                        chrono::Utc::now().timestamp(),
+                    )
+                    .await
+            {
+                tracing::warn!(%error, "MCP cleanup failed");
+            }
             maint_limiters.prune_stale();
         }
     });

@@ -3,6 +3,7 @@ pub mod auth;
 pub mod bench_gen;
 pub mod billing;
 pub mod establishments;
+pub mod mcp;
 pub mod menus;
 pub mod ocr;
 pub mod publishing;

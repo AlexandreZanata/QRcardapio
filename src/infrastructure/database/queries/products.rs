@@ -1,4 +1,4 @@
-use sqlx::{Row, SqlitePool};
+use sqlx::{Row, SqliteConnection, SqlitePool};
 
 use super::mappers::row_to_product;
 use crate::domain::product::Product;
@@ -32,12 +32,29 @@ pub async fn find_product_for_est(
 
 pub async fn insert_product(pool: &SqlitePool, prod: &Product) -> AppResult<()> {
     let mut tx = begin_immediate(pool).await?;
+    insert_product_in(&mut tx, prod).await?;
+    sqlx::query(
+        "UPDATE establishments SET has_unpublished_changes = 1, updated_at = ? WHERE id = ?",
+    )
+    .bind(&prod.updated_at)
+    .bind(&prod.establishment_id)
+    .execute(&mut *tx)
+    .await?;
+
+    tx.commit().await?;
+    Ok(())
+}
+
+pub(super) async fn insert_product_in(
+    conn: &mut SqliteConnection,
+    prod: &Product,
+) -> AppResult<()> {
     let cat_exists: Option<i64> = sqlx::query_scalar(
         "SELECT 1 FROM categories WHERE id = ? AND establishment_id = ? LIMIT 1",
     )
     .bind(&prod.category_id)
     .bind(&prod.establishment_id)
-    .fetch_optional(&mut *tx)
+    .fetch_optional(&mut *conn)
     .await?;
 
     if cat_exists.is_none() {
@@ -50,7 +67,7 @@ pub async fn insert_product(pool: &SqlitePool, prod: &Product) -> AppResult<()> 
     )
     .bind(&prod.establishment_id)
     .bind(&prod.category_id)
-    .fetch_one(&mut *tx)
+    .fetch_one(&mut *conn)
     .await?;
 
     sqlx::query(
@@ -76,18 +93,8 @@ pub async fn insert_product(pool: &SqlitePool, prod: &Product) -> AppResult<()> 
     .bind(i64::from(prod.is_visible))
     .bind(&prod.created_at)
     .bind(&prod.updated_at)
-    .execute(&mut *tx)
+    .execute(&mut *conn)
     .await?;
-
-    sqlx::query(
-        "UPDATE establishments SET has_unpublished_changes = 1, updated_at = ? WHERE id = ?",
-    )
-    .bind(&prod.updated_at)
-    .bind(&prod.establishment_id)
-    .execute(&mut *tx)
-    .await?;
-
-    tx.commit().await?;
     Ok(())
 }
 

@@ -66,3 +66,10 @@ All `POST` routes verify `_csrf` against the server session's `csrf_token` in co
 - `POST /dashboard/billing/checkout`, `POST /dashboard/billing/reconcile` e `POST /dashboard/billing/cancel` verificam sessão, vínculo de proprietário e `_csrf`. As três ações retornam ao painel. O cancelamento exige confirmação e verifica o ID informado contra a assinatura corrente do estabelecimento.
 - `POST /webhooks/asaas` aceita JSON até 64 KiB e autentica `asaas-access-token` antes de interpretar o corpo. Retorna `200` após aplicar o evento de forma idempotente, `401` com token ausente ou inválido, `413` acima do limite e `404` quando a cobrança está desabilitada.
 - Com Asaas habilitado, `POST /dashboard/publish` direciona o usuário ao painel de assinatura quando faltar cobertura paga. Nenhuma requisição pública ao cardápio consulta a cobrança.
+
+## MCP e autenticação de aplicativos de IA
+
+- `POST /mcp` transporta JSON-RPC com autenticação bearer, limite de 128 KiB e ferramentas de consulta e edição de rascunho.
+- Os documentos OAuth de descoberta estão em `/.well-known/oauth-protected-resource/mcp`, `/.well-known/oauth-protected-resource` e `/.well-known/oauth-authorization-server`.
+- `GET /mcp/oauth/authorize` inicia a solicitação. `GET` e `POST /mcp/oauth/consent` apresentam e decidem o consentimento. `POST /mcp/oauth/login` autentica quando necessário. `POST /mcp/oauth/token` troca códigos PKCE ou renova tokens.
+- `GET /dashboard/integrations` lista os vínculos do proprietário. `POST /dashboard/integrations/revoke` exige sessão, proprietário e `_csrf` para revogar um vínculo. Veja [Arquitetura MCP](MCP.md).

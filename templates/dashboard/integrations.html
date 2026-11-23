@@ -1,0 +1,47 @@
+{% extends "layouts/dashboard.html" %}
+
+{% block content %}
+<div class="page-top">
+  <div>
+    <h1 data-i18n="mcp.integrations">{{ page.t("mcp.integrations") }}</h1>
+    <p data-i18n="mcp.integrations_intro">{{ page.t("mcp.integrations_intro") }}</p>
+  </div>
+  <a class="btn btn-secondary" href="/dashboard/settings" data-i18n="nav.settings">{{ page.t("nav.settings") }}</a>
+</div>
+
+<div class="grid-2">
+  <section class="card" aria-labelledby="mcp-endpoint-title">
+    <h2 id="mcp-endpoint-title" data-i18n="mcp.endpoint">{{ page.t("mcp.endpoint") }}</h2>
+    <div class="url-box">
+      <code id="mcp-endpoint" class="url-code">{{ endpoint }}</code>
+      <button type="button" class="btn btn-secondary btn-sm" data-copy-target="mcp-endpoint" data-i18n="common.copy">{{ page.t("common.copy") }}</button>
+    </div>
+    <p data-i18n="mcp.connection_help">{{ page.t("mcp.connection_help") }}</p>
+  </section>
+
+  <section class="card" aria-labelledby="mcp-connections-title">
+    <h2 id="mcp-connections-title" data-i18n="mcp.connections">{{ page.t("mcp.connections") }}</h2>
+    {% if connections.is_empty() %}
+    <p data-i18n="mcp.no_connections">{{ page.t("mcp.no_connections") }}</p>
+    {% else %}
+    <ul class="checklist">
+      {% for connection in connections %}
+      <li>
+        <div>
+          <strong>{{ connection.provider }}</strong>
+          {% if connection.read_write %}<p class="field-hint" data-i18n="mcp.access_edit">{{ page.t("mcp.access_edit") }}</p>
+          {% else %}<p class="field-hint" data-i18n="mcp.access_read">{{ page.t("mcp.access_read") }}</p>{% endif %}
+          <time class="field-hint" datetime="{{ connection.created_at }}">{{ page.timestamp(connection.created_at) }}</time>
+        </div>
+        <form method="post" action="/dashboard/integrations/revoke">
+          <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+          <input type="hidden" name="connection" value="{{ connection.id }}">
+          <button class="btn btn-secondary btn-sm" data-i18n="mcp.revoke">{{ page.t("mcp.revoke") }}</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

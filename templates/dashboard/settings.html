@@ -18,6 +18,7 @@
     <h1 data-i18n="settings.heading">{{ page.t("settings.heading") }}</h1>
     <p data-i18n="settings.subtitle">{{ page.t("settings.subtitle") }}</p>
   </div>
+  {% if mcp_enabled %}<a class="btn btn-secondary" href="/dashboard/integrations" data-i18n="mcp.integrations">{{ page.t("mcp.integrations") }}</a>{% endif %}
 </div>
 
 {% if let Some(err) = error_key %}

@@ -20,10 +20,9 @@ pub async fn security_headers_middleware(req: Request, next: Next) -> Response {
         HeaderName::from_static("x-frame-options"),
         HeaderValue::from_static("DENY"),
     );
-    headers.insert(
-        HeaderName::from_static("referrer-policy"),
-        HeaderValue::from_static("strict-origin-when-cross-origin"),
-    );
+    headers
+        .entry(HeaderName::from_static("referrer-policy"))
+        .or_insert(HeaderValue::from_static("strict-origin-when-cross-origin"));
     headers.insert(
         HeaderName::from_static("permissions-policy"),
         HeaderValue::from_static("camera=(), microphone=(), geolocation=()"),

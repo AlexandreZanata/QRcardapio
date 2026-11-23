@@ -183,6 +183,15 @@ pub async fn redeem_reset_token(
         .execute(&mut *tx)
         .await?;
 
+    sqlx::query("DELETE FROM mcp_grants WHERE account_id = ?")
+        .bind(&account_id)
+        .execute(&mut *tx)
+        .await?;
+    sqlx::query("DELETE FROM mcp_codes WHERE account_id = ?")
+        .bind(&account_id)
+        .execute(&mut *tx)
+        .await?;
+
     tx.commit().await?;
     Ok(())
 }

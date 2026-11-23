@@ -1,0 +1,42 @@
+{% extends "layouts/base.html" %}
+
+{% block content %}
+<main id="main-content" class="auth-wrap">
+  <div class="container">
+    <section class="card auth-card">
+      <h1 data-i18n="mcp.authorize_heading">{{ page.t("mcp.authorize_heading") }}</h1>
+      <p><strong>{{ provider }}</strong></p>
+      {% if let Some(establishment) = establishment %}
+      <p><span data-i18n="mcp.establishment">{{ page.t("mcp.establishment") }}</span> <strong>{{ establishment }}</strong></p>
+      <p data-i18n="mcp.scope_read">{{ page.t("mcp.scope_read") }}</p>
+      {% if read_write %}<p data-i18n="mcp.scope_write">{{ page.t("mcp.scope_write") }}</p>{% endif %}
+      <p data-i18n="mcp.review_notice">{{ page.t("mcp.review_notice") }}</p>
+      <form class="inline-actions" method="post" action="/mcp/oauth/consent">
+        <input type="hidden" name="_csrf" value="{{ csrf }}">
+        <input type="hidden" name="flow" value="{{ flow }}">
+        <button class="btn btn-secondary" name="decision" value="deny" data-i18n="mcp.deny">{{ page.t("mcp.deny") }}</button>
+        <button class="btn btn-primary" name="decision" value="allow" data-i18n="mcp.allow">{{ page.t("mcp.allow") }}</button>
+      </form>
+      {% else %}
+      <p data-i18n="mcp.login_prompt">{{ page.t("mcp.login_prompt") }}</p>
+      {% if let Some(key) = error %}
+      <div class="alert alert-error" role="alert" data-i18n="{{ key }}">{{ page.t(key) }}</div>
+      {% endif %}
+      <form class="form-stack" method="post" action="/mcp/oauth/login">
+        <input type="hidden" name="_csrf" value="{{ csrf }}">
+        <input type="hidden" name="flow" value="{{ flow }}">
+        <div class="field">
+          <label for="email" data-i18n="auth.email_label">{{ page.t("auth.email_label") }}</label>
+          <input id="email" name="email" type="email" value="{{ email }}" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label for="password" data-i18n="auth.password_label">{{ page.t("auth.password_label") }}</label>
+          <input id="password" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button class="btn btn-primary" data-i18n="auth.submit_login">{{ page.t("auth.submit_login") }}</button>
+      </form>
+      {% endif %}
+    </section>
+  </div>
+</main>
+{% endblock %}

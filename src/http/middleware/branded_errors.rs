@@ -16,6 +16,8 @@ pub async fn branded_errors(
     let page_request = request.method() != Method::HEAD
         && !path.starts_with("/static/")
         && !path.starts_with("/webhooks/")
+        && !path.starts_with("/.well-known/")
+        && !matches!(path, "/mcp" | "/mcp/oauth/token")
         && !matches!(path, "/healthz" | "/readyz");
     let response = next.run(request).await;
     let status = response.status();

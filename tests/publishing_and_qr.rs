@@ -35,6 +35,7 @@ use qrcardapio::qr::{generate_png, generate_svg};
 fn test_config(dir: &TempDir) -> Config {
     Config {
         asaas: None,
+        mcp_enabled: false,
         bind_addr: "127.0.0.1:0".parse().unwrap(),
         public_base_url: "https://qrcardapio.com.br".to_string(),
         data_dir: dir.path().join("data"),

@@ -62,6 +62,7 @@ pub async fn settings_page(
     let (jar, flash) = take_flash(jar);
 
     let tpl = SettingsTemplate {
+        mcp_enabled: state.config.mcp_enabled,
         page: PageMeta::new(locale, "settings.page_title", flash),
         brand_name: est.name.clone(),
         has_establishment: true,
@@ -128,6 +129,7 @@ pub async fn settings_submit(
         Err(err) => {
             let logo_url = resolve_logo_url(&state, &tenant).await?;
             let tpl = SettingsTemplate {
+                mcp_enabled: state.config.mcp_enabled,
                 page: PageMeta::new(locale, "settings.page_title", None),
                 brand_name: tenant.establishment.name.clone(),
                 has_establishment: true,

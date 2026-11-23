@@ -92,6 +92,7 @@ async fn billing_is_tenant_scoped_and_tracks_authenticated_financial_events() {
     let dir = TempDir::new().unwrap();
     let token = webhook_token();
     let config = Config {
+        mcp_enabled: false,
         asaas: Some(
             AsaasConfig::new(AsaasEnvironment::Sandbox, "test-api-credential", &token).unwrap(),
         ),
