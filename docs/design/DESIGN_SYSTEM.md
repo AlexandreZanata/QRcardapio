@@ -82,6 +82,8 @@ Menu editing, import history, and operations show an illustrated empty state whe
 
 A seção do Plano Essencial usa a mesma faixa de fundo de `.landing-how`. O cartão combina a cor creme, os contornos escuros, a coroa amarela e as formas de fundo azul e rosa da landing. O botão abre um `<dialog>` com os controles de foco e fechamento de `panel-dialog.js`. O modal mostra três cards, com artes próprias no canto feitas no sprite da landing. O mensal usa azul, o semestral usa rosa com a etiqueta de 5% e o anual usa amarelo com a estrela de 10%. Os cards ficam lado a lado em telas largas e empilhados em telas estreitas. Cada card exibe o total e o intervalo de cobrança. A periodicidade e as ações usam os catálogos PT, EN e ES.
 
+Cada selo tem uma coluna própria no cartão e mantém o percentual centralizado sobre a forma. Os contornos ficam nas bordas da arte para preservar a leitura do número.
+
 O painel agrupa preço, situação da assinatura e ações. O proprietário inicia o checkout pelo formulário local do painel e segue por um link para o Asaas, preservando a diretiva `form-action 'self'`.
 
 ### Link do cardápio no cadastro
