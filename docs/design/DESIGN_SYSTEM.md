@@ -15,7 +15,9 @@ Dashboard pages share a dark sidebar, a workspace header with a language switche
 
 The dashboard uses the original `static/icons/dashboard.svg` illustrations for navigation, metrics, and actions. The Guide button opens a keyboard-accessible dialog and highlights controls annotated by `components/guide_hint.html`. It scrolls each control into view, reveals collapsed fields for its explanation, and restores the previous view on close. The component reads translated instructions from the page catalog.
 
-The Google Maps landing section compares two simulated 30-day periods for the fictional Café Pingo. It uses an original storefront photo generated from the brief for a Brazilian café with cream walls, cobalt window frames, and a yellow awning. The comparison illustrates review and profile-visit counts without presenting them as measured results.
+The Google Maps feature section shows the public profile fields for Brasa 128, a fictional hamburger restaurant. Its original storefront photo uses a cream façade, cobalt frames, and a yellow awning. The review comparison uses a simulated average, total count, and 1–5 star distribution. Profile views are an owner performance metric and sit outside the public profile demonstration. [Google Business Profile performance documentation](https://support.google.com/business/answer/9918094?hl=pt-BR)
+
+See the [guide to applying the landing style](GUIA_ESTILO_LANDING.md) for the visual tokens, page structure, and reusable examples for this repository and other projects.
 
 The brand mark and icon sprites live under `static/icons/`. The landing's features and how-it-works sections share the illustrated SVG sprite, with bold outlines and fills from the landing palette. Keep decorative icons hidden from assistive technology when the adjacent text already names the action. Landing assets are served from `static/images/` and CSS stays scoped to the landing and dashboard layouts.
 

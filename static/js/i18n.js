@@ -109,6 +109,13 @@
       }
     });
 
+    document.querySelectorAll("[data-i18n-alt]").forEach((el) => {
+      const key = el.dataset.i18nAlt;
+      if (key && Object.prototype.hasOwnProperty.call(dict, key)) {
+        el.setAttribute("alt", dict[key]);
+      }
+    });
+
     document.querySelectorAll("[data-i18n-title]").forEach((el) => {
       const key = el.dataset.i18nTitle;
       if (key && Object.prototype.hasOwnProperty.call(dict, key)) {

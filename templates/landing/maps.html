@@ -1,5 +1,28 @@
 {% import "components/icons.html" as icons %}
 
+{% macro review_summary(period_key, score_key, total, distribution, featured) %}
+<section class="maps-period{% if featured %} maps-period-highlight{% endif %}">
+  <h5 data-i18n="{{ period_key }}">{{ page.t(period_key) }}</h5>
+  <div class="maps-rating">
+    <strong><span data-i18n="{{ score_key }}">{{ page.t(score_key) }}</span> <span class="maps-accessible" data-i18n="maps.score_suffix">{{ page.t("maps.score_suffix") }}</span></strong>
+    {{ icons::sticker("review-star") }}
+    <span>{{ total }} <span data-i18n="maps.reviews">{{ page.t("maps.reviews") }}</span></span>
+  </div>
+  <ul class="maps-distribution">
+    {% for (stars, count) in distribution %}
+    <li>
+      <span>{{ stars }}{{ icons::sticker("review-star") }} <span class="maps-accessible" data-i18n="maps.score_suffix">{{ page.t("maps.score_suffix") }}</span></span>
+      <svg class="maps-review-bar" viewBox="0 0 {{ total }} 4" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+        <rect width="{{ total }}" height="4" class="maps-bar-track"></rect>
+        <rect width="{{ count }}" height="4" class="maps-bar-fill"></rect>
+      </svg>
+      <span>{{ count }} <span class="maps-accessible" data-i18n="maps.reviews">{{ page.t("maps.reviews") }}</span></span>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endmacro %}
+
 <section id="google-maps" class="landing-container landing-maps" aria-labelledby="landing-maps-title">
   <div class="landing-maps-content">
     <div class="landing-section-heading">
@@ -8,34 +31,46 @@
     </div>
     <div class="landing-maps-action">
       {{ icons::panel("map") }}
-      <span data-i18n="public_menu.google_review_action">{{ page.t("public_menu.google_review_action") }}</span>
+      <div>
+        <span class="landing-maps-action-label" data-i18n="maps.menu_prompt">{{ page.t("maps.menu_prompt") }}</span>
+        <strong data-i18n="public_menu.google_review_action">{{ page.t("public_menu.google_review_action") }}</strong>
+      </div>
     </div>
     <a class="btn landing-button landing-button-blue" href="{% if is_logged_in %}/dashboard/settings#google-maps{% else %}/register{% endif %}" data-i18n="maps.cta">{{ page.t("maps.cta") }}</a>
   </div>
 
-  <figure class="maps-example">
-    <img src="/static/images/cafe-pingo.webp" alt="" width="960" height="640" loading="lazy">
+  <article class="maps-example" aria-labelledby="maps-profile-name">
+    <img src="/static/images/brasa-128.webp" width="1080" height="720" loading="lazy"
+         alt="{{ page.t("maps.storefront_alt") }}" data-i18n-alt="maps.storefront_alt">
     <div class="maps-example-content">
-      <figcaption>
-        <strong>Café Pingo</strong>
-        <span data-i18n="maps.example">{{ page.t("maps.example") }}</span>
-      </figcaption>
+      <header class="maps-profile-title">
+        <div>
+          <h3 id="maps-profile-name">Brasa 128</h3>
+          <span data-i18n="maps.category">{{ page.t("maps.category") }}</span>
+        </div>
+        <p data-i18n="maps.example">{{ page.t("maps.example") }}</p>
+      </header>
+
+      <dl class="maps-profile-details">
+        <div>
+          <dt data-i18n="maps.address">{{ page.t("maps.address") }}</dt>
+          <dd>Rua da Brasa, 128 · Vila do Cedro</dd>
+        </div>
+        <div>
+          <dt data-i18n="maps.hours">{{ page.t("maps.hours") }}</dt>
+          <dd data-i18n="maps.hours_value">{{ page.t("maps.hours_value") }}</dd>
+        </div>
+        <div>
+          <dt data-i18n="maps.website">{{ page.t("maps.website") }}</dt>
+          <dd>brasa128.example</dd>
+        </div>
+      </dl>
+
+      <h4 class="maps-ratings-heading" data-i18n="maps.review_summary">{{ page.t("maps.review_summary") }}</h4>
       <div class="maps-comparison">
-        <div class="maps-period">
-          <h3 data-i18n="maps.before">{{ page.t("maps.before") }}</h3>
-          <dl>
-            <div><dt data-i18n="maps.reviews">{{ page.t("maps.reviews") }}</dt><dd>12</dd></div>
-            <div><dt data-i18n="maps.visits">{{ page.t("maps.visits") }}</dt><dd>180</dd></div>
-          </dl>
-        </div>
-        <div class="maps-period maps-period-highlight">
-          <h3 data-i18n="maps.after">{{ page.t("maps.after") }}</h3>
-          <dl>
-            <div><dt data-i18n="maps.reviews">{{ page.t("maps.reviews") }}</dt><dd>87</dd></div>
-            <div><dt data-i18n="maps.visits">{{ page.t("maps.visits") }}</dt><dd>540</dd></div>
-          </dl>
-        </div>
+        {{ review_summary("maps.before", "maps.score_before", 12, [(5, 6), (4, 3), (3, 2), (2, 0), (1, 1)], false) }}
+        {{ review_summary("maps.after", "maps.score_after", 87, [(5, 70), (4, 11), (3, 3), (2, 1), (1, 2)], true) }}
       </div>
     </div>
-  </figure>
+  </article>
 </section>
