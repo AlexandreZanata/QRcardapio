@@ -1,0 +1,37 @@
+{% import "components/icons.html" as icons %}
+{% import "components/guide_hint.html" as guide %}
+
+{% macro tile(icon, tone) %}
+<span class="panel-icon-tile panel-icon-tile-{{ tone }}">{{ icons::panel(icon) }}</span>
+{% endmacro %}
+
+{% macro section_heading(id, label_key, icon, tone) %}
+<h2 class="panel-section-heading" id="{{ id }}">
+  {{ tile(icon, tone) }}
+  <span data-i18n="{{ label_key }}">{{ page.t(label_key) }}</span>
+</h2>
+{% endmacro %}
+
+{% macro link(url, label_key, icon, primary=false, guide_key="", new_tab=false) %}
+<a class="btn panel-action{% if primary %} panel-action-primary{% endif %}" href="{{ url }}"
+   {% if !guide_key.is_empty() %}{{ guide::hint(guide_key) }}{% endif %}
+   {% if new_tab %}target="_blank" rel="noopener"{% endif %}>
+  {{ icons::panel(icon) }} <span data-i18n="{{ label_key }}">{{ page.t(label_key) }}</span>
+</a>
+{% endmacro %}
+
+{% macro submit(label_key, icon, primary=false) %}
+<button class="btn panel-action{% if primary %} panel-action-primary{% endif %}" type="submit">
+  {{ icons::panel(icon) }} <span data-i18n="{{ label_key }}">{{ page.t(label_key) }}</span>
+</button>
+{% endmacro %}
+
+{% macro tip(icon, tone, title_key, body_key) %}
+<li class="panel-tip">
+  {{ tile(icon, tone) }}
+  <div>
+    <strong data-i18n="{{ title_key }}">{{ page.t(title_key) }}</strong>
+    <p data-i18n="{{ body_key }}">{{ page.t(body_key) }}</p>
+  </div>
+</li>
+{% endmacro %}

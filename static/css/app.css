@@ -710,28 +710,6 @@ th {
 .text-muted { color: var(--ink-muted); }
 
 /* OCR & PDF Menu Import */
-.ocr-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 2fr) minmax(260px, 1fr);
-  gap: var(--space-5);
-  align-items: start;
-}
-
-.ocr-card-title {
-  margin: 0 0 var(--space-4);
-  font-size: 1.2rem;
-}
-
-.ocr-tips-list {
-  margin: 0;
-  padding-left: 1.2rem;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-  color: var(--ink-secondary);
-  line-height: 1.5;
-}
-
 .ocr-details {
   border-top: 1px solid var(--border-subtle);
   padding-top: var(--space-3);
@@ -798,8 +776,7 @@ th {
 }
 
 @media (max-width: 860px) {
-  .grid-2,
-  .ocr-grid {
+  .grid-2 {
     grid-template-columns: 1fr;
   }
 }

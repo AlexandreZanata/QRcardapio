@@ -3,6 +3,8 @@
 
 {% import "components/icons.html" as icons %}
 {% import "components/dashboard_metric.html" as metrics %}
+{% import "components/panel_controls.html" as controls %}
+{% import "components/panel_publication.html" as publication %}
 
 {% block content %}
 <div class="page-top dashboard-overview-top">
@@ -32,32 +34,44 @@
 </div>
 
 <div class="grid-2 dashboard-overview-grid">
-  <section class="card">
-    <h2 class="dashboard-card-heading">
-      {{ icons::panel("link") }}
-      <span data-i18n="dashboard.public_url_label">{{ page.t("dashboard.public_url_label") }}</span>
-    </h2>
-    <div class="url-box mb-4" {{ guide::hint("guide.public_link") }}>
-      <code id="public-menu-url" class="url-code">{{ public_url }}</code>
-      <button type="button" class="btn btn-secondary btn-sm" data-copy-target="public-menu-url">
-        {{ icons::panel("link") }}
-        <span data-i18n="common.copy">{{ page.t("common.copy") }}</span>
-      </button>
+  <section class="card panel-publication-card" aria-labelledby="panel-publication-title">
+    {{ controls::section_heading("panel-publication-title", "dashboard.publication_title", "publish", "blue") }}
+
+    <div class="panel-public-url" {{ guide::hint("guide.public_link") }}>
+      <p id="public-menu-label" data-i18n="dashboard.public_url_label">{{ page.t("dashboard.public_url_label") }}</p>
+      <div class="url-box" role="group" aria-labelledby="public-menu-label">
+        <code id="public-menu-url" class="url-code">{{ public_url }}</code>
+        <button type="button" class="btn btn-secondary btn-sm" data-copy-target="public-menu-url">
+          {{ icons::panel("link") }}
+          <span data-i18n="common.copy">{{ page.t("common.copy") }}</span>
+        </button>
+      </div>
     </div>
 
-    <div class="inline-actions">
-      <form class="inline-form" method="post" action="/dashboard/publish" {{ guide::hint("guide.publish") }}>
-        <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-        <button class="btn btn-primary" type="submit"
-                data-i18n="{% if is_published %}dashboard.action_republish{% else %}dashboard.action_publish{% endif %}">
-          {% if is_published %}{{ page.t("dashboard.action_republish") }}{% else %}{{ page.t("dashboard.action_publish") }}{% endif %}
-        </button>
-      </form>
-
-      <a class="btn btn-secondary" href="/dashboard/preview" {{ guide::hint("guide.preview") }} target="_blank" rel="noopener">{{ icons::panel("menu") }} <span data-i18n="dashboard.action_preview">{{ page.t("dashboard.action_preview") }}</span></a>
-
+    <div class="panel-publication-actions">
       {% if is_published %}
-      <a class="btn btn-secondary" href="/c/{{ slug }}" target="_blank" rel="noopener">{{ icons::panel("globe") }} <span data-i18n="nav.public_menu">{{ page.t("nav.public_menu") }}</span></a>
+      {{ publication::submit("dashboard.action_republish") }}
+      {% else %}
+      {{ publication::submit("dashboard.action_publish") }}
+      {% endif %}
+      <div class="panel-publication-links">
+        {{ controls::link("/dashboard/preview", "dashboard.action_preview", "image", guide_key="guide.preview", new_tab=true) }}
+        {% if is_published %}
+        {{ controls::link("/c/" ~ slug, "nav.public_menu", "globe", new_tab=true) }}
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="panel-publication-footer">
+      <p class="field-hint">
+        <span data-i18n="dashboard.last_published_label">{{ page.t("dashboard.last_published_label") }}</span>
+        {% if let Some(ts) = last_published_at %}
+        <time datetime="{{ ts }}">{{ page.timestamp(ts) }}</time>
+        {% else %}
+        <span data-i18n="dashboard.never_published">{{ page.t("dashboard.never_published") }}</span>
+        {% endif %}
+      </p>
+      {% if is_published %}
       <form class="inline-form" method="post" action="/dashboard/unpublish" {{ guide::hint("guide.unpublish") }}
             data-confirm-key="dashboard.confirm_unpublish"
             data-confirm-fallback="{{ page.t("dashboard.confirm_unpublish") }}">
@@ -66,15 +80,6 @@
       </form>
       {% endif %}
     </div>
-
-    <p class="field-hint mt-3">
-      <span data-i18n="dashboard.last_published_label">{{ page.t("dashboard.last_published_label") }}</span>
-      {% if let Some(ts) = last_published_at %}
-        <time datetime="{{ ts }}">{{ page.timestamp(ts) }}</time>
-      {% else %}
-        <span data-i18n="dashboard.never_published">{{ page.t("dashboard.never_published") }}</span>
-      {% endif %}
-    </p>
   </section>
 
   <section class="card">

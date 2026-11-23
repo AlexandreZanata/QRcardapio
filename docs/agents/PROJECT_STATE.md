@@ -29,6 +29,8 @@ The Google Maps landing section layers the fictional business profile and the mo
 
 Settings groups business details, Google Maps links, and the current logo. Dashboard forms share translated Askama field components for settings, onboarding, categories, products, and menu import and review. Logo, product photo, and menu imports share an illustrated file picker with image preview, local format and size checks, and a native input fallback.
 
+Menu import separates file upload, pasted text, and illustrated tips. The menu editor and overview share the blue publication action, with the preview and live menu links grouped in the overview.
+
 ## Verification Snapshot
 
 - `cargo fmt --check`: Passed

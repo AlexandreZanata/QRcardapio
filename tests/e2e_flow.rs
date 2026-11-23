@@ -589,6 +589,10 @@ async fn complete_definition_of_done_e2e_flow_including_restart() {
     assert!(dash_html.contains("v2"));
     assert!(dash_html.contains("aria-controls=\"dashboard-navigation\""));
     assert!(dash_html.contains("href=\"/dashboard\" aria-current=\"page\""));
+    assert!(dash_html.contains("class=\"panel-publication-actions\""));
+    assert!(dash_html.contains("Publicar atualizações"));
+    assert!(dash_html.contains("href=\"/dashboard/preview\""));
+    assert!(dash_html.contains("href=\"/c/bistro-do-sol\""));
     assert!(!dash_html.contains("href=\"/admin\""));
 
     let after_restart_pub = app2

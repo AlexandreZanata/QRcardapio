@@ -60,6 +60,19 @@
   overflow-wrap: anywhere;
 }
 
+.file-field-featured .file-trigger {
+  gap: 0.72rem;
+  min-height: 5.1rem;
+  padding: 0.65rem 0.75rem;
+  border: 1.5px dashed #8e9bdc;
+  background: #eef1ff;
+  font-size: 1rem;
+}
+
+.file-field-featured .file-trigger:hover { background: #e6eaff; }
+.file-field-featured .file-trigger-icon { width: 2.65rem; height: 2.65rem; }
+.file-field-featured .dashboard-field-hint { padding: 0.16rem 0 0; }
+
 .file-field-clear,
 .file-picker-close {
   display: grid;

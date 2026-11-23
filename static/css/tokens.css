@@ -1,4 +1,7 @@
 :root {
+  --qr-blue: #263be8;
+  --qr-blue-hover: #1e2ebe;
+
   /* Warm Brazilian hospitality palette */
   --bg-page: #FAF7F2;
   --bg-surface: #FFFFFF;

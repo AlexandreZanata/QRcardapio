@@ -4,15 +4,13 @@
   // 1. OCR upload submit feedback
   const uploadForm = document.querySelector("[data-ocr-upload-form]");
   if (uploadForm) {
-    const submitBtn = uploadForm.querySelector("[data-ocr-submit]");
+    const submitBtn = uploadForm.querySelector('button[type="submit"]');
 
     uploadForm.addEventListener("submit", () => {
       if (!submitBtn) return;
       submitBtn.disabled = true;
-      const processing =
-        (window.QRI18n && window.QRI18n.t("ocr.processing")) ||
-        "Lendo cardápio... aguarde alguns segundos.";
-      const span = submitBtn.querySelector("span") || submitBtn;
+      const processing = window.QRI18n?.t("ocr.processing") || uploadForm.dataset.processingCopy;
+      const span = submitBtn.querySelector("[data-i18n]") || submitBtn;
       span.setAttribute("data-i18n", "ocr.processing");
       span.textContent = processing;
     });

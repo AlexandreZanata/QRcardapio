@@ -1,7 +1,7 @@
 body:has(.landing-page) {
   --landing-paper: #fff9ee;
   --landing-ink: #161721;
-  --landing-blue: #263be8;
+  --landing-blue: var(--qr-blue);
   --landing-yellow: #ffdc38;
   --landing-pink: #ff5596;
   --landing-rule: #ded4c4;
@@ -83,7 +83,7 @@ body:has(.landing-page) {
 .landing-button:hover { background: #f0e9dd; }
 .landing-button:active { box-shadow: 1px 1px 0 var(--landing-ink); transform: translate(2px, 3px); }
 .landing-button-blue { background: var(--landing-blue); color: #fff; }
-.landing-button-blue:hover { background: #1e2ebe; }
+.landing-button-blue:hover { background: var(--qr-blue-hover); }
 .landing-button-pink { background: var(--landing-pink); }
 .landing-button-pink:hover { background: #ff79ac; }
 .landing-button-yellow { background: var(--landing-yellow); }

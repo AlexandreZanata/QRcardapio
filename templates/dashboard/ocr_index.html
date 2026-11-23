@@ -1,64 +1,73 @@
 {% extends "layouts/dashboard.html" %}
 {% import "components/icons.html" as icons %}
-{% import "components/guide_hint.html" as guide %}
+{% import "components/panel_controls.html" as controls %}
 {% import "components/form_fields.html" as fields %}
 {% import "components/panel_empty.html" as empty %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="/static/css/ocr-intake.css">
+{% endblock %}
 
 {% block file_picker %}
 {% include "components/file_picker.html" %}
 {% endblock %}
 
 {% block content %}
-<div class="page-top">
+<div class="page-top panel-page-top">
   <div>
     <h1 data-i18n="ocr.heading">{{ page.t("ocr.heading") }}</h1>
     <p data-i18n="ocr.subtitle">{{ page.t("ocr.subtitle") }}</p>
   </div>
-  <div class="inline-actions">
-    <a class="btn btn-secondary btn-sm" href="/dashboard/menu">{{ icons::panel("back") }} <span data-i18n="common.back">{{ page.t("common.back") }}</span></a>
-  </div>
+  {{ controls::link("/dashboard/menu", "common.back", "back") }}
 </div>
 
 {% if let Some(err) = error_key %}
 <div class="alert alert-error" role="alert" data-i18n="{{ err }}">{{ page.t(err) }}</div>
 {% endif %}
 
-<div class="ocr-grid">
-  <section class="card">
-    <h2 class="ocr-card-title" data-i18n="ocr.upload_title">{{ page.t("ocr.upload_title") }}</h2>
+<div class="ocr-intake">
+  <div class="ocr-entry-methods">
+    <section class="card ocr-upload" aria-labelledby="ocr-upload-title">
+      {{ controls::section_heading("ocr-upload-title", "ocr.upload_title", "scan", "blue") }}
 
-    <form class="form-stack" method="post" action="/dashboard/ocr/extract" enctype="multipart/form-data" data-ocr-upload-form>
-      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <form class="form-stack" method="post" action="/dashboard/ocr/extract" enctype="multipart/form-data"
+            data-ocr-upload-form data-processing-copy="{{ page.t("ocr.processing") }}">
+        <input type="hidden" name="_csrf" value="{{ csrf_token }}">
 
-      {{ fields::file("menu_file", "ocr.upload_label", "ocr.upload_formats", "guide.ocr_file", required=true, max_image_mb=10, max_pdf_mb=15) }}
+        {{ fields::file("menu_file", "ocr.upload_label", "ocr.upload_formats", "guide.ocr_file", required=true, max_image_mb=10, max_pdf_mb=15, featured=true) }}
 
-      <button class="btn btn-primary" type="submit" data-ocr-submit>
-        <span data-i18n="ocr.submit_extract">{{ page.t("ocr.submit_extract") }}</span>
-      </button>
-    </form>
+        <div class="ocr-entry-actions">
+          {{ controls::submit("ocr.submit_extract", "scan", primary=true) }}
+        </div>
+      </form>
+    </section>
 
-    <details class="ocr-details mt-5">
-      <summary class="ocr-summary" data-i18n="ocr.paste_toggle">{{ page.t("ocr.paste_toggle") }}</summary>
-      <form class="form-stack mt-3" method="post" action="/dashboard/ocr/text">
+    <details class="card ocr-paste">
+      <summary>
+        {{ controls::tile("edit", "pink") }}
+        <span data-i18n="ocr.paste_toggle">{{ page.t("ocr.paste_toggle") }}</span>
+        <span class="ocr-paste-chevron">{{ icons::panel("down") }}</span>
+      </summary>
+      <form class="form-stack" method="post" action="/dashboard/ocr/text">
         <input type="hidden" name="_csrf" value="{{ csrf_token }}">
         {{ fields::textarea("raw_text", "ocr.paste_label", "", guide_key="guide.ocr_text", rows=7, placeholder_key="ocr.paste_placeholder", required=true) }}
-        <button class="btn btn-secondary" type="submit">{{ icons::panel("scan") }} <span data-i18n="ocr.submit_text">{{ page.t("ocr.submit_text") }}</span></button>
+        <div class="ocr-entry-actions">{{ controls::submit("ocr.submit_text", "scan", primary=true) }}</div>
       </form>
     </details>
-  </section>
+  </div>
 
-  <aside class="card card-muted">
-    <h2 class="ocr-card-title" data-i18n="ocr.tips_title">{{ page.t("ocr.tips_title") }}</h2>
-    <ul class="ocr-tips-list">
-      <li data-i18n="ocr.tip_1">{{ page.t("ocr.tip_1") }}</li>
-      <li data-i18n="ocr.tip_2">{{ page.t("ocr.tip_2") }}</li>
-      <li data-i18n="ocr.tip_3">{{ page.t("ocr.tip_3") }}</li>
+  <aside class="card ocr-intake-tips" aria-labelledby="ocr-tips-title">
+    {{ controls::section_heading("ocr-tips-title", "ocr.tips_title", "guide", "yellow") }}
+    <ul class="panel-tips">
+      {{ controls::tip("menu", "blue", "ocr.tip_1_title", "ocr.tip_1") }}
+      {{ controls::tip("image", "pink", "ocr.tip_2_title", "ocr.tip_2") }}
+      {{ controls::tip("check", "yellow", "ocr.tip_3_title", "ocr.tip_3") }}
     </ul>
   </aside>
 </div>
 
-<section class="card mt-5">
-  <h2 class="ocr-card-title" data-i18n="ocr.history_title">{{ page.t("ocr.history_title") }}</h2>
+<section class="card mt-5" aria-labelledby="ocr-history-title">
+  {{ controls::section_heading("ocr-history-title", "ocr.history_title", "history", "blue") }}
   {% if imports.is_empty() %}
   {{ empty::message("ocr.history_empty") }}
   {% else %}

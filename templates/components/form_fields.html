@@ -90,15 +90,15 @@
 </div>
 {% endmacro %}
 
-{% macro file(id, label_key, hint_key, guide_key, required=false, max_image_mb=5, max_pdf_mb=0) %}
-<div class="dashboard-field file-field" data-file-field data-image-limit="{{ max_image_mb }}" data-pdf-limit="{{ max_pdf_mb }}" {{ guide::hint(guide_key) }}>
+{% macro file(id, label_key, hint_key, guide_key, required=false, max_image_mb=5, max_pdf_mb=0, featured=false) %}
+<div class="dashboard-field file-field{% if featured %} file-field-featured{% endif %}" data-file-field data-image-limit="{{ max_image_mb }}" data-pdf-limit="{{ max_pdf_mb }}" {{ guide::hint(guide_key) }}>
   {{ label(id, label_key) }}
   <input class="dashboard-control file-native" type="file" id="{{ id }}" name="{{ id }}"
          accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp{% if max_pdf_mb > 0 %},application/pdf,.pdf{% endif %}"
          aria-describedby="{{ id }}-hint" {% if required %}required{% endif %}>
   <div class="file-field-actions">
     <button class="file-trigger" type="button" aria-haspopup="dialog" aria-describedby="{{ id }}-hint" data-file-open hidden>
-      <span class="file-trigger-icon">{{ icons::panel("image") }}</span>
+      <span class="file-trigger-icon">{{ icons::panel("upload") }}</span>
       <span>
         <strong data-i18n="forms.choose_file">{{ page.t("forms.choose_file") }}</strong>
         <span class="file-trigger-name" data-file-name data-file-empty="{{ page.t("forms.no_file") }}"

@@ -1,0 +1,22 @@
+{% import "components/panel_controls.html" as controls %}
+{% import "components/guide_hint.html" as guide %}
+
+{% macro submit(label_key) %}
+<form class="panel-publish-form" method="post" action="/dashboard/publish" {{ guide::hint("guide.publish") }}>
+  <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+  {{ controls::submit(label_key, "publish", primary=true) }}
+</form>
+{% endmacro %}
+
+{% macro pending_notice() %}
+<div class="panel-publish-notice">
+  <div class="panel-publish-notice-copy" role="status">
+    {{ controls::tile("pending", "yellow") }}
+    <div>
+      <strong data-i18n="dashboard.status_pending">{{ page.t("dashboard.status_pending") }}</strong>
+      <p data-i18n="menu_editor.publish_banner">{{ page.t("menu_editor.publish_banner") }}</p>
+    </div>
+  </div>
+  {{ submit("dashboard.action_publish") }}
+</div>
+{% endmacro %}

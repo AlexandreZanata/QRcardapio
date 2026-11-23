@@ -214,4 +214,19 @@
     <circle cx="12" cy="15" r="1.3" fill="#161721"/>
     <path d="M12 16v2" stroke="#161721" stroke-width="1.6" stroke-linecap="round"/>
   </symbol>
+  <symbol id="upload" viewBox="0 0 24 24">
+    <g stroke="#161721" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 13h14l2 3v4H3v-4z" fill="#fff9ee"/>
+      <path d="M10 16V8H7l5-5 5 5h-3v8z" fill="#5060ff"/>
+      <path d="M5.8 17.5h2M16.2 17.5h2" fill="none" stroke-width="1.4"/>
+    </g>
+  </symbol>
+  <symbol id="publish" viewBox="0 0 24 24">
+    <g stroke="#161721" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="3" y="4.5" width="18" height="15" rx="2.5" fill="#fff9ee"/>
+      <path d="M3 9h18M6.4 6.8h.1M9.3 6.8h.1" fill="none"/>
+      <path d="m7.5 14.1 2.7 2.9 6.3-5.8" fill="none" stroke-width="3.6"/>
+      <path d="m7.5 14.1 2.7 2.9 6.3-5.8" fill="none" stroke="#ffdc38" stroke-width="1.65"/>
+    </g>
+  </symbol>
 </svg>

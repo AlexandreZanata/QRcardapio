@@ -2,30 +2,26 @@
 {% import "components/icons.html" as icons %}
 {% import "components/guide_hint.html" as guide %}
 {% import "components/panel_empty.html" as empty %}
+{% import "components/panel_controls.html" as controls %}
+{% import "components/panel_publication.html" as publication %}
 
 {% block content %}
-<div class="page-top">
+<div class="page-top panel-page-top">
   <div>
     <h1 data-i18n="menu_editor.heading">{{ page.t("menu_editor.heading") }}</h1>
     <p data-i18n="menu_editor.subtitle">{{ page.t("menu_editor.subtitle") }}</p>
   </div>
-  <div class="inline-actions">
-    <a class="btn btn-secondary" href="/dashboard/ocr" {{ guide::hint("guide.import_menu") }}>{{ icons::panel("scan") }} <span data-i18n="menu_editor.import_ocr">{{ page.t("menu_editor.import_ocr") }}</span></a>
-    <a class="btn btn-secondary" href="/dashboard/categories/new" {{ guide::hint("guide.add_category") }}>{{ icons::panel("layers") }} <span data-i18n="menu_editor.new_category">{{ page.t("menu_editor.new_category") }}</span></a>
+  <div class="panel-action-row" role="group" aria-label="{{ page.t("menu_editor.actions_label") }}" data-i18n-aria="menu_editor.actions_label">
     {% if !categories.is_empty() %}
-    <a class="btn btn-primary" href="/dashboard/products/new" {{ guide::hint("guide.add_product") }}>{{ icons::panel("add") }} <span data-i18n="menu_editor.new_product">{{ page.t("menu_editor.new_product") }}</span></a>
+    {{ controls::link("/dashboard/products/new", "menu_editor.new_product", "add", primary=true, guide_key="guide.add_product") }}
     {% endif %}
+    {{ controls::link("/dashboard/categories/new", "menu_editor.new_category", "layers", guide_key="guide.add_category") }}
+    {{ controls::link("/dashboard/ocr", "menu_editor.import_ocr", "scan", guide_key="guide.import_menu") }}
   </div>
 </div>
 
 {% if has_unpublished_changes %}
-<div class="alert alert-warn" role="status">
-  <span data-i18n="menu_editor.publish_banner">{{ page.t("menu_editor.publish_banner") }}</span>
-  <form class="inline-form" method="post" action="/dashboard/publish">
-    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-    <button class="btn btn-primary btn-sm" type="submit" data-i18n="dashboard.action_publish">{{ page.t("dashboard.action_publish") }}</button>
-  </form>
-</div>
+{{ publication::pending_notice() }}
 {% endif %}
 
 {% if categories.is_empty() %}
@@ -33,9 +29,9 @@
   <img class="panel-empty-art" src="/static/images/state-empty.svg" width="240" height="165" alt="">
   <h2 data-i18n="menu_editor.empty_title">{{ page.t("menu_editor.empty_title") }}</h2>
   <p class="text-muted mb-4" data-i18n="menu_editor.empty_body">{{ page.t("menu_editor.empty_body") }}</p>
-  <div class="inline-actions">
-    <a class="btn btn-primary" href="/dashboard/categories/new">{{ icons::panel("layers") }} <span data-i18n="menu_editor.new_category">{{ page.t("menu_editor.new_category") }}</span></a>
-    <a class="btn btn-secondary" href="/dashboard/ocr">{{ icons::panel("scan") }} <span data-i18n="menu_editor.import_ocr">{{ page.t("menu_editor.import_ocr") }}</span></a>
+  <div class="panel-action-row">
+    {{ controls::link("/dashboard/categories/new", "menu_editor.new_category", "layers", primary=true) }}
+    {{ controls::link("/dashboard/ocr", "menu_editor.import_ocr", "scan") }}
   </div>
 </section>
 {% else %}
