@@ -25,7 +25,7 @@ The landing, dashboard, and public menu share an illustrated disclosure that sho
 
 The dashboard uses original icons and a contextual tutorial on the owner and platform workflows. Empty collections and browser error pages use coordinated illustrations. Owners can save a Google Maps profile or direct review link and publish an optional review invitation in their menu. The landing comparison uses public Maps profile fields and labeled synthetic review data for the fictional Brasa 128 hamburger restaurant. The landing style has a transferable implementation guide under `docs/design/`.
 
-The Google Maps landing section layers the fictional business profile and the mobile review invitation above the ratings comparison. Its example link navigates to the responsive demonstration. The simulated comparison uses light gray for the before card and the landing's cobalt blue for the after card.
+The Google Maps landing section combines the fictional business profile and ratings in one panel, with the mobile review invitation and a food photograph in the overlapping phone. Its example link navigates to the responsive demonstration. The simulated comparison uses light gray for the before card and the landing's cobalt blue for the after card.
 
 The Google Maps phone uses responsive 4K frame artwork with translated HTML content. The complete Portuguese mockup is available as a transparent 2160 × 3840 WebP. The homepage hero displays its responsive device images and their demo caption.
 

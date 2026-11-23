@@ -2,7 +2,7 @@
 
 {% macro review_summary(period_key, score_key, total, distribution, featured) %}
 <section class="maps-period{% if featured %} maps-period-highlight{% endif %}">
-  <h4 data-i18n="{{ period_key }}">{{ page.t(period_key) }}</h4>
+  <h5 data-i18n="{{ period_key }}">{{ page.t(period_key) }}</h5>
   <div class="maps-rating">
     <strong><span data-i18n="{{ score_key }}">{{ page.t(score_key) }}</span> <span class="maps-accessible" data-i18n="maps.score_suffix">{{ page.t("maps.score_suffix") }}</span></strong>
     {{ icons::sticker("review-star") }}
@@ -49,22 +49,33 @@
   </div>
 
   <div id="maps-demo" class="maps-showcase" role="group" aria-labelledby="maps-example-note" tabindex="-1">
-    <div class="maps-showcase-burst">{{ icons::sticker("burst") }}</div>
+    <span class="maps-showcase-rays" aria-hidden="true"><span></span></span>
     <article class="maps-profile" aria-labelledby="maps-profile-name">
       <header class="maps-profile-bar">
         {{ icons::panel("map") }}
         <span data-i18n="maps.profile_label">{{ page.t("maps.profile_label") }}</span>
+        <span class="maps-profile-connected">
+          {{ icons::icon("check") }}
+          <span data-i18n="maps.connected">{{ page.t("maps.connected") }}</span>
+        </span>
       </header>
       <img class="maps-storefront" src="/static/images/brasa-128.webp" width="1080" height="720" loading="lazy"
            alt="{{ page.t("maps.storefront_alt") }}" data-i18n-alt="maps.storefront_alt">
       <div class="maps-profile-content">
-        <h3 id="maps-profile-name">Brasa 128</h3>
-        <div class="maps-profile-rating">
-          <strong data-i18n="maps.score_after">{{ page.t("maps.score_after") }}</strong>
-          {{ icons::sticker("review-star") }}
-          <span>(87 <span data-i18n="maps.reviews">{{ page.t("maps.reviews") }}</span>)</span>
+        <div class="maps-profile-identity">
+          <div>
+            <h3 id="maps-profile-name">Brasa 128</h3>
+            <p class="maps-profile-category" data-i18n="maps.category">{{ page.t("maps.category") }}</p>
+          </div>
+          <div class="maps-profile-rating">
+            <div class="maps-profile-stars">
+              <strong data-i18n="maps.score_after">{{ page.t("maps.score_after") }}</strong>
+              {{ icons::sticker("review-star") }}
+              <span class="maps-accessible" data-i18n="maps.score_suffix">{{ page.t("maps.score_suffix") }}</span>
+            </div>
+            <span>87 <span data-i18n="maps.reviews">{{ page.t("maps.reviews") }}</span></span>
+          </div>
         </div>
-        <p class="maps-profile-category" data-i18n="maps.category">{{ page.t("maps.category") }}</p>
         <dl class="maps-profile-details">
           <div>
             <dt>{{ icons::panel("map") }} <span class="maps-accessible" data-i18n="maps.address">{{ page.t("maps.address") }}</span></dt>
@@ -75,11 +86,22 @@
             <dd data-i18n="maps.hours_value">{{ page.t("maps.hours_value") }}</dd>
           </div>
           <div>
-            <dt>{{ icons::panel("globe") }} <span class="maps-accessible" data-i18n="maps.website">{{ page.t("maps.website") }}</span></dt>
+            <dt>{{ icons::panel("link") }} <span class="maps-accessible" data-i18n="maps.website">{{ page.t("maps.website") }}</span></dt>
             <dd>brasa128.example</dd>
           </div>
         </dl>
       </div>
+
+      <section class="maps-scores" aria-labelledby="maps-ratings-heading">
+        <div class="maps-scores-heading">
+          <h4 id="maps-ratings-heading" data-i18n="maps.review_summary">{{ page.t("maps.review_summary") }}</h4>
+          <p id="maps-example-note" data-i18n="maps.example">{{ page.t("maps.example") }}</p>
+        </div>
+        <div class="maps-comparison">
+          {{ review_summary("maps.before", "maps.score_before", 12, [(5, 6), (4, 3), (3, 2), (2, 0), (1, 1)], false) }}
+          {{ review_summary("maps.after", "maps.score_after", 87, [(5, 70), (4, 11), (3, 3), (2, 1), (1, 2)], true) }}
+        </div>
+      </section>
     </article>
 
     <div class="maps-phone" role="group" aria-labelledby="maps-phone-label">
@@ -87,32 +109,23 @@
            srcset="/static/images/landing-review-frame-540.webp 540w,
                    /static/images/landing-review-frame-1080.webp 1080w,
                    /static/images/landing-review-frame-4k.webp 2160w"
-           sizes="(max-width: 35rem) min(37vw, 164px), (max-width: 62rem) min(30vw, 234px), 234px"
+           sizes="(max-width: 35rem) min(37vw, 164px), (max-width: 62rem) min(30vw, 248px), 248px"
            width="540" height="960" alt="" loading="lazy" decoding="async">
       <div class="maps-phone-screen">
         <div class="maps-phone-brand">
           <img src="/static/icons/favicon.svg" width="26" height="26" alt="">
           <span data-i18n="app.name">{{ page.t("app.name") }}</span>
         </div>
-        <p class="maps-phone-label" id="maps-phone-label" data-i18n="maps.menu_prompt">{{ page.t("maps.menu_prompt") }}</p>
+        <p class="maps-accessible" id="maps-phone-label" data-i18n="maps.menu_prompt">{{ page.t("maps.menu_prompt") }}</p>
         <div class="maps-phone-card">
           {{ icons::sticker("review-pin") }}
           <strong data-i18n="public_menu.google_review_heading">{{ page.t("public_menu.google_review_heading") }}</strong>
           <p data-i18n="maps.invite_body">{{ page.t("maps.invite_body") }}</p>
           <span class="maps-phone-action" data-i18n="public_menu.google_review_action">{{ page.t("public_menu.google_review_action") }}</span>
         </div>
+        <img class="maps-phone-photo" src="/static/images/landing-burger.webp"
+             width="720" height="405" loading="lazy" decoding="async" alt="">
       </div>
     </div>
-
-    <section class="maps-scores" aria-labelledby="maps-ratings-heading">
-      <div class="maps-scores-heading">
-        <h3 id="maps-ratings-heading" data-i18n="maps.review_summary">{{ page.t("maps.review_summary") }}</h3>
-        <p id="maps-example-note" data-i18n="maps.example">{{ page.t("maps.example") }}</p>
-      </div>
-      <div class="maps-comparison">
-        {{ review_summary("maps.before", "maps.score_before", 12, [(5, 6), (4, 3), (3, 2), (2, 0), (1, 1)], false) }}
-        {{ review_summary("maps.after", "maps.score_after", 87, [(5, 70), (4, 11), (3, 3), (2, 1), (1, 2)], true) }}
-      </div>
-    </section>
   </div>
 </section>
