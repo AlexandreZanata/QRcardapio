@@ -63,7 +63,7 @@ A seção `#integracoes-ia` explica as operações no rascunho, a revisão do pr
 
 O bloco de ativação organiza as etapas de configuração e autorização ao lado do endereço MCP. O botão de copiar usa o controle do painel quando a API de área de transferência está disponível. O endereço permanece selecionável. O guia abre pelo botão amarelo e a validação técnica fica em uma seção expansível.
 
-A faixa branca abaixo das integrações usa ilustrações próprias do sprite da landing para nove tipos de comércio. Duas cópias visuais da lista formam o ciclo contínuo, e a segunda fica oculta para leitores de tela. O controle de pausa fica acima da faixa. A preferência por movimento reduzido exibe a lista completa, parada e com quebra de linha.
+A faixa branca abaixo das integrações usa ilustrações próprias do sprite da landing para nove tipos de comércio. Duas cópias visuais da lista formam o ciclo contínuo, e a segunda fica oculta para leitores de tela. Um ícone na lateral pausa ou retoma a animação e tem um rótulo acessível. A preferência por movimento reduzido exibe a lista completa, parada e com quebra de linha.
 
 A ilustração foi criada com o ImageGen integrado e exportada como WebP transparente em 620 e 1240 pixels de largura, em `static/images/landing-ai-menu-620.webp` e `static/images/landing-ai-menu-1240.webp`.
 
