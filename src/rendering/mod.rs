@@ -1,5 +1,6 @@
 pub mod admin;
 pub mod affiliates;
+pub mod assets;
 pub mod auth;
 pub mod billing;
 pub mod dashboard;
@@ -100,5 +101,5 @@ pub fn render_html<T: Template>(tpl: &T, status: StatusCode) -> AppResult<Respon
     let body = tpl
         .render()
         .map_err(|e| AppError::Internal(format!("template render failed: {e}")))?;
-    Ok((status, Html(body)).into_response())
+    Ok((status, Html(assets::version_static_assets(body))).into_response())
 }

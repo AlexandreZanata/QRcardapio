@@ -224,6 +224,8 @@ pub fn render_public_menu_html(
         json_ld,
     };
 
-    tpl.render()
-        .map_err(|e| AppError::Internal(format!("public menu render failed: {e}")))
+    let html = tpl
+        .render()
+        .map_err(|e| AppError::Internal(format!("public menu render failed: {e}")))?;
+    Ok(super::assets::version_static_assets(html))
 }
