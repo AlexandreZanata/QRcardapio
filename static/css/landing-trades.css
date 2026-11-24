@@ -33,6 +33,7 @@
   border-radius: 50%;
   background: #fff9ee;
   color: var(--landing-ink);
+  pointer-events: none;
 }
 
 .landing-trades-motion span::before {
