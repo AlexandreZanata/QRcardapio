@@ -29,6 +29,7 @@ pub fn config(dir: &TempDir, billing: bool) -> Config {
     Config {
         mcp_enabled: false,
         google: None,
+        payments: Default::default(),
         asaas: billing.then(|| {
             AsaasConfig::new(AsaasEnvironment::Sandbox, "test-api-credential", &token()).unwrap()
         }),

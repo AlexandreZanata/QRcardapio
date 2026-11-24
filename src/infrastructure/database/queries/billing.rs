@@ -2,13 +2,20 @@ use chrono::NaiveDate;
 use sqlx::{Sqlite, SqlitePool, Transaction};
 
 use super::commercial_contracts;
+
+pub use super::billing_payments::*;
 use crate::domain::billing::BillingPlan;
 use crate::domain::commercial::Quote;
+use crate::domain::payments::{PaymentMethod, PaymentProvider};
 use crate::error::AppResult;
 use crate::infrastructure::database::begin_immediate;
 
 #[derive(sqlx::FromRow)]
 pub struct Checkout {
+    pub reference: String,
+    pub provider: String,
+    pub payment_method: String,
+    pub checkout_url: Option<String>,
     pub checkout_id: Option<String>,
     pub checkout_status: String,
     pub subscription_id: Option<String>,
@@ -23,7 +30,8 @@ pub async fn current_checkout(
     est: &str,
 ) -> AppResult<Option<Checkout>> {
     Ok(sqlx::query_as(
-        "SELECT checkout_id, checkout_status, subscription_id, subscription_status, plan_months, price_centavos
+        "SELECT reference, provider, payment_method, checkout_url, checkout_id, checkout_status,
+                subscription_id, subscription_status, plan_months, price_centavos
          FROM billing_checkouts WHERE environment = ? AND establishment_id = ?
            AND checkout_status <> 'closed' AND subscription_status <> 'deleted'
            AND (checkout_status <> 'creating' OR created_at > datetime('now', '-60 minutes'))",
@@ -82,7 +90,31 @@ pub async fn reserve_checkout(
     plan: BillingPlan,
 ) -> AppResult<bool> {
     let quote = crate::domain::commercial::catalog().entry_quote(plan);
-    reserve_contract_checkout(pool, env, est, reference, today, &quote).await
+    reserve_contract_checkout(
+        pool,
+        env,
+        est,
+        reference,
+        today,
+        &quote,
+        CheckoutTarget::ASAAS_CARD,
+    )
+    .await
+}
+
+/// Provider and method of a new checkout. Providers without hosted checkout (Inter) open the
+/// local subscription immediately under synthetic, provider-qualified identifiers.
+#[derive(Debug, Clone, Copy)]
+pub struct CheckoutTarget {
+    pub provider: PaymentProvider,
+    pub method: PaymentMethod,
+}
+
+impl CheckoutTarget {
+    pub const ASAAS_CARD: Self = Self {
+        provider: PaymentProvider::Asaas,
+        method: PaymentMethod::Card,
+    };
 }
 
 /// Reserves a checkout and stores its commercial contract snapshot atomically. The gateway
@@ -94,6 +126,7 @@ pub async fn reserve_contract_checkout(
     reference: &str,
     today: NaiveDate,
     quote: &Quote,
+    target: CheckoutTarget,
 ) -> AppResult<bool> {
     let mut tx = begin_immediate(pool).await?;
     // A creating row has never exposed a link. Allow recovery after the provider's
@@ -107,13 +140,24 @@ pub async fn reserve_contract_checkout(
     .bind(est)
     .execute(&mut *tx)
     .await?;
+    // Inter has no hosted checkout or provider subscription: our reference is both.
+    let local_id =
+        (target.provider == PaymentProvider::Inter).then(|| target.provider.qualify(reference));
+    let (checkout_status, subscription_status) = match local_id {
+        Some(_) => ("open", "active"),
+        None => ("creating", "pending"),
+    };
     let result = sqlx::query(
-        "INSERT INTO billing_checkouts (reference, environment, establishment_id, created_at, plan_months, price_centavos)
-         SELECT ?, ?, ?, datetime('now'), ?, ? WHERE NOT EXISTS (
+        "INSERT INTO billing_checkouts (reference, environment, establishment_id, created_at, plan_months,
+            price_centavos, provider, payment_method, checkout_id, checkout_status, subscription_id,
+            subscription_status)
+         SELECT ?, ?, ?, datetime('now'), ?, ?, ?, ?, ?, ?, ?, ? WHERE NOT EXISTS (
             SELECT 1 FROM billing_coverage
             WHERE environment = ? AND establishment_id = ? AND due_date <= ? AND paid_through > ?
          ) ON CONFLICT DO NOTHING",
     ).bind(reference).bind(env).bind(est).bind(quote.cycle.months()).bind(quote.total_centavos)
+        .bind(target.provider.as_str()).bind(target.method.as_str()).bind(local_id.as_deref())
+        .bind(checkout_status).bind(local_id.as_deref()).bind(subscription_status)
         .bind(env).bind(est).bind(today).bind(today)
         .execute(&mut *tx).await?;
     let reserved = result.rows_affected() == 1;
@@ -132,10 +176,22 @@ pub async fn finish_checkout(
     reference: &str,
     id: Option<&str>,
 ) -> AppResult<()> {
+    finish_hosted_checkout(pool, env, est, reference, id, None).await
+}
+
+/// Stores the hosted checkout id (and URL when the provider does not derive it from the id).
+pub async fn finish_hosted_checkout(
+    pool: &SqlitePool,
+    env: &str,
+    est: &str,
+    reference: &str,
+    id: Option<&str>,
+    url: Option<&str>,
+) -> AppResult<()> {
     sqlx::query(
-        "UPDATE billing_checkouts SET checkout_id = ?, checkout_status = ?
+        "UPDATE billing_checkouts SET checkout_id = ?, checkout_status = ?, checkout_url = ?
          WHERE environment = ? AND establishment_id = ? AND reference = ? AND checkout_status = 'creating'",
-    ).bind(id).bind(if id.is_some() { "open" } else { "closed" }).bind(env).bind(est).bind(reference)
+    ).bind(id).bind(if id.is_some() { "open" } else { "closed" }).bind(url).bind(env).bind(est).bind(reference)
         .execute(pool).await?;
     Ok(())
 }
@@ -249,33 +305,6 @@ pub async fn record_subscription(
     .bind(status)
     .execute(&mut **tx)
     .await?;
-    Ok(())
-}
-
-pub struct Payment<'a> {
-    pub id: &'a str,
-    pub subscription: &'a str,
-    pub due_date: NaiveDate,
-    pub confirmed_centavos: Option<i64>,
-    pub at: &'a str,
-    pub priority: i64,
-}
-
-pub async fn record_payment(
-    tx: &mut Transaction<'_, Sqlite>,
-    env: &str,
-    payment: Payment<'_>,
-) -> AppResult<()> {
-    sqlx::query(
-        "INSERT INTO billing_payments (environment, payment_id, subscription_id, due_date, confirmed_centavos, event_at, event_priority)
-         VALUES (?, ?, ?, ?, ?, ?, ?)
-         ON CONFLICT(environment, payment_id) DO UPDATE SET due_date = excluded.due_date,
-            confirmed_centavos = excluded.confirmed_centavos, event_at = excluded.event_at, event_priority = excluded.event_priority
-         WHERE subscription_id = excluded.subscription_id AND (
-            event_at < excluded.event_at OR (event_at = excluded.event_at AND event_priority < excluded.event_priority)
-         )",
-    ).bind(env).bind(payment.id).bind(payment.subscription).bind(payment.due_date).bind(payment.confirmed_centavos)
-        .bind(payment.at).bind(payment.priority).execute(&mut **tx).await?;
     Ok(())
 }
 

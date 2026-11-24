@@ -53,6 +53,20 @@ Contract drift is enforced by `tests/commercial_contracts.rs` (catalog, capabili
 5. The landing page still names the offer "Plano Essencial" (marketing copy); billing and contracts call it QR Menu.
 6. `establishment_members.member_role` and MCP `scope` CHECK constraints need expand migrations before new roles/scopes.
 
+## SaaS Billing Providers: Asaas, Stripe and Banco Inter (2026-11-24)
+
+The three providers can be active at the same time; the owner chooses the payment method and each subscription stays with its provider ([ADR-011](../decisions/ADR-011-multi-provider-saas-billing.md), [providers](../architecture/payments/README.md)).
+
+| Area | Status |
+|---|---|
+| Provider-neutral `GatewayEvent` pipeline shared by all providers | Implemented and tested |
+| Stripe card subscriptions (hosted Checkout, API `2026-11-18.endive`, HMAC webhooks, refunds and disputes via `invoice_payments`, cancel at period end) | Implemented, tested with signed events and an API mock; **not homologated** |
+| Banco Inter Pix/boleto (Cobrança v3 per cycle, mTLS + cached OAuth, payer data, secret-path webhook with re-fetch, hourly renewal and reconciliation, cancel) | Implemented, tested with an API mock; **not homologated** |
+| Asaas | Unchanged behavior; sandbox homologation still pending |
+| Refunds of Inter charges, Pix Automático, Stripe Pix/Boleto | Planned |
+
+Verification on this branch: `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test --locked` (all suites, including `tests/payment_providers.rs`).
+
 ## Landing and Panel Refresh
 
 The homepage includes native 4K browser captures of the owner dashboard and public mobile menu, with responsive WebP variants on the landing. The owner dashboard and operational administration share responsive side navigation. Operational tables include translated statuses and empty states.

@@ -181,3 +181,42 @@ Releases from this one on run migrations with `ignore_missing = true`, so later 
 4. On roll-forward the idempotent migration runs again and backfills contracts for any checkout created meanwhile (as `legacy_plan`, QR Menu v1, original price).
 
 Alternative: restore the pre-deploy backup taken by the deploy agent (`/var/backups/qrcardapio/pre-<sha>-*.sqlite`), accepting the loss of writes made after the deploy, then replay missed Asaas webhooks from the Asaas dashboard.
+
+## Payment providers (Stripe and Banco Inter)
+
+Asaas, Stripe and Inter can be active at the same time ([ADR-011](../decisions/ADR-011-multi-provider-saas-billing.md), [providers](../architecture/payments/README.md)). All of them must use the same environment (`sandbox` or `production`). With Asaas and Stripe both configured, set `BILLING_CARD_PROVIDER=asaas|stripe`. Every provider requires an HTTPS `PUBLIC_BASE_URL` and `COOKIE_SECURE=true`. Variables are listed in `.env.example`.
+
+### Stripe
+
+1. Dashboard (Sandbox first) → Developers → API keys: create a **restricted key** (`rk_test_…`) with write access to Checkout Sessions and Subscriptions and read access to Invoices/Invoice Payments; set `STRIPE_SECRET_KEY`.
+2. Workbench → Webhooks → add endpoint `https://<domain>/webhooks/stripe`, payload **snapshot**, API version **2026-11-18.endive**, events: `checkout.session.completed`, `checkout.session.expired`, `checkout.session.async_payment_succeeded`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`, `invoice.paid`, `charge.refunded`, `charge.dispute.created`, `charge.dispute.closed`. Copy the signing secret into `STRIPE_WEBHOOK_SECRET`.
+3. Sandbox homologation: subscribe with card `4242 4242 4242 4242`; confirm the session, subscription and `invoice.paid` events (HTTP 200), coverage on `/dashboard/billing`, `SubscriptionActivated` in `domain_events`; cancel renewal (Stripe shows "cancels at period end"); refund the charge from the Dashboard and confirm publishing is blocked; resend an event from the Dashboard and confirm nothing changes.
+4. Production: repeat with `rk_live_…`/`sk_live_…` and a live-mode endpoint (its own `whsec_`). Upgrading the API version means a new endpoint plus a code change of `stripe::API_VERSION`.
+
+### Banco Inter
+
+1. Sandbox: create an integration at developers.inter.co (community account), download certificate and key, note `client_id`/`client_secret`. Production: Internet Banking PJ → Integrar → Nova integração with scopes `boleto-cobranca.read` and `boleto-cobranca.write` (analysis required); the certificate lasts 1 year (sandbox: 30 days) and is renewed 90 days before expiry with the same client id and secret.
+2. Store the files readable only by the service user (for example `/etc/qrcardapio/inter.crt`, `/etc/qrcardapio/inter.key`, mode `0400`) and set `INTER_ENV`, `INTER_CLIENT_ID`, `INTER_CLIENT_SECRET`, `INTER_CERT_PATH`, `INTER_KEY_PATH`, `INTER_WEBHOOK_TOKEN` (32+ letters/digits) and, only for multi-account integrations, `INTER_ACCOUNT`. The server refuses to start if the PEM pair is invalid.
+3. Use a **static egress IP** (Inter blocks some dynamic cloud ranges with an empty 406).
+4. Register the callback once: `qrcardapio billing register-inter-webhook` (uses `PUBLIC_BASE_URL`; pass `--base https://<host>` for the dedicated mTLS host below).
+5. Optional hardening: verify Inter's client certificate (Internet Banking → Minhas integrações → "Certificado Webhook", file `ca.crt`) on a dedicated host so browsers are never asked for a certificate, then register it with `--base`:
+
+   ```caddyfile
+   pagamentos.qrcardapio.com.br {
+       tls {
+           client_auth {
+               mode require_and_verify
+               trust_pool file /etc/caddy/inter-ca.crt
+           }
+       }
+       handle /webhooks/inter/* {
+           reverse_proxy app:8080
+       }
+       respond 404
+   }
+   ```
+
+6. The server runs the Inter pass hourly (issue renewals 10 days ahead, reconcile open charges). Run it on demand with `qrcardapio billing run-inter-cycle`.
+7. Sandbox homologation: save payer data, subscribe with "Pix ou boleto", confirm the charge appears in Inter and on `/dashboard/billing` (Pix QR, digitable line, PDF); simulate payment with `POST /cobranca/v3/cobrancas/{codigoSolicitacao}/pagar` (`{"pagarCom":"PIX"}`, sandbox only, mTLS); confirm the callback (or the next pass) grants coverage; cancel renewal and confirm pending charges become `CANCELADO`.
+
+Refunds of Inter charges are manual (boleto has no refund API; Pix refunds need the end-to-end id). They are not reflected automatically — record the decision and keep the coverage consistent manually until the planned operator command exists.

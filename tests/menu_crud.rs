@@ -24,6 +24,7 @@ fn test_config(dir: &TempDir) -> Config {
     let static_dir = dir.path().join("static");
     std::fs::create_dir_all(&static_dir).unwrap();
     Config {
+        payments: Default::default(),
         asaas: None,
         mcp_enabled: false,
         google: None,

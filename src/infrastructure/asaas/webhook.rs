@@ -5,6 +5,9 @@ use serde_json::Number;
 use uuid::Uuid;
 
 use super::BILLING_PATH;
+use crate::domain::payments::{
+    CheckoutState, GatewayEvent, PRIORITY_REVERSED, PRIORITY_SETTLED, SubscriptionState,
+};
 use crate::domain::product::parse_price_centavos;
 
 #[derive(Deserialize)]
@@ -53,31 +56,8 @@ struct Payment {
     original_value: Option<Number>,
 }
 
-pub enum Change {
-    Checkout {
-        id: Uuid,
-        reference: Option<Uuid>,
-        status: &'static str,
-    },
-    Subscription {
-        id: String,
-        checkout: Option<Uuid>,
-        status: &'static str,
-        at: String,
-    },
-    Payment {
-        id: String,
-        checkout: Option<Uuid>,
-        subscription_id: String,
-        confirmed_centavos: Option<i64>,
-        due_date: NaiveDate,
-        priority: i64,
-        at: String,
-    },
-}
-
 impl Webhook {
-    pub fn into_change(self) -> Result<Option<Change>, &'static str> {
+    pub fn into_change(self) -> Result<Option<GatewayEvent>, &'static str> {
         if self.id.is_empty()
             || self.id.len() > 200
             || !self.id.bytes().all(|byte| byte.is_ascii_graphic())
@@ -87,10 +67,10 @@ impl Webhook {
         match self.event.as_str() {
             "CHECKOUT_CREATED" | "CHECKOUT_PAID" | "CHECKOUT_CANCELED" | "CHECKOUT_EXPIRED" => {
                 let data = self.checkout.ok_or("missing checkout")?;
-                let status = match self.event.as_str() {
-                    "CHECKOUT_CREATED" => "open",
-                    "CHECKOUT_PAID" => "paid",
-                    _ => "closed",
+                let state = match self.event.as_str() {
+                    "CHECKOUT_CREATED" => CheckoutState::Open,
+                    "CHECKOUT_PAID" => CheckoutState::Paid,
+                    _ => CheckoutState::Closed,
                 };
                 let reference = data
                     .external_reference
@@ -98,10 +78,10 @@ impl Webhook {
                     .and_then(parse_uuid)
                     .or_else(|| data.callback.as_ref().and_then(Callback::reference));
                 let id = parse_uuid(&data.id).ok_or("invalid checkout id")?;
-                Ok(Some(Change::Checkout {
-                    id,
-                    reference,
-                    status,
+                Ok(Some(GatewayEvent::Checkout {
+                    id: id.to_string(),
+                    reference: reference.map(|r| r.to_string()),
+                    state,
                 }))
             }
             "SUBSCRIPTION_CREATED"
@@ -112,18 +92,24 @@ impl Webhook {
                 if !subscription_id_valid(&data.id) {
                     return Err("invalid subscription id");
                 }
-                let status = match (self.event.as_str(), data.deleted, data.status.as_deref()) {
-                    ("SUBSCRIPTION_DELETED", _, _) | (_, Some(true), _) => "deleted",
-                    ("SUBSCRIPTION_INACTIVATED", _, _) | (_, _, Some("INACTIVE" | "EXPIRED")) => {
-                        "inactive"
+                let state = match (self.event.as_str(), data.deleted, data.status.as_deref()) {
+                    ("SUBSCRIPTION_DELETED", _, _) | (_, Some(true), _) => {
+                        SubscriptionState::Deleted
                     }
-                    (_, _, Some("ACTIVE")) => "active",
+                    ("SUBSCRIPTION_INACTIVATED", _, _) | (_, _, Some("INACTIVE" | "EXPIRED")) => {
+                        SubscriptionState::Inactive
+                    }
+                    (_, _, Some("ACTIVE")) => SubscriptionState::Active,
                     _ => return Ok(None),
                 };
-                Ok(Some(Change::Subscription {
+                Ok(Some(GatewayEvent::Subscription {
                     id: data.id,
-                    checkout: data.checkout_session.as_deref().and_then(parse_uuid),
-                    status,
+                    checkout: data
+                        .checkout_session
+                        .as_deref()
+                        .and_then(parse_uuid)
+                        .map(|id| id.to_string()),
+                    state,
                     at: parse_timestamp(self.date_created.as_deref())?,
                 }))
             }
@@ -158,13 +144,21 @@ impl Webhook {
                 } else {
                     None
                 };
-                Ok(Some(Change::Payment {
+                Ok(Some(GatewayEvent::Payment {
                     id: data.id,
-                    checkout: data.checkout_session.as_deref().and_then(parse_uuid),
+                    checkout: data
+                        .checkout_session
+                        .as_deref()
+                        .and_then(parse_uuid)
+                        .map(|id| id.to_string()),
                     subscription_id,
                     confirmed_centavos,
                     due_date,
-                    priority: if settled { 1 } else { 2 },
+                    priority: if settled {
+                        PRIORITY_SETTLED
+                    } else {
+                        PRIORITY_REVERSED
+                    },
                     at: parse_timestamp(self.date_created.as_deref())?,
                 }))
             }

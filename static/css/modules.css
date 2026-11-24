@@ -33,3 +33,22 @@
 
 .module-card-head h3 { margin: 0; font-size: 1.05rem; }
 .module-price { margin-top: auto; }
+
+.billing-methods-title { margin: var(--space-4) 0 var(--space-2); font-size: 1rem; }
+.billing-methods { display: grid; gap: var(--space-3); margin: 0; padding: 0; list-style: none; }
+.billing-method { display: grid; gap: var(--space-2); padding: var(--space-3); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); }
+.billing-method p { margin: 0; }
+
+.billing-charge, .billing-payer { margin-top: var(--space-6); }
+.billing-charge-facts { display: grid; grid-template-columns: max-content 1fr; gap: var(--space-1) var(--space-3); }
+.billing-charge-facts dd { margin: 0; font-weight: 700; }
+.billing-charge-pix { display: grid; gap: var(--space-2); justify-items: start; margin: var(--space-4) 0; }
+.billing-charge-pix img { width: min(100%, 220px); height: auto; background: #fff; }
+.billing-charge textarea, .billing-charge input { width: 100%; font-family: ui-monospace, monospace; }
+
+.billing-payer-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+  gap: var(--space-3);
+  align-items: end;
+}

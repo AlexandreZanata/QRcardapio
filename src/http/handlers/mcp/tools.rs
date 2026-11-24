@@ -56,7 +56,7 @@ pub async fn execute(
             let _: EmptyArgs = parse(args)?;
             Ok(account::read_settings(
                 &state.pool,
-                state.asaas.as_ref(),
+                state.billing.enforcement(),
                 grant,
                 &state.config.public_base_url,
             )
@@ -65,7 +65,7 @@ pub async fn execute(
         UPDATE_ACCOUNT => Ok(account::update_settings(
             &state.pool,
             &state.publish_locks,
-            state.asaas.as_ref(),
+            state.billing.enforcement(),
             grant,
             parse(args)?,
             &state.config.public_base_url,
@@ -94,7 +94,7 @@ pub async fn execute(
                 &state.pool,
                 &state.config,
                 &state.publish_locks,
-                state.asaas.as_ref(),
+                state.billing.enforcement(),
                 grant,
             )
             .await

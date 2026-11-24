@@ -72,6 +72,7 @@ pub(super) async fn setup_with_billing(
         log_format: LogFormat::Pretty,
         log_level: "warn".into(),
         asaas,
+        payments: Default::default(),
         mcp_enabled: enabled,
         google: None,
     };

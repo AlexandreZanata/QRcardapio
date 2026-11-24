@@ -15,6 +15,7 @@ use qrcardapio::infrastructure::database::init_pool;
 
 fn test_config(dir: &TempDir) -> Config {
     Config {
+        payments: Default::default(),
         asaas: None,
         mcp_enabled: false,
         google: None,

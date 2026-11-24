@@ -30,10 +30,7 @@ pub const REFERRAL_COOKIE_NAME: &str = "qr_ref";
 const PORTAL_PATH: &str = "/dashboard/affiliate";
 
 pub fn active_billing_env(state: &AppState) -> &'static str {
-    state
-        .asaas
-        .as_ref()
-        .map_or("production", |client| client.config().environment.as_str())
+    state.billing.environment().unwrap_or("production")
 }
 
 pub fn referral_cookie_value(jar: &CookieJar) -> Option<&str> {
@@ -139,7 +136,7 @@ pub async fn referral_redirect(
         Some(Locale::Es) => "/es",
         _ => "/",
     };
-    let target = if state.asaas.is_some()
+    let target = if state.billing.enabled()
         && let Some(plan) = BillingPlan::from_key(&query.plan)
     {
         format!("/register?plan={}", plan.key())

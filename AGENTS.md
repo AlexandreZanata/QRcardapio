@@ -78,6 +78,7 @@ Modular monolith written in **Rust 1.100.0 (Edition 2024)** with **Axum 0.8.9**,
 - **Migrations are expand-contract** (ADR-010): additive and idempotent first; destructive changes only in a later release. `init_pool` tolerates newer migrations.
 - **Contract drift is a test failure**: update `contracts/`, `docs/modules/*.md` and `docs/business/MODULE_CATALOG.md` together; run `cargo test --test commercial_contracts`.
 - SaaS billing (platform ↔ establishment) and Commerce Payments (consumer ↔ establishment) must never share credentials, beneficiaries, state or ledgers.
+- **Payment providers** (Asaas, Stripe, Inter) are adapters: translate provider facts into `domain::payments::GatewayEvent` and apply them with `application::billing_events::apply_events`. Never branch coverage, entitlements or commissions on the provider. Store Stripe/Inter ids qualified (`stripe:`, `inter:`), verify webhooks (header token, Stripe HMAC, Inter secret path + mTLS re-fetch) and never log provider payloads or payer documents. See `docs/architecture/payments/`.
 
 ## 6. Multi-Tenant & Security Constraints
 

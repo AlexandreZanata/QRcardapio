@@ -4,6 +4,8 @@ pub mod admin_affiliates;
 pub mod affiliates;
 pub mod auth;
 pub mod billing;
+pub mod billing_payer;
+pub mod billing_webhooks;
 pub mod categories;
 pub mod dashboard;
 pub mod google;

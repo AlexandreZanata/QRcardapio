@@ -37,3 +37,7 @@ O Plano Essencial passou a ser o módulo **QR Menu v1** do [catálogo comercial]
 - Clientes existentes foram migrados para contratos `legacy_plan` sem nova cobrança (`tests/commercial_migration.rs`).
 - Alterações de assinatura (adicionar módulos, trocar ciclo, proporcionalidade) não estão habilitadas; ver [SUBSCRIPTION_RULES](../business/SUBSCRIPTION_RULES.md).
 - A homologação na conta Sandbox do Asaas continua pendente e é requisito para declarar o fluxo homologado.
+
+## Provedores Stripe e Banco Inter
+
+Desde [ADR-011](../decisions/ADR-011-multi-provider-saas-billing.md), o Asaas é um dos três provedores de cobrança SaaS. O cartão é processado pelo Asaas ou pela Stripe (`BILLING_CARD_PROVIDER`), e Pix/boleto pelo Banco Inter, com uma cobrança por ciclo emitida pela plataforma. Todos produzem os mesmos eventos normalizados (`GatewayEvent`) e a mesma regra de cobertura. Detalhes: [provedores](payments/README.md), [Stripe](payments/STRIPE.md), [Inter](payments/INTER.md).

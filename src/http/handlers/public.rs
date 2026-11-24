@@ -91,7 +91,7 @@ fn no_store_redirect(location: &str) -> Response {
 }
 
 fn render_landing(state: &AppState, locale: Locale, is_logged_in: bool) -> AppResult<Response> {
-    let billing_enabled = state.asaas.is_some();
+    let billing_enabled = state.billing.enabled();
     let show_plan = billing_enabled || local_plan_preview(&state.config.public_base_url);
     let base = &state.config.public_base_url;
     let cat = Catalog::global();

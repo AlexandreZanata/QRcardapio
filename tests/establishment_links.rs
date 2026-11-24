@@ -33,6 +33,7 @@ async fn submit(app: &Router, account: &AuthSuccess, path: &str, fields: &str) -
 async fn concurrent_onboarding_gives_identical_names_distinct_short_public_links() {
     let dir = TempDir::new().unwrap();
     let config = Config {
+        payments: Default::default(),
         asaas: None,
         mcp_enabled: false,
         google: None,

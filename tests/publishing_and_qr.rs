@@ -36,6 +36,7 @@ use qrcardapio::qr::{generate_png, generate_svg};
 
 fn test_config(dir: &TempDir) -> Config {
     Config {
+        payments: Default::default(),
         asaas: None,
         mcp_enabled: false,
         google: None,

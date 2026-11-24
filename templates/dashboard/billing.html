@@ -1,4 +1,5 @@
 {% extends "layouts/dashboard.html" %}
+{% import "components/form_fields.html" as fields %}
 
 {% block page_styles %}
 <link rel="stylesheet" href="/static/css/modules.css">
@@ -31,12 +32,26 @@
          data-i18n="{{ offer.name_key }}">{{ page.t(offer.name_key) }}</a>
       {% endfor %}
     </nav>
-    <form method="post" action="/dashboard/billing/checkout">
-      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
-      <input type="hidden" name="plan" value="{{ plan.key }}">
-      <input type="hidden" name="offer" value="{{ plan.offer }}">
-      <button class="btn panel-action panel-action-primary" type="submit" data-i18n="billing.subscribe">{{ page.t("billing.subscribe") }}</button>
-    </form>
+    <h3 class="billing-methods-title" data-i18n="billing.method_heading">{{ page.t("billing.method_heading") }}</h3>
+    <ul class="billing-methods">
+      {% for method in methods %}
+      <li class="billing-method">
+        <strong data-i18n="{{ method.name_key }}">{{ page.t(method.name_key) }}</strong>
+        <p class="field-hint" data-i18n="{{ method.hint_key }}">{{ page.t(method.hint_key) }}</p>
+        {% if method.blocked_key.is_empty() %}
+        <form method="post" action="/dashboard/billing/checkout">
+          <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+          <input type="hidden" name="plan" value="{{ plan.key }}">
+          <input type="hidden" name="offer" value="{{ plan.offer }}">
+          <input type="hidden" name="method" value="{{ method.key }}">
+          <button class="btn panel-action panel-action-primary" type="submit" data-i18n="{{ method.submit_key }}">{{ page.t(method.submit_key) }}</button>
+        </form>
+        {% else %}
+        <p class="field-hint" data-i18n="{{ method.blocked_key }}">{{ page.t(method.blocked_key) }}</p>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
     {% endif %}
   </section>
   <section class="card" aria-labelledby="billing-status-title">
@@ -66,6 +81,55 @@
     {% endif %}
   </section>
 </div>
+
+{% if let Some(charge) = inter_charge %}
+<section class="card billing-charge" aria-labelledby="billing-charge-title">
+  <h2 id="billing-charge-title" data-i18n="billing.charge_heading">{{ page.t("billing.charge_heading") }}</h2>
+  <p role="status" data-i18n="{{ charge.status_key }}">{{ page.t(charge.status_key) }}</p>
+  <dl class="billing-charge-facts">
+    <dt data-i18n="billing.charge_amount">{{ page.t("billing.charge_amount") }}</dt>
+    <dd>{{ charge.amount }}</dd>
+    <dt data-i18n="billing.charge_due">{{ page.t("billing.charge_due") }}</dt>
+    <dd><time datetime="{{ charge.due_date }}">{{ charge.due_date.format("%d/%m/%Y") }}</time></dd>
+  </dl>
+  {% if let Some(pix) = charge.pix_copy_paste %}
+  <div class="billing-charge-pix">
+    <img src="/dashboard/billing/pix.svg" width="220" height="220" alt="{{ page.t("billing.charge_qr_alt") }}" data-i18n-alt="billing.charge_qr_alt">
+    <label class="dashboard-field-label" for="billing-pix" data-i18n="billing.charge_pix">{{ page.t("billing.charge_pix") }}</label>
+    <textarea class="dashboard-control" id="billing-pix" rows="3" readonly>{{ pix }}</textarea>
+  </div>
+  {% endif %}
+  {% if let Some(line) = charge.digitable_line %}
+  <label class="dashboard-field-label" for="billing-boleto" data-i18n="billing.charge_boleto">{{ page.t("billing.charge_boleto") }}</label>
+  <input class="dashboard-control" id="billing-boleto" value="{{ line }}" readonly>
+  <p><a class="btn btn-secondary" href="/dashboard/billing/boleto.pdf" data-i18n="billing.charge_pdf">{{ page.t("billing.charge_pdf") }}</a></p>
+  {% endif %}
+</section>
+{% endif %}
+
+{% if show_payer_form %}
+<section class="card billing-payer" aria-labelledby="billing-payer-title">
+  <h2 id="billing-payer-title" data-i18n="billing.payer_heading">{{ page.t("billing.payer_heading") }}</h2>
+  <p class="field-hint" data-i18n="billing.payer_intro">{{ page.t("billing.payer_intro") }}</p>
+  {% if let Some(summary) = payer_summary %}
+  <p><span data-i18n="billing.payer_on_file">{{ page.t("billing.payer_on_file") }}</span>: {{ summary }}</p>
+  {% endif %}
+  <form method="post" action="/dashboard/billing/payer" class="billing-payer-form">
+    <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+    {{ fields::input("document", "billing.payer_document", "", 18, required=true, input_mode="numeric") }}
+    {{ fields::input("legal_name", "billing.payer_legal_name", "", 100, required=true) }}
+    {{ fields::input("email", "billing.payer_email", "", 254, kind="email", required=true) }}
+    {{ fields::input("postal_code", "billing.payer_postal_code", "", 9, required=true, input_mode="numeric") }}
+    {{ fields::input("street", "billing.payer_street", "", 90, required=true) }}
+    {{ fields::input("number", "billing.payer_number", "", 10, required=true) }}
+    {{ fields::input("complement", "billing.payer_complement", "", 30) }}
+    {{ fields::input("district", "billing.payer_district", "", 60, required=true) }}
+    {{ fields::input("city", "billing.payer_city", "", 60, required=true) }}
+    {{ fields::input("state", "billing.payer_state", "", 2, required=true) }}
+    <button class="btn btn-secondary" type="submit" data-i18n="billing.payer_save">{{ page.t("billing.payer_save") }}</button>
+  </form>
+</section>
+{% endif %}
 
 <section class="module-catalog" aria-labelledby="module-catalog-title">
   <h2 id="module-catalog-title" data-i18n="commercial.modules_heading">{{ page.t("commercial.modules_heading") }}</h2>

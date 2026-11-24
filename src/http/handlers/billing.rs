@@ -1,5 +1,4 @@
-use axum::Json;
-use axum::extract::{Form, FromRequest, Query, Request, State};
+use axum::extract::{Form, Query, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Redirect, Response};
 use axum_extra::extract::CookieJar;
@@ -7,21 +6,23 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::app::AppState;
-use crate::application::entitlements::Enforcement;
 use crate::application::{billing, commercial};
 use crate::domain::account::AccountRole;
 use crate::domain::billing::{BillingPlan, billing_now};
 use crate::domain::commercial::ENTRY_OFFER;
 use crate::domain::entitlements::{Operation, OperationalStatus};
+use crate::domain::payments::{PaymentMethod, PaymentProvider};
 use crate::error::{AppError, AppResult};
 use crate::http::handlers::{dashboard::CsrfForm, onboarding::PlanIntent};
 use crate::http::middleware::auth::{TenantContext, verify_csrf};
 use crate::http::middleware::locale::RequestLocale;
 use crate::http::responses::{take_flash, with_flash_redirect};
-use crate::infrastructure::asaas::{AsaasClient, BILLING_PATH, Webhook};
-use crate::infrastructure::database::queries::{billing as queries, entitlements};
-use crate::infrastructure::security::constant_time_eq;
-use crate::rendering::billing::{BillingTemplate, ModuleCard, PlanOffer};
+use crate::i18n::{Locale, format_price};
+use crate::infrastructure::asaas::BILLING_PATH;
+use crate::infrastructure::database::queries::{
+    billing as queries, billing_inter, billing_payers, entitlements,
+};
+use crate::rendering::billing::{BillingTemplate, ChargeView, MethodOffer, ModuleCard, PlanOffer};
 use crate::rendering::{PageMeta, render_html};
 
 pub async fn page(
@@ -31,8 +32,7 @@ pub async fn page(
     jar: CookieJar,
     Query(intent): Query<PlanIntent>,
 ) -> AppResult<Response> {
-    let client = configured_client(&state)?;
-    let env = client.config().environment.as_str();
+    let env = billing_environment(&state)?;
     let est = &tenant.establishment.id;
     let is_owner = Operation::ManageBilling.permits(tenant.role);
     let today = billing_now().date_naive();
@@ -43,7 +43,7 @@ pub async fn page(
         queries::paid_coverage(&state.pool, env, est, today),
         commercial::module_overview(
             &state.pool,
-            Enforcement::from_gateway(Some(client)),
+            state.billing.enforcement(),
             est,
             suspended,
             today,
@@ -71,6 +71,22 @@ pub async fn page(
         (Some(_), None) => "billing.status_verifying",
         (None, None) => "billing.status_none",
     };
+    let payer = billing_payers::find(&state.pool, est).await?;
+    let inter_charge = match current.as_ref() {
+        Some(row) if row.provider == PaymentProvider::Inter.as_str() => {
+            billing_inter::latest_for_establishment(&state.pool, env, est)
+                .await?
+                .filter(|charge| charge.billing_reference == row.reference)
+                .map(|charge| charge_view(&charge))
+        }
+        _ => None,
+    };
+    let methods = state.billing.methods();
+    let start_checkout = current.is_none() && paid_through.is_none();
+    let checkout_url = current
+        .as_ref()
+        .filter(|row| row.checkout_status == "open")
+        .and_then(|row| hosted_checkout_url(&state, row));
     let (jar, flash) = take_flash(jar);
     let tpl = BillingTemplate {
         page: PageMeta::new(locale, "billing.heading", flash),
@@ -85,18 +101,20 @@ pub async fn page(
         paid_through,
         status_key,
         is_owner,
-        start_checkout: current.is_none() && paid_through.is_none(),
-        checkout_url: current
-            .as_ref()
-            .filter(|row| row.checkout_status == "open")
-            .and_then(|row| row.checkout_id.as_deref())
-            .and_then(|id| Uuid::parse_str(id).ok())
-            .map(|id| client.checkout_url(id).to_string()),
+        start_checkout,
+        checkout_url,
         can_reconcile: current
             .as_ref()
             .is_some_and(|row| row.checkout_status == "paid" && row.subscription_id.is_none()),
         cancellable_id: current.and_then(|row| row.subscription_id),
         modules: modules.into_iter().map(ModuleCard::from_overview).collect(),
+        show_payer_form: is_owner && start_checkout && methods.contains(&PaymentMethod::PixBoleto),
+        methods: methods
+            .into_iter()
+            .map(|method| MethodOffer::new(method, payer.is_some()))
+            .collect(),
+        inter_charge,
+        payer_summary: payer.map(|p| format!("{} ({})", p.legal_name, p.masked_document())),
     };
     Ok((jar, render_html(&tpl, StatusCode::OK)?).into_response())
 }
@@ -106,6 +124,7 @@ pub struct CheckoutForm {
     _csrf: String,
     plan: Option<String>,
     offer: Option<String>,
+    method: Option<String>,
 }
 
 pub async fn checkout(
@@ -114,8 +133,10 @@ pub async fn checkout(
     Form(form): Form<CheckoutForm>,
 ) -> AppResult<Redirect> {
     verify_csrf(&tenant.auth, &form._csrf)?;
-    let client = configured_client(&state)?;
+    billing_environment(&state)?;
     authorize_mutation(&state, &tenant).await?;
+    let method = PaymentMethod::parse(form.method.as_deref().unwrap_or("card"))
+        .ok_or(AppError::Validation("error.payment_method_unavailable"))?;
     let plan = match form.plan.as_deref() {
         None => BillingPlan::Monthly,
         Some(key) => {
@@ -127,9 +148,10 @@ pub async fn checkout(
     let quote = commercial::quote_checkout(&[offer], plan)?;
     billing::start_checkout(
         &state.pool,
-        client,
+        &state.billing,
         &state.config.public_base_url,
         &tenant.establishment.id,
+        method,
         &quote,
     )
     .await?;
@@ -143,9 +165,10 @@ pub async fn reconcile(
     Form(form): Form<CsrfForm>,
 ) -> AppResult<Response> {
     verify_csrf(&tenant.auth, &form._csrf)?;
-    let client = configured_client(&state)?;
+    billing_environment(&state)?;
     authorize_mutation(&state, &tenant).await?;
-    let linked = billing::reconcile_checkout(&state.pool, client, &tenant.establishment.id).await?;
+    let linked =
+        billing::reconcile_checkout(&state.pool, &state.billing, &tenant.establishment.id).await?;
     Ok(with_flash_redirect(
         jar,
         BILLING_PATH,
@@ -173,14 +196,14 @@ pub async fn cancel(
     Form(form): Form<CancelForm>,
 ) -> AppResult<Response> {
     verify_csrf(&tenant.auth, &form._csrf)?;
-    let client = configured_client(&state)?;
+    billing_environment(&state)?;
     authorize_mutation(&state, &tenant).await?;
     if form.confirm.as_deref() != Some("yes") {
         return Err(AppError::Validation("error.billing_confirm_cancellation"));
     }
     billing::cancel_subscription(
         &state.pool,
-        client,
+        &state.billing,
         &tenant.establishment.id,
         &form.subscription,
     )
@@ -194,37 +217,40 @@ pub async fn cancel(
     ))
 }
 
-pub async fn webhook(State(state): State<AppState>, request: Request) -> Response {
-    let client = match configured_client(&state) {
-        Ok(client) => client,
-        Err(error) => return error.into_response(),
-    };
-    let authorized = request
-        .headers()
-        .get("asaas-access-token")
-        .and_then(|value| value.to_str().ok())
-        .is_some_and(|value| constant_time_eq(client.config().webhook_token(), value));
-    if !authorized {
-        return StatusCode::UNAUTHORIZED.into_response();
-    }
-    let Json(event) = match Json::<Webhook>::from_request(request, &state).await {
-        Ok(event) => event,
-        Err(rejection) => return rejection.status().into_response(),
-    };
-    match billing::process_webhook(&state.pool, client.config().environment.as_str(), event).await {
-        Ok(()) => StatusCode::OK.into_response(),
-        Err(error) => error.into_response(),
-    }
-}
-
-fn configured_client(state: &AppState) -> AppResult<&AsaasClient> {
+fn billing_environment(state: &AppState) -> AppResult<&'static str> {
     state
-        .asaas
-        .as_ref()
+        .billing
+        .environment()
         .ok_or(AppError::NotFound("error.not_found"))
 }
 
-async fn authorize_mutation(state: &AppState, tenant: &TenantContext) -> AppResult<()> {
+/// Hosted checkout link: stored by Stripe, derived from the id for Asaas.
+fn hosted_checkout_url(state: &AppState, row: &queries::Checkout) -> Option<String> {
+    if let Some(url) = &row.checkout_url {
+        return Some(url.clone());
+    }
+    if row.provider != PaymentProvider::Asaas.as_str() {
+        return None;
+    }
+    let id = Uuid::parse_str(row.checkout_id.as_deref()?).ok()?;
+    Some(state.billing.asaas.as_ref()?.checkout_url(id).to_string())
+}
+
+fn charge_view(charge: &billing_inter::InterCharge) -> ChargeView {
+    let status_key = match charge.status.as_str() {
+        "reserved" | "issued" | "EM_PROCESSAMENTO" => "billing.charge_issuing",
+        _ => "billing.charge_pending",
+    };
+    ChargeView {
+        amount: format_price(charge.amount_centavos, Locale::PtBr),
+        due_date: charge.due_date,
+        pix_copy_paste: charge.pix_copy_paste.clone(),
+        digitable_line: charge.digitable_line.clone(),
+        status_key,
+    }
+}
+
+pub(crate) async fn authorize_mutation(state: &AppState, tenant: &TenantContext) -> AppResult<()> {
     if !Operation::ManageBilling.permits(tenant.role) {
         return Err(AppError::Forbidden("error.billing_owner_required"));
     }
