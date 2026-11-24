@@ -14,7 +14,7 @@ use crate::application::publishing::PublishLocks;
 use crate::config::Config;
 use crate::http::handlers::{
     admin, auth, billing, categories, dashboard, health, mcp, menu_editor, ocr, onboarding,
-    products, public, qr, settings,
+    products, public, qr, seo, settings,
 };
 use crate::http::middleware::branded_errors::branded_errors;
 use crate::http::middleware::security_headers::security_headers_middleware;
@@ -82,6 +82,36 @@ pub fn build_router(state: AppState) -> Router {
 
     Router::new()
         .route("/", get(public::landing))
+        .route("/en", get(public::landing_en))
+        .route("/en/", get(seo::redirect_en_slash))
+        .route("/es", get(public::landing_es))
+        .route("/es/", get(seo::redirect_es_slash))
+        .route("/robots.txt", get(seo::robots_txt))
+        .route("/sitemap.xml", get(seo::sitemap_xml))
+        .route("/llms.txt", get(seo::llms_txt))
+        .route("/manifest.webmanifest", get(seo::manifest_webmanifest))
+        .route("/favicon.ico", get(seo::favicon_ico))
+        .route("/apple-touch-icon.png", get(seo::apple_touch_icon))
+        .route("/solucoes", get(seo::solutions_hub_pt))
+        .route("/en/solutions", get(seo::solutions_hub_en))
+        .route("/es/soluciones", get(seo::solutions_hub_es))
+        .route("/cardapio-digital/{slug}", get(seo::segment_page_pt))
+        .route("/en/digital-menu/{slug}", get(seo::segment_page_en))
+        .route("/es/menu-digital/{slug}", get(seo::segment_page_es))
+        .route("/ferramentas", get(seo::tools_hub_pt))
+        .route("/en/tools", get(seo::tools_hub_en))
+        .route("/es/herramientas", get(seo::tools_hub_es))
+        .route("/ferramentas/{slug}", get(seo::tool_page_pt))
+        .route("/en/tools/{slug}", get(seo::tool_page_en))
+        .route("/es/herramientas/{slug}", get(seo::tool_page_es))
+        .route("/api/tools/qr.svg", get(seo::tool_qr_svg))
+        .route("/api/tools/qr.png", get(seo::tool_qr_png))
+        .route("/guias", get(seo::guides_hub_pt))
+        .route("/en/guides", get(seo::guides_hub_en))
+        .route("/es/guias", get(seo::guides_hub_es))
+        .route("/guias/{slug}", get(seo::guide_page_pt))
+        .route("/en/guides/{slug}", get(seo::guide_page_en))
+        .route("/es/guias/{slug}", get(seo::guide_page_es))
         .route("/login", get(auth::login_page).post(auth::login_submit))
         .route(
             "/register",

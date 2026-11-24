@@ -1,0 +1,26 @@
+{% extends "seo/layout.html" %}
+
+{% block seo_main %}
+<div class="landing-container seo-shell">
+  <nav class="seo-breadcrumb" aria-label="{{ page.t("seo.breadcrumb_label") }}">
+    <a href="{{ nav.home_url }}">{{ page.t("seo.home") }}</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">{{ page.t("seo.tools") }}</span>
+  </nav>
+
+  <header class="seo-hero">
+    <h1>{{ page.t("seo.tools_hub_h1") }}</h1>
+    <p class="seo-lead">{{ page.t("seo.tools_hub_lead") }}</p>
+  </header>
+
+  <section class="seo-card-grid seo-card-grid-3">
+    {% for tool in nav.tools %}
+    <article class="seo-card">
+      <h2><a href="{{ tool.href }}">{{ tool.name }}</a></h2>
+      <p>{{ tool.short_desc }}</p>
+      <a class="seo-inline-link" href="{{ tool.href }}">{{ page.t("seo.open_tool") }}</a>
+    </article>
+    {% endfor %}
+  </section>
+</div>
+{% endblock %}

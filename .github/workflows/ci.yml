@@ -13,6 +13,35 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  branch-policy:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate PR source branch name
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          PATTERN='^(feat|fix|chore|docs|refactor|test|perf|ci|seo|hotfix)/[a-z0-9]+(-[a-z0-9]+)*$'
+          if [ "${#HEAD_REF}" -gt 64 ] || ! [[ "$HEAD_REF" =~ $PATTERN ]]; then
+            echo "::error::Branch '$HEAD_REF' violates docs/agents/BRANCH_POLICY.md."
+            echo "Allowed format (<= 64 chars): ^(feat|fix|chore|docs|refactor|test|perf|ci|seo|hotfix)/[a-z0-9]+(-[a-z0-9]+)*$"
+            echo "Valid examples: feat/seo-geo-growth, fix/sitemap-lastmod, seo/schema-faq, ci/pr-gates"
+            exit 1
+          fi
+          echo "Branch '$HEAD_REF' complies with BRANCH_POLICY.md"
+
+  seo-contracts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.100.0
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Run SEO & GEO contract suite
+        run: cargo test --locked --test seo --test seo_contracts
+
   quality:
     runs-on: ubuntu-latest
     steps:

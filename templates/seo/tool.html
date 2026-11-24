@@ -1,0 +1,180 @@
+{% extends "seo/layout.html" %}
+
+{% block seo_head %}
+<script src="/static/js/seo-tools.js" defer></script>
+{% endblock %}
+
+{% block seo_main %}
+<div class="landing-container seo-shell">
+  <nav class="seo-breadcrumb" aria-label="{{ page.t("seo.breadcrumb_label") }}">
+    <a href="{{ nav.home_url }}">{{ page.t("seo.home") }}</a>
+    <span aria-hidden="true">/</span>
+    <a href="{{ nav.tools_url }}">{{ page.t("seo.tools") }}</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">{{ tool.name }}</span>
+  </nav>
+
+  <header class="seo-hero">
+    <h1>{{ tool.h1 }}</h1>
+    <div class="seo-answer-box">
+      <p class="seo-answer-kicker">{{ page.t("seo.answer_label") }}</p>
+      <p>{{ tool.answer_summary }}</p>
+    </div>
+  </header>
+
+  {% if tool.id.is_qr_generator() %}
+  <section class="seo-tool-grid" data-seo-tool="qr">
+    <form class="seo-card seo-tool-form" method="get" action="{{ form_action }}">
+      <label class="seo-field">
+        <span>{{ page.t("seo.tool_qr_url_label") }}</span>
+        <input id="seo-qr-url" name="url" type="url" required maxlength="512" value="{{ qr_target_url }}" placeholder="https://qrcardapio.com.br/c/seu-negocio">
+      </label>
+      <div class="seo-tool-actions">
+        <button class="btn landing-button landing-button-blue" type="submit">{{ page.t("seo.tool_qr_generate") }}</button>
+        <a id="seo-qr-download-svg" class="btn landing-button" href="{{ qr_svg_download }}">{{ page.t("qr.download_svg") }}</a>
+        <a id="seo-qr-download-png" class="btn landing-button landing-button-yellow" href="{{ qr_png_download }}">{{ page.t("qr.download_png") }}</a>
+      </div>
+      <p class="seo-field-hint">{{ page.t("seo.tool_qr_hint") }}</p>
+    </form>
+
+    <div class="seo-card seo-qr-preview-box">
+      <img id="seo-qr-preview" src="{{ qr_preview_src }}" width="260" height="260" alt="{{ tool.name }}">
+      <p id="seo-qr-caption" class="seo-url-caption">{{ qr_target_url }}</p>
+    </div>
+  </section>
+  {% else if tool.id.is_cmv_calculator() %}
+  <section class="seo-tool-grid" data-seo-tool="cmv" data-locale="{{ page.locale_code }}">
+    <form id="seo-cmv-form" class="seo-card seo-tool-form">
+      <label class="seo-field">
+        <span>{{ page.t("seo.tool_cmv_ingredients") }}</span>
+        <input id="cmv-ingredients" type="text" inputmode="decimal" value="12,50">
+      </label>
+      <label class="seo-field">
+        <span>{{ page.t("seo.tool_cmv_packaging") }}</span>
+        <input id="cmv-packaging" type="text" inputmode="decimal" value="2,50">
+      </label>
+      <label class="seo-field">
+        <span>{{ page.t("seo.tool_cmv_target") }}</span>
+        <input id="cmv-target" type="number" min="5" max="85" step="1" value="30">
+      </label>
+      <div class="seo-preset-row">
+        <button class="btn landing-button seo-preset-btn" type="button" data-cmv-preset="25">25%</button>
+        <button class="btn landing-button seo-preset-btn" type="button" data-cmv-preset="30">30%</button>
+        <button class="btn landing-button seo-preset-btn" type="button" data-cmv-preset="35">35%</button>
+      </div>
+      <label class="seo-field">
+        <span>{{ page.t("seo.tool_cmv_fees") }}</span>
+        <input id="cmv-fees" type="number" min="0" max="40" step="0.5" value="5">
+      </label>
+    </form>
+
+    <div class="seo-card seo-cmv-results" aria-live="polite">
+      <div class="seo-metric-grid">
+        <div class="seo-metric">
+          <span>{{ page.t("seo.tool_cmv_total_cost") }}</span>
+          <strong id="cmv-out-cost">R$ 15,00</strong>
+        </div>
+        <div class="seo-metric seo-metric-highlight">
+          <span>{{ page.t("seo.tool_cmv_suggested_price") }}</span>
+          <strong id="cmv-out-price">R$ 52,63</strong>
+        </div>
+        <div class="seo-metric">
+          <span>{{ page.t("seo.tool_cmv_margin_unit") }}</span>
+          <strong id="cmv-out-margin">R$ 35,00 (67%)</strong>
+        </div>
+        <div class="seo-metric">
+          <span>{{ page.t("seo.tool_cmv_profit_100") }}</span>
+          <strong id="cmv-out-profit100">R$ 3.500,00</strong>
+        </div>
+      </div>
+      <p id="cmv-out-warning" class="seo-warning" hidden>{{ page.t("seo.tool_cmv_invalid") }}</p>
+      <table class="seo-table">
+        <thead>
+          <tr>
+            <th>{{ page.t("seo.tool_cmv_bench_segment") }}</th>
+            <th>{{ page.t("seo.tool_cmv_bench_range") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>{{ page.t("seo.tool_cmv_bench_coffee") }}</td><td>18% – 25%</td></tr>
+          <tr><td>{{ page.t("seo.tool_cmv_bench_burger") }}</td><td>28% – 34%</td></tr>
+          <tr><td>{{ page.t("seo.tool_cmv_bench_restaurant") }}</td><td>28% – 35%</td></tr>
+          <tr><td>{{ page.t("seo.tool_cmv_bench_pizza") }}</td><td>24% – 30%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% else %}
+  <section class="seo-tool-grid" data-seo-tool="placard">
+    <form class="seo-card seo-tool-form" method="get" action="{{ form_action }}">
+      <label class="seo-field">
+        <span>{{ page.t("seo.tool_placard_name") }}</span>
+        <input id="placard-name" name="name" type="text" maxlength="80" value="{{ placard_name }}">
+      </label>
+      <label class="seo-field">
+        <span>{{ page.t("seo.tool_placard_cta") }}</span>
+        <input id="placard-cta" name="cta" type="text" maxlength="120" value="{{ placard_cta }}">
+      </label>
+      <label class="seo-field">
+        <span>{{ page.t("seo.tool_qr_url_label") }}</span>
+        <input id="placard-url" name="url" type="url" required maxlength="512" value="{{ qr_target_url }}">
+      </label>
+      <div class="seo-tool-actions">
+        <button class="btn landing-button" type="submit">{{ page.t("seo.tool_qr_generate") }}</button>
+        <button id="placard-print-btn" class="btn landing-button landing-button-blue" type="button">{{ page.t("print.button") }}</button>
+      </div>
+      <p class="seo-field-hint">{{ page.t("print.helper") }}</p>
+    </form>
+
+    <article class="seo-placard-sheet" aria-label="{{ tool.name }}">
+      <p class="seo-placard-brand" id="placard-preview-name">{{ placard_name }}</p>
+      <img id="placard-preview-qr" src="{{ qr_preview_src }}" width="260" height="260" alt="{{ tool.name }}">
+      <p class="seo-placard-cta" id="placard-preview-cta">{{ placard_cta }}</p>
+      <p class="seo-placard-url" id="placard-preview-url">{{ qr_target_url }}</p>
+    </article>
+  </section>
+  {% endif %}
+
+  <section class="seo-section">
+    <h2>{{ tool.steps_heading }}</h2>
+    <ol class="seo-steps-list">
+      {% for step in tool.how_to_steps %}
+      <li>{{ step }}</li>
+      {% endfor %}
+    </ol>
+  </section>
+
+  <section class="seo-section seo-band">
+    <h2>{{ tool.bridge_title }}</h2>
+    <p>{{ tool.bridge_body }}</p>
+    <div class="landing-actions">
+      <a class="btn landing-button landing-button-pink" href="/register">{{ page.t("landing.create_menu") }}</a>
+      <a class="btn landing-button" href="{{ nav.solutions_url }}">{{ page.t("seo.solutions") }}</a>
+    </div>
+  </section>
+
+  <section class="seo-section">
+    <h2>{{ page.t("seo.faq_heading") }}</h2>
+    <div class="seo-faq-list">
+      {% for (q, a) in tool.faqs %}
+      <details class="seo-faq-item">
+        <summary>{{ q }}</summary>
+        <p>{{ a }}</p>
+      </details>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="seo-section">
+    <h2>{{ page.t("seo.other_tools") }}</h2>
+    <div class="seo-card-grid seo-card-grid-2">
+      {% for other in other_tools %}
+      <a class="seo-card seo-card-link" href="{{ other.href }}">
+        <h3>{{ other.name }}</h3>
+        <p>{{ other.short_desc }}</p>
+      </a>
+      {% endfor %}
+    </div>
+  </section>
+</div>
+{% endblock %}

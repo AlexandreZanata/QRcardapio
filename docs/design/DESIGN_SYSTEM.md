@@ -111,3 +111,7 @@ O campo de endereço inicial mostra o prefixo `/c/` e explica a geração autom�
 ### Integrações de IA
 
 Configurações oferece acesso a **Integrações de IA** quando o MCP está habilitado. A página reaproveita os controles de copiar endereço e os cards do painel. As telas de autorização reutilizam o layout de login e exibem o aplicativo, o estabelecimento e o acesso solicitado nos três idiomas do produto.
+
+### Páginas de SEO, FAQ e utilitários gratuitos
+
+A landing page inclui a faixa de segmentos atendidos, a seção de perguntas frequentes com `<details>` nativo (`#faq`) e o rodapé semântico de 4 colunas (`templates/landing/footer.html`). As páginas de segmentos (`/solucoes`, `/cardapio-digital/{slug}`), ferramentas gratuitas (`/ferramentas/{slug}`, usando `static/js/seo-tools.js` sem estilos inline e folha `@media print` dedicada na placa de mesa) e guias (`/guias/{slug}`) compartilham o mesmo sistema visual em `static/css/seo-pages.css`. Os cartões sociais `og-{pt-BR,en,es}.png` (1200×630) e ícones (`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`, `favicon.ico`) seguem a paleta creme, azul cobalto, amarelo e contorno escuro da marca.
