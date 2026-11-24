@@ -119,3 +119,9 @@ A navegação da landing usa um cabeçalho de uma linha. O menu Explorar agrupa 
 Os cards de segmentos reutilizam o sprite da landing. As perguntas frequentes (`#faq`) usam `<details>` e uma ilustração própria por tema em `static/icons/landing-faq.svg`. A grade passa de duas para uma coluna em telas estreitas. O rodapé escuro compartilhado em `templates/landing/footer.html` destaca a marca e os idiomas acima dos quatro grupos de links.
 
 As páginas de segmentos (`/solucoes`, `/cardapio-digital/{slug}`), ferramentas gratuitas (`/ferramentas/{slug}`, usando `static/js/seo-tools.js` sem estilos inline e folha `@media print` dedicada na placa de mesa) e guias (`/guias/{slug}`) compartilham o mesmo sistema visual em `static/css/seo-pages.css`. Os cartões sociais `og-{pt-BR,en,es}.png` (1200×630) e ícones (`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`, `favicon.ico`) seguem a paleta creme, azul cobalto, amarelo e contorno escuro da marca.
+
+### Login com o Google
+
+A ação **Continuar com o Google** reaproveita um componente Askama nas telas de login, cadastro e consentimento MCP. O botão usa a marca oficial servida localmente e os três catálogos do projeto. O painel de segurança permite vincular ou desvincular o provedor conforme as opções de entrada da conta.
+
+[Diretrizes de marca do Google](https://developers.google.com/identity/branding-guidelines)

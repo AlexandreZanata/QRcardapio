@@ -4,13 +4,12 @@ mod protocol;
 mod tools;
 
 use axum::Router;
-use axum::extract::{DefaultBodyLimit, Request};
-use axum::http::{HeaderValue, header};
-use axum::middleware::{self, Next};
-use axum::response::Response;
+use axum::extract::DefaultBodyLimit;
+use axum::middleware;
 use axum::routing::{get, post};
 
 use crate::app::AppState;
+use crate::http::middleware::security_headers::no_store;
 
 pub const AUTHORIZE_PATH: &str = "/mcp/oauth/authorize";
 pub const CONSENT_PATH: &str = "/mcp/oauth/consent";
@@ -36,21 +35,10 @@ pub fn routes(enabled: bool) -> Router<AppState> {
             get(oauth::consent).post(oauth::consent_submit),
         )
         .route("/mcp/oauth/login", post(oauth::login_submit))
+        .route("/mcp/oauth/google/start", get(oauth::google_start))
         .route(TOKEN_PATH, post(oauth::token))
         .route("/dashboard/integrations", get(connections::page))
         .route("/dashboard/integrations/revoke", post(connections::revoke))
         .layer(DefaultBodyLimit::max(128 * 1024))
         .layer(middleware::from_fn(no_store))
-}
-
-async fn no_store(request: Request, next: Next) -> Response {
-    let mut response = next.run(request).await;
-    response
-        .headers_mut()
-        .insert(header::CACHE_CONTROL, HeaderValue::from_static("no-store"));
-    response.headers_mut().insert(
-        header::REFERRER_POLICY,
-        HeaderValue::from_static("no-referrer"),
-    );
-    response
 }

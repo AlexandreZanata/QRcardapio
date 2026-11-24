@@ -86,3 +86,9 @@ O endpoint MCP remoto usa OAuth com PKCE e vincula ChatGPT, Claude e Antigravity
 ## Navegação da landing
 
 A landing agrupa links secundários no menu Explorar e mantém o seletor de idioma na mesma linha da marca. O menu também reúne as ações de conta em telas estreitas. Os oito segmentos têm cards ilustrados, e cada pergunta frequente tem uma arte própria. O rodapé compartilhado organiza os links em Produto, Para seu negócio, Ferramentas e Guias.
+
+## Login com o Google e contratos MCP
+
+O cadastro, o login e o consentimento MCP aceitam Google quando as credenciais OAuth estão configuradas. Contas antigas vinculam a identidade na área de segurança. Os testes de contrato cobrem o fluxo OpenID Connect com tokens assinados, cadastro, sessão, vínculo, escolha de plano e retomada do MCP. Os contratos MCP exercitam descoberta, OAuth e ferramentas para ChatGPT, Claude e Google Antigravity.
+
+[Ativação e homologação](../operations/RUNBOOK.md#habilitação-do-login-com-o-google) · [Contrato Google](../architecture/GOOGLE_AUTH.md) · [Contratos MCP](../architecture/MCP.md#contratos-e-homologação)

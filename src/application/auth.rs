@@ -73,7 +73,10 @@ pub async fn login(
         None => None,
     };
 
-    let stored_hash = account.as_ref().map(|a| a.password_hash.as_str());
+    let stored_hash = account
+        .as_ref()
+        .map(|a| a.password_hash.as_str())
+        .filter(|hash| !hash.is_empty());
     let valid = passwords.verify_password(password, stored_hash).await?;
 
     let Some(account) = account else {

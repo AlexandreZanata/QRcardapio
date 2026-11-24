@@ -24,7 +24,7 @@ use crate::http::middleware::{
     auth::{ClientIp, OptionalAuth, TenantContext, build_session_cookie, verify_csrf},
     locale::RequestLocale,
 };
-use crate::i18n::Locale;
+use crate::http::responses::take_flash;
 use crate::infrastructure::database::queries::{
     find_establishment_for_account, is_establishment_owner,
     mcp_oauth::{self as queries, Authorization},
@@ -128,6 +128,25 @@ pub struct FlowQuery {
     flow: String,
 }
 
+pub async fn google_start(
+    State(state): State<AppState>,
+    ClientIp(ip): ClientIp,
+    jar: CookieJar,
+    Query(query): Query<FlowQuery>,
+) -> AppResult<Response> {
+    let id = Uuid::parse_str(&query.flow)
+        .map_err(|_| AppError::Validation("mcp.expired"))?
+        .to_string();
+    load_flow(&state, &jar, &id).await?;
+    super::super::google::start_redirect(
+        &state,
+        ip,
+        jar,
+        crate::application::google::Intent::Mcp(&id),
+    )
+    .await
+}
+
 pub async fn consent(
     State(state): State<AppState>,
     OptionalAuth(auth): OptionalAuth,
@@ -136,34 +155,44 @@ pub async fn consent(
     Query(query): Query<FlowQuery>,
 ) -> AppResult<Response> {
     let flow = load_flow(&state, &jar, &query.flow).await?;
+    let (jar, flash) = take_flash(jar);
+    let page = PageMeta::new(locale, "mcp.authorize_heading", flash);
     let Some(auth) = auth else {
-        return login_response(
+        let response = login_response(
             &flow,
             &query.flow,
             browser_token(&jar).unwrap_or_default(),
-            locale,
+            page,
             "",
             None,
-            StatusCode::OK,
-        );
+            (state.google.is_some(), StatusCode::OK),
+        )?;
+        return Ok((jar, response).into_response());
     };
-    let est = find_establishment_for_account(&state.pool, &auth.account.id)
-        .await?
-        .ok_or(AppError::Forbidden("mcp.establishment_required"))?;
+    let Some(est) = find_establishment_for_account(&state.pool, &auth.account.id).await? else {
+        let id = Uuid::parse_str(&query.flow).map_err(|_| AppError::Validation("mcp.expired"))?;
+        return Ok(Redirect::to(&format!("/onboarding?mcp={id}")).into_response());
+    };
     if !is_establishment_owner(&state.pool, &est.id, &auth.account.id).await? {
         return Err(AppError::Forbidden("mcp.owner_required"));
     }
+    let callback =
+        Url::parse(&flow.redirect_uri).map_err(|_| AppError::Validation("mcp.expired"))?;
     let view = ConsentTemplate {
-        page: PageMeta::new(locale, "mcp.authorize_heading", None),
+        page,
         flow: &query.flow,
         provider: provider_name(&flow.client_id).ok_or(AppError::Validation("mcp.expired"))?,
         establishment: Some(&est.name),
+        callback_host: callback
+            .host_str()
+            .ok_or(AppError::Validation("mcp.expired"))?,
         read_write: flow.scope == READ_WRITE,
         csrf: &auth.csrf_token,
+        google_enabled: false,
         email: "",
         error: None,
     };
-    render_html(&view, StatusCode::OK)
+    Ok((jar, render_html(&view, StatusCode::OK)?).into_response())
 }
 
 #[derive(Deserialize)]
@@ -186,15 +215,16 @@ pub async fn login_submit(
     if !constant_time_eq(browser, &form._csrf) {
         return Err(AppError::Forbidden("error.invalid_csrf"));
     }
+    let page = PageMeta::new(locale, "mcp.authorize_heading", None);
     if state.rate_limiters.login_ip.check_key(&ip).is_err() {
         return login_response(
             &flow,
             &form.flow,
             browser,
-            locale,
+            page,
             &form.email,
             Some("error.rate_limited"),
-            StatusCode::TOO_MANY_REQUESTS,
+            (state.google.is_some(), StatusCode::TOO_MANY_REQUESTS),
         );
     }
     match login(&state.pool, &state.passwords, &form.email, &form.password).await {
@@ -210,10 +240,10 @@ pub async fn login_submit(
             &flow,
             &form.flow,
             browser,
-            locale,
+            page,
             &form.email,
             Some(error.i18n_key()),
-            StatusCode::UNAUTHORIZED,
+            (state.google.is_some(), StatusCode::UNAUTHORIZED),
         ),
         Err(error) => Err(error),
     }
@@ -223,19 +253,21 @@ fn login_response(
     flow: &Authorization,
     id: &str,
     csrf: &str,
-    locale: Locale,
+    page: PageMeta,
     email: &str,
     error: Option<&str>,
-    status: StatusCode,
+    (google_enabled, status): (bool, StatusCode),
 ) -> AppResult<Response> {
     render_html(
         &ConsentTemplate {
-            page: PageMeta::new(locale, "mcp.authorize_heading", None),
+            page,
             flow: id,
             provider: provider_name(&flow.client_id).ok_or(AppError::Validation("mcp.expired"))?,
             establishment: None,
+            callback_host: "",
             read_write: flow.scope == READ_WRITE,
             csrf,
+            google_enabled,
             email,
             error,
         },

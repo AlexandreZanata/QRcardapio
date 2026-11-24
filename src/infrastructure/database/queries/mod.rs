@@ -3,6 +3,7 @@ pub mod admin;
 pub mod billing;
 pub mod categories;
 pub mod establishments;
+pub mod google;
 pub(crate) mod mappers;
 pub mod mcp_menu;
 pub mod mcp_oauth;

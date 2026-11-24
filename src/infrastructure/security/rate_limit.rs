@@ -13,6 +13,7 @@ type KeyedLimiter<K> = RateLimiter<K, DashMapStateStore<K>, DefaultClock>;
 pub struct AppRateLimiters {
     pub mcp_oauth_ip: Arc<KeyedLimiter<IpAddr>>,
     pub mcp_establishment: Arc<KeyedLimiter<String>>,
+    pub google_ip: Arc<KeyedLimiter<IpAddr>>,
     pub login_ip: Arc<KeyedLimiter<IpAddr>>,
     pub register_ip: Arc<KeyedLimiter<IpAddr>>,
     pub reset_ip: Arc<KeyedLimiter<IpAddr>>,
@@ -36,6 +37,9 @@ impl AppRateLimiters {
             ))),
             mcp_establishment: Arc::new(RateLimiter::dashmap(Quota::per_minute(
                 NonZeroU32::new(120).expect("non-zero"),
+            ))),
+            google_ip: Arc::new(RateLimiter::dashmap(Quota::per_minute(
+                NonZeroU32::new(12).expect("non-zero"),
             ))),
             login_ip: Arc::new(RateLimiter::dashmap(Quota::per_minute(
                 NonZeroU32::new(10).expect("non-zero"),
@@ -67,6 +71,8 @@ impl AppRateLimiters {
         self.mcp_oauth_ip.shrink_to_fit();
         self.mcp_establishment.retain_recent();
         self.mcp_establishment.shrink_to_fit();
+        self.google_ip.retain_recent();
+        self.google_ip.shrink_to_fit();
         self.login_ip.retain_recent();
         self.login_ip.shrink_to_fit();
         self.register_ip.retain_recent();

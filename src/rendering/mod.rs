@@ -3,6 +3,7 @@ pub mod auth;
 pub mod billing;
 pub mod dashboard;
 pub mod error_page;
+pub mod google;
 pub mod landing;
 pub mod mcp;
 pub mod menu_editor;

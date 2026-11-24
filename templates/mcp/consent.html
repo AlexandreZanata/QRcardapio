@@ -1,15 +1,20 @@
 {% extends "layouts/base.html" %}
+{% import "components/google_signin.html" as google %}
+
+{% block head_extra %}{% if google_enabled %}<link rel="stylesheet" href="/static/css/google-signin.css">{% endif %}{% endblock %}
 
 {% block content %}
 <main id="main-content" class="auth-wrap">
   <div class="container">
     <section class="card auth-card">
+      {% include "components/flash.html" %}
       <h1 data-i18n="mcp.authorize_heading">{{ page.t("mcp.authorize_heading") }}</h1>
       <p><strong>{{ provider }}</strong></p>
       {% if let Some(establishment) = establishment %}
       <p><span data-i18n="mcp.establishment">{{ page.t("mcp.establishment") }}</span> <strong>{{ establishment }}</strong></p>
       <p data-i18n="mcp.scope_read">{{ page.t("mcp.scope_read") }}</p>
       {% if read_write %}<p data-i18n="mcp.scope_write">{{ page.t("mcp.scope_write") }}</p>{% endif %}
+      <p><span data-i18n="mcp.callback_domain">{{ page.t("mcp.callback_domain") }}</span> <strong>{{ callback_host }}</strong></p>
       <p data-i18n="mcp.review_notice">{{ page.t("mcp.review_notice") }}</p>
       <form class="inline-actions" method="post" action="/mcp/oauth/consent">
         <input type="hidden" name="_csrf" value="{{ csrf }}">
@@ -35,6 +40,7 @@
         </div>
         <button class="btn btn-primary" data-i18n="auth.submit_login">{{ page.t("auth.submit_login") }}</button>
       </form>
+      {% if google_enabled %}{{ google::button("/mcp/oauth/google/start?flow=" ~ flow) }}{% endif %}
       {% endif %}
     </section>
   </div>

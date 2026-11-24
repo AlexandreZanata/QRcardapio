@@ -90,6 +90,7 @@ async fn post_form(
 fn test_config(dir: &TempDir, token: &str) -> Config {
     Config {
         mcp_enabled: false,
+        google: None,
         asaas: Some(
             AsaasConfig::new(AsaasEnvironment::Sandbox, "test-api-credential", token).unwrap(),
         ),

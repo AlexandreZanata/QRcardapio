@@ -13,6 +13,8 @@ services:
       TRUST_PROXY: "true"
       LOG_FORMAT: "json"
       LOG_LEVEL: "${LOG_LEVEL:-info,qrcardapio=info}"
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:-}"
+      GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET:-}"
       MCP_ENABLED: "${MCP_ENABLED:-false}"
       ASAAS_ENV: "${ASAAS_ENV:-}"
       ASAAS_API_KEY: "${ASAAS_API_KEY:-}"

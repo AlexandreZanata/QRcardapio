@@ -2,8 +2,10 @@ use std::net::SocketAddr;
 use std::path::PathBuf;
 
 mod billing;
+mod google;
 mod mcp;
 pub use billing::{AsaasConfig, AsaasEnvironment};
+pub use google::{CALLBACK_PATH as GOOGLE_CALLBACK_PATH, GoogleConfig};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DbSynchronous {
@@ -52,6 +54,7 @@ pub struct Config {
     pub log_level: String,
     pub asaas: Option<AsaasConfig>,
     pub mcp_enabled: bool,
+    pub google: Option<GoogleConfig>,
 }
 
 impl Config {
@@ -91,6 +94,7 @@ impl Config {
         let log_level =
             std::env::var("LOG_LEVEL").unwrap_or_else(|_| "info,qrcardapio=debug".to_string());
         let asaas = AsaasConfig::from_env(&public_base_url, cookie_secure)?;
+        let google = GoogleConfig::from_env(&public_base_url, cookie_secure)?;
         let mcp_enabled = parse_bool_env("MCP_ENABLED", false);
         if mcp_enabled {
             mcp::validate_origin(&public_base_url, cookie_secure)?;
@@ -109,6 +113,7 @@ impl Config {
             log_level,
             asaas,
             mcp_enabled,
+            google,
         })
     }
 

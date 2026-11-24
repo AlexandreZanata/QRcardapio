@@ -5,6 +5,7 @@ use super::PageMeta;
 #[derive(Template)]
 #[template(path = "dashboard/onboarding.html")]
 pub struct OnboardingTemplate {
+    pub google_enabled: bool,
     pub page: PageMeta,
     pub brand_name: String,
     pub has_establishment: bool,
@@ -13,7 +14,7 @@ pub struct OnboardingTemplate {
     pub active_nav: &'static str,
     pub csrf_token: String,
     pub step: u8,
-    pub plan_suffix: String,
+    pub continuation_suffix: String,
     pub base_host: String,
     pub name_value: String,
     pub slug_value: String,
@@ -47,6 +48,7 @@ pub struct OverviewTemplate {
 #[derive(Template)]
 #[template(path = "dashboard/settings.html")]
 pub struct SettingsTemplate {
+    pub google_enabled: bool,
     pub mcp_enabled: bool,
     pub page: PageMeta,
     pub brand_name: String,
