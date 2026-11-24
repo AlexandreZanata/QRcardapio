@@ -78,7 +78,7 @@ All `POST` routes verify `_csrf` against the server session's `csrf_token` in co
 
 ## MCP e autenticação de aplicativos de IA
 
-- `POST /mcp` transporta JSON-RPC com autenticação bearer, limite de 128 KiB e ferramentas de consulta e edição de rascunho.
+- `POST /mcp` transporta JSON-RPC com autenticação bearer, limite de 128 KiB e seis ferramentas: consulta/edição de conta e estabelecimento (`get_account_settings`, `update_account_settings`), consulta/edição/reordenação/exclusão no rascunho (`get_menu_draft`, `apply_menu_changes`) e publicação/despublicação (`publish_menu`, `unpublish_menu`, respeitando assinatura). `GET` e `DELETE /mcp` autenticados retornam `405 Allow: POST`; `OPTIONS` e CORS são restritos às origens oficiais dos conectores.
 - Os documentos OAuth de descoberta estão em `/.well-known/oauth-protected-resource/mcp`, `/.well-known/oauth-protected-resource` e `/.well-known/oauth-authorization-server`.
 - `GET /mcp/oauth/authorize` inicia a solicitação. `GET` e `POST /mcp/oauth/consent` apresentam e decidem o consentimento. `POST /mcp/oauth/login` autentica quando necessário. `POST /mcp/oauth/token` troca códigos PKCE ou renova tokens.
 - `GET /dashboard/integrations` lista os vínculos do proprietário. `POST /dashboard/integrations/revoke` exige sessão, proprietário e `_csrf` para revogar um vínculo. Veja [Arquitetura MCP](MCP.md).

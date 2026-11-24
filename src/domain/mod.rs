@@ -5,6 +5,7 @@ pub mod establishment;
 pub mod establishment_slug;
 pub mod google_maps;
 pub mod mcp;
+pub mod mcp_account;
 pub mod mcp_menu;
 pub mod ocr;
 pub mod ocr_parser;

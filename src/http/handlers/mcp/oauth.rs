@@ -75,7 +75,7 @@ pub async fn authorize(
     State(state): State<AppState>,
     ClientIp(ip): ClientIp,
     jar: CookieJar,
-    Query(params): Query<AuthorizeParams>,
+    params: Result<Query<AuthorizeParams>, axum::extract::rejection::QueryRejection>,
 ) -> Result<Response, OAuthError> {
     if state.rate_limiters.mcp_oauth_ip.check_key(&ip).is_err() {
         return Ok((
@@ -84,6 +84,9 @@ pub async fn authorize(
         )
             .into_response());
     }
+    let Ok(Query(params)) = params else {
+        return Err(OAuthError::InvalidRequest);
+    };
     let flow = params.validate(&state.config.public_base_url)?;
     let browser = browser_token(&jar)
         .map(str::to_owned)

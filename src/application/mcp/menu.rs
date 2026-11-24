@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
@@ -8,10 +10,14 @@ use crate::domain::{
     category::Category,
     establishment::{sanitize_optional_text, validate_non_empty_name},
     mcp::is_url_token,
-    mcp_menu::{AppliedChanges, CategoryPatch, ProductPatch, TextPatch, ValidatedChanges},
+    mcp_menu::{
+        AppliedChanges, CategoryPatch, DeleteRef, ProductOrderPatch, ProductPatch, TextPatch,
+        ValidatedChanges,
+    },
     product::{MAX_PRICE_CENTAVOS, Product},
 };
 use crate::error::{AppError, AppResult};
+use crate::infrastructure::assets::AssetProcessor;
 use crate::infrastructure::database::queries::{
     find_category_for_est, find_establishment_by_id, mcp_menu as queries, mcp_oauth::Grant,
 };
@@ -49,23 +55,72 @@ pub async fn read(
             .await?
             .ok_or(AppError::NotFound("error.not_found"))?;
         let products = queries::products(pool, est, &category, input.offset, limit + 1).await?;
-        ("products", products.into_iter().map(|product| json!({
-            "id": product.id, "updated_at": product.updated_at, "category_id": product.category_id,
-            "text": {"name": product.name, "name_en": product.name_en, "name_es": product.name_es,
-                "description": product.description, "description_en": product.description_en, "description_es": product.description_es},
-            "price_centavos": product.price_centavos, "available": product.is_available, "visible": product.is_visible
-        })).collect::<Vec<_>>())
+        (
+            "products",
+            products
+                .into_iter()
+                .map(|product| {
+                    json!({
+                        "id": product.id,
+                        "updated_at": product.updated_at,
+                        "category_id": product.category_id,
+                        "position": product.position,
+                        "text": {
+                            "name": product.name,
+                            "name_en": product.name_en,
+                            "name_es": product.name_es,
+                            "description": product.description,
+                            "description_en": product.description_en,
+                            "description_es": product.description_es,
+                        },
+                        "price_centavos": product.price_centavos,
+                        "available": product.is_available,
+                        "visible": product.is_visible,
+                        "has_image": product.image_asset_id.is_some(),
+                    })
+                })
+                .collect::<Vec<_>>(),
+        )
     } else {
-        let categories = queries::categories(pool, est, input.offset, limit + 1).await?;
-        ("categories", categories.into_iter().map(|category| json!({
-            "id": category.id, "updated_at": category.updated_at, "visible": category.is_visible,
-            "text": {"name": category.name, "name_en": category.name_en, "name_es": category.name_es,
-                "description": category.description, "description_en": category.description_en, "description_es": category.description_es}
-        })).collect())
+        let categories =
+            queries::categories_with_counts(pool, est, input.offset, limit + 1).await?;
+        (
+            "categories",
+            categories
+                .into_iter()
+                .map(|entry| {
+                    let category = entry.category;
+                    json!({
+                        "id": category.id,
+                        "updated_at": category.updated_at,
+                        "position": category.position,
+                        "product_count": entry.product_count,
+                        "visible": category.is_visible,
+                        "text": {
+                            "name": category.name,
+                            "name_en": category.name_en,
+                            "name_es": category.name_es,
+                            "description": category.description,
+                            "description_en": category.description_en,
+                            "description_es": category.description_es,
+                        },
+                    })
+                })
+                .collect(),
+        )
     };
     let next = (entries.len() > limit as usize).then_some(input.offset + limit);
     entries.truncate(limit as usize);
-    let mut response = json!({"establishment": record.name, "next_offset": next, "draft": true, "preview_url": format!("{origin}/dashboard/preview")});
+    let mut response = json!({
+        "establishment": record.name,
+        "establishment_updated_at": record.updated_at,
+        "is_published": record.is_published,
+        "has_unpublished_changes": record.has_unpublished_changes,
+        "public_url": format!("{origin}/c/{}", record.slug),
+        "next_offset": next,
+        "draft": true,
+        "preview_url": format!("{origin}/dashboard/preview"),
+    });
     response[key] = Value::Array(entries);
     Ok(response)
 }
@@ -82,6 +137,14 @@ pub struct WriteMenu {
     category_updates: Vec<CategoryPatch>,
     #[serde(default)]
     product_updates: Vec<ProductPatch>,
+    #[serde(default)]
+    delete_categories: Vec<DeleteRef>,
+    #[serde(default)]
+    delete_products: Vec<DeleteRef>,
+    #[serde(default)]
+    category_order: Option<Vec<String>>,
+    #[serde(default)]
+    product_orders: Vec<ProductOrderPatch>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -111,6 +174,7 @@ struct NewProduct {
 
 pub async fn apply(
     pool: &SqlitePool,
+    assets: &AssetProcessor,
     grant: &Grant,
     input: WriteMenu,
 ) -> AppResult<AppliedChanges> {
@@ -125,7 +189,11 @@ pub async fn apply(
             .map(|entry| entry.products.len())
             .sum::<usize>()
         + input.category_updates.len()
-        + input.product_updates.len();
+        + input.product_updates.len()
+        + input.delete_categories.len()
+        + input.delete_products.len()
+        + usize::from(input.category_order.is_some())
+        + input.product_orders.len();
     if !(1..=CHANGE_LIMIT).contains(&count)
         || input
             .add_products
@@ -180,8 +248,10 @@ pub async fn apply(
     }
     for mut patch in input.product_updates {
         patch.id = uuid(&patch.id)?;
+        patch.category_id = patch.category_id.as_deref().map(uuid).transpose()?;
         validate_version(&patch.updated_at)?;
         if patch.text.is_empty()
+            && patch.category_id.is_none()
             && patch.visible.is_none()
             && patch.available.is_none()
             && patch.price_centavos.is_none()
@@ -192,7 +262,27 @@ pub async fn apply(
         patch.text = validate_text(patch.text, 100, 320)?;
         changes.product_updates.push(patch);
     }
-    queries::apply(
+    for mut del in input.delete_categories {
+        del.id = uuid(&del.id)?;
+        validate_version(&del.updated_at)?;
+        changes.delete_categories.push(del);
+    }
+    for mut del in input.delete_products {
+        del.id = uuid(&del.id)?;
+        validate_version(&del.updated_at)?;
+        changes.delete_products.push(del);
+    }
+    if let Some(order) = input.category_order {
+        changes.category_order = Some(validate_unique_uuids(order)?);
+    }
+    for order in input.product_orders {
+        changes.product_orders.push(ProductOrderPatch {
+            category_id: uuid(&order.category_id)?,
+            product_ids: validate_unique_uuids(order.product_ids)?,
+        });
+    }
+
+    let (applied, orphaned_assets) = queries::apply(
         pool,
         grant,
         queries::Operation {
@@ -203,7 +293,29 @@ pub async fn apply(
         },
         changes,
     )
-    .await
+    .await?;
+
+    // Remove orphaned media files from disk only after the SQLite transaction has committed.
+    for asset in &orphaned_assets {
+        assets.remove_files(asset);
+    }
+    Ok(applied)
+}
+
+fn validate_unique_uuids(raw: Vec<String>) -> AppResult<Vec<String>> {
+    if raw.is_empty() {
+        return Err(AppError::Validation("mcp.invalid_order"));
+    }
+    let mut seen = HashSet::with_capacity(raw.len());
+    let mut parsed = Vec::with_capacity(raw.len());
+    for entry in raw {
+        let id = uuid(&entry)?;
+        if !seen.insert(id.clone()) {
+            return Err(AppError::Validation("mcp.invalid_order"));
+        }
+        parsed.push(id);
+    }
+    Ok(parsed)
 }
 
 fn build_products(

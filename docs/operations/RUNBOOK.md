@@ -97,7 +97,7 @@ Desabilitar a integração local interrompe o recebimento de eventos e remove a 
 }
 ```
 
-Depois de autorizar, volte ao cliente pelo link na tela de confirmação. Na homologação, peça para listar o rascunho, criar uma categoria com um item de exemplo e modificar o preço. Confira o rascunho no painel, publique se desejar e valide a URL pública. Revogue a conexão nas **Integrações de IA** e verifique que a sessão do cliente deixa de acessar o rascunho.
+Depois de autorizar, volte ao cliente pelo link na tela de confirmação. Na homologação, peça para consultar a conta (`get_account_settings`) e o rascunho (`get_menu_draft`), ajustar a descrição/cor do estabelecimento ou criar/reordenar/editar itens no rascunho e, quando desejar, publicar ao vivo (`publish_menu`) e validar `/c/{slug}`. Revogue a conexão nas **Integrações de IA** e verifique que a sessão do cliente deixa de acessar a conta.
 
 Para diagnosticar descoberta, consulte `/.well-known/oauth-protected-resource/mcp` e `/.well-known/oauth-authorization-server` na origem pública. Uma chamada sem credencial a `/mcp` deve retornar `401` com `WWW-Authenticate`. Se um cliente mostrar erro no callback, confira se usa a identidade publicada e a opção de autenticação OAuth indicada acima. O OAuth vincula credenciais à origem configurada. Alterações de domínio exigem nova conexão.
 
