@@ -14,7 +14,7 @@
       <a class="landing-segment-card" href="{{ seg.href }}" aria-labelledby="landing-segment-title-{{ loop.index }}" aria-describedby="landing-segment-desc-{{ loop.index }}">
         <div class="landing-segment-art">
           {{ icons::sticker(seg.sticker) }}
-          <span class="landing-segment-arrow" aria-hidden="true">↗</span>
+          <span class="landing-segment-arrow">{{ icons::sticker("segment-arrow") }}</span>
         </div>
         <h3 id="landing-segment-title-{{ loop.index }}">{{ seg.name }}</h3>
         <p id="landing-segment-desc-{{ loop.index }}">{{ seg.short_desc }}</p>

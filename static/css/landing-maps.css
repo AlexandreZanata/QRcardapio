@@ -100,38 +100,45 @@
 .maps-profile-bar {
   position: absolute;
   z-index: 1;
-  inset: -0.87rem auto auto 0;
+  inset: -1.05rem auto auto 0.45rem;
   display: inline-flex;
   align-items: center;
-  gap: 0.38rem;
-  max-width: 100%;
-  padding: 0.4rem 0.58rem;
-  border: 1px solid #d6d8e4;
-  border-radius: 0.76rem;
-  background: #fff;
-  box-shadow: 0 3px 8px rgb(25 24 38 / 9%);
-  font-size: clamp(0.68rem, 1.85cqw, 0.89rem);
-  font-weight: 800;
+  gap: clamp(0.3rem, 1cqw, 0.6rem);
+  max-width: calc(100% - 0.9rem);
+  padding: 0.3rem 0.4rem 0.3rem 0.45rem;
+  border: 2px solid var(--landing-ink);
+  border-radius: 0.7rem;
+  background: var(--landing-paper);
+  box-shadow: 2px 3px 0 var(--landing-ink);
+  font-size: clamp(0.68rem, 1.85cqw, 0.93rem);
+  font-weight: 850;
   line-height: 1.2;
 }
 
-.maps-profile-bar .panel-icon,
+.maps-profile-bar > .landing-sticker {
+  flex: none;
+  width: clamp(1.35rem, 4.55cqw, 2.05rem);
+  height: auto;
+  aspect-ratio: 1;
+}
+
 .maps-profile-details .panel-icon { flex: none; width: 1.04rem; height: 1.04rem; }
 
 .maps-profile-connected {
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: 0.13rem;
-  padding: 0.24rem 0.39rem;
-  border-radius: 1rem;
+  gap: 0.2rem;
+  padding: 0.21rem 0.45rem 0.21rem 0.3rem;
+  border: 1px solid var(--landing-ink);
+  border-radius: 0.45rem;
   color: #fff;
-  background: #17623e;
-  font-size: 0.82em;
-  font-weight: 740;
+  background: var(--landing-blue);
+  font-size: 0.86em;
+  font-weight: 820;
 }
 
-.maps-profile-connected .ui-icon { width: 0.75rem; height: 0.75rem; }
+.maps-profile-connected .landing-sticker { flex: none; width: clamp(0.95rem, 3cqw, 1.4rem); height: auto; aspect-ratio: 1; }
 
 .maps-storefront {
   width: 100%;
@@ -371,8 +378,7 @@
   .maps-showcase-rays { top: 4%; right: 2%; }
 
   .maps-profile { grid-column: 1 / 12; }
-  .maps-profile-bar { padding: 0.32rem 0.37rem; gap: 0.27rem; }
-  .maps-profile-bar .panel-icon { width: 0.87rem; height: 0.87rem; }
+  .maps-profile-bar { inset-inline-start: 0.25rem; padding: 0.22rem 0.28rem; }
   .maps-storefront { height: clamp(7.15rem, 39cqw, 11rem); object-position: center 4%; }
   .maps-profile-content { min-height: min(44cqw, 11rem); padding: 0.49rem var(--maps-profile-clearance) 0.58rem 0.5rem; }
   .maps-profile-content h3 { font-size: clamp(1rem, 5.2cqw, 1.32rem); }

@@ -1,0 +1,176 @@
+name: Deploy Bundle
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-bundle-main
+  cancel-in-progress: false
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.100.0
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Check formatting
+        run: cargo fmt --check
+
+      - name: Run Clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Install OCR & PDF tools
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends tesseract-ocr tesseract-ocr-por poppler-utils
+
+      - name: Run Rust test suite
+        run: cargo test --locked
+
+      - name: Run deploy agent unit tests
+        run: python3 -m unittest discover -s deploy/vps -p 'test_*.py' -v
+
+      - name: Install cargo-audit
+        uses: taiki-e/install-action@cargo-audit
+
+      - name: Security audit
+        run: cargo audit
+
+  publish-bundle:
+    if: github.ref == 'refs/heads/main'
+    needs: [verify]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: 1.100.0
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build release binary
+        run: |
+          cargo build --release --locked
+          strip target/release/qrcardapio
+
+      - name: Package release bundle
+        id: pkg
+        run: |
+          set -euo pipefail
+          SHORT_SHA="${GITHUB_SHA:0:12}"
+          BUILT_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          RUST_VER="$(rustc --version)"
+          BUNDLE="qrcardapio-${SHORT_SHA}-linux-amd64.tar.gz"
+          ATTEST="${BUNDLE}.sigstore.json"
+
+          rm -rf dist stage
+          mkdir -p dist stage/bin
+          cp target/release/qrcardapio stage/bin/qrcardapio
+          chmod 0755 stage/bin/qrcardapio
+          cp -R static stage/static
+          find stage/static -type d -exec chmod 0755 {} +
+          find stage/static -type f -exec chmod 0644 {} +
+
+          python3 - "$GITHUB_SHA" "$SHORT_SHA" "$BUILT_AT" "$RUST_VER" <<'PY'
+          import json, sys
+          with open("stage/release.json", "w", encoding="utf-8") as fh:
+              json.dump({
+                  "repo": "AlexandreZanata/QRcardapio",
+                  "sha": sys.argv[1],
+                  "short_sha": sys.argv[2],
+                  "ref": "refs/heads/main",
+                  "built_at": sys.argv[3],
+                  "rust_version": sys.argv[4],
+              }, fh, indent=2)
+          PY
+          chmod 0644 stage/release.json
+
+          tar --sort=name --owner=0 --group=0 --numeric-owner -czf "dist/${BUNDLE}" -C stage bin static release.json
+          SHA256="$(sha256sum "dist/${BUNDLE}" | awk '{print $1}')"
+          printf "%s  %s\n" "${SHA256}" "${BUNDLE}" > dist/SHA256SUMS
+
+          python3 - "$GITHUB_REPOSITORY" "$GITHUB_SHA" "$SHORT_SHA" "$BUNDLE" "$SHA256" "$ATTEST" "$BUILT_AT" <<'PY'
+          import json, sys
+          with open("dist/manifest.json", "w", encoding="utf-8") as fh:
+              json.dump({
+                  "repo": sys.argv[1],
+                  "sha": sys.argv[2],
+                  "short_sha": sys.argv[3],
+                  "ref": "refs/heads/main",
+                  "bundle": sys.argv[4],
+                  "bundle_sha256": sys.argv[5],
+                  "attestation_bundle": sys.argv[6],
+                  "built_at": sys.argv[7],
+                  "workflow": f"{sys.argv[1]}/.github/workflows/deploy-bundle.yml",
+              }, fh, indent=2)
+          PY
+
+          echo "bundle=${BUNDLE}" >> "$GITHUB_OUTPUT"
+          echo "attest=${ATTEST}" >> "$GITHUB_OUTPUT"
+          echo "short_sha=${SHORT_SHA}" >> "$GITHUB_OUTPUT"
+
+      - name: Generate Sigstore build provenance attestation
+        id: attest
+        uses: actions/attest-build-provenance@v4
+        with:
+          subject-path: dist/${{ steps.pkg.outputs.bundle }}
+
+      - name: Stage offline Sigstore bundle
+        run: |
+          cp "${{ steps.attest.outputs.bundle-path }}" "dist/${{ steps.pkg.outputs.attest }}"
+
+      - name: Publish rolling deploy-main release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_REPO: ${{ github.repository }}
+          BUNDLE: ${{ steps.pkg.outputs.bundle }}
+          ATTEST: ${{ steps.pkg.outputs.attest }}
+          SHORT_SHA: ${{ steps.pkg.outputs.short_sha }}
+        run: |
+          set -euo pipefail
+          TAG="deploy-main"
+          NOTES="CI-verified release bundle for main commit ${GITHUB_SHA} (${SHORT_SHA})."
+
+          if gh release view "${TAG}" >/dev/null 2>&1; then
+            gh release edit "${TAG}" \
+              --target "${GITHUB_SHA}" \
+              --title "Deploy Bundle (main @ ${SHORT_SHA})" \
+              --notes "${NOTES}"
+          else
+            gh release create "${TAG}" \
+              --target "${GITHUB_SHA}" \
+              --prerelease \
+              --title "Deploy Bundle (main @ ${SHORT_SHA})" \
+              --notes "${NOTES}"
+          fi
+
+          # Upload immutable SHA-named bundle and attestation FIRST, then manifest.json LAST
+          # so pull-based deploy agents never observe a manifest referencing missing assets.
+          gh release upload "${TAG}" \
+            "dist/${BUNDLE}" \
+            "dist/${ATTEST}" \
+            dist/SHA256SUMS \
+            --clobber
+          gh release upload "${TAG}" dist/manifest.json --clobber
+
+          # Prune superseded tarball/attestation assets while keeping the active bundle intact.
+          gh release view "${TAG}" --json assets --jq '.assets[].name' | while read -r asset; do
+            case "${asset}" in
+              "${BUNDLE}"|"${ATTEST}"|manifest.json|SHA256SUMS) ;;
+              qrcardapio-*) gh release delete-asset "${TAG}" "${asset}" --yes || true ;;
+            esac
+          done

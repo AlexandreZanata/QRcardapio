@@ -1,3 +1,5 @@
+{% import "components/icons.html" as icons %}
+
 <section id="faq" class="landing-faq" aria-labelledby="faq-heading">
   <div class="landing-container">
     <div class="landing-section-heading">
@@ -10,6 +12,10 @@
         <summary>
           <svg class="landing-faq-art" aria-hidden="true" focusable="false"><use href="/static/icons/landing-faq.svg#{{ item.art }}"></use></svg>
           <span data-i18n="{{ item.q_key }}">{{ page.t(item.q_key) }}</span>
+          <span class="landing-faq-toggle" aria-hidden="true">
+            {{ icons::sticker("faq-expand") }}
+            {{ icons::sticker("faq-collapse") }}
+          </span>
         </summary>
         <p data-i18n="{{ item.a_key }}">{{ page.t(item.a_key) }}</p>
       </details>
