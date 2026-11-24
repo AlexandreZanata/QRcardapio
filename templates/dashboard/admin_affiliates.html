@@ -1,0 +1,206 @@
+{% extends "layouts/dashboard.html" %}
+{% import "components/icons.html" as icons %}
+{% import "components/panel_controls.html" as controls %}
+{% import "components/panel_empty.html" as empty %}
+{% import "components/dashboard_metric.html" as metrics %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="/static/css/affiliates.css">
+{% endblock %}
+
+{% block content %}
+<div class="page-top dashboard-overview-top">
+  <div>
+    <h1 data-i18n="admin_affiliates.heading">{{ page.t("admin_affiliates.heading") }}</h1>
+    <p data-i18n="admin_affiliates.subtitle">{{ page.t("admin_affiliates.subtitle") }}</p>
+  </div>
+  <div class="affiliate-env-bar">
+    <a class="btn btn-sm {% if billing_env == "production" %}panel-action-primary{% else %}btn-secondary{% endif %}" href="/admin/affiliates?env=production">Production</a>
+    <a class="btn btn-sm {% if billing_env == "sandbox" %}panel-action-primary{% else %}btn-secondary{% endif %}" href="/admin/affiliates?env=sandbox">Sandbox</a>
+  </div>
+</div>
+
+<div class="stats-grid">
+  {{ metrics::metric("users", "violet", "admin_affiliates.stat_affiliates", total_affiliates) }}
+  {{ metrics::metric("store", "pink", "admin_affiliates.stat_active_referrals", active_referrals) }}
+  {{ metrics::metric("pending", "yellow", "affiliate.stat_pending", pending_formatted) }}
+  {{ metrics::metric("check", "green", "affiliate.stat_available", available_formatted) }}
+</div>
+
+<div class="affiliate-grid-2 mb-4">
+  <section class="card" aria-labelledby="admin-aff-defaults-heading">
+    <h2 class="dashboard-card-heading" id="admin-aff-defaults-heading">
+      {{ icons::panel("settings") }}
+      <span data-i18n="admin_affiliates.defaults_heading">{{ page.t("admin_affiliates.defaults_heading") }}</span>
+    </h2>
+    <form class="form-stack" method="post" action="/admin/affiliates/settings">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <label class="affiliate-checkbox-row">
+        <input type="checkbox" name="self_signup_enabled" value="1"{% if self_signup_enabled %} checked{% endif %}>
+        <span data-i18n="admin_affiliates.self_signup_label">{{ page.t("admin_affiliates.self_signup_label") }}</span>
+      </label>
+      <div class="dashboard-field-pair">
+        <div class="dashboard-field">
+          <label class="dashboard-field-label" for="def-comm-type" data-i18n="admin_affiliates.quota_type_label">{{ page.t("admin_affiliates.quota_type_label") }}</label>
+          <select class="dashboard-control" id="def-comm-type" name="default_commission_type">
+            <option value="fixed_monthly_centavos"{% if default_commission_type == "fixed_monthly_centavos" %} selected{% endif %} data-i18n="admin_affiliates.type_fixed">{{ page.t("admin_affiliates.type_fixed") }}</option>
+            <option value="percent_bps"{% if default_commission_type == "percent_bps" %} selected{% endif %} data-i18n="admin_affiliates.type_percent">{{ page.t("admin_affiliates.type_percent") }}</option>
+          </select>
+        </div>
+        <div class="dashboard-field">
+          <label class="dashboard-field-label" for="def-comm-val" data-i18n="admin_affiliates.quota_value_label">{{ page.t("admin_affiliates.quota_value_label") }}</label>
+          <input class="dashboard-control" id="def-comm-val" name="default_commission_value" type="text" required value="{{ default_commission_input }}">
+          <p class="dashboard-field-hint" data-i18n="admin_affiliates.quota_value_hint">{{ page.t("admin_affiliates.quota_value_hint") }}</p>
+        </div>
+      </div>
+      <div class="dashboard-field-pair">
+        <div class="dashboard-field">
+          <label class="dashboard-field-label" for="def-hold" data-i18n="admin_affiliates.hold_days_label">{{ page.t("admin_affiliates.hold_days_label") }}</label>
+          <input class="dashboard-control" id="def-hold" name="default_hold_days" type="number" min="0" max="90" required value="{{ default_hold_days }}">
+        </div>
+        <div class="dashboard-field">
+          <label class="dashboard-field-label" for="def-cookie" data-i18n="admin_affiliates.cookie_ttl_label">{{ page.t("admin_affiliates.cookie_ttl_label") }}</label>
+          <input class="dashboard-control" id="def-cookie" name="cookie_ttl_days" type="number" min="1" max="180" required value="{{ cookie_ttl_days }}">
+        </div>
+      </div>
+      <div>
+        <button class="btn panel-action panel-action-primary" type="submit">
+          {{ icons::panel("check") }}
+          <span data-i18n="admin_affiliates.save_defaults">{{ page.t("admin_affiliates.save_defaults") }}</span>
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card" aria-labelledby="admin-aff-enroll-heading">
+    <h2 class="dashboard-card-heading" id="admin-aff-enroll-heading">
+      {{ icons::panel("add") }}
+      <span data-i18n="admin_affiliates.enroll_heading">{{ page.t("admin_affiliates.enroll_heading") }}</span>
+    </h2>
+    <form class="form-stack" method="post" action="/admin/affiliates/enroll">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <div class="dashboard-field-pair">
+        <div class="dashboard-field">
+          <label class="dashboard-field-label" for="enroll-email" data-i18n="admin_affiliates.email_label">{{ page.t("admin_affiliates.email_label") }}</label>
+          <input class="dashboard-control" id="enroll-email" name="email" type="email" required placeholder="parceiro@dominio.com">
+        </div>
+        <div class="dashboard-field">
+          <label class="dashboard-field-label" for="enroll-code" data-i18n="affiliate.code_label">{{ page.t("affiliate.code_label") }}</label>
+          <input class="dashboard-control" id="enroll-code" name="code" type="text" maxlength="32" placeholder="codigo-opcional">
+        </div>
+      </div>
+      <div class="dashboard-field-pair">
+        <div class="dashboard-field">
+          <label class="dashboard-field-label" for="enroll-type" data-i18n="admin_affiliates.quota_type_label">{{ page.t("admin_affiliates.quota_type_label") }}</label>
+          <select class="dashboard-control" id="enroll-type" name="commission_type">
+            <option value="fixed_monthly_centavos"{% if default_commission_type == "fixed_monthly_centavos" %} selected{% endif %} data-i18n="admin_affiliates.type_fixed">{{ page.t("admin_affiliates.type_fixed") }}</option>
+            <option value="percent_bps"{% if default_commission_type == "percent_bps" %} selected{% endif %} data-i18n="admin_affiliates.type_percent">{{ page.t("admin_affiliates.type_percent") }}</option>
+          </select>
+        </div>
+        <div class="dashboard-field">
+          <label class="dashboard-field-label" for="enroll-val" data-i18n="admin_affiliates.quota_value_label">{{ page.t("admin_affiliates.quota_value_label") }}</label>
+          <input class="dashboard-control" id="enroll-val" name="commission_value" type="text" required value="{{ default_commission_input }}">
+        </div>
+      </div>
+      <div class="dashboard-field-pair">
+        <div class="dashboard-field">
+          <label class="dashboard-field-label" for="enroll-hold" data-i18n="admin_affiliates.hold_days_label">{{ page.t("admin_affiliates.hold_days_label") }}</label>
+          <input class="dashboard-control" id="enroll-hold" name="hold_days" type="number" min="0" max="90" required value="{{ default_hold_days }}">
+        </div>
+        <div class="dashboard-field">
+          <label class="dashboard-field-label" for="enroll-status" data-i18n="admin.col_status">{{ page.t("admin.col_status") }}</label>
+          <select class="dashboard-control" id="enroll-status" name="status">
+            <option value="active" data-i18n="affiliate.status_active">{{ page.t("affiliate.status_active") }}</option>
+            <option value="paused" data-i18n="affiliate.status_paused">{{ page.t("affiliate.status_paused") }}</option>
+            <option value="revoked" data-i18n="affiliate.status_revoked">{{ page.t("affiliate.status_revoked") }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="dashboard-field">
+        <label class="dashboard-field-label" for="enroll-pix" data-i18n="affiliate.pix_label">{{ page.t("affiliate.pix_label") }}</label>
+        <input class="dashboard-control" id="enroll-pix" name="pix_key" type="text" maxlength="140">
+      </div>
+      <div class="dashboard-field">
+        <label class="dashboard-field-label" for="enroll-notes" data-i18n="admin_affiliates.notes_label">{{ page.t("admin_affiliates.notes_label") }}</label>
+        <input class="dashboard-control" id="enroll-notes" name="notes" type="text" maxlength="400">
+      </div>
+      <div>
+        <button class="btn panel-action panel-action-primary" type="submit">
+          {{ icons::panel("add") }}
+          <span data-i18n="admin_affiliates.enroll_action">{{ page.t("admin_affiliates.enroll_action") }}</span>
+        </button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<section class="card dashboard-table-card" aria-labelledby="admin-aff-list-heading">
+  <h2 class="dashboard-card-heading" id="admin-aff-list-heading">
+    {{ icons::panel("users") }}
+    <span data-i18n="admin_affiliates.list_heading">{{ page.t("admin_affiliates.list_heading") }}</span>
+  </h2>
+  {% if affiliates.is_empty() %}
+  {{ empty::message("admin_affiliates.empty") }}
+  {% else %}
+  <div class="table-wrap" role="region" aria-labelledby="admin-aff-list-heading" tabindex="0">
+    <table class="mobile-table" role="table">
+      <thead role="rowgroup">
+        <tr role="row">
+          <th scope="col" role="columnheader" data-i18n="admin_affiliates.col_account">{{ page.t("admin_affiliates.col_account") }}</th>
+          <th scope="col" role="columnheader" data-i18n="affiliate.code_label">{{ page.t("affiliate.code_label") }}</th>
+          <th scope="col" role="columnheader" data-i18n="admin_affiliates.col_quota">{{ page.t("admin_affiliates.col_quota") }}</th>
+          <th scope="col" role="columnheader" data-i18n="admin.col_status">{{ page.t("admin.col_status") }}</th>
+          <th scope="col" role="columnheader" data-i18n="admin_affiliates.col_referrals">{{ page.t("admin_affiliates.col_referrals") }}</th>
+          <th scope="col" role="columnheader" data-i18n="affiliate.stat_available">{{ page.t("affiliate.stat_available") }}</th>
+          <th scope="col" role="columnheader" data-i18n="affiliate.stat_paid">{{ page.t("affiliate.stat_paid") }}</th>
+          <th scope="col" role="columnheader" data-i18n="admin_affiliates.col_action">{{ page.t("admin_affiliates.col_action") }}</th>
+        </tr>
+      </thead>
+      <tbody role="rowgroup">
+        {% for a in affiliates %}
+        <tr role="row">
+          <td role="cell">
+            {{ controls::mobile_cell_label("admin_affiliates.col_account") }}
+            <div class="mobile-table-value"><strong>{{ a.account_email }}</strong></div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("affiliate.code_label") }}
+            <div class="mobile-table-value"><code>{{ a.code }}</code></div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("admin_affiliates.col_quota") }}
+            <div class="mobile-table-value">
+              <strong>{{ a.quota_display }}</strong>
+              <span class="dashboard-field-hint" data-i18n="{{ a.quota_unit_key }}">{{ page.t(a.quota_unit_key) }}</span>
+            </div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("admin.col_status") }}
+            <div class="mobile-table-value"><span class="badge {{ a.status_badge }}" data-i18n="{{ a.status_key }}">{{ page.t(a.status_key) }}</span></div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("admin_affiliates.col_referrals") }}
+            <div class="mobile-table-value">{{ a.referrals_active }} / {{ a.referrals_total }}</div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("affiliate.stat_available") }}
+            <div class="mobile-table-value"><strong>{{ a.available_formatted }}</strong></div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("affiliate.stat_paid") }}
+            <div class="mobile-table-value">{{ a.paid_formatted }}</div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("admin_affiliates.col_action") }}
+            <div class="mobile-table-value">
+              <a class="btn btn-secondary btn-sm" href="/admin/affiliates/{{ a.id }}?env={{ billing_env }}" data-i18n="admin_affiliates.manage">{{ page.t("admin_affiliates.manage") }}</a>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

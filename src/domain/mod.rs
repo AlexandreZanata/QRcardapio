@@ -1,4 +1,6 @@
 pub mod account;
+pub mod affiliate;
+pub mod affiliate_math;
 pub mod billing;
 pub mod category;
 pub mod establishment;

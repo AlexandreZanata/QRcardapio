@@ -31,3 +31,9 @@
 5. **MediaAsset & PublicationRecord (`src/domain/publication.rs`)**
    - Content-addressed image variants (`logo` -> PNG 512/192; `product_image` -> JPEG 800/400).
    - Every mutation to establishment profile, logo, category, or product sets `establishments.has_unpublished_changes = 1`.
+
+6. **Affiliate Program (`src/domain/affiliate.rs`, `src/domain/affiliate_math.rs`)**
+   - `AffiliateCode`: Lowercase ASCII `^[a-z0-9]+(?:-[a-z0-9]+)*$` (length 3–32), rejecting platform reserved names.
+   - `CommissionType`: `FixedMonthlyCentavos` (`0..=MONTHLY_PRICE_CENTAVOS`, parsed via integer `parse_price_centavos`) or `PercentBps` (`0..=10_000` basis points, parsed without floats via `parse_percent_bps`).
+   - `compute_installment_schedule`: Splits total commission (capped at `confirmed_centavos`) across `1`, `6`, or `12` monthly installments with exact integer remainder distribution and `add_months_floor(due_date, idx - 1) + hold_days`.
+   - `canonical_email_identity` & `mask_email_for_partner`: Pure domain guards against `+alias`/Gmail-dot self-referral and LGPD email masking in partner views.

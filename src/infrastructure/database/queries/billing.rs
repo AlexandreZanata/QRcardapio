@@ -263,9 +263,29 @@ pub async fn reconcile_subscription(
     checkout: &str,
     subscription: &str,
 ) -> AppResult<()> {
-    sqlx::query(
+    let mut tx = begin_immediate(pool).await?;
+    let res = sqlx::query(
         "UPDATE billing_checkouts SET subscription_id = ? WHERE environment = ? AND establishment_id = ?
          AND checkout_status = 'paid' AND checkout_id = ? AND subscription_id IS NULL",
-    ).bind(subscription).bind(env).bind(est).bind(checkout).execute(pool).await?;
+    )
+    .bind(subscription)
+    .bind(env)
+    .bind(est)
+    .bind(checkout)
+    .execute(&mut *tx)
+    .await?;
+    if res.rows_affected() == 1 {
+        let today = crate::domain::billing::billing_now().date_naive();
+        let now = chrono::Utc::now().to_rfc3339();
+        super::affiliate_ledger::sync_subscription_commissions(
+            &mut tx,
+            env,
+            subscription,
+            today,
+            &now,
+        )
+        .await?;
+    }
+    tx.commit().await?;
     Ok(())
 }

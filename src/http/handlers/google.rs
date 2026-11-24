@@ -15,9 +15,11 @@ use axum_extra::extract::{
 use reqwest::Url;
 use serde::Deserialize;
 
+use super::affiliates::{build_clear_referral_cookie, referral_cookie_value};
 use super::onboarding::PlanIntent;
 use crate::app::AppState;
 use crate::application::{
+    affiliates::attribute_new_account,
     auth::issue_session,
     google::{self, Intent},
 };
@@ -209,6 +211,22 @@ async fn callback(
             }
             Err(err) => return Err(err),
         };
+    let ref_code = if created {
+        referral_cookie_value(&jar).map(str::to_owned)
+    } else {
+        None
+    };
+    if created
+        && let Err(err) = attribute_new_account(
+            &state.pool,
+            ref_code.as_deref(),
+            &account.id,
+            &account.email,
+        )
+        .await
+    {
+        tracing::warn!(error = %err, "affiliate attribution failed during google signup");
+    }
     let destination = if flow.purpose == "signin"
         && find_establishment_for_account(&state.pool, &account.id)
             .await?
@@ -219,6 +237,11 @@ async fn callback(
         return_path(&flow, false)
     };
     let session = issue_session(&state.pool, account).await?;
+    let jar = if ref_code.is_some() {
+        jar.add(build_clear_referral_cookie(state.config.cookie_secure))
+    } else {
+        jar
+    };
     let jar = jar.add(build_session_cookie(
         session.raw_session_token,
         state.config.cookie_secure,

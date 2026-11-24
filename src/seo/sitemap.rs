@@ -26,6 +26,7 @@ Disallow: /reset-password
 Disallow: /auth/
 Disallow: /account/
 Disallow: /mcp
+Disallow: /r/
 Disallow: /webhooks/
 Disallow: /healthz
 Disallow: /readyz

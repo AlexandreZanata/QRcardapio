@@ -62,3 +62,13 @@ A migração `20261123000005_mcp_oauth.sql` mantém solicitações de autorizaç
 A migração `20261123000007_google_oidc.sql` cria `google_identities` e `google_oauth_flows`. A primeira tabela tem um `sub` único do Google por conta local. Cadastro e vínculo são transacionais. A segunda tabela registra o estado temporário por hash e o consome com `DELETE … RETURNING`, atrelado ao navegador, cliente e URI de retorno. A limpeza expira esses registros e as referências encerram fluxos ligados a sessões ou autorizações MCP excluídas.
 
 Uma conta criada via Google tem senha local vazia até cadastrar uma pelo processo de recuperação. O login por senha faz a verificação Argon2 de referência para essas contas. Tokens Google de identidade, acesso e renovação são descartados após o callback.
+
+## Programa de Afiliados
+
+A migração `20261124000008_affiliate_program.sql` adiciona seis tabelas com integridade referencial estrita:
+- `affiliate_program_settings` (linha única `id = 1`): controle de autoativação (`self_signup_enabled`), tipo/valor padrão de cota mensal (`fixed_monthly_centavos` ou `percent_bps`), carência padrão (`default_hold_days`) e janela do cookie (`cookie_ttl_days`).
+- `affiliates`: vínculo `1:1` com `accounts(id)` (independente de possuir estabelecimento), `code` único, `status` (`active`|`paused`|`revoked`), cota individual, `hold_days`, `pix_key`, `notes` e `click_count`.
+- `affiliate_referrals`: atribuição imutável (`UNIQUE(referred_account_id)` e `UNIQUE(referred_establishment_id)`), status (`signed_up`|`active`|`disqualified`) e carimbo do primeiro pagamento.
+- `affiliate_commissions`: razão financeiro imutável isolado por `environment` (`sandbox`|`production`), com `UNIQUE(environment, payment_id, installment_index, entry_kind)` cobrindo parcelas mensais (`1..=12`) e estornos negativos (`clawback`), snapshot da cota aplicada e data determinística `available_on`.
+- `affiliate_payouts`: registro de repasses manuais via PIX com `pix_key_snapshot`, comprovante (`reference`), `entries_count`, `paid_by_account_id` e liquidação atômica em `BEGIN IMMEDIATE`.
+- `affiliate_evaluated_payments`: registro idempotente de pagamentos já avaliados na primeira confirmação válida para impedir concessão retroativa em eventos `PAYMENT_RECEIVED` tardios. Veja [Programa de Afiliados](AFFILIATES.md).

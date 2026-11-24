@@ -1,4 +1,6 @@
 pub mod admin;
+pub mod affiliate_operations;
+pub mod affiliates;
 pub mod auth;
 pub mod bench_gen;
 pub mod billing;

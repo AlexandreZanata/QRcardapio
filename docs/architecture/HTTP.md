@@ -92,3 +92,18 @@ All `POST` routes verify `_csrf` against the server session's `csrf_token` in co
 - As rotas de identidade usam `Cache-Control: no-store` e `Referrer-Policy: no-referrer`.
 
 [Fluxo e contratos de login](GOOGLE_AUTH.md)
+
+## Programa de Afiliados
+
+Todas as rotas abaixo aplicam `Cache-Control: no-store` e limite de corpo de 16 KiB; todas as mutações `POST` validam `_csrf`.
+
+| Method | Path | Protection | Purpose |
+|---|---|---|---|
+| `GET` | `/r/{code}` | IP rate limit (60/min) | Valida afiliado ativo, incrementa cliques (sem inflar com cookie repetido), grava cookie `qr_ref` (`HttpOnly`, `SameSite=Lax`) e redireciona (`302`) para rota interna limpa (`Disallow: /r/` em `robots.txt`). |
+| `GET` | `/`, `/en`, `/es`, `/register` (com `?ref=`) | IP rate limit | Captura o código de indicação e redireciona (`302 no-store`) para a URL canônica limpa sem `?ref=`. |
+| `GET` | `/dashboard/affiliate` | `AuthContext` | Portal do afiliado (funciona com ou sem estabelecimento): autoativação, link de indicação, cota mensal, chave PIX, indicados (e-mail mascarado LGPD), extrato de comissões e histórico de repasses. |
+| `POST` | `/dashboard/affiliate/activate`, `/pix` | `AuthContext` + CSRF | Autoativação com cota padrão global e atualização da chave PIX. |
+| `GET` | `/admin/affiliates`, `/admin/affiliates/{id}` | `AdminContext` | Visão geral por ambiente (`production`/`sandbox`), regras padrão, cadastro manual, edição de cota mensal/status/carência, baixa manual PIX e auditoria de indicados/extrato. |
+| `POST` | `/admin/affiliates/settings`, `/enroll`, `/{id}/update`, `/{id}/payout`, `/{id}/referrals/{referral_id}/disqualify` | `AdminContext` + CSRF | Mutação das regras padrão, cadastro/edição de afiliado, liquidação atômica de repasse PIX (exige `confirm=yes`) e desqualificação de indicação com estorno das parcelas em aberto. |
+
+[Arquitetura do Programa de Afiliados](AFFILIATES.md)
