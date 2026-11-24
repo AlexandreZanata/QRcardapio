@@ -1,14 +1,19 @@
-<section id="faq" class="landing-container seo-faq-band" aria-labelledby="faq-heading">
-  <div class="landing-section-heading">
-    <h2 id="faq-heading" data-i18n="landing.faq_title">{{ page.t("landing.faq_title") }}</h2>
-    <p data-i18n="landing.faq_subtitle">{{ page.t("landing.faq_subtitle") }}</p>
-  </div>
-  <div class="seo-faq-list">
-    {% for item in faqs %}
-    <details class="seo-faq-item">
-      <summary data-i18n="{{ item.q_key }}">{{ page.t(item.q_key) }}</summary>
-      <p data-i18n="{{ item.a_key }}">{{ page.t(item.a_key) }}</p>
-    </details>
-    {% endfor %}
+<section id="faq" class="landing-faq" aria-labelledby="faq-heading">
+  <div class="landing-container">
+    <div class="landing-section-heading">
+      <h2 id="faq-heading" data-i18n="landing.faq_title">{{ page.t("landing.faq_title") }}</h2>
+      <p data-i18n="landing.faq_subtitle">{{ page.t("landing.faq_subtitle") }}</p>
+    </div>
+    <div class="landing-faq-grid">
+      {% for item in faqs %}
+      <details class="seo-faq-item" name="landing-faq">
+        <summary>
+          <svg class="landing-faq-art" aria-hidden="true" focusable="false"><use href="/static/icons/landing-faq.svg#{{ item.art }}"></use></svg>
+          <span data-i18n="{{ item.q_key }}">{{ page.t(item.q_key) }}</span>
+        </summary>
+        <p data-i18n="{{ item.a_key }}">{{ page.t(item.a_key) }}</p>
+      </details>
+      {% endfor %}
+    </div>
   </div>
 </section>

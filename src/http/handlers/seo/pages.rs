@@ -282,11 +282,7 @@ fn render_guide_page(
         page: PageMeta::with_seo(locale, "", None, seo),
         nav: SeoNavContext::build(locale, cluster, is_logged_in),
         guide,
-        related_segment: SegmentCardView {
-            name: seg.name,
-            short_desc: seg.short_desc,
-            href: seg.id.full_path(locale),
-        },
+        related_segment: SegmentCardView::new(seg, locale),
         related_tool: ToolCardView {
             name: tool.name,
             short_desc: tool.short_desc,

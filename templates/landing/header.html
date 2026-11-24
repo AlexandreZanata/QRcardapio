@@ -1,0 +1,48 @@
+{% import "components/icons.html" as icons %}
+{% import "components/lang_switcher.html" as languages %}
+
+{% macro featured_links() %}
+  <a href="#how-it-works" data-i18n="nav.features">{{ page.t("nav.features") }}</a>
+  <a href="{{ solutions_url }}" data-i18n="landing.nav_solutions">{{ page.t("landing.nav_solutions") }}</a>
+  {% if show_plan %}
+  <a href="#plan" data-i18n="billing.nav_plan">{{ page.t("billing.nav_plan") }}</a>
+  {% endif %}
+{% endmacro %}
+
+{% macro account_links() %}
+  {% if is_logged_in %}
+  <a class="btn landing-button landing-button-pink" href="/dashboard" data-i18n="landing.open_panel">{{ page.t("landing.open_panel") }}</a>
+  {% else %}
+  <a class="btn landing-button landing-login" href="/login" data-i18n="nav.login">{{ page.t("nav.login") }}</a>
+  <a class="btn landing-button landing-button-pink" href="/register" data-i18n="landing.create_menu">{{ page.t("landing.create_menu") }}</a>
+  {% endif %}
+{% endmacro %}
+
+<header class="landing-header">
+  <div class="landing-container landing-topbar">
+    <a class="landing-brand" href="{{ nav_home_url }}">
+      <img src="/static/icons/favicon.svg" alt="" width="48" height="48">
+      <span data-i18n="app.name">{{ page.t("app.name") }}</span>
+    </a>
+    <nav class="landing-topbar-nav" aria-label="{{ page.t("nav.primary_label") }}" data-i18n-aria="nav.primary_label">
+      <div class="landing-topbar-featured">{{ featured_links() }}</div>
+      <details class="landing-topbar-menu">
+        <summary aria-label="{{ page.t("landing.nav_explore") }}" data-i18n-aria="landing.nav_explore">
+          {{ icons::icon("bars") }}
+          <span data-i18n="landing.nav_explore">{{ page.t("landing.nav_explore") }}</span>
+        </summary>
+        <div class="landing-topbar-popover">
+          <div class="landing-topbar-compact">{{ featured_links() }}</div>
+          <a href="#benefits" data-i18n="landing.nav_features">{{ page.t("landing.nav_features") }}</a>
+          <a href="#google-maps">Google Maps</a>
+          <a href="#integracoes-ia" data-i18n="landing.mcp_nav">{{ page.t("landing.mcp_nav") }}</a>
+          <a href="{{ tools_url }}" data-i18n="landing.nav_tools">{{ page.t("landing.nav_tools") }}</a>
+          <a href="#faq" data-i18n="landing.nav_faq">{{ page.t("landing.nav_faq") }}</a>
+          <div class="landing-topbar-popover-account">{{ account_links() }}</div>
+        </div>
+      </details>
+    </nav>
+    <div class="landing-topbar-account">{{ account_links() }}</div>
+    {{ languages::seo_picker(page.locale_code, page.t("lang.switcher_label"), home_pt_url, home_en_url, home_es_url, false) }}
+  </div>
+</header>

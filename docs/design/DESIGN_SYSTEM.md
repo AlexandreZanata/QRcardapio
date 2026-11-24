@@ -114,7 +114,11 @@ Configurações oferece acesso a **Integrações de IA** quando o MCP está habi
 
 ### Páginas de SEO, FAQ e utilitários gratuitos
 
-A landing page inclui a faixa de segmentos atendidos, a seção de perguntas frequentes com `<details>` nativo (`#faq`) e o rodapé semântico de 4 colunas (`templates/landing/footer.html`). As páginas de segmentos (`/solucoes`, `/cardapio-digital/{slug}`), ferramentas gratuitas (`/ferramentas/{slug}`, usando `static/js/seo-tools.js` sem estilos inline e folha `@media print` dedicada na placa de mesa) e guias (`/guias/{slug}`) compartilham o mesmo sistema visual em `static/css/seo-pages.css`. Os cartões sociais `og-{pt-BR,en,es}.png` (1200×630) e ícones (`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`, `favicon.ico`) seguem a paleta creme, azul cobalto, amarelo e contorno escuro da marca.
+A navegação da landing usa um cabeçalho de uma linha. O menu Explorar agrupa os links secundários e reúne a navegação e as ações da conta em telas estreitas. O controle usa `<details>` e os links permanecem operáveis sem JavaScript.
+
+Os cards de segmentos reutilizam o sprite da landing. As perguntas frequentes (`#faq`) usam `<details>` e uma ilustração própria por tema em `static/icons/landing-faq.svg`. A grade passa de duas para uma coluna em telas estreitas. O rodapé escuro compartilhado em `templates/landing/footer.html` destaca a marca e os idiomas acima dos quatro grupos de links.
+
+As páginas de segmentos (`/solucoes`, `/cardapio-digital/{slug}`), ferramentas gratuitas (`/ferramentas/{slug}`, usando `static/js/seo-tools.js` sem estilos inline e folha `@media print` dedicada na placa de mesa) e guias (`/guias/{slug}`) compartilham o mesmo sistema visual em `static/css/seo-pages.css`. Os cartões sociais `og-{pt-BR,en,es}.png` (1200×630) e ícones (`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`, `favicon.ico`) seguem a paleta creme, azul cobalto, amarelo e contorno escuro da marca.
 
 ### Login com o Google
 

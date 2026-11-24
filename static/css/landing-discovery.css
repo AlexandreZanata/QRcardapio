@@ -1,0 +1,147 @@
+.landing-segments,
+.landing-faq {
+  padding-block: clamp(2.65rem, 5.6vw, 5.4rem);
+}
+
+.landing-segments-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem 2rem;
+  max-width: none;
+  margin-bottom: 1.65rem;
+}
+
+.landing-segments-head h2 { max-width: 31ch; }
+.landing-segments-head .landing-button { flex: none; }
+
+.landing-segments-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(0.8rem, 1.6vw, 1.4rem);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.landing-segment-card {
+  --segment-wash: #fff0b4;
+  --segment-accent: var(--landing-yellow);
+  box-sizing: border-box;
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  align-content: start;
+  height: 100%;
+  padding: clamp(0.7rem, 1.2vw, 1rem);
+  border: 2px solid var(--landing-ink);
+  border-radius: 1rem;
+  background: #fffdf8;
+  box-shadow: 3px 4px 0 var(--landing-ink);
+  color: var(--landing-ink);
+}
+
+.landing-segments-grid li:nth-child(3n + 2) a { --segment-wash: #ffe4ef; --segment-accent: var(--landing-pink); }
+.landing-segments-grid li:nth-child(3n) a { --segment-wash: #e9edff; --segment-accent: #93a2ff; }
+
+.landing-segment-card:hover { background: var(--segment-wash); text-decoration: none; }
+.landing-segment-card:hover h3 { text-decoration: underline; text-underline-offset: 0.22em; }
+
+.landing-segment-art {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.25rem clamp(0.45rem, 1vw, 0.85rem);
+  margin-bottom: 0.8rem;
+  border-radius: 0.65rem;
+  background: var(--segment-wash);
+}
+
+.landing-segment-art .landing-sticker { width: clamp(3rem, 6vw, 4.8rem); height: auto; aspect-ratio: 1; }
+
+.landing-segment-arrow {
+  display: grid;
+  place-items: center;
+  width: 2.05rem;
+  aspect-ratio: 1;
+  flex: none;
+  border: 1.5px solid var(--landing-ink);
+  border-radius: 50%;
+  background: #fffdf8;
+  font-size: 1.15rem;
+  font-weight: 850;
+  line-height: 1;
+}
+
+.landing-segment-card:hover .landing-segment-arrow { background: var(--segment-accent); }
+.landing-segment-card h3 { margin: 0 0 0.32rem; font-size: clamp(1rem, 1.65vw, 1.32rem); line-height: 1.16; font-weight: 880; letter-spacing: -0.025em; }
+.landing-segment-card p { align-self: start; margin: 0; color: #45414b; font-size: clamp(0.875rem, 1.35vw, 0.98rem); line-height: 1.48; }
+
+.landing-faq {
+  border-block: 1px solid var(--landing-rule);
+  background: #f8efdf;
+}
+
+.landing-faq .landing-section-heading { max-width: 52rem; }
+
+.landing-faq-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: clamp(0.75rem, 1.5vw, 1.2rem);
+}
+
+.landing-faq-grid .seo-faq-item {
+  padding: 0;
+  border-radius: 1rem;
+  background: #fffdf8;
+  box-shadow: 2px 3px 0 var(--landing-ink);
+}
+
+.landing-faq-grid .seo-faq-item summary {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: clamp(0.55rem, 1.5vw, 1rem);
+  min-height: clamp(5.2rem, 8vw, 6.6rem);
+  padding: 0.45rem clamp(0.6rem, 1.5vw, 1rem);
+  border-radius: inherit;
+  font-size: clamp(0.98rem, 1.6vw, 1.15rem);
+}
+
+.landing-faq-grid .seo-faq-item summary:hover { background: #fff6df; }
+.landing-faq-grid .seo-faq-item[open] { border-color: var(--landing-blue); }
+.landing-faq-grid .seo-faq-item[open] summary { border-end-start-radius: 0; border-end-end-radius: 0; background: #fff6df; }
+
+.landing-faq-art { display: block; width: clamp(3.1rem, 7.5vw, 5.3rem); height: auto; aspect-ratio: 1; }
+
+.landing-faq-grid .seo-faq-item summary::after {
+  display: grid;
+  place-items: center;
+  width: 1.8rem;
+  height: 1.8rem;
+  border: 1px solid var(--landing-ink);
+  border-radius: 50%;
+  background: var(--landing-yellow);
+  color: var(--landing-ink);
+  line-height: 1;
+}
+
+.landing-faq-grid .seo-faq-item[open] summary::after { background: var(--landing-blue); color: #fff; }
+
+.landing-faq-grid .seo-faq-item p {
+  padding: 0.85rem clamp(0.85rem, 2vw, 1.45rem) 1.05rem;
+  border-top: 1px solid var(--landing-rule);
+  margin: 0;
+}
+
+@media (max-width: 63rem) {
+  .landing-segments-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 46rem) {
+  .landing-faq-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 23rem) {
+  .landing-segments-grid { grid-template-columns: minmax(0, 1fr); }
+}

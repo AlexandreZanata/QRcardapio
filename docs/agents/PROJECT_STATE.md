@@ -83,6 +83,10 @@ O bloco de ativação separa pré-requisitos, autorização e endereço. A faixa
 
 O endpoint MCP remoto usa OAuth 2.1 com PKCE, descoberta RFC 9728/8414, `WWW-Authenticate` RFC 6750 e CORS restrito às origens confiáveis para vincular ChatGPT, Claude e Google Antigravity ao estabelecimento autorizado pelo proprietário. As seis ferramentas (`get_account_settings`, `update_account_settings`, `get_menu_draft`, `apply_menu_changes`, `publish_menu` e `unpublish_menu`) permitem consultar e editar configurações da conta/estabelecimento (respeitando trava de slug pós-publicação), gerenciar categorias e produtos no rascunho (criar, editar, traduzir, mover, reordenar e excluir com limpeza de mídia órfã, idempotência e trava otimista) e publicar/despublicar o cardápio estático respeitando as regras de assinatura. A integração é configurada com `MCP_ENABLED=true` e HTTPS. Veja [Arquitetura MCP](../architecture/MCP.md) e [configuração dos clientes](../operations/RUNBOOK.md#integrar-chatgpt-claude-e-antigravity).
 
+## Navegação da landing
+
+A landing agrupa links secundários no menu Explorar e mantém o seletor de idioma na mesma linha da marca. O menu também reúne as ações de conta em telas estreitas. Os oito segmentos têm cards ilustrados, e cada pergunta frequente tem uma arte própria. O rodapé compartilhado organiza os links em Produto, Para seu negócio, Ferramentas e Guias.
+
 ## Login com o Google e contratos MCP
 
 O cadastro, o login e o consentimento MCP aceitam Google quando as credenciais OAuth estão configuradas. Contas antigas vinculam a identidade na área de segurança. Os testes de contrato cobrem o fluxo OpenID Connect com tokens assinados, cadastro, sessão, vínculo, escolha de plano e retomada do MCP. Os contratos MCP exercitam descoberta, OAuth e ferramentas para ChatGPT, Claude e Google Antigravity.
