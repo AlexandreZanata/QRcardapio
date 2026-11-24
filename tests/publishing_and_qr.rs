@@ -12,6 +12,7 @@ use tower::ServiceExt;
 
 use qrcardapio::app::{AppState, build_router};
 use qrcardapio::application::auth::register_owner;
+use qrcardapio::application::demo_menu::seed_public_demo;
 use qrcardapio::application::establishments::{
     CreateEstablishmentInput, create_establishment, upload_logo,
 };
@@ -22,6 +23,7 @@ use qrcardapio::application::publishing::{
     PublishLocks, publish_establishment, unpublish_establishment,
 };
 use qrcardapio::config::{Config, DbSynchronous, LogFormat};
+use qrcardapio::domain::establishment::PUBLIC_DEMO_SLUG;
 use qrcardapio::http::handlers::public::serve_published_file_from_disk;
 use qrcardapio::i18n::Locale;
 use qrcardapio::infrastructure::assets::AssetProcessor;
@@ -58,6 +60,74 @@ fn png_bytes(w: u32, h: u32) -> Vec<u8> {
         .write_image(&rgba, w, h, image::ExtendedColorType::Rgba8)
         .unwrap();
     out
+}
+
+#[tokio::test]
+async fn public_demo_reseeds_without_creating_a_tenant_and_serves_the_complete_menu() {
+    let dir = TempDir::new().unwrap();
+    let cfg = test_config(&dir);
+    let pool = init_pool(&cfg).await.unwrap();
+    let index = cfg
+        .published_dir()
+        .join(PUBLIC_DEMO_SLUG)
+        .join("index.html");
+
+    seed_public_demo(&pool, &cfg).await.unwrap();
+    let first = std::fs::read_to_string(&index).unwrap();
+    seed_public_demo(&pool, &cfg).await.unwrap();
+    assert_eq!(first, std::fs::read_to_string(&index).unwrap());
+    assert_eq!(first.matches("data-cat-section=").count(), 5);
+    assert_eq!(first.matches("data-menu-item").count(), 9);
+    assert_eq!(first.matches("class=\"item-photo\"").count(), 9);
+    assert!(first.contains("data-en=\"House Burger\""));
+    assert!(first.contains("data-es=\"Hamburguesa de la casa\""));
+    assert!(first.contains("name=\"robots\" content=\"noindex, follow\""));
+    assert!(!first.contains("application/ld+json"));
+
+    let tenants: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM establishments")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(tenants, 0);
+
+    let router = build_router(AppState::new(cfg.clone(), pool.clone()));
+    let landing = router
+        .oneshot(Request::get("/").body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+    let body = landing.into_body().collect().await.unwrap().to_bytes();
+    let landing_html = std::str::from_utf8(&body).unwrap();
+    assert!(landing_html.contains(&format!("href=\"/c/{PUBLIC_DEMO_SLUG}\" data-public-demo")));
+
+    // Simulate a tenant created on a release predating the reservation.
+    sqlx::query(
+        "INSERT INTO establishments (id, slug, name, accent_color, created_at, updated_at)
+         VALUES ('legacy-id', ?, 'Restaurante existente', '#263BE8', '2026-11-01', '2026-11-01')",
+    )
+    .bind(PUBLIC_DEMO_SLUG)
+    .execute(&pool)
+    .await
+    .unwrap();
+    assert!(seed_public_demo(&pool, &cfg).await.is_err());
+    assert_eq!(first, std::fs::read_to_string(&index).unwrap());
+    pool.close().await;
+
+    for image in first.split("class=\"item-photo\" src=\"").skip(1) {
+        let url = image.split('"').next().unwrap();
+        let path = url
+            .strip_prefix(&format!("/c/{PUBLIC_DEMO_SLUG}/"))
+            .unwrap();
+        let response = serve_published_file_from_disk(
+            &cfg.published_dir(),
+            PUBLIC_DEMO_SLUG,
+            path,
+            Locale::PtBr,
+            &HeaderMap::new(),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(response.headers()["content-type"], "image/jpeg");
+    }
 }
 
 #[tokio::test]

@@ -25,4 +25,5 @@ pub struct LandingTemplate {
     pub solutions_url: &'static str,
     pub tools_url: &'static str,
     pub guides_url: &'static str,
+    pub demo_menu_path: String,
 }

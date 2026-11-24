@@ -57,6 +57,12 @@ See the [guide to applying the landing style](GUIA_ESTILO_LANDING.md) for the vi
 
 The brand mark and icon sprites live under `static/icons/`. The landing's features and how-it-works sections share the illustrated SVG sprite, with bold outlines and fills from the landing palette. Keep decorative icons hidden from assistive technology when the adjacent text already names the action. Landing assets are served from `static/images/` and CSS stays scoped to the landing and dashboard layouts.
 
+### Cardápio demonstrativo do Bistrô da Praça
+
+Preserve `static/images/landing-demo-qr.svg`. A placa é um link para o cardápio de exemplo, e o endereço já codificado usa o fragmento `#demonstracao` para chegar ao mesmo destino. O catálogo usa o tema azul cobalto do painel e as fotos do hambúrguer da casa e das fritas da landing. As sete novas fotos foram geradas com o ImageGen e ficam em `src/application/demo_menu/images/`.
+
+O conjunto de prompts usou uma fotografia comercial quadrada por item, com luz lateral quente, mesa de madeira caramelizada e composição central a 45 graus. Os temas foram duplo smash com bacon, hambúrguer de grão-de-bico, combo com fritas e cola, anéis de cebola, limonada, milkshake de morango e brownie com sorvete. Cada composição pediu ingredientes nítidos, fundo desfocado e ausência de texto, marcas e marcas-d'água.
+
 ### Integrações de IA na landing
 
 A seção `#integracoes-ia` explica as operações no rascunho, a revisão do proprietário e a ativação por MCP. Os cartões usam SVGs originais como identificação dos clientes. O Gemini aparece como opção de modelo dentro do Google Antigravity. O atalho para o painel depende de `MCP_ENABLED` e a área de ativação mostra o endereço do conector, o runbook e o estado da homologação.

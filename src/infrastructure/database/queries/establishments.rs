@@ -50,6 +50,15 @@ pub async fn find_establishment_by_id(
     Ok(row.map(|r| row_to_establishment(&r)))
 }
 
+pub async fn establishment_slug_exists(pool: &SqlitePool, slug: &str) -> AppResult<bool> {
+    Ok(
+        sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM establishments WHERE slug = ?)")
+            .bind(slug)
+            .fetch_one(pool)
+            .await?,
+    )
+}
+
 pub async fn create_establishment_with_member(
     pool: &SqlitePool,
     mut est: Establishment,

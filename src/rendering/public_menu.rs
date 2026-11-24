@@ -1,7 +1,7 @@
 use askama::Template;
 use sha2::{Digest, Sha256};
 
-use crate::domain::establishment::AccentColor;
+use crate::domain::establishment::{AccentColor, PUBLIC_DEMO_SLUG};
 use crate::domain::publication::MenuSnapshot;
 use crate::error::{AppError, AppResult};
 use crate::i18n::{Catalog, Locale, format_price};
@@ -101,6 +101,7 @@ pub fn render_public_menu_html(
 ) -> AppResult<String> {
     let cat = Catalog::global();
     let est = &snapshot.establishment;
+    let is_demo = est.slug == PUBLIC_DEMO_SLUG;
 
     let logo_url = snapshot
         .logo
@@ -118,6 +119,8 @@ pub fn render_public_menu_html(
     };
     let robots_meta = if is_preview {
         "noindex, nofollow"
+    } else if is_demo {
+        "noindex, follow"
     } else {
         "index, follow, max-image-preview:large, max-snippet:-1"
     };
@@ -131,7 +134,7 @@ pub fn render_public_menu_html(
         .or(logo_url.as_deref())
         .map(|rel| absolute_url(base, rel))
         .unwrap_or_else(|| og_image_url(base, locale));
-    let json_ld = if is_preview {
+    let json_ld = if is_preview || is_demo {
         String::new()
     } else {
         public_menu_json_ld(base, snapshot, cover_url.as_deref(), logo_url.as_deref())

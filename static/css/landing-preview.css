@@ -123,6 +123,7 @@
   border-radius: 1.85cqw 1.85cqw 0.7cqw 0.7cqw;
   background: var(--landing-yellow);
   box-shadow: 0.6cqw 0.7cqw 0 var(--landing-ink);
+  color: var(--landing-ink);
   text-align: center;
   font-size: 1.72cqw;
   font-weight: 900;
@@ -130,6 +131,7 @@
   transform: rotate(7deg);
 }
 
+.demo-qr:hover { background: #ffe77a; text-decoration: none; }
 .demo-qr img { width: 100%; height: auto; border-radius: 0.45cqw; margin-top: 0.55cqw; }
 
 .landing-demo figcaption {

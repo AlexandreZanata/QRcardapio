@@ -4,6 +4,7 @@ pub mod affiliates;
 pub mod auth;
 pub mod bench_gen;
 pub mod billing;
+pub mod demo_menu;
 pub mod establishments;
 pub mod google;
 pub mod mcp;

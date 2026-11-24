@@ -1,3 +1,4 @@
+use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 use std::path::Path;
 use std::sync::{Arc, Mutex};
@@ -109,6 +110,18 @@ pub async fn write_static_snapshot(
     config: &Config,
     snapshot: &MenuSnapshot,
 ) -> AppResult<(usize, usize)> {
+    let src_media_dir = resolve_safe_subpath(&config.media_dir(), &snapshot.establishment.id)?;
+    write_static_snapshot_with_media(config, snapshot, |filename| {
+        let src = resolve_safe_subpath(&src_media_dir, filename)?;
+        Ok(Cow::Owned(std::fs::read(src)?))
+    })
+}
+
+pub(crate) fn write_static_snapshot_with_media<'a>(
+    config: &Config,
+    snapshot: &MenuSnapshot,
+    load_media: impl Fn(&str) -> AppResult<Cow<'a, [u8]>>,
+) -> AppResult<(usize, usize)> {
     let slug = Slug::validate_existing(&snapshot.establishment.slug)?;
     let slug_str = slug.as_str();
 
@@ -150,12 +163,10 @@ pub async fn write_static_snapshot(
     }
 
     // Stage all media assets first so the HTML never points to missing files.
-    let src_media_dir = resolve_safe_subpath(&config.media_dir(), &snapshot.establishment.id)?;
     for filename in &keep_media {
         let dest = resolve_safe_subpath(&pub_media_dir, filename)?;
         if !dest.exists() {
-            let src = resolve_safe_subpath(&src_media_dir, filename)?;
-            let bytes = std::fs::read(&src)?;
+            let bytes = load_media(filename)?;
             atomic_write_file(&tmp_dir, &dest, &bytes)?;
         }
     }

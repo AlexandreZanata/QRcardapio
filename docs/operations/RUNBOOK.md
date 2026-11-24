@@ -19,6 +19,7 @@ qrcardapio db migrate
 qrcardapio admin create --email ops@qrcardapio.com.br --password "<strong-password>"
 qrcardapio admin reset-token --email owner@restaurant.com.br
 qrcardapio seed
+qrcardapio seed-public-demo
 qrcardapio republish-all
 ```
 
@@ -131,6 +132,12 @@ O autodeploy de produção usa arquitetura **pull** sem chaves SSH, IPs ou segre
    - Valida que `manifest.json` aponta para o HEAD atual de `refs/heads/main`, verifica SHA-256 exato e valida a assinatura offline com `gh attestation verify --bundle ... --signer-workflow ... --source-ref refs/heads/main --source-digest <sha> --deny-self-hosted-runners`.
    - Extrai o pacote com proteção contra path traversal e symlinks para `/opt/qrcardapio/releases/<sha12>`, testa `--help`, gera backup online do SQLite (`db backup` via `VACUUM INTO` em `/var/backups/qrcardapio/`), troca atomicamente o symlink `/opt/qrcardapio/current`, reinicia apenas `qrcardapio.service` (sem tocar no Caddy ou em outros projetos), valida `/healthz`, `/readyz`, páginas SEO e descoberta MCP, e executa `republish-all`.
    - **Rollback automático**: se o reinício ou qualquer verificação falhar, o agente restaura imediatamente o symlink `/opt/qrcardapio/current` para a release anterior, reinicia `qrcardapio.service`, confirma recuperação e grava o SHA com falha para evitar loop de reinício.
+
+### Cardápio público de demonstração
+
+O comando `serve` prepara o exemplo antes de abrir a porta HTTP. O pacote assinado já leva o catálogo e as fotos otimizadas dentro do binário, prontas para publicação. O passo de prontidão do agente só passa depois de o cardápio estar gravado em `DATA_DIR/published/bistro-da-praca/`. A rotina usa o mesmo formato estático dos cardápios comuns e pode executar de novo sem criar contas, estabelecimentos ou cobranças. `seed-public-demo` reconstitui o exemplo pela CLI, usando o mesmo ambiente do serviço.
+
+O QR da arte já imprime `https://qrcardapio.com.br/#demonstracao`. A home encaminha esse fragmento pelo navegador para `/c/bistro-da-praca` e a placa também abre o cardápio por clique. A imagem SVG deve permanecer a mesma. A reserva recusa novos endereços personalizados com esse slug. Se uma base antiga já contém um estabelecimento com esse endereço, a rotina interrompe a inicialização antes de escrever no diretório publicado. O agente preserva a release anterior via rollback.
 
 ### Controles operacionais na VPS
 

@@ -41,6 +41,10 @@ An optional Google review invitation is rendered into the static HTML on publica
 
 Owner profile updates use the same per-establishment lock as publishing. The update statement also checks the stored publication version so a form opened before publication cannot rename a published path.
 
+## Public demonstration menu
+
+`application/demo_menu` builds a release-owned snapshot for `/c/bistro-da-praca`. The startup seed checks for a conflicting tenant before writing and invokes the same atomic snapshot writer. It keeps catalog data in code, with photos embedded in the binary. This menu has no owner account or database-backed establishment, is excluded from the sitemap, and uses `noindex, follow` without structured business data. It serves the same static HTML, media and theme contract as a published tenant menu.
+
 ## Failure Recovery & Rollback
 
 - If any error occurs before step 8's atomic rename (e.g., missing source media file or full disk), temporary files remain isolated in `.tmp/` or unused, a `'failed'` audit row is logged, and **the previous live `index.html` and its assets remain completely intact and serving**.
