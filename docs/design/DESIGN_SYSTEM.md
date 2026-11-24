@@ -63,7 +63,7 @@ A seção `#integracoes-ia` explica as operações no rascunho, a revisão do pr
 
 O bloco de ativação organiza as etapas de configuração e autorização ao lado do endereço MCP. O botão de copiar usa o controle do painel quando a API de área de transferência está disponível. O endereço permanece selecionável. O guia abre pelo botão amarelo e a validação técnica fica em uma seção expansível.
 
-A faixa branca abaixo das integrações usa ilustrações próprias do sprite da landing para nove tipos de comércio. Duas cópias visuais da lista formam o ciclo contínuo, e a segunda fica oculta para leitores de tela. Um ícone na lateral pausa ou retoma a animação e tem um rótulo acessível. A preferência por movimento reduzido exibe a lista completa, parada e com quebra de linha.
+A faixa branca abaixo das integrações usa ilustrações próprias do sprite da landing para nove tipos de comércio. Duas cópias visuais da lista formam o ciclo contínuo, e a segunda fica oculta para leitores de tela. O movimento pausa quando o mouse entra na faixa. A preferência por movimento reduzido exibe a lista completa, parada e com quebra de linha.
 
 A ilustração foi criada com o ImageGen integrado e exportada como WebP transparente em 620 e 1240 pixels de largura, em `static/images/landing-ai-menu-620.webp` e `static/images/landing-ai-menu-1240.webp`.
 
@@ -116,7 +116,7 @@ Configurações oferece acesso a **Integrações de IA** quando o MCP está habi
 
 A navegação da landing usa um cabeçalho de uma linha. O menu Explorar agrupa os links secundários e reúne a navegação e as ações da conta em telas estreitas. O controle usa `<details>` e os links permanecem operáveis sem JavaScript.
 
-Os cards de segmentos reutilizam o sprite da landing. As perguntas frequentes (`#faq`) usam `<details>` e uma ilustração própria por tema em `static/icons/landing-faq.svg`. A grade passa de duas para uma coluna em telas estreitas. O rodapé escuro compartilhado em `templates/landing/footer.html` destaca a marca e os idiomas acima dos quatro grupos de links.
+Os cards de segmentos reutilizam o sprite da landing para as ilustrações e a seta de navegação. O selo do perfil no Maps usa um alfinete ilustrado e uma marca de conexão do mesmo sprite. As perguntas frequentes (`#faq`) usam `<details>` com ícones próprios de expansão e recolhimento e uma ilustração por tema em `static/icons/landing-faq.svg`. A cor do hover é aplicada ao próprio cartão para respeitar seu contorno. A grade passa de duas para uma coluna em telas estreitas. O rodapé escuro compartilhado em `templates/landing/footer.html` destaca a marca e os idiomas acima dos quatro grupos de links.
 
 As páginas de segmentos (`/solucoes`, `/cardapio-digital/{slug}`), ferramentas gratuitas (`/ferramentas/{slug}`, usando `static/js/seo-tools.js` sem estilos inline e folha `@media print` dedicada na placa de mesa) e guias (`/guias/{slug}`) compartilham o mesmo sistema visual em `static/css/seo-pages.css`. Os cartões sociais `og-{pt-BR,en,es}.png` (1200×630) e ícones (`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`, `favicon.ico`) seguem a paleta creme, azul cobalto, amarelo e contorno escuro da marca.
 
