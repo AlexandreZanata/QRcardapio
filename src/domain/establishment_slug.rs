@@ -3,6 +3,7 @@ use crate::error::{AppError, AppResult};
 const MAX_SLUG_LEN: usize = 64;
 const MAX_GENERATED_BASE_LEN: usize = 32;
 const SHORT_CODE_ALPHABET: &[u8; 32] = b"0123456789abcdefghjkmnpqrstvwxyz";
+pub const PUBLIC_DEMO_SLUG: &str = "bistro-da-praca";
 
 const RESERVED_SLUGS: &[&str] = &[
     "admin",
@@ -61,7 +62,11 @@ pub struct Slug(String);
 impl Slug {
     /// Normalizes a custom address while retaining the established validation rules.
     pub fn from_input(raw: &str) -> AppResult<Self> {
-        Self::validate_existing(&normalize_ascii_slug(raw, MAX_SLUG_LEN))
+        let normalized = normalize_ascii_slug(raw, MAX_SLUG_LEN);
+        if normalized == PUBLIC_DEMO_SLUG {
+            return Err(AppError::Validation("error.slug_reserved"));
+        }
+        Self::validate_existing(&normalized)
     }
 
     /// Produces a compact address from any valid display name.
@@ -70,7 +75,7 @@ impl Slug {
         if base.is_empty() {
             return Self("loja".into());
         }
-        if base.len() < 3 || RESERVED_SLUGS.contains(&base.as_str()) {
+        if base.len() < 3 || base == PUBLIC_DEMO_SLUG || RESERVED_SLUGS.contains(&base.as_str()) {
             return Self(format!("{base}-loja"));
         }
         Self(base)
@@ -160,6 +165,12 @@ mod tests {
             "acai-do-joao-cia"
         );
         assert!(Slug::from_input("admin").is_err());
+        assert!(Slug::from_input("Bistrô da Praça").is_err());
+        assert_eq!(
+            Slug::from_name("Bistrô da Praça").as_str(),
+            "bistro-da-praca-loja"
+        );
+        assert!(Slug::validate_existing(PUBLIC_DEMO_SLUG).is_ok());
         assert!(Slug::from_input("ab").is_err());
         assert_eq!(Slug::from_name("Açaí").as_str(), "acai");
         assert_eq!(Slug::from_name("Ac\u{0327}ai\u{0301}").as_str(), "acai");

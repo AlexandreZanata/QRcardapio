@@ -25,6 +25,8 @@ Browser errors without an HTML body use a localized illustrated response with th
 | `GET` | `/healthz` | None | Liveness probe (`{"status":"ok"}`). |
 | `GET` | `/readyz` | None | Readiness probe executing `SELECT sqlite_version()`. |
 
+A visita à home com o fragmento `#demonstracao` é encaminhada pelo navegador para o exemplo fixo `/c/bistro-da-praca`. A placa do QR também é um link direto. O destino usa a entrega estática de `/c/{slug}`.
+
 ## Authentication Routes
 
 | Method | Path | Protection | Notes |

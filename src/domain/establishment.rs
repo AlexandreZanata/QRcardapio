@@ -1,7 +1,7 @@
 use crate::error::{AppError, AppResult};
 use crate::i18n::{Locale, pick_localized_text};
 
-pub use super::establishment_slug::Slug;
+pub use super::establishment_slug::{PUBLIC_DEMO_SLUG, Slug};
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct AccentColor(String);

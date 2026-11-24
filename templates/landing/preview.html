@@ -25,10 +25,10 @@
              alt="{{ page.t("landing.phone_alt") }}" data-i18n-alt="landing.phone_alt">
       </div>
     </div>
-    <div class="demo-qr" aria-hidden="true">
+    <a class="demo-qr" href="{{ demo_menu_path }}" data-public-demo>
       <span data-i18n="landing.demo_qr">{{ page.t("landing.demo_qr") }}</span>
       <img src="/static/images/landing-demo-qr.svg" alt="" width="90" height="90">
-    </div>
+    </a>
   </div>
   <figcaption>
     <span data-i18n="landing.demo_badge">{{ page.t("landing.demo_badge") }}</span>

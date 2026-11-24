@@ -8,6 +8,7 @@ use qrcardapio::app::{AppState, build_router};
 use qrcardapio::application::admin::bootstrap_admin;
 use qrcardapio::application::auth::{cleanup_expired_sessions, create_password_reset_token};
 use qrcardapio::application::bench_gen::generate_benchmark_dataset;
+use qrcardapio::application::demo_menu::seed_public_demo;
 use qrcardapio::application::publishing::{PublishLocks, republish_all};
 use qrcardapio::application::seed::seed_demo_establishment;
 use qrcardapio::config::{Config, LogFormat};
@@ -43,6 +44,8 @@ enum Commands {
         #[arg(long)]
         password: Option<String>,
     },
+    /// Rebuild the read-only public hamburger menu at its fixed demonstration address
+    SeedPublicDemo,
     /// Republish all currently published menus (useful after template upgrades)
     RepublishAll,
     /// Generate multi-tenant synthetic data for reproducible benchmarks
@@ -139,6 +142,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                 out.slug, out.public_url, out.email, out.password
             );
         }
+        Commands::SeedPublicDemo => {
+            let pool = init_pool(&config).await?;
+            seed_public_demo(&pool, &config).await?;
+            pool.close().await;
+        }
         Commands::RepublishAll => {
             let pool = init_pool(&config).await?;
             let locks = PublishLocks::default();
@@ -181,6 +189,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 async fn run_server(config: Config) -> Result<(), Box<dyn std::error::Error>> {
     let pool = init_pool(&config).await?;
+    seed_public_demo(&pool, &config).await?;
     let bind_addr = config.bind_addr;
     let state = AppState::new(config, pool.clone());
 

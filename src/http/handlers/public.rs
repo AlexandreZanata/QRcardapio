@@ -9,7 +9,7 @@ use axum_extra::extract::CookieJar;
 use serde::Deserialize;
 
 use crate::app::AppState;
-use crate::domain::establishment::Slug;
+use crate::domain::establishment::{PUBLIC_DEMO_SLUG, Slug};
 use crate::error::AppResult;
 use crate::http::handlers::affiliates::capture_referral_redirect;
 use crate::http::handlers::seo::with_public_cache;
@@ -143,6 +143,7 @@ fn render_landing(state: &AppState, locale: Locale, is_logged_in: bool) -> AppRe
         solutions_url: RouteCluster::SolutionsHub.path_for(locale),
         tools_url: RouteCluster::ToolsHub.path_for(locale),
         guides_url: RouteCluster::GuidesHub.path_for(locale),
+        demo_menu_path: format!("/c/{PUBLIC_DEMO_SLUG}"),
     };
     with_public_cache(render_html(&tpl, StatusCode::OK)?, is_logged_in)
 }
