@@ -55,8 +55,9 @@
     output.hidden = false;
   });
 
-  // Copy public menu URL button
+  // Copy a displayed address. Hidden controls require clipboard support.
   document.querySelectorAll("[data-copy-target]").forEach((btn) => {
+    if (btn.hidden && navigator.clipboard?.writeText) btn.hidden = false;
     btn.addEventListener("click", async () => {
       const target = document.getElementById(btn.dataset.copyTarget);
       if (!target) return;

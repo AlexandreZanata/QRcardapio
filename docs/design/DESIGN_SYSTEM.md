@@ -57,9 +57,13 @@ The brand mark and icon sprites live under `static/icons/`. The landing's featur
 
 A seção `#integracoes-ia` explica as operações no rascunho, a revisão do proprietário e a ativação por MCP. Os cartões usam SVGs originais como identificação dos clientes. O Gemini aparece como opção de modelo dentro do Google Antigravity. O atalho para o painel depende de `MCP_ENABLED` e a área de ativação mostra o endereço do conector, o runbook e o estado da homologação.
 
-- [Ícone do ChatGPT](https://chatgpt.com/cdn/assets/favicon.6a33781f61.svg) e [guia da marca OpenAI](https://openai.com/brand/).
+- O cartão do ChatGPT usa o Blossom preto do [pacote oficial da OpenAI](https://cdn.openai.com/brand/openai-logos.zip), com cor fixa para o fundo claro. [Guia da marca OpenAI](https://openai.com/brand/)
 - [Ícone oficial do Claude](https://platform.claude.com/docs/en/manage-claude/oauth-apps/branding-samples#download-the-logo).
 - [Kit do Google Antigravity](https://antigravity.google/press) e [SVG do Gemini](https://www.gstatic.com/lamda/images/gemini_sparkle_aurora_33f86dc0c0257da337c63.svg).
+
+O bloco de ativação organiza as etapas de configuração e autorização ao lado do endereço MCP. O botão de copiar usa o controle do painel quando a API de área de transferência está disponível. O endereço permanece selecionável. O guia abre pelo botão amarelo e a validação técnica fica em uma seção expansível.
+
+A faixa branca abaixo das integrações usa ilustrações próprias do sprite da landing para nove tipos de comércio. Duas cópias visuais da lista formam o ciclo contínuo, e a segunda fica oculta para leitores de tela. O controle de pausa fica acima da faixa. A preferência por movimento reduzido exibe a lista completa, parada e com quebra de linha.
 
 A ilustração foi criada com o ImageGen integrado e exportada como WebP transparente em 620 e 1240 pixels de largura, em `static/images/landing-ai-menu-620.webp` e `static/images/landing-ai-menu-1240.webp`.
 

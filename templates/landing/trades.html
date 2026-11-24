@@ -1,0 +1,38 @@
+{% import "components/icons.html" as icons %}
+
+{% macro business(icon, label_key) %}
+<li>
+  {{ icons::sticker(icon) }}
+  <span data-i18n="{{ label_key }}">{{ page.t(label_key) }}</span>
+</li>
+{% endmacro %}
+
+{% macro lane(duplicate=false) %}
+<ul class="landing-trades-lane" role="list"{% if duplicate %} aria-hidden="true"{% endif %}>
+  {{ business("trade-burger", "landing.trade_burger") }}
+  {{ business("trade-restaurant", "landing.trade_restaurant") }}
+  {{ business("trade-cafe", "landing.trade_cafe") }}
+  {{ business("trade-pizza", "landing.trade_pizza") }}
+  {{ business("trade-bakery", "landing.trade_bakery") }}
+  {{ business("trade-ice-cream", "landing.trade_ice_cream") }}
+  {{ business("trade-acai", "landing.trade_acai") }}
+  {{ business("trade-truck", "landing.trade_truck") }}
+  {{ business("trade-bar", "landing.trade_bar") }}
+</ul>
+{% endmacro %}
+
+<section class="landing-trades" aria-labelledby="landing-trades-title">
+  <div class="landing-container landing-trades-head">
+    <h2 id="landing-trades-title" data-i18n="landing.trades_title">{{ page.t("landing.trades_title") }}</h2>
+    <label class="landing-trades-motion">
+      <input type="checkbox" aria-controls="landing-trades-track">
+      <span data-i18n="landing.trades_pause">{{ page.t("landing.trades_pause") }}</span>
+    </label>
+  </div>
+  <div class="landing-trades-window">
+    <div class="landing-trades-track" id="landing-trades-track">
+      {{ lane() }}
+      {{ lane(duplicate=true) }}
+    </div>
+  </div>
+</section>

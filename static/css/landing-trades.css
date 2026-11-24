@@ -1,0 +1,84 @@
+.landing-trades {
+  padding-block: clamp(1rem, 3vw, 1.9rem);
+  border-bottom: 1px solid var(--landing-rule);
+  background: #fff;
+}
+
+.landing-trades + .landing-plan-band { margin-block-start: 0; }
+
+.landing-trades-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.15rem 1rem;
+  margin-bottom: 0.45rem;
+}
+
+.landing-trades-head h2 {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.5vw, 1.65rem);
+  font-weight: 850;
+  letter-spacing: -0.04em;
+  line-height: 1.2;
+}
+
+.landing-trades-motion {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  color: #453f50;
+  font-size: 0.85rem;
+  font-weight: 730;
+  cursor: pointer;
+}
+
+.landing-trades-motion input { width: 1rem; height: 1rem; margin: 0; accent-color: var(--landing-blue); }
+.landing-trades-window { overflow: clip; }
+.landing-trades-track { display: flex; width: max-content; animation: landing-trades-scroll 38s linear infinite; }
+.landing-trades:has(.landing-trades-motion input:checked) .landing-trades-track { animation-play-state: paused; }
+
+@keyframes landing-trades-scroll {
+  to { transform: translateX(-50%); }
+}
+
+.landing-trades-lane {
+  display: flex;
+  flex: none;
+  justify-content: space-around;
+  gap: 1rem;
+  min-width: 100vw;
+  width: max-content;
+  margin: 0;
+  padding: 0.15rem 0.5rem 0.38rem;
+  list-style: none;
+}
+
+.landing-trades-lane li {
+  display: flex;
+  align-items: center;
+  gap: clamp(0.42rem, 1vw, 0.7rem);
+  padding: 0.38rem clamp(0.65rem, 1.5vw, 1rem);
+  border: 2px solid var(--landing-ink);
+  border-radius: 0.75rem;
+  background: #fff3bc;
+  box-shadow: 2px 3px 0 var(--landing-ink);
+  font-weight: 790;
+  white-space: nowrap;
+}
+
+.landing-trades-lane li:nth-child(3n + 2) { background: #fee4ef; }
+.landing-trades-lane li:nth-child(3n) { background: #eaedff; }
+.landing-trades-lane .landing-sticker { flex: none; width: clamp(2.25rem, 5vw, 2.85rem); height: auto; aspect-ratio: 1; }
+
+@media (hover: hover) {
+  .landing-trades-window:hover .landing-trades-track { animation-play-state: paused; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .landing-trades-motion,
+  .landing-trades-lane[aria-hidden="true"] { display: none; }
+  .landing-trades-track { width: 100%; animation: none; }
+  .landing-trades-lane { justify-content: center; flex-wrap: wrap; gap: 0.55rem; width: 100%; min-width: 0; }
+}
