@@ -114,7 +114,7 @@ Configurações oferece acesso a **Integrações de IA** quando o MCP está habi
 
 ### Páginas de SEO, FAQ e utilitários gratuitos
 
-A navegação da landing usa um cabeçalho de uma linha. O menu Explorar agrupa os links secundários e reúne a navegação e as ações da conta em telas estreitas. O controle usa `<details>` e os links permanecem operáveis sem JavaScript.
+A navegação da landing usa um cabeçalho de uma linha. No desktop, o menu Explorar fica ao lado das ações da conta. Seu ícone de três traços usa o sprite da landing. Em telas estreitas, o menu reúne os links de navegação e as ações da conta. O controle usa `<details>` e os links permanecem operáveis sem JavaScript.
 
 Os cards de segmentos reutilizam o sprite da landing para as ilustrações e a seta de navegação. O selo do perfil no Maps usa um alfinete ilustrado e uma marca de conexão do mesmo sprite. As perguntas frequentes (`#faq`) usam `<details>` com ícones próprios de expansão e recolhimento e uma ilustração por tema em `static/icons/landing-faq.svg`. A cor do hover é aplicada ao próprio cartão para respeitar seu contorno. A grade passa de duas para uma coluna em telas estreitas. O rodapé escuro compartilhado em `templates/landing/footer.html` destaca a marca e os idiomas acima dos quatro grupos de links.
 
