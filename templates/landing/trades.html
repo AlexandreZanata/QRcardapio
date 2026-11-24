@@ -21,18 +21,15 @@
 </ul>
 {% endmacro %}
 
-<section class="landing-trades" aria-labelledby="landing-trades-title">
-  <div class="landing-container landing-trades-head">
-    <h2 id="landing-trades-title" data-i18n="landing.trades_title">{{ page.t("landing.trades_title") }}</h2>
-    <label class="landing-trades-motion">
-      <input type="checkbox" aria-controls="landing-trades-track">
-      <span data-i18n="landing.trades_pause">{{ page.t("landing.trades_pause") }}</span>
-    </label>
-  </div>
+<section class="landing-trades" aria-label="{{ page.t("landing.trades_title") }}" data-i18n-aria="landing.trades_title">
   <div class="landing-trades-window">
     <div class="landing-trades-track" id="landing-trades-track">
       {{ lane() }}
       {{ lane(duplicate=true) }}
     </div>
   </div>
+  <label class="landing-trades-motion">
+    <input type="checkbox" aria-controls="landing-trades-track" aria-label="{{ page.t("landing.trades_pause") }}" data-i18n-aria="landing.trades_pause">
+    <span aria-hidden="true"></span>
+  </label>
 </section>
