@@ -93,6 +93,10 @@ O cadastro, o login e o consentimento MCP aceitam Google quando as credenciais O
 
 [Ativação e homologação](../operations/RUNBOOK.md#habilitação-do-login-com-o-google) · [Contrato Google](../architecture/GOOGLE_AUTH.md) · [Contratos MCP](../architecture/MCP.md#contratos-e-homologação)
 
+## Páginas de segmentos
+
+As oito páginas de segmentos combinam uma arte exclusiva, cores por tema, benefícios em cards, um exemplo de cardápio, dicas operacionais, perguntas frequentes e links relacionados. Soluções, ferramentas e guias compartilham o breadcrumb com destaque para a página atual. O layout serve os mesmos textos e caminhos em português, inglês e espanhol.
+
 ## Autodeploy na VPS (Pull + Sigstore)
 
 Implementado em `.github/workflows/deploy-bundle.yml` e `deploy/vps/` sem armazenar chaves SSH, IPs ou segredos de servidor no GitHub:

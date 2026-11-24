@@ -1,0 +1,24 @@
+{% import "components/icons.html" as icons %}
+
+{% macro trail(home_url, current, parent_url="", parent_key="") %}
+<nav class="seo-breadcrumb" aria-label="{{ page.t("seo.breadcrumb_label") }}" data-i18n-aria="seo.breadcrumb_label">
+  <ol role="list">
+    <li>
+      <a href="{{ home_url }}">
+        {{ icons::sticker("storefront") }}
+        <span data-i18n="seo.home">{{ page.t("seo.home") }}</span>
+      </a>
+    </li>
+    {% if !parent_url.is_empty() %}
+    <li>
+      <span class="seo-breadcrumb-divider" aria-hidden="true"></span>
+      <a href="{{ parent_url }}" data-i18n="{{ parent_key }}">{{ page.t(parent_key) }}</a>
+    </li>
+    {% endif %}
+    <li>
+      <span class="seo-breadcrumb-divider" aria-hidden="true"></span>
+      <span aria-current="page">{{ current }}</span>
+    </li>
+  </ol>
+</nav>
+{% endmacro %}

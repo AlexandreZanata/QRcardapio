@@ -1,0 +1,213 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <g id="qr-placard" stroke="#161721" stroke-width="4" stroke-linejoin="round">
+      <path d="m56 9 34 91-56 7-31-10Z" fill="#161721"/>
+      <path d="M20 5 70 8 54 103 3 96Z" fill="#ffdc38"/>
+      <path d="m23 21 39 3-9 54-39-4Z" fill="#fff9ee" stroke="none"/>
+      <path d="m26 28 11 1-2 11-11-1Zm17 1 11 1-2 11-11-1ZM22 46l11 1-2 11-11-1Zm15 3 8 1-1 6 6 1-2 10-5-1 1-4-9-1Zm-17 15 6 1-1 5-6-1Z" fill="#161721" stroke="none"/>
+      <path d="m19 82 31 3" stroke-linecap="round" stroke-width="3"/>
+    </g>
+    <g id="sparkle">
+      <path d="M17 1c1 9 6 14 15 16-9 1-14 6-15 15C15 23 10 18 1 17 10 15 15 10 17 1Z" fill="#ffdc38" stroke="#161721" stroke-width="2.4" stroke-linejoin="round"/>
+    </g>
+  </defs>
+
+  <symbol id="restaurant" viewBox="0 0 480 380">
+    <ellipse cx="239" cy="319" rx="190" ry="25" fill="#161721" opacity=".15"/>
+    <g stroke="#161721" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M63 179c-6-34-33-56-25-84l8-15 9 5-3 28 9 13 11-6-5-29 9-3 15 30v15l15 36" fill="#fff9ee"/>
+      <path d="m74 146 47 117m-31-121 49 117" stroke-width="11" fill="none"/>
+      <path d="M379 87q-27 14-33 65l-14 64 17 4 40-91q9-27-10-42Z" fill="#fff9ee"/>
+      <path d="m343 212-21 56" stroke-width="11"/>
+      <ellipse cx="236" cy="280" rx="161" ry="46" fill="#ff985e"/>
+      <ellipse cx="236" cy="267" rx="161" ry="40" fill="#ffdc38"/>
+      <ellipse cx="235" cy="261" rx="133" ry="26" fill="#fff9ee"/>
+      <path d="M109 253c3-73 52-125 125-125 70 0 125 46 132 125Z" fill="#90a3ff"/>
+      <path d="M210 131c-15 55-72 61-74 114h-27c3-73 52-125 125-125l18 8Z" fill="#c5d1ff" stroke="none"/>
+      <path d="M139 213c12-31 36-53 65-64" fill="none" stroke="#fff9ee" stroke-width="7"/>
+      <path d="M212 130q-6-13 1-23 7-9 22-9 14 0 22 9 6 10 0 23Z" fill="#ffdc38"/>
+      <path d="M95 252h284q2 13-14 16H110q-15-2-15-16Z" fill="#a9b9ff"/>
+      <path d="M198 87q-16-15 0-31t0-25m37 52q-13-13 5-32t0-19m28 62q-8-10 0-17" stroke="#fff9ee" stroke-width="7" fill="none"/>
+    </g>
+    <use href="#sparkle" transform="translate(304 77) scale(.86)"/>
+    <use href="#sparkle" transform="translate(119 102) scale(.58)"/>
+    <use href="#qr-placard" transform="translate(333 224) rotate(7 45 54) scale(1.08)"/>
+  </symbol>
+
+  <symbol id="burger" viewBox="0 0 480 380">
+    <ellipse cx="240" cy="319" rx="192" ry="25" fill="#161721" opacity=".15"/>
+    <g stroke="#161721" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m316 123 12-74 18 3-10 86Zm22 16 21-99 17 5-16 91Zm16 2 35-88 16 6-32 94Zm-59-8 4-67 17-1 1 74Zm72 13 30-68 16 8-29 75Z" fill="#ffdc38"/>
+      <path d="M295 116q47 35 95 26l-17 120q-33 20-68-2Z" fill="#ff5596"/>
+      <path d="M306 156q33 17 67 14l-9 53q-26 9-49-3Z" fill="#fff9ee" stroke="none"/>
+      <ellipse cx="188" cy="292" rx="140" ry="37" fill="#93a2ff"/>
+      <path d="M70 257h238q-4 36-37 42H102q-29-4-32-42Z" fill="#ffac59"/>
+      <path d="M68 234q-2-15 16-17l210 1q19 5 16 19l-7 23H76Z" fill="#713822"/>
+      <path d="M71 219q14-13 44-10h176q14 1 11 13l-41 2-23 22-34-21-34 1-24 12-25-13Z" fill="#ffdc38"/>
+      <path d="M64 204q-6-15 21-20h200q31 0 26 21l-4 13-26 5-15-8-23 9-46-7-19 9-29-9-27 11-28-11-19 5Z" fill="#97c75a"/>
+      <path d="M70 185c0-61 58-107 119-107 63 0 115 41 119 107q-19 14-44 12H98q-19-2-28-12Z" fill="#ffae55"/>
+      <path d="M80 160c23-42 62-66 108-68 56-2 99 33 111 75" stroke="#ffe2a5" stroke-width="7" fill="none"/>
+      <path d="m122 149 8-5m16-19 9 2m21-16 6 7m24 1 8-6m22 14 7 3m21 17 8-4m-83 5 9 3m26 5 5-5" stroke="#fff9ee" stroke-width="4" fill="none"/>
+    </g>
+    <use href="#sparkle" transform="translate(47 101) scale(.86)"/>
+    <use href="#sparkle" transform="translate(274 64) scale(.66)"/>
+    <use href="#qr-placard" transform="translate(360 225) rotate(7 45 54)"/>
+  </symbol>
+
+  <symbol id="coffee" viewBox="0 0 480 380">
+    <ellipse cx="245" cy="320" rx="193" ry="23" fill="#161721" opacity=".15"/>
+    <g stroke="#161721" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <ellipse cx="199" cy="277" rx="144" ry="45" fill="#ed4e92"/>
+      <ellipse cx="200" cy="265" rx="143" ry="39" fill="#ff9bc0"/>
+      <ellipse cx="199" cy="264" rx="104" ry="24" fill="#ffd6e8"/>
+      <path d="M279 156q47-24 57 5 19 45-52 64l-2-19q48-11 39-37-6-13-35 3Z" fill="#ffdc38"/>
+      <path d="M102 157h200l-13 63q-12 50-83 58-69-1-89-51Z" fill="#fff9ee"/>
+      <path d="M117 212q34 37 106 31 37-2 64-24-12 51-78 59-65 3-89-47Z" fill="#ebd5c7" stroke="none"/>
+      <ellipse cx="202" cy="157" rx="101" ry="35" fill="#ffd9a4"/>
+      <ellipse cx="202" cy="156" rx="89" ry="26" fill="#794431"/>
+      <path d="M154 153q42-26 59 10 20-30 51-12-34 9-47 25-23-10-63-23Z" fill="#fff1c7" stroke="none"/>
+      <path d="M167 113q-21-23 0-43t0-32m39 69q-15-15 2-37t0-36m36 85q-11-13 1-29" fill="none" stroke="#fff9ee" stroke-width="7"/>
+      <path d="M255 294c19-58 59-76 96-52 22 14 33 48 20 66-11 10-27-4-33-14q-32 16-63-1-31 24-32 3Z" fill="#ffb35e"/>
+      <path d="M275 293q-3-23 8-40m5 48q-1-36 12-52m23 46q0-31-12-45m25 43q-3-20-13-38" fill="none" stroke="#a8582b" stroke-width="4"/>
+    </g>
+    <use href="#sparkle" transform="translate(78 93) scale(.75)"/>
+    <use href="#sparkle" transform="translate(337 91) scale(1.07)"/>
+    <use href="#qr-placard" transform="translate(374 233) rotate(8 45 54) scale(.92)"/>
+  </symbol>
+
+  <symbol id="snack" viewBox="0 0 480 380">
+    <ellipse cx="239" cy="321" rx="187" ry="24" fill="#161721" opacity=".15"/>
+    <g stroke="#161721" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m298 104 86-6-9 168q-32 22-68 2Z" fill="#ff5596"/>
+      <path d="m300 118 84-7-4 65q-24-12-76 3Z" fill="#ffd1e4" stroke="none"/>
+      <path d="m333 107 6-65 30-22 8 12-26 22-3 54Z" fill="#93a2ff"/>
+      <ellipse cx="341" cy="109" rx="48" ry="14" fill="#fff9ee"/>
+      <path d="M331 109q-1-8 13-8t11 7" fill="#93a2ff"/>
+      <path d="m329 190 13-24 14 24-14 19Z" fill="#ffdc38"/>
+      <path d="M58 287q10-55 42-72l162-28 71 55-17 54Z" fill="#7890ff"/>
+      <path d="m64 278 30-44 183-38 56 44-19 37Z" fill="#fff9ee"/>
+      <path d="M82 248q48-93 119-137c11-7 29-8 40 6l60 90q9 12-2 26l-29 34-136 26-49-25q-12-7-3-20Z" fill="#e68d41"/>
+      <path d="m89 242 40 14 133-27 39-25 4 14-43 44-130 24-53-25Z" fill="#a3cb61"/>
+      <path d="m84 232 46 18 132-31 31-21 8 15-33 33-130 26-55-23Z" fill="#ff8298"/>
+      <path d="M86 227q45-85 115-128 24-14 41 7l52 83q8 13-8 21l-36 18-123 26-36-9q-12-4-5-18Z" fill="#ffc977"/>
+      <path d="M108 223q52-73 103-101 7-5 14 3l48 68-25 12-112 29Z" fill="#fff0bc" stroke="none"/>
+      <path d="m133 215 63-55m-27 62 63-60m-29 52 48-38" fill="none" stroke="#bc6b36" stroke-width="5"/>
+    </g>
+    <use href="#sparkle" transform="translate(93 113) scale(.72)"/>
+    <use href="#sparkle" transform="translate(261 70) scale(.65)"/>
+    <use href="#qr-placard" transform="translate(361 239) rotate(8 45 54)"/>
+  </symbol>
+
+  <symbol id="pizzeria" viewBox="0 0 480 380">
+    <ellipse cx="232" cy="325" rx="190" ry="23" fill="#161721" opacity=".15"/>
+    <g stroke="#161721" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m90 58 219 14 42 169-257-9-17-143Z" fill="#ffbd80"/>
+      <path d="m101 74 198 13 41 135-235-7Z" fill="#fff0c7"/>
+      <path d="m117 88 175 12 33 108-206-7Z" fill="none" stroke="#dd8b52" stroke-dasharray="7 8" stroke-width="3"/>
+      <path d="m83 213 257 5 50 70-33 35-268-9-46-66Z" fill="#ffbf80"/>
+      <path d="m43 248 274 1 73 39-33 35-268-9Z" fill="#e58a51"/>
+      <path d="m54 245 258-8 67 45-34 22-255-8Z" fill="#fff1cb"/>
+      <ellipse cx="200" cy="248" rx="114" ry="49" fill="#de894f" transform="rotate(7 200 248)"/>
+      <ellipse cx="198" cy="239" rx="111" ry="48" fill="#ffb756" transform="rotate(7 198 239)"/>
+      <ellipse cx="198" cy="239" rx="96" ry="37" fill="#ffdf77" stroke="#f47a4c" stroke-width="4" transform="rotate(7 198 239)"/>
+      <path d="m198 239 49-70q-38-29-80-19Z" fill="#fff0ca"/>
+      <path d="m204 233 55-83q-43-31-89-21Z" fill="#ffce64"/>
+      <path d="M171 130q46-13 90 21l-9 13q-37-25-77-21Z" fill="#ff9b4e"/>
+      <g fill="#fa6d64" stroke-width="3">
+        <ellipse cx="136" cy="233" rx="13" ry="8"/><ellipse cx="170" cy="258" rx="13" ry="8"/>
+        <ellipse cx="220" cy="262" rx="13" ry="8"/><ellipse cx="265" cy="240" rx="13" ry="8"/>
+        <ellipse cx="211" cy="169" rx="10" ry="11"/>
+      </g>
+      <path d="M222 246q12-25 23-16 1 12-23 16Zm-76 11q-23-14-16-20 11 2 16 20Zm73-58q9-21 19-17-1 11-19 17Z" fill="#91bf59" stroke-width="2.5"/>
+    </g>
+    <use href="#sparkle" transform="translate(352 103) scale(1.06)"/>
+    <use href="#sparkle" transform="translate(55 142) scale(.65)"/>
+    <use href="#qr-placard" transform="translate(361 231) rotate(7 45 54)"/>
+  </symbol>
+
+  <symbol id="acai" viewBox="0 0 480 380">
+    <ellipse cx="239" cy="320" rx="190" ry="24" fill="#161721" opacity=".15"/>
+    <g stroke="#161721" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m86 172 17 2 53 72-13 17-68-73q-8-10 11-18Z" fill="#fff9ee"/>
+      <path d="m294 180 87-3-43 104Z" fill="#ffbc70"/>
+      <path d="m305 192 43 60m-30-62 36 44m-25-46 32 28m-57 2 43-37m-34 55 49-49m-41 64 50-52" fill="none" stroke="#b86543" stroke-width="3.6"/>
+      <path d="M284 181q-14-17 4-34-4-23 16-34 9-32 37-27 28-1 41 26 23 4 25 25 12 18-2 33-8 7-16 5-7 14-21 12-13 10-25 1-15 9-30-3-16 11-29-4Z" fill="#ff8db4"/>
+      <path d="M299 126q-4-18 13-32 2-22 24-29 17-25 42-9 23 11 24 36 12 11 4 27-8 15-22 12-15 10-25 3-19 9-28-1-18 9-32-7Z" fill="#fff2bc"/>
+      <path d="M341 78q14-13 29-7m-55 76q8-9 19-10" fill="none" stroke="#fff9ee" stroke-width="6"/>
+      <path d="M86 234q11 65 61 78h103q49-17 65-78Z" fill="#9871e7"/>
+      <path d="M96 266q49 35 184 11-12 24-33 35H149q-34-12-53-46Z" fill="#7753bf" stroke="none"/>
+      <ellipse cx="198" cy="237" rx="116" ry="36" fill="#c8afff"/>
+      <ellipse cx="198" cy="235" rx="103" ry="28" fill="#6a3d9e"/>
+      <path d="M102 234q16-26 49-22 18-16 44-7 32-13 54 4 29-4 48 17-62 22-195 8Z" fill="#925ac2" stroke-width="3"/>
+      <g fill="#ffefaf" stroke-width="2.6">
+        <ellipse cx="173" cy="227" rx="15" ry="9" transform="rotate(-13 173 227)"/>
+        <ellipse cx="193" cy="225" rx="15" ry="9" transform="rotate(-11 193 225)"/>
+        <ellipse cx="213" cy="224" rx="15" ry="9" transform="rotate(-9 213 224)"/>
+      </g>
+      <g fill="#ff7295" stroke-width="2.7">
+        <path d="M130 217q-17-10-26 0-6 10 25 23l10-12Z"/><path d="M257 214q19-9 26 2 8 11-22 20l-11-11Z"/>
+      </g>
+      <g fill="#a6b2fa" stroke-width="2.4">
+        <circle cx="149" cy="229" r="7"/><circle cx="242" cy="227" r="7"/><circle cx="234" cy="238" r="5"/>
+      </g>
+      <path d="m138 244 6 2m15-7 5 3m13 3 6-3m25 2 6-3m32 4 6-3" stroke="#ffe0a2" stroke-width="3.4"/>
+    </g>
+    <use href="#sparkle" transform="translate(161 130) scale(1.1)"/>
+    <use href="#sparkle" transform="translate(256 82) scale(.62)"/>
+    <use href="#qr-placard" transform="translate(358 230) rotate(7 45 54)"/>
+  </symbol>
+
+  <symbol id="bakery" viewBox="0 0 480 380">
+    <ellipse cx="237" cy="326" rx="192" ry="23" fill="#161721" opacity=".15"/>
+    <g stroke="#161721" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M91 252 52 91m34 120L68 72m26 155L98 98" fill="none" stroke="#a26347"/>
+      <path d="M67 152q-22-9-23-36 24 10 23 36Zm3-24q-23-12-21-34 21 9 21 34Zm10 54q21-21 11-43-15 10-11 43Zm15-49q-11-16 4-34 12 18-4 34Z" fill="#ffe18c" stroke-width="3"/>
+      <path d="M68 240 298 218l77 36 25 40-38 31-256-6-53-38Z" fill="#865036"/>
+      <path d="M65 233 302 213l77 37 18 35-34 26-254-7-55-32Z" fill="#e6a373"/>
+      <path d="m96 274 199-13m-162 31 183-8m-193-53 174-14" fill="none" stroke="#bd7750" stroke-width="3.5"/>
+      <path d="M83 201Q168 76 280 74q55-1 67 31 15 35-21 58L134 266q-39 14-56-9-16-20 5-56Z" fill="#f39f52"/>
+      <path d="M81 232q11 25 45 13l204-109 13-22q9 27-17 48l-192 104q-38 14-55-9-8-10 2-25Z" fill="#c66c39" stroke="none"/>
+      <path d="M126 192q15-36 37-50-3 21-26 49Zm48-33q17-36 39-47-4 23-28 47Zm55-23q11-32 35-44-3 21-26 40Zm49-17q16-23 34-22-10 19-31 29Z" fill="#fff0ba" stroke="#bd6a3c" stroke-width="3"/>
+      <path d="M229 282c15-48 51-77 83-60 26 10 46 41 40 57q-6 16-33 1-27 16-63 4-37 27-27-2Z" fill="#ffbf70"/>
+      <path d="M263 279q-5-23 12-43m1 52q-5-34 15-55m20 51q4-27-7-52m23 54q1-24-14-42" fill="none" stroke="#a8582b" stroke-width="4"/>
+    </g>
+    <use href="#sparkle" transform="translate(344 97) scale(1.15)"/>
+    <use href="#sparkle" transform="translate(119 76) scale(.61)"/>
+    <use href="#qr-placard" transform="translate(359 232) rotate(7 45 54)"/>
+  </symbol>
+
+  <symbol id="bar" viewBox="0 0 480 380">
+    <ellipse cx="237" cy="322" rx="192" ry="25" fill="#161721" opacity=".15"/>
+    <g stroke="#161721" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M205 156q49-44 68 6 9 31-31 61l-26 11-7-17 24-13q21-20 15-40-5-14-32 9Z" fill="#fff9ee"/>
+      <ellipse cx="148" cy="288" rx="92" ry="26" fill="#ffd4e8"/>
+      <path d="M70 144q64-18 156 7l-17 129q-73 21-125-8Z" fill="#ffca56"/>
+      <path d="m185 160 25 5-12 103-22 5Z" fill="#ef9b4a" stroke="none"/>
+      <path d="M67 148c-15-16-4-38 13-44-4-17 15-28 34-23 10-22 39-23 52-4 15-8 33 0 35 12 24-3 39 16 33 37 9 10-5 24-16 25l-9 42q-3 15-16 12-12-3-11-16l-1-27q-10 13-22 7l-13-5q-28 12-49-10-24 4-30-6Z" fill="#fff9ee"/>
+      <path d="M98 211v42m29-49v56m31-68v61" fill="none" stroke="#fff1a7" stroke-width="5.2"/>
+      <path d="M282 175h117l-50 70-3 35 34 9q4 10-10 12h-60q-9-1-8-10l31-11v-35Z" fill="#c9d4ff"/>
+      <path d="m295 193 94-2-41 53h-13Z" fill="#ff78a9"/>
+      <ellipse cx="340" cy="175" rx="59" ry="15" fill="#ffb1cf"/>
+      <path d="M357 163q-3-38 28-53 28-9 48 17-39 15-55 51Z" fill="#b9d86c"/>
+      <path d="m380 161 22-34m-33 27-1-23m19 12 23 1" fill="none" stroke="#57773c" stroke-width="3.5"/>
+      <path d="M262 257q10-22 35-28l5 25q-23 14-40 3Z" fill="#ffe897"/>
+    </g>
+    <use href="#sparkle" transform="translate(266 77) scale(1.12)"/>
+    <use href="#sparkle" transform="translate(46 81) scale(.61)"/>
+    <use href="#qr-placard" transform="translate(233 236) rotate(7 45 54) scale(.97)"/>
+  </symbol>
+
+  <symbol id="tip-check" viewBox="0 0 32 32">
+    <path d="m16 2 5 4 6 1 1 6 3 5-4 5-2 6-6-1-6 2-4-5-6-2 1-7-2-5 6-3 3-5Z" fill="#ffdc38" stroke="#161721" stroke-width="2" stroke-linejoin="round"/>
+    <path d="m10 16 4 4 8-9" fill="none" stroke="#161721" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
+  </symbol>
+  <symbol id="question-tab" viewBox="0 0 40 40">
+    <path d="m10 7 18-2q7 0 8 8l-1 16q0 7-6 7l-18 1q-7 0-8-8V15q0-7 7-8Z" fill="var(--segment-toggle-fill, #ffdc38)" stroke="#161721" stroke-width="2.3" stroke-linejoin="round"/>
+    <path d="m12 17 8 8 8-8" fill="none" stroke="#161721" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="M3 6 1 3m7 2V1" stroke="#e84084" stroke-width="1.7" stroke-linecap="round"/>
+  </symbol>
+  <symbol id="next-sticker" viewBox="0 0 40 40">
+    <path d="m5 21 17-2-4-7 17 8-14 13 1-8-15 2Z" fill="#ff84b1" stroke="#161721" stroke-width="2.1" stroke-linejoin="round"/>
+    <path d="m3 14 8 1m-6-7 8 3" fill="none" stroke="#263be8" stroke-width="2.1" stroke-linecap="round"/>
+  </symbol>
+</svg>
