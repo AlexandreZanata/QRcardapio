@@ -1,0 +1,34 @@
+{% import "components/icons.html" as icons %}
+{% import "components/lang_switcher.html" as languages %}
+{% import "components/public_account.html" as account %}
+
+{% macro links() %}
+  <a href="{{ nav.solutions_url }}" data-i18n="seo.solutions">{{ page.t("seo.solutions") }}</a>
+  <a href="{{ nav.tools_url }}" data-i18n="seo.tools">{{ page.t("seo.tools") }}</a>
+  <a href="{{ nav.guides_url }}" data-i18n="seo.guides">{{ page.t("seo.guides") }}</a>
+{% endmacro %}
+
+<header class="landing-header">
+  <div class="landing-container landing-topbar seo-topbar">
+    <a class="landing-brand" href="{{ nav.home_url }}">
+      <img src="/static/icons/favicon.svg" alt="" width="48" height="48">
+      <span data-i18n="app.name">{{ page.t("app.name") }}</span>
+    </a>
+    <nav class="landing-topbar-nav" aria-label="{{ page.t("nav.primary_label") }}" data-i18n-aria="nav.primary_label">
+      <div class="landing-topbar-featured">{{ links() }}</div>
+      <details class="landing-topbar-menu">
+        <summary aria-label="{{ page.t("landing.nav_explore") }}" data-i18n-aria="landing.nav_explore">
+          {{ icons::icon("bars") }}
+          <span data-i18n="landing.nav_explore">{{ page.t("landing.nav_explore") }}</span>
+        </summary>
+        <div class="landing-topbar-popover">
+          <a href="{{ nav.home_url }}" data-i18n="seo.home">{{ page.t("seo.home") }}</a>
+          {{ links() }}
+          <div class="landing-topbar-popover-account">{{ account::links(nav.is_logged_in) }}</div>
+        </div>
+      </details>
+    </nav>
+    <div class="landing-topbar-account">{{ account::links(nav.is_logged_in) }}</div>
+    {{ languages::seo_picker(page.locale_code, page.t("lang.switcher_label"), nav.alt_pt_url, nav.alt_en_url, nav.alt_es_url, true) }}
+  </div>
+</header>

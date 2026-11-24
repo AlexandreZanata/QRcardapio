@@ -1,37 +1,16 @@
 {% extends "layouts/base.html" %}
-{% import "components/lang_switcher.html" as languages %}
 
 {% block head_extra %}
 <link rel="stylesheet" href="/static/css/landing.css">
+<link rel="stylesheet" href="/static/css/landing-header.css">
 <link rel="stylesheet" href="/static/css/seo-pages.css">
 <link rel="stylesheet" href="/static/css/site-footer.css">
+<script src="/static/js/landing-nav.js" type="module"></script>
 {% block seo_head %}{% endblock %}
 {% endblock %}
 
 {% block header %}
-<header class="landing-header">
-  <div class="landing-container landing-header-inner">
-    <a class="landing-brand" href="{{ nav.home_url }}">
-      <img src="/static/icons/favicon.svg" alt="" width="48" height="48">
-      <span data-i18n="app.name">{{ page.t("app.name") }}</span>
-    </a>
-    <nav class="landing-nav" aria-label="{{ page.t("nav.primary_label") }}" data-i18n-aria="nav.primary_label">
-      <a href="{{ nav.home_url }}" data-i18n="seo.home">{{ page.t("seo.home") }}</a>
-      <a href="{{ nav.solutions_url }}" data-i18n="seo.solutions">{{ page.t("seo.solutions") }}</a>
-      <a href="{{ nav.tools_url }}" data-i18n="seo.tools">{{ page.t("seo.tools") }}</a>
-      <a href="{{ nav.guides_url }}" data-i18n="seo.guides">{{ page.t("seo.guides") }}</a>
-    </nav>
-    <div class="landing-account">
-      {% if nav.is_logged_in %}
-      <a class="btn landing-button landing-button-pink" href="/dashboard" data-i18n="landing.open_panel">{{ page.t("landing.open_panel") }}</a>
-      {% else %}
-      <a class="btn landing-button landing-login" href="/login" data-i18n="nav.login">{{ page.t("nav.login") }}</a>
-      <a class="btn landing-button landing-button-pink" href="/register" data-i18n="landing.create_menu">{{ page.t("landing.create_menu") }}</a>
-      {% endif %}
-    </div>
-    {{ languages::seo_picker(page.locale_code, page.t("lang.switcher_label"), nav.alt_pt_url, nav.alt_en_url, nav.alt_es_url, true) }}
-  </div>
-</header>
+{% include "seo/header.html" %}
 {% endblock %}
 
 {% block content %}
