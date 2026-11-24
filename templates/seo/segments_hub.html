@@ -1,23 +1,48 @@
 {% extends "seo/layout.html" %}
+{% import "components/icons.html" as icons %}
 {% import "seo/breadcrumb.html" as breadcrumb %}
+{% import "seo/segment_art.html" as art %}
+
+{% block seo_head %}
+<link rel="stylesheet" href="/static/css/segment-visuals.css">
+<link rel="stylesheet" href="/static/css/solutions-hub.css">
+{% endblock %}
 
 {% block seo_main %}
-<div class="landing-container seo-shell">
+<div class="landing-container seo-shell solutions-hub">
   {{ breadcrumb::trail(nav.home_url, page.t("seo.solutions")) }}
 
-  <header class="seo-hero">
-    <h1>{{ page.t("seo.solutions_hub_h1") }}</h1>
-    <p class="seo-lead">{{ page.t("seo.solutions_hub_lead") }}</p>
+  <header class="solutions-hero">
+    <div>
+      <h1 class="segment-display-title" data-i18n="seo.solutions_hub_h1">{{ page.t("seo.solutions_hub_h1") }}</h1>
+      <p class="seo-lead" data-i18n="seo.solutions_hub_lead">{{ page.t("seo.solutions_hub_lead") }}</p>
+    </div>
+    <div class="solutions-hero-art" aria-hidden="true">
+      <span class="solutions-hero-tile">{{ icons::sticker("trade-cafe") }}</span>
+      <span class="solutions-hero-tile">{{ icons::sticker("trade-burger") }}</span>
+      <span class="solutions-hero-tile">{{ icons::sticker("trade-acai") }}</span>
+      <span class="solutions-hero-spark">{{ icons::sticker("burst") }}</span>
+    </div>
   </header>
 
-  <section class="seo-card-grid seo-card-grid-2">
+  <ul class="solutions-gallery" role="list">
     {% for seg in nav.segments %}
-    <article class="seo-card">
-      <h2><a href="{{ seg.href }}">{{ seg.name }}</a></h2>
-      <p>{{ seg.short_desc }}</p>
-      <a class="seo-inline-link" href="{{ seg.href }}">{{ page.t("seo.explore_solution") }}</a>
-    </article>
+    <li>
+      <a class="solutions-card segment-palette" data-segment="{{ seg.art }}" href="{{ seg.href }}"
+         aria-labelledby="solution-title-{{ loop.index }} solution-action-{{ loop.index }}"
+         aria-describedby="solution-description-{{ loop.index }}">
+        <div class="solutions-card-scene segment-scene" aria-hidden="true">{{ art::scene(seg.art) }}</div>
+        <div class="solutions-card-body">
+          <h2 id="solution-title-{{ loop.index }}">{{ seg.name }}</h2>
+          <p id="solution-description-{{ loop.index }}">{{ seg.short_desc }}</p>
+          <span class="solutions-card-action">
+            <span id="solution-action-{{ loop.index }}" data-i18n="seo.explore_solution">{{ page.t("seo.explore_solution") }}</span>
+            {{ art::next() }}
+          </span>
+        </div>
+      </a>
+    </li>
     {% endfor %}
-  </section>
+  </ul>
 </div>
 {% endblock %}

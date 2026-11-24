@@ -1,20 +1,22 @@
 {% extends "seo/layout.html" %}
 {% import "components/icons.html" as icons %}
 {% import "seo/breadcrumb.html" as breadcrumb %}
+{% import "seo/segment_art.html" as art %}
 
 {% block seo_head %}
+<link rel="stylesheet" href="/static/css/segment-visuals.css">
 <link rel="stylesheet" href="/static/css/segment-pages.css">
 {% endblock %}
 
 {% block seo_main %}
 {% let visual = self.visual() %}
-<div class="segment-page" data-segment="{{ visual.art }}">
+<div class="segment-page segment-palette" data-segment="{{ visual.art }}">
   <div class="landing-container segment-intro">
     {{ breadcrumb::trail(nav.home_url, seg.name, nav.solutions_url, "seo.solutions") }}
 
     <header class="segment-hero">
       <div class="segment-hero-copy">
-        <h1>{{ seg.h1 }}</h1>
+        <h1 class="segment-display-title">{{ seg.h1 }}</h1>
         <div class="segment-answer">
           <p class="segment-answer-label" data-i18n="seo.answer_label">{{ page.t("seo.answer_label") }}</p>
           <p>{{ seg.answer_summary }}</p>
@@ -24,8 +26,8 @@
           <a class="btn landing-button" href="{{ nav.tools_url }}" data-i18n="seo.tools">{{ page.t("seo.tools") }}</a>
         </div>
       </div>
-      <div class="segment-hero-scene" aria-hidden="true">
-        <svg viewBox="0 0 480 380" class="segment-hero-art" aria-hidden="true" focusable="false"><use href="/static/icons/segment-scenes.svg#{{ visual.art }}"></use></svg>
+      <div class="segment-scene segment-hero-scene" aria-hidden="true">
+        {{ art::scene(visual.art) }}
       </div>
     </header>
   </div>
@@ -112,7 +114,7 @@
         <a class="segment-card segment-related-card" href="{{ rel.href }}" aria-labelledby="related-segment-{{ loop.index }}" aria-describedby="related-description-{{ loop.index }}">
           <div class="segment-related-art">
             {{ icons::sticker(rel.sticker) }}
-            <svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><use href="/static/icons/segment-scenes.svg#next-sticker"></use></svg>
+            {{ art::next() }}
           </div>
           <h3 id="related-segment-{{ loop.index }}">{{ rel.name }}</h3>
           <p id="related-description-{{ loop.index }}">{{ rel.short_desc }}</p>
