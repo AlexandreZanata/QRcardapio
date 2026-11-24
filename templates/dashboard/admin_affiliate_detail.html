@@ -1,0 +1,343 @@
+{% extends "layouts/dashboard.html" %}
+{% import "components/icons.html" as icons %}
+{% import "components/panel_controls.html" as controls %}
+{% import "components/panel_empty.html" as empty %}
+{% import "components/dashboard_metric.html" as metrics %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="/static/css/affiliates.css">
+{% endblock %}
+
+{% block content %}
+<div class="page-top dashboard-overview-top">
+  <div>
+    <h1>{{ account_email }}</h1>
+    <div class="affiliate-meta-list">
+      <span class="badge {{ status_badge }}" data-i18n="{{ status_key }}">{{ page.t(status_key) }}</span>
+      <span class="affiliate-quota-pill">
+        <span data-i18n="admin_affiliates.col_quota">{{ page.t("admin_affiliates.col_quota") }}</span>:
+        <strong>{{ quota_display }}</strong>
+        <span data-i18n="{{ quota_unit_key }}">{{ page.t(quota_unit_key) }}</span>
+      </span>
+      <span class="badge badge-neutral">{{ billing_env }}</span>
+    </div>
+  </div>
+  <div class="affiliate-env-bar">
+    <a class="btn btn-sm {% if billing_env == "production" %}panel-action-primary{% else %}btn-secondary{% endif %}" href="/admin/affiliates/{{ affiliate_id }}?env=production">Production</a>
+    <a class="btn btn-sm {% if billing_env == "sandbox" %}panel-action-primary{% else %}btn-secondary{% endif %}" href="/admin/affiliates/{{ affiliate_id }}?env=sandbox">Sandbox</a>
+    <a class="btn btn-secondary" href="/admin/affiliates?env={{ billing_env }}" data-i18n="common.back">{{ page.t("common.back") }}</a>
+  </div>
+</div>
+
+<div class="stats-grid">
+  {{ metrics::metric("link", "violet", "affiliate.stat_clicks", click_count) }}
+  {{ metrics::metric("pending", "yellow", "affiliate.stat_pending", pending_formatted) }}
+  {{ metrics::metric("check", "green", "affiliate.stat_available", available_formatted) }}
+  {{ metrics::metric("history", "pink", "affiliate.stat_paid", paid_formatted) }}
+</div>
+
+<section class="card mb-4" aria-labelledby="admin-aff-link-heading">
+  <h2 class="dashboard-card-heading" id="admin-aff-link-heading">
+    {{ icons::panel("link") }}
+    <span data-i18n="affiliate.your_link_heading">{{ page.t("affiliate.your_link_heading") }}</span>
+  </h2>
+  <div class="affiliate-link-box">
+    <code class="affiliate-link-url" id="admin-affiliate-referral-url">{{ referral_url }}</code>
+    <button class="btn btn-secondary" type="button" data-copy-target="admin-affiliate-referral-url" hidden>
+      <span data-i18n="common.copy">{{ page.t("common.copy") }}</span>
+    </button>
+  </div>
+</section>
+
+<div class="affiliate-grid-2 mb-4">
+  <section class="card" aria-labelledby="admin-aff-edit-heading">
+    <h2 class="dashboard-card-heading" id="admin-aff-edit-heading">
+      {{ icons::panel("edit") }}
+      <span data-i18n="admin_affiliates.edit_heading">{{ page.t("admin_affiliates.edit_heading") }}</span>
+    </h2>
+    <p class="dashboard-field-hint mb-4" data-i18n="admin_affiliates.quota_snapshot_hint">{{ page.t("admin_affiliates.quota_snapshot_hint") }}</p>
+    <form class="form-stack" method="post" action="/admin/affiliates/{{ affiliate_id }}/update">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <div class="dashboard-field-pair">
+        <div class="dashboard-field">
+          <label class="dashboard-field-label" for="edit-code" data-i18n="affiliate.code_label">{{ page.t("affiliate.code_label") }}</label>
+          <input class="dashboard-control" id="edit-code" name="code" type="text" maxlength="32" required value="{{ code }}">
+        </div>
+        <div class="dashboard-field">
+          <label class="dashboard-field-label" for="edit-status" data-i18n="admin.col_status">{{ page.t("admin.col_status") }}</label>
+          <select class="dashboard-control" id="edit-status" name="status">
+            <option value="active"{% if status == "active" %} selected{% endif %} data-i18n="affiliate.status_active">{{ page.t("affiliate.status_active") }}</option>
+            <option value="paused"{% if status == "paused" %} selected{% endif %} data-i18n="affiliate.status_paused">{{ page.t("affiliate.status_paused") }}</option>
+            <option value="revoked"{% if status == "revoked" %} selected{% endif %} data-i18n="affiliate.status_revoked">{{ page.t("affiliate.status_revoked") }}</option>
+          </select>
+        </div>
+      </div>
+      <div class="dashboard-field-pair">
+        <div class="dashboard-field">
+          <label class="dashboard-field-label" for="edit-type" data-i18n="admin_affiliates.quota_type_label">{{ page.t("admin_affiliates.quota_type_label") }}</label>
+          <select class="dashboard-control" id="edit-type" name="commission_type">
+            <option value="fixed_monthly_centavos"{% if commission_type == "fixed_monthly_centavos" %} selected{% endif %} data-i18n="admin_affiliates.type_fixed">{{ page.t("admin_affiliates.type_fixed") }}</option>
+            <option value="percent_bps"{% if commission_type == "percent_bps" %} selected{% endif %} data-i18n="admin_affiliates.type_percent">{{ page.t("admin_affiliates.type_percent") }}</option>
+          </select>
+        </div>
+        <div class="dashboard-field">
+          <label class="dashboard-field-label" for="edit-val" data-i18n="admin_affiliates.quota_value_label">{{ page.t("admin_affiliates.quota_value_label") }}</label>
+          <input class="dashboard-control" id="edit-val" name="commission_value" type="text" required value="{{ commission_input }}">
+          <p class="dashboard-field-hint" data-i18n="admin_affiliates.quota_value_hint">{{ page.t("admin_affiliates.quota_value_hint") }}</p>
+        </div>
+      </div>
+      <div class="dashboard-field-pair">
+        <div class="dashboard-field">
+          <label class="dashboard-field-label" for="edit-hold" data-i18n="admin_affiliates.hold_days_label">{{ page.t("admin_affiliates.hold_days_label") }}</label>
+          <input class="dashboard-control" id="edit-hold" name="hold_days" type="number" min="0" max="90" required value="{{ hold_days }}">
+        </div>
+        <div class="dashboard-field">
+          <label class="dashboard-field-label" for="edit-pix" data-i18n="affiliate.pix_label">{{ page.t("affiliate.pix_label") }}</label>
+          <input class="dashboard-control" id="edit-pix" name="pix_key" type="text" maxlength="140" value="{{ pix_key }}">
+        </div>
+      </div>
+      <div class="dashboard-field">
+        <label class="dashboard-field-label" for="edit-notes" data-i18n="admin_affiliates.notes_label">{{ page.t("admin_affiliates.notes_label") }}</label>
+        <textarea class="dashboard-control" id="edit-notes" name="notes" maxlength="400">{{ notes }}</textarea>
+      </div>
+      <div>
+        <button class="btn panel-action panel-action-primary" type="submit">
+          {{ icons::panel("check") }}
+          <span data-i18n="common.save">{{ page.t("common.save") }}</span>
+        </button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card" aria-labelledby="admin-aff-payout-heading">
+    <h2 class="dashboard-card-heading" id="admin-aff-payout-heading">
+      {{ icons::panel("check") }}
+      <span data-i18n="admin_affiliates.payout_heading">{{ page.t("admin_affiliates.payout_heading") }}</span>
+    </h2>
+    <div class="affiliate-payout-summary mb-4">
+      <span class="dashboard-field-hint" data-i18n="admin_affiliates.payable_now">{{ page.t("admin_affiliates.payable_now") }}</span>
+      <span class="affiliate-payout-amount">{{ available_formatted }}</span>
+      <span class="dashboard-field-hint">
+        <span data-i18n="affiliate.col_pix">{{ page.t("affiliate.col_pix") }}</span>:
+        <code>{% if pix_key.is_empty() %}—{% else %}{{ pix_key }}{% endif %}</code>
+      </span>
+      <span class="dashboard-field-hint">
+        <span data-i18n="admin_affiliates.voided_total">{{ page.t("admin_affiliates.voided_total") }}</span>:
+        {{ voided_formatted }}
+      </span>
+    </div>
+
+    {% if can_settle_payout %}
+    <form class="form-stack" method="post" action="/admin/affiliates/{{ affiliate_id }}/payout">
+      <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+      <input type="hidden" name="env" value="{{ billing_env }}">
+      <div class="dashboard-field">
+        <label class="dashboard-field-label" for="payout-ref" data-i18n="admin_affiliates.payout_reference_label">{{ page.t("admin_affiliates.payout_reference_label") }}</label>
+        <input class="dashboard-control" id="payout-ref" name="reference" type="text" maxlength="120" placeholder="E2E / PIX">
+      </div>
+      <div class="dashboard-field">
+        <label class="dashboard-field-label" for="payout-notes" data-i18n="admin_affiliates.notes_label">{{ page.t("admin_affiliates.notes_label") }}</label>
+        <input class="dashboard-control" id="payout-notes" name="notes" type="text" maxlength="400">
+      </div>
+      <label class="affiliate-checkbox-row">
+        <input type="checkbox" name="confirm" value="yes" required>
+        <span data-i18n="admin_affiliates.payout_confirm_label">{{ page.t("admin_affiliates.payout_confirm_label") }}</span>
+      </label>
+      <div>
+        <button class="btn panel-action panel-action-primary" type="submit">
+          {{ icons::panel("check") }}
+          <span data-i18n="admin_affiliates.payout_submit">{{ page.t("admin_affiliates.payout_submit") }}</span>
+        </button>
+      </div>
+    </form>
+    {% else %}
+    <div class="panel-empty">
+      <p data-i18n="admin_affiliates.no_payable_balance">{{ page.t("admin_affiliates.no_payable_balance") }}</p>
+    </div>
+    {% endif %}
+  </section>
+</div>
+
+<section class="card dashboard-table-card mb-4" aria-labelledby="admin-aff-refs-heading">
+  <h2 class="dashboard-card-heading" id="admin-aff-refs-heading">
+    {{ icons::panel("users") }}
+    <span data-i18n="affiliate.referrals_heading">{{ page.t("affiliate.referrals_heading") }}</span>
+  </h2>
+  {% if referrals.is_empty() %}
+  {{ empty::message("affiliate.no_referrals") }}
+  {% else %}
+  <div class="table-wrap" role="region" aria-labelledby="admin-aff-refs-heading" tabindex="0">
+    <table class="mobile-table" role="table">
+      <thead role="rowgroup">
+        <tr role="row">
+          <th scope="col" role="columnheader" data-i18n="affiliate.col_customer">{{ page.t("affiliate.col_customer") }}</th>
+          <th scope="col" role="columnheader" data-i18n="affiliate.col_business">{{ page.t("affiliate.col_business") }}</th>
+          <th scope="col" role="columnheader" data-i18n="admin.col_status">{{ page.t("admin.col_status") }}</th>
+          <th scope="col" role="columnheader" data-i18n="affiliate.col_attributed_at">{{ page.t("affiliate.col_attributed_at") }}</th>
+          <th scope="col" role="columnheader" data-i18n="admin_affiliates.col_action">{{ page.t("admin_affiliates.col_action") }}</th>
+        </tr>
+      </thead>
+      <tbody role="rowgroup">
+        {% for r in referrals %}
+        <tr role="row">
+          <td role="cell">
+            {{ controls::mobile_cell_label("affiliate.col_customer") }}
+            <div class="mobile-table-value"><strong>{{ r.account_label }}</strong></div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("affiliate.col_business") }}
+            <div class="mobile-table-value">
+              {% if r.has_establishment %}<strong>{{ r.establishment_name }}</strong> <code>{{ r.establishment_slug }}</code>{% else %}—{% endif %}
+            </div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("admin.col_status") }}
+            <div class="mobile-table-value">
+              <span class="badge {{ r.status_badge }}" data-i18n="{{ r.status_key }}">{{ page.t(r.status_key) }}</span>
+              {% if !r.disqualified_reason.is_empty() %}<span class="dashboard-field-hint">{{ r.disqualified_reason }}</span>{% endif %}
+            </div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("affiliate.col_attributed_at") }}
+            <div class="mobile-table-value"><time datetime="{{ r.attributed_at }}">{{ page.timestamp(r.attributed_at) }}</time></div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("admin_affiliates.col_action") }}
+            <div class="mobile-table-value">
+              {% if r.can_disqualify %}
+              <form class="affiliate-inline-form" method="post" action="/admin/affiliates/{{ affiliate_id }}/referrals/{{ r.id }}/disqualify" data-confirm-key="admin_affiliates.disqualify_confirm">
+                <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+                <input type="hidden" name="reason" value="admin_disqualified">
+                <button class="btn btn-danger btn-sm" type="submit" data-i18n="admin_affiliates.disqualify_action">{{ page.t("admin_affiliates.disqualify_action") }}</button>
+              </form>
+              {% else %}—{% endif %}
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</section>
+
+<section class="card dashboard-table-card mb-4" aria-labelledby="admin-aff-ledger-heading">
+  <h2 class="dashboard-card-heading" id="admin-aff-ledger-heading">
+    {{ icons::panel("history") }}
+    <span data-i18n="affiliate.ledger_heading">{{ page.t("affiliate.ledger_heading") }}</span>
+  </h2>
+  {% if commissions.is_empty() %}
+  {{ empty::message("affiliate.no_commissions") }}
+  {% else %}
+  <div class="table-wrap" role="region" aria-labelledby="admin-aff-ledger-heading" tabindex="0">
+    <table class="mobile-table" role="table">
+      <thead role="rowgroup">
+        <tr role="row">
+          <th scope="col" role="columnheader" data-i18n="affiliate.col_business">{{ page.t("affiliate.col_business") }}</th>
+          <th scope="col" role="columnheader" data-i18n="affiliate.col_type">{{ page.t("affiliate.col_type") }}</th>
+          <th scope="col" role="columnheader" data-i18n="affiliate.col_installment">{{ page.t("affiliate.col_installment") }}</th>
+          <th scope="col" role="columnheader" data-i18n="admin_affiliates.col_payment">{{ page.t("admin_affiliates.col_payment") }}</th>
+          <th scope="col" role="columnheader" data-i18n="admin_affiliates.col_rate">{{ page.t("admin_affiliates.col_rate") }}</th>
+          <th scope="col" role="columnheader" data-i18n="affiliate.col_commission">{{ page.t("affiliate.col_commission") }}</th>
+          <th scope="col" role="columnheader" data-i18n="affiliate.col_available_on">{{ page.t("affiliate.col_available_on") }}</th>
+          <th scope="col" role="columnheader" data-i18n="admin.col_status">{{ page.t("admin.col_status") }}</th>
+        </tr>
+      </thead>
+      <tbody role="rowgroup">
+        {% for c in commissions %}
+        <tr role="row">
+          <td role="cell">
+            {{ controls::mobile_cell_label("affiliate.col_business") }}
+            <div class="mobile-table-value"><strong>{{ c.establishment_name }}</strong></div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("affiliate.col_type") }}
+            <div class="mobile-table-value"><span data-i18n="{{ c.kind_key }}">{{ page.t(c.kind_key) }}</span></div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("affiliate.col_installment") }}
+            <div class="mobile-table-value">{{ c.installment_label }}</div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("admin_affiliates.col_payment") }}
+            <div class="mobile-table-value"><code>{{ c.payment_id }}</code> ({{ c.gross_formatted }})</div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("admin_affiliates.col_rate") }}
+            <div class="mobile-table-value">{{ c.rate_snapshot }}</div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("affiliate.col_commission") }}
+            <div class="mobile-table-value"><span class="{% if c.is_clawback %}affiliate-amount-neg{% else %}affiliate-amount-pos{% endif %}">{{ c.commission_formatted }}</span></div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("affiliate.col_available_on") }}
+            <div class="mobile-table-value"><time datetime="{{ c.available_on }}">{{ c.available_on }}</time></div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("admin.col_status") }}
+            <div class="mobile-table-value"><span class="badge {{ c.status_badge }}" data-i18n="{{ c.status_key }}">{{ page.t(c.status_key) }}</span></div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</section>
+
+<section class="card dashboard-table-card" aria-labelledby="admin-aff-payouts-heading">
+  <h2 class="dashboard-card-heading" id="admin-aff-payouts-heading">
+    {{ icons::panel("check") }}
+    <span data-i18n="affiliate.payouts_heading">{{ page.t("affiliate.payouts_heading") }}</span>
+  </h2>
+  {% if payouts.is_empty() %}
+  {{ empty::message("affiliate.no_payouts") }}
+  {% else %}
+  <div class="table-wrap" role="region" aria-labelledby="admin-aff-payouts-heading" tabindex="0">
+    <table class="mobile-table" role="table">
+      <thead role="rowgroup">
+        <tr role="row">
+          <th scope="col" role="columnheader" data-i18n="affiliate.col_paid_at">{{ page.t("affiliate.col_paid_at") }}</th>
+          <th scope="col" role="columnheader" data-i18n="affiliate.col_amount">{{ page.t("affiliate.col_amount") }}</th>
+          <th scope="col" role="columnheader" data-i18n="affiliate.col_entries">{{ page.t("affiliate.col_entries") }}</th>
+          <th scope="col" role="columnheader" data-i18n="affiliate.col_pix">{{ page.t("affiliate.col_pix") }}</th>
+          <th scope="col" role="columnheader" data-i18n="affiliate.col_reference">{{ page.t("affiliate.col_reference") }}</th>
+          <th scope="col" role="columnheader" data-i18n="admin_affiliates.col_paid_by">{{ page.t("admin_affiliates.col_paid_by") }}</th>
+        </tr>
+      </thead>
+      <tbody role="rowgroup">
+        {% for p in payouts %}
+        <tr role="row">
+          <td role="cell">
+            {{ controls::mobile_cell_label("affiliate.col_paid_at") }}
+            <div class="mobile-table-value"><time datetime="{{ p.paid_at }}">{{ page.timestamp(p.paid_at) }}</time></div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("affiliate.col_amount") }}
+            <div class="mobile-table-value"><strong>{{ p.total_formatted }}</strong></div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("affiliate.col_entries") }}
+            <div class="mobile-table-value">{{ p.entries_count }}</div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("affiliate.col_pix") }}
+            <div class="mobile-table-value"><code>{% if p.pix_key_snapshot.is_empty() %}—{% else %}{{ p.pix_key_snapshot }}{% endif %}</code></div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("affiliate.col_reference") }}
+            <div class="mobile-table-value">{% if p.reference.is_empty() %}—{% else %}<code>{{ p.reference }}</code>{% endif %}</div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("admin_affiliates.col_paid_by") }}
+            <div class="mobile-table-value">{{ p.paid_by_email }}</div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

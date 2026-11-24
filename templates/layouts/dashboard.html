@@ -33,7 +33,7 @@
 
   <aside class="dashboard-sidebar">
     <div class="sidebar-header">
-      <a class="sidebar-brand" href="{% if active_nav == "admin" %}/admin{% else if has_establishment %}/dashboard{% else %}/onboarding{% endif %}">
+      <a class="sidebar-brand" href="{% if active_nav == "admin" || active_nav == "admin_affiliates" %}/admin{% else if has_establishment %}/dashboard{% else if active_nav == "affiliate" %}/dashboard/affiliate{% else %}/onboarding{% endif %}">
         <img src="/static/icons/favicon.svg" alt="" width="40" height="40">
         <span data-i18n="app.name">{{ page.t("app.name") }}</span>
       </a>
@@ -52,13 +52,18 @@
         {{ sidebar_link("/dashboard/ocr", "nav.ocr", "scan", "ocr") }}
         {{ sidebar_link("/dashboard/qr", "nav.qr", "qr", "qr") }}
         {{ sidebar_link("/dashboard/settings", "nav.settings", "settings", "settings") }}
-        {% else if active_nav != "admin" %}
+        {{ sidebar_link("/dashboard/affiliate", "nav.affiliates", "link", "affiliate") }}
+        {% else if active_nav != "admin" && active_nav != "admin_affiliates" %}
         {{ sidebar_link("/onboarding", "nav.setup", "store", "") }}
+        {{ sidebar_link("/dashboard/affiliate", "nav.affiliates", "link", "affiliate") }}
+        {% else %}
+        {{ sidebar_link("/dashboard/affiliate", "nav.affiliates", "link", "affiliate") }}
         {% endif %}
 
         {% if is_admin %}
         <span class="sidebar-label" data-i18n="nav.platform">{{ page.t("nav.platform") }}</span>
         {{ sidebar_link("/admin", "nav.admin", "activity", "admin") }}
+        {{ sidebar_link("/admin/affiliates", "nav.admin_affiliates", "users", "admin_affiliates") }}
         {% block sidebar_sections %}{% endblock %}
         {% endif %}
       </nav>
@@ -75,12 +80,15 @@
   <div class="dashboard-workspace">
     <header class="dashboard-topbar">
       <div class="dashboard-context">
-        {% if active_nav == "admin" %}
+        {% if active_nav == "admin" || active_nav == "admin_affiliates" %}
           {{ icons::panel("activity") }}
           <span data-i18n="nav.platform">{{ page.t("nav.platform") }}</span>
         {% else if has_establishment %}
           {{ icons::panel("store") }}
           <span>{{ brand_name }}</span>
+        {% else if active_nav == "affiliate" %}
+          {{ icons::panel("link") }}
+          <span data-i18n="nav.affiliates">{{ page.t("nav.affiliates") }}</span>
         {% else %}
           {{ icons::panel("store") }}
           <span data-i18n="nav.setup">{{ page.t("nav.setup") }}</span>

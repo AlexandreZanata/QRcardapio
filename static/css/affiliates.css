@@ -1,0 +1,123 @@
+.affiliate-env-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.affiliate-link-box {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #bfc5d7;
+  border-radius: 0.75rem;
+  background: #f6f7fe;
+}
+
+.affiliate-link-url {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #171a2d;
+  overflow-wrap: anywhere;
+}
+
+.affiliate-quota-pill {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.35rem;
+  padding: 0.4rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #d7d9eb;
+  background: #fff9ee;
+  color: #171a2d;
+  font-size: 0.9rem;
+}
+
+.affiliate-quota-pill strong {
+  font-size: 1rem;
+}
+
+.affiliate-grid-2 {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 21rem), 1fr));
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.affiliate-checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: 0.92rem;
+  color: #171a2d;
+}
+
+.affiliate-checkbox-row input[type="checkbox"] {
+  margin-top: 0.2rem;
+  width: 1.05rem;
+  height: 1.05rem;
+  flex: none;
+}
+
+.affiliate-payout-summary {
+  padding: 0.85rem 1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #d7d9eb;
+  background: #fff9ee;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.affiliate-payout-amount {
+  font-size: 1.45rem;
+  font-weight: 850;
+  color: #171a2d;
+  font-variant-numeric: tabular-nums;
+}
+
+.affiliate-amount-neg {
+  color: #b42318;
+  font-weight: 750;
+}
+
+.affiliate-amount-pos {
+  color: #166534;
+  font-weight: 750;
+}
+
+.affiliate-inline-form {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.badge-warning {
+  background: #fef3c7;
+  color: #92400e;
+  border: 1px solid #f59e0b;
+}
+
+.badge-info {
+  background: #e0e7ff;
+  color: #1e3a8a;
+  border: 1px solid #818cf8;
+}
+
+.affiliate-meta-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem 1.25rem;
+  margin-top: 0.65rem;
+  color: var(--dashboard-muted);
+  font-size: 0.88rem;
+}
+
+.affiliate-meta-list strong {
+  color: #171a2d;
+}

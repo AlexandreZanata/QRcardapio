@@ -1,5 +1,9 @@
 pub mod accounts;
 pub mod admin;
+pub mod affiliate_ledger;
+pub mod affiliate_payouts;
+pub mod affiliate_referrals;
+pub mod affiliates;
 pub mod billing;
 pub mod categories;
 pub mod establishments;

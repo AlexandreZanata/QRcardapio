@@ -1,4 +1,5 @@
 pub mod admin;
+pub mod affiliates;
 pub mod auth;
 pub mod billing;
 pub mod dashboard;

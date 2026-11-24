@@ -5,8 +5,12 @@ use axum::response::{IntoResponse, Redirect, Response};
 use axum_extra::extract::CookieJar;
 use serde::Deserialize;
 
+use super::affiliates::{
+    build_clear_referral_cookie, capture_referral_redirect, referral_cookie_value,
+};
 use super::onboarding::PlanIntent;
 use crate::app::AppState;
+use crate::application::affiliates::attribute_new_account;
 use crate::application::auth::{login, logout, redeem_password_reset, register_owner};
 use crate::error::AppResult;
 use crate::http::middleware::auth::{
@@ -137,14 +141,23 @@ pub async fn login_submit(
     }
 }
 
+#[derive(Deserialize)]
+pub struct RegisterPageQuery {
+    #[serde(flatten)]
+    pub plan: PlanIntent,
+    #[serde(default, rename = "ref")]
+    pub referral: Option<String>,
+}
+
 pub async fn register_page(
     State(state): State<AppState>,
     RequestLocale(locale): RequestLocale,
     OptionalAuth(auth): OptionalAuth,
+    ClientIp(ip): ClientIp,
     jar: CookieJar,
-    Query(plan): Query<PlanIntent>,
+    Query(query): Query<RegisterPageQuery>,
 ) -> AppResult<Response> {
-    let plan_suffix = plan.suffix(&state);
+    let plan_suffix = query.plan.suffix(&state);
     if auth.is_some() {
         let destination = if plan_suffix.is_empty() {
             "/dashboard".to_owned()
@@ -152,6 +165,10 @@ pub async fn register_page(
             format!("/onboarding{plan_suffix}")
         };
         return Ok(Redirect::to(&destination).into_response());
+    }
+    if let Some(code) = query.referral.as_deref().filter(|s| !s.trim().is_empty()) {
+        let target = format!("/register{plan_suffix}");
+        return capture_referral_redirect(&state, ip, jar, code, &target, false).await;
     }
     let (jar, flash) = take_flash(jar);
     let tpl = RegisterTemplate {
@@ -210,8 +227,24 @@ pub async fn register_submit(
     .await
     {
         Ok(success) => {
+            let ref_code = referral_cookie_value(&jar).map(str::to_owned);
+            if let Err(err) = attribute_new_account(
+                &state.pool,
+                ref_code.as_deref(),
+                &success.account.id,
+                &success.account.email,
+            )
+            .await
+            {
+                tracing::warn!(error = %err, "affiliate attribution failed during register");
+            }
             let cookie =
                 build_session_cookie(success.raw_session_token, state.config.cookie_secure);
+            let jar = if ref_code.is_some() {
+                jar.add(build_clear_referral_cookie(state.config.cookie_secure))
+            } else {
+                jar
+            };
             Ok(with_flash_redirect(
                 jar.add(cookie),
                 &format!("/onboarding{plan_suffix}"),

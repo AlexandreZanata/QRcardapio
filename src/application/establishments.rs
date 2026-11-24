@@ -83,7 +83,10 @@ pub async fn create_establishment(
         updated_at: now,
     };
 
-    create_establishment_with_member(pool, est, account_id, alternatives).await
+    let created = create_establishment_with_member(pool, est, account_id, alternatives).await?;
+    crate::application::affiliates::bind_establishment_referral(pool, account_id, &created.id)
+        .await?;
+    Ok(created)
 }
 
 pub async fn update_profile(

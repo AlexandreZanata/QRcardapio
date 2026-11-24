@@ -1,16 +1,19 @@
 use std::net::IpAddr;
 use std::os::unix::fs::MetadataExt;
 
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use axum::http::header::{CACHE_CONTROL, CONTENT_TYPE, ETAG};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
-use axum::response::{IntoResponse, Response};
+use axum::response::{IntoResponse, Redirect, Response};
+use axum_extra::extract::CookieJar;
+use serde::Deserialize;
 
 use crate::app::AppState;
 use crate::domain::establishment::Slug;
 use crate::error::AppResult;
+use crate::http::handlers::affiliates::capture_referral_redirect;
 use crate::http::handlers::seo::with_public_cache;
-use crate::http::middleware::auth::OptionalAuth;
+use crate::http::middleware::auth::{ClientIp, OptionalAuth};
 use crate::http::middleware::locale::{ExplicitRequestLocale, RequestLocale};
 use crate::http::responses::check_etag_not_modified;
 use crate::i18n::{Catalog, Locale};
@@ -24,11 +27,26 @@ use crate::seo::faq::LANDING_FAQS;
 use crate::seo::routes::RouteCluster;
 use crate::seo::schema::landing_json_ld;
 
+#[derive(Deserialize)]
+pub struct LandingQuery {
+    #[serde(default, rename = "ref")]
+    pub referral: Option<String>,
+}
+
 pub async fn landing(
     State(state): State<AppState>,
     ExplicitRequestLocale(explicit_locale): ExplicitRequestLocale,
     OptionalAuth(auth): OptionalAuth,
+    ClientIp(ip): ClientIp,
+    jar: CookieJar,
+    Query(query): Query<LandingQuery>,
 ) -> AppResult<Response> {
+    if let Some(code) = query.referral.as_deref().filter(|s| !s.trim().is_empty()) {
+        if auth.is_some() {
+            return Ok(no_store_redirect("/"));
+        }
+        return capture_referral_redirect(&state, ip, jar, code, "/", false).await;
+    }
     let locale = explicit_locale.unwrap_or(Locale::PtBr);
     render_landing(&state, locale, auth.is_some())
 }
@@ -36,15 +54,40 @@ pub async fn landing(
 pub async fn landing_en(
     State(state): State<AppState>,
     OptionalAuth(auth): OptionalAuth,
+    ClientIp(ip): ClientIp,
+    jar: CookieJar,
+    Query(query): Query<LandingQuery>,
 ) -> AppResult<Response> {
+    if let Some(code) = query.referral.as_deref().filter(|s| !s.trim().is_empty()) {
+        if auth.is_some() {
+            return Ok(no_store_redirect("/en"));
+        }
+        return capture_referral_redirect(&state, ip, jar, code, "/en", false).await;
+    }
     render_landing(&state, Locale::En, auth.is_some())
 }
 
 pub async fn landing_es(
     State(state): State<AppState>,
     OptionalAuth(auth): OptionalAuth,
+    ClientIp(ip): ClientIp,
+    jar: CookieJar,
+    Query(query): Query<LandingQuery>,
 ) -> AppResult<Response> {
+    if let Some(code) = query.referral.as_deref().filter(|s| !s.trim().is_empty()) {
+        if auth.is_some() {
+            return Ok(no_store_redirect("/es"));
+        }
+        return capture_referral_redirect(&state, ip, jar, code, "/es", false).await;
+    }
     render_landing(&state, Locale::Es, auth.is_some())
+}
+
+fn no_store_redirect(location: &str) -> Response {
+    let mut res = Redirect::to(location).into_response();
+    res.headers_mut()
+        .insert(CACHE_CONTROL, HeaderValue::from_static("no-store"));
+    res
 }
 
 fn render_landing(state: &AppState, locale: Locale, is_logged_in: bool) -> AppResult<Response> {

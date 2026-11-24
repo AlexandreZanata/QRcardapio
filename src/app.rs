@@ -13,11 +13,11 @@ use tower_http::trace::TraceLayer;
 use crate::application::publishing::PublishLocks;
 use crate::config::Config;
 use crate::http::handlers::{
-    admin, auth, billing, categories, dashboard, google, health, mcp, menu_editor, ocr, onboarding,
-    products, public, qr, seo, settings,
+    admin, admin_affiliates, affiliates, auth, billing, categories, dashboard, google, health, mcp,
+    menu_editor, ocr, onboarding, products, public, qr, seo, settings,
 };
 use crate::http::middleware::branded_errors::branded_errors;
-use crate::http::middleware::security_headers::security_headers_middleware;
+use crate::http::middleware::security_headers::{no_store, security_headers_middleware};
 use crate::i18n::Catalog;
 use crate::infrastructure::asaas::AsaasClient;
 use crate::infrastructure::assets::AssetProcessor;
@@ -84,6 +84,48 @@ pub fn build_router(state: AppState) -> Router {
     let billing_webhook = Router::new()
         .route("/webhooks/asaas", post(billing::webhook))
         .layer(DefaultBodyLimit::max(64 * 1024));
+
+    let affiliate_routes = Router::new()
+        .route("/r/{code}", get(affiliates::referral_redirect))
+        .route("/dashboard/affiliate", get(affiliates::portal_page))
+        .route(
+            "/dashboard/affiliate/activate",
+            post(affiliates::activate_submit),
+        )
+        .route(
+            "/dashboard/affiliate/pix",
+            post(affiliates::update_pix_submit),
+        )
+        .route(
+            "/admin/affiliates",
+            get(admin_affiliates::admin_affiliates_page),
+        )
+        .route(
+            "/admin/affiliates/settings",
+            post(admin_affiliates::update_settings_submit),
+        )
+        .route(
+            "/admin/affiliates/enroll",
+            post(admin_affiliates::enroll_submit),
+        )
+        .route(
+            "/admin/affiliates/{id}",
+            get(admin_affiliates::admin_affiliate_detail_page),
+        )
+        .route(
+            "/admin/affiliates/{id}/update",
+            post(admin_affiliates::update_affiliate_submit),
+        )
+        .route(
+            "/admin/affiliates/{id}/payout",
+            post(admin_affiliates::settle_payout_submit),
+        )
+        .route(
+            "/admin/affiliates/{id}/referrals/{referral_id}/disqualify",
+            post(admin_affiliates::disqualify_referral_submit),
+        )
+        .layer(DefaultBodyLimit::max(16 * 1024))
+        .layer(middleware::from_fn(no_store));
 
     Router::new()
         .route("/", get(public::landing))
@@ -213,6 +255,7 @@ pub fn build_router(state: AppState) -> Router {
         .merge(upload_routes)
         .merge(ocr_upload_routes)
         .merge(billing_webhook)
+        .merge(affiliate_routes)
         .merge(mcp_routes)
         .merge(google_routes)
         .nest_service("/static", ServeDir::new(static_dir))

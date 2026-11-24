@@ -1,10 +1,11 @@
+use chrono::Utc;
 use sqlx::SqlitePool;
 use uuid::Uuid;
 
 use crate::domain::billing::{BillingPlan, billing_now};
 use crate::error::{AppError, AppResult};
 use crate::infrastructure::asaas::{AsaasClient, Change, GatewayError, Webhook};
-use crate::infrastructure::database::queries::billing as queries;
+use crate::infrastructure::database::queries::{affiliate_ledger, billing as queries};
 
 pub async fn publication_allowed(
     pool: &SqlitePool,
@@ -140,6 +141,10 @@ pub async fn process_webhook(pool: &SqlitePool, env: &str, event: Webhook) -> Ap
         } => {
             if let Some(checkout) = checkout {
                 queries::link_subscription(&mut tx, env, &checkout.to_string(), &id).await?;
+                let today = billing_now().date_naive();
+                let now = Utc::now().to_rfc3339();
+                affiliate_ledger::sync_subscription_commissions(&mut tx, env, &id, today, &now)
+                    .await?;
             }
             queries::record_subscription(&mut tx, env, &id, status, &at).await?;
         }
@@ -152,6 +157,7 @@ pub async fn process_webhook(pool: &SqlitePool, env: &str, event: Webhook) -> Ap
             priority,
             at,
         } => {
+            let linked_checkout = checkout.is_some();
             if let Some(checkout) = checkout {
                 queries::link_subscription(&mut tx, env, &checkout.to_string(), &subscription_id)
                     .await?;
@@ -169,6 +175,20 @@ pub async fn process_webhook(pool: &SqlitePool, env: &str, event: Webhook) -> Ap
                 },
             )
             .await?;
+            let today = billing_now().date_naive();
+            let now = Utc::now().to_rfc3339();
+            if linked_checkout {
+                affiliate_ledger::sync_subscription_commissions(
+                    &mut tx,
+                    env,
+                    &subscription_id,
+                    today,
+                    &now,
+                )
+                .await?;
+            } else {
+                affiliate_ledger::sync_payment_commissions(&mut tx, env, &id, today, &now).await?;
+            }
         }
     }
     tx.commit().await?;
