@@ -33,6 +33,8 @@ Settings groups business details, Google Maps links, and the current logo. Dashb
 
 Menu import separates file upload, pasted text, and illustrated tips. The menu editor and overview share the blue publication action, with the preview and live menu links grouped in the overview.
 
+A visão geral usa selos ilustrados de publicação e cartões em azul, rosa e amarelo para categorias, produtos e versão publicada. Os selos distinguem o cardápio no ar, o estado atualizado, as alterações pendentes e o rascunho. Os cartões se empilham em telas estreitas.
+
 The category creation dialog shares its fields with the standalone category form and shows validation without leaving the editor. The overview uses an illustrated, keyboard-accessible confirmation for taking a menu offline.
 
 The product dialog opens from the editor, a category row, or the product creation URL. It shares the standard fields and photo picker with the standalone form and edit page. Localized validation stays in the dialog, and a successful save returns to the same editor page.
