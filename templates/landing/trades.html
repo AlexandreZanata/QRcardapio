@@ -23,13 +23,9 @@
 
 <section class="landing-trades" aria-label="{{ page.t("landing.trades_title") }}" data-i18n-aria="landing.trades_title">
   <div class="landing-trades-window">
-    <div class="landing-trades-track" id="landing-trades-track">
+    <div class="landing-trades-track">
       {{ lane() }}
       {{ lane(duplicate=true) }}
     </div>
   </div>
-  <label class="landing-trades-motion">
-    <input type="checkbox" aria-controls="landing-trades-track" aria-label="{{ page.t("landing.trades_pause") }}" data-i18n-aria="landing.trades_pause">
-    <span aria-hidden="true"></span>
-  </label>
 </section>

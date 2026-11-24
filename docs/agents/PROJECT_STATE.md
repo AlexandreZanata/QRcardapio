@@ -79,13 +79,13 @@ A cobrança pode ser habilitada por ambiente. O modal compara os ciclos mensal, 
 
 A landing apresenta o conector MCP, as marcas dos três clientes e a etapa de revisão e publicação. A seção mostra o endereço de conexão e aponta para o guia de ativação e a implementação.
 
-O bloco de ativação separa pré-requisitos, autorização e endereço. A faixa de tipos de comércio tem nove ícones, animação contínua, um controle lateral para pausar e uma versão estática para a preferência por movimento reduzido.
+O bloco de ativação separa pré-requisitos, autorização e endereço. A faixa de tipos de comércio tem nove ícones, animação contínua com pausa ao passar o mouse e uma versão estática para a preferência por movimento reduzido.
 
 O endpoint MCP remoto usa OAuth 2.1 com PKCE, descoberta RFC 9728/8414, `WWW-Authenticate` RFC 6750 e CORS restrito às origens confiáveis para vincular ChatGPT, Claude e Google Antigravity ao estabelecimento autorizado pelo proprietário. As seis ferramentas (`get_account_settings`, `update_account_settings`, `get_menu_draft`, `apply_menu_changes`, `publish_menu` e `unpublish_menu`) permitem consultar e editar configurações da conta/estabelecimento (respeitando trava de slug pós-publicação), gerenciar categorias e produtos no rascunho (criar, editar, traduzir, mover, reordenar e excluir com limpeza de mídia órfã, idempotência e trava otimista) e publicar/despublicar o cardápio estático respeitando as regras de assinatura. A integração é configurada com `MCP_ENABLED=true` e HTTPS. Veja [Arquitetura MCP](../architecture/MCP.md) e [configuração dos clientes](../operations/RUNBOOK.md#integrar-chatgpt-claude-e-antigravity).
 
 ## Navegação da landing
 
-A landing agrupa links secundários no menu Explorar e mantém o seletor de idioma na mesma linha da marca. O menu também reúne as ações de conta em telas estreitas. Os oito segmentos têm cards ilustrados, e cada pergunta frequente tem uma arte própria. O rodapé compartilhado organiza os links em Produto, Para seu negócio, Ferramentas e Guias.
+A landing agrupa links secundários no menu Explorar e mantém o seletor de idioma na mesma linha da marca. O menu também reúne as ações de conta em telas estreitas. Os oito segmentos têm cards ilustrados, e cada pergunta frequente tem uma arte própria. O sprite inclui a seta dos segmentos, os controles da FAQ e o selo da arte do Google Maps. O rodapé compartilhado organiza os links em Produto, Para seu negócio, Ferramentas e Guias.
 
 ## Login com o Google e contratos MCP
 
