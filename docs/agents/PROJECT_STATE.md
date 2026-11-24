@@ -97,6 +97,8 @@ O cadastro, o login e o consentimento MCP aceitam Google quando as credenciais O
 
 As oito páginas de segmentos combinam uma arte exclusiva, cores por tema, benefícios em cards, um exemplo de cardápio, dicas operacionais, perguntas frequentes e links relacionados. Soluções, ferramentas e guias compartilham o breadcrumb com destaque para a página atual. O layout serve os mesmos textos e caminhos em português, inglês e espanhol.
 
+A galeria de Soluções reutiliza as oito ilustrações e paletas das páginas individuais. Cada card abre o modelo do segmento no idioma selecionado.
+
 ## Autodeploy na VPS (Pull + Sigstore)
 
 Implementado em `.github/workflows/deploy-bundle.yml` e `deploy/vps/` sem armazenar chaves SSH, IPs ou segredos de servidor no GitHub:

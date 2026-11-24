@@ -17,15 +17,18 @@ pub struct SegmentCardView {
     pub short_desc: &'static str,
     pub href: &'static str,
     pub sticker: &'static str,
+    pub art: &'static str,
 }
 
 impl SegmentCardView {
     pub fn new(segment: &SegmentContent, locale: Locale) -> Self {
+        let visual = SegmentVisual::for_id(segment.id);
         Self {
             name: segment.name,
             short_desc: segment.short_desc,
             href: segment.id.full_path(locale),
-            sticker: SegmentVisual::for_id(segment.id).sticker,
+            sticker: visual.sticker,
+            art: visual.art,
         }
     }
 }

@@ -1,0 +1,144 @@
+.solutions-hub {
+  padding-block-end: clamp(2.5rem, 5vw, 5rem);
+}
+
+.solutions-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.85fr);
+  align-items: center;
+  gap: clamp(0.8rem, 3vw, 3rem);
+  margin-block: 0.35rem clamp(1.6rem, 4vw, 3.5rem);
+}
+
+.solutions-hero .segment-display-title { max-width: 21ch; }
+
+.solutions-hero .seo-lead {
+  max-width: 55ch;
+  padding-inline-start: 0.85rem;
+  border-inline-start: 4px solid var(--landing-pink);
+  font-size: clamp(1rem, 1.6vw, 1.18rem);
+  line-height: 1.52;
+}
+
+.solutions-hero-art {
+  position: relative;
+  isolation: isolate;
+  justify-self: center;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  width: min(100%, 26rem);
+  min-height: clamp(9rem, 19vw, 16rem);
+  padding: 1rem;
+}
+
+.solutions-hero-art::before,
+.solutions-hero-art::after {
+  position: absolute;
+  z-index: -1;
+  content: "";
+}
+
+.solutions-hero-art::before {
+  inset: 9% 7% 13% 6%;
+  border-radius: 30% 28% 23% 34%;
+  background: var(--landing-blue);
+  transform: rotate(-8deg);
+}
+
+.solutions-hero-art::after {
+  inset: 41% 4% 9% 19%;
+  border-radius: 21% 32% 35% 30%;
+  background: var(--landing-pink);
+  transform: rotate(8deg);
+}
+
+.solutions-hero-tile {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 0.9;
+  min-width: 0;
+  border: 2px solid var(--landing-ink);
+  border-radius: clamp(0.65rem, 1.7vw, 1.15rem);
+  background: #ffe6ef;
+  box-shadow: 3px 4px 0 var(--landing-ink);
+  transform: translate(1%, 7%) rotate(-12deg);
+}
+
+.solutions-hero-tile:nth-child(2) {
+  z-index: 1;
+  background: var(--landing-yellow);
+  transform: translateY(-15%) rotate(-3deg) scale(1.12);
+}
+
+.solutions-hero-tile:nth-child(3) {
+  background: #efe5ff;
+  transform: translate(-1%, 10%) rotate(12deg);
+}
+
+.solutions-hero-tile .landing-sticker { display: block; width: 72%; height: auto; aspect-ratio: 1; }
+.solutions-hero-spark { position: absolute; z-index: 2; inset: 5% 1% auto auto; width: clamp(2.2rem, 5vw, 4rem); transform: rotate(13deg); }
+.solutions-hero-spark .landing-sticker { display: block; width: 100%; height: auto; aspect-ratio: 5 / 4; }
+
+.solutions-gallery {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(1rem, 2vw, 1.55rem);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.solutions-card {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  padding: clamp(0.65rem, 1.25vw, 1rem);
+  border: 2px solid var(--segment-ink);
+  border-radius: 1rem;
+  background: var(--segment-card-paper);
+  box-shadow: 3px 4px 0 var(--segment-ink);
+  color: var(--segment-ink);
+}
+
+.solutions-card-scene { align-self: center; width: min(100%, 24rem); margin-bottom: 0.6rem; }
+.solutions-card-body { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.solutions-card h2 { margin: 0 0 0.35rem; font-size: clamp(1.07rem, 1.65vw, 1.38rem); font-weight: 870; letter-spacing: -0.026em; line-height: 1.17; }
+.solutions-card p { margin: 0 0 0.65rem; color: #45414b; font-size: 0.94rem; line-height: 1.45; }
+
+.solutions-card-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.35rem;
+  min-height: 44px;
+  padding-top: 0.18rem;
+  margin-top: auto;
+  border-top: 1px solid var(--landing-rule);
+  color: var(--landing-blue);
+  font-size: 0.89rem;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.solutions-card-action svg { width: 1.8rem; height: 1.8rem; flex: none; }
+.solutions-card:is(:hover, :focus-visible) { background: var(--segment-soft); text-decoration: none; }
+.solutions-card:is(:hover, :focus-visible) .solutions-card-action span { text-decoration: underline; text-underline-offset: 0.18em; }
+
+@media (max-width: 70rem) {
+  .solutions-gallery { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 42rem) {
+  .solutions-hero { grid-template-columns: minmax(0, 1fr); }
+  .solutions-hero-art { display: none; }
+}
+
+@media (max-width: 31rem) {
+  .solutions-gallery { grid-template-columns: minmax(0, 1fr); }
+  .solutions-card { display: grid; grid-template-columns: minmax(0, 0.76fr) minmax(0, 1.24fr); align-items: center; gap: 0.65rem; }
+  .solutions-card-scene { margin: 0; }
+  .solutions-card h2 { font-size: 1.03rem; }
+  .solutions-card p { font-size: 0.88rem; }
+  .solutions-card-action { font-size: 0.84rem; }
+}

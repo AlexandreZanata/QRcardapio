@@ -1,0 +1,52 @@
+.segment-palette {
+  --segment-color: #ffdc38;
+  --segment-soft: #fff0b9;
+  --segment-secondary: #263be8;
+  --segment-ink: var(--landing-ink);
+  --segment-card-paper: #fffdf8;
+}
+
+.segment-palette[data-segment="burger"] { --segment-color: #ff8b55; --segment-soft: #ffead7; --segment-secondary: #ff5596; }
+.segment-palette[data-segment="coffee"] { --segment-color: #ff86ad; --segment-soft: #ffe3ed; --segment-secondary: #263be8; }
+.segment-palette[data-segment="snack"] { --segment-color: #ffdc38; --segment-soft: #fff0b9; --segment-secondary: #ff5596; }
+.segment-palette[data-segment="pizzeria"] { --segment-color: #ff855f; --segment-soft: #ffebe2; --segment-secondary: #263be8; }
+.segment-palette[data-segment="acai"] { --segment-color: #c6abff; --segment-soft: #efe5ff; --segment-secondary: #ff5596; }
+.segment-palette[data-segment="bakery"] { --segment-color: #ffc266; --segment-soft: #fff0d5; --segment-secondary: #263be8; }
+.segment-palette[data-segment="bar"] { --segment-color: #aeb8ff; --segment-soft: #e9edff; --segment-secondary: #263be8; }
+
+.segment-display-title {
+  margin: 0 0 1.2rem;
+  max-width: 19ch;
+  color: var(--landing-ink);
+  font-size: clamp(2.2rem, 4.3vw, 4.75rem);
+  font-weight: 900;
+  line-height: 1.02;
+  letter-spacing: -0.065em;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.segment-scene { position: relative; isolation: isolate; }
+
+.segment-scene::before,
+.segment-scene::after {
+  position: absolute;
+  z-index: -1;
+  content: "";
+}
+
+.segment-scene::before {
+  inset: 8% 3% 10% 12%;
+  transform: rotate(-6deg);
+  border-radius: 34% 18% 36% 28% / 34% 26% 39% 22%;
+  background: var(--segment-secondary);
+}
+
+.segment-scene::after {
+  inset: 22% 13% 3% 3%;
+  transform: rotate(5deg);
+  border-radius: 31% 40% 18% 34% / 30% 29% 34% 25%;
+  background: var(--segment-soft);
+}
+
+.segment-scene-art { display: block; width: 100%; height: auto; }
