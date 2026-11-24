@@ -44,7 +44,22 @@ pub(super) const VERIFIER: &str = "QrcardapioFixtureVerifierWithEnoughCharacters
 const PASSWORD: &str = "LocalFixturePasswordForTest123";
 
 pub(super) async fn setup(enabled: bool) -> (TempDir, SqlitePool, Router) {
+    setup_with_billing(enabled, false).await
+}
+
+pub(super) async fn setup_with_billing(
+    enabled: bool,
+    with_billing: bool,
+) -> (TempDir, SqlitePool, Router) {
     let dir = TempDir::new().unwrap();
+    let asaas = with_billing.then(|| {
+        qrcardapio::config::AsaasConfig::new(
+            qrcardapio::config::AsaasEnvironment::Sandbox,
+            "test-api-key",
+            "test-webhook-token-at-least-32-chars-long",
+        )
+        .unwrap()
+    });
     let config = Config {
         bind_addr: "127.0.0.1:0".parse().unwrap(),
         public_base_url: ORIGIN.into(),
@@ -56,7 +71,7 @@ pub(super) async fn setup(enabled: bool) -> (TempDir, SqlitePool, Router) {
         trust_proxy: false,
         log_format: LogFormat::Pretty,
         log_level: "warn".into(),
-        asaas: None,
+        asaas,
         mcp_enabled: enabled,
         google: None,
     };

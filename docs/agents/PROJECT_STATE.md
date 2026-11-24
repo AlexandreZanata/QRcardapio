@@ -81,7 +81,7 @@ A landing apresenta o conector MCP, as marcas dos três clientes e a etapa de re
 
 O bloco de ativação separa pré-requisitos, autorização e endereço. A faixa de tipos de comércio tem nove ícones, animação contínua, um controle lateral para pausar e uma versão estática para a preferência por movimento reduzido.
 
-O endpoint MCP remoto usa OAuth com PKCE e vincula ChatGPT, Claude e Antigravity ao estabelecimento autorizado pelo proprietário. As ferramentas consultam e editam o rascunho em lotes atômicos, com idempotência e verificação da versão dos itens. A publicação continua no painel. A integração é configurada com `MCP_ENABLED=true` e HTTPS. Veja [Arquitetura MCP](../architecture/MCP.md) e [configuração dos clientes](../operations/RUNBOOK.md#integrar-chatgpt-claude-e-antigravity).
+O endpoint MCP remoto usa OAuth 2.1 com PKCE, descoberta RFC 9728/8414, `WWW-Authenticate` RFC 6750 e CORS restrito às origens confiáveis para vincular ChatGPT, Claude e Google Antigravity ao estabelecimento autorizado pelo proprietário. As seis ferramentas (`get_account_settings`, `update_account_settings`, `get_menu_draft`, `apply_menu_changes`, `publish_menu` e `unpublish_menu`) permitem consultar e editar configurações da conta/estabelecimento (respeitando trava de slug pós-publicação), gerenciar categorias e produtos no rascunho (criar, editar, traduzir, mover, reordenar e excluir com limpeza de mídia órfã, idempotência e trava otimista) e publicar/despublicar o cardápio estático respeitando as regras de assinatura. A integração é configurada com `MCP_ENABLED=true` e HTTPS. Veja [Arquitetura MCP](../architecture/MCP.md) e [configuração dos clientes](../operations/RUNBOOK.md#integrar-chatgpt-claude-e-antigravity).
 
 ## Navegação da landing
 

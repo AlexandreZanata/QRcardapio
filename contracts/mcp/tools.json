@@ -1,19 +1,71 @@
 {
+  "get_account_settings": {
+    "scope": "menu.read",
+    "read_only": true,
+    "destructive": false,
+    "required": [],
+    "properties": []
+  },
+  "update_account_settings": {
+    "scope": "menu.write",
+    "read_only": false,
+    "destructive": false,
+    "required": ["operation_key", "updated_at"],
+    "properties": [
+      "accent_color",
+      "description",
+      "description_en",
+      "description_es",
+      "google_maps_url",
+      "google_review_url",
+      "name",
+      "operation_key",
+      "preferred_locale",
+      "slug",
+      "updated_at"
+    ]
+  },
   "get_menu_draft": {
     "scope": "menu.read",
     "read_only": true,
+    "destructive": false,
     "required": [],
     "properties": ["category_id", "limit", "offset"]
   },
   "apply_menu_changes": {
     "scope": "menu.write",
     "read_only": false,
+    "destructive": true,
     "required": ["operation_key"],
-    "properties": ["add_products", "category_updates", "new_categories", "operation_key", "product_updates"],
+    "properties": [
+      "add_products",
+      "category_order",
+      "category_updates",
+      "delete_categories",
+      "delete_products",
+      "new_categories",
+      "operation_key",
+      "product_orders",
+      "product_updates"
+    ],
     "integer_centavos": [
       "/properties/new_categories/items/properties/products/items/properties/price_centavos",
       "/properties/add_products/items/properties/products/items/properties/price_centavos",
       "/properties/product_updates/items/properties/price_centavos"
     ]
+  },
+  "publish_menu": {
+    "scope": "menu.write",
+    "read_only": false,
+    "destructive": false,
+    "required": [],
+    "properties": []
+  },
+  "unpublish_menu": {
+    "scope": "menu.write",
+    "read_only": false,
+    "destructive": true,
+    "required": [],
+    "properties": []
   }
 }

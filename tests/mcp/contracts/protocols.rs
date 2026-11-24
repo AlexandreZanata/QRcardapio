@@ -129,6 +129,10 @@ fn verify_tool_schema(tools: &Value) {
         let expected = &contract[name];
         assert!(!expected.is_null());
         assert_eq!(tool["annotations"]["readOnlyHint"], expected["read_only"]);
+        assert_eq!(
+            tool["annotations"]["destructiveHint"],
+            expected["destructive"]
+        );
         assert_eq!(tool["_meta"]["securitySchemes"], tool["securitySchemes"]);
         assert_eq!(
             tool["securitySchemes"],

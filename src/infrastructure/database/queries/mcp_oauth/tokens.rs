@@ -9,6 +9,7 @@ pub struct Grant {
     pub account_id: String,
     pub establishment_id: String,
     pub scope: String,
+    pub preferred_locale: String,
 }
 
 pub struct CredentialRotation<'a> {
@@ -93,8 +94,29 @@ pub async fn authenticate(
     now: i64,
 ) -> AppResult<Option<Grant>> {
     Ok(sqlx::query_as(
-        "SELECT g.id, g.account_id, g.establishment_id, g.scope FROM mcp_grants g
+        "SELECT g.id, g.account_id, g.establishment_id, g.scope, a.preferred_locale FROM mcp_grants g
          JOIN establishment_members m ON m.account_id = g.account_id AND m.establishment_id = g.establishment_id
+         JOIN accounts a ON a.id = g.account_id
          WHERE g.access_hash = ? AND g.resource = ? AND g.access_expires_at > ? AND m.member_role = 'owner'",
     ).bind(hash).bind(resource).bind(now).fetch_optional(pool).await?)
+}
+
+pub async fn has_active_owner_write_grant(
+    pool: &SqlitePool,
+    grant: &Grant,
+    now: i64,
+) -> AppResult<bool> {
+    Ok(sqlx::query_scalar(
+        "SELECT EXISTS(SELECT 1 FROM mcp_grants g
+            JOIN establishment_members m
+              ON m.establishment_id = g.establishment_id AND m.account_id = g.account_id
+         WHERE g.id = ? AND g.account_id = ? AND g.establishment_id = ? AND g.access_expires_at > ?
+           AND (' ' || g.scope || ' ') LIKE '% menu.write %' AND m.member_role = 'owner')",
+    )
+    .bind(&grant.id)
+    .bind(&grant.account_id)
+    .bind(&grant.establishment_id)
+    .bind(now)
+    .fetch_one(pool)
+    .await?)
 }
