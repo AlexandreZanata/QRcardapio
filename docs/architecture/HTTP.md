@@ -8,11 +8,20 @@ Browser errors without an HTML body use a localized illustrated response with th
 
 | Method | Path | Auth | Notes |
 |---|---|---|---|
-| `GET` | `/` | Optional | Commercial landing page (`landing.page_title`) with SSR + zero-reload i18n. |
+| `GET` | `/`, `/en`, `/es` | Optional | Commercial landing pages (`pt-BR`, `en`, `es`) with SSR, canonical/hreflang clusters, JSON-LD `@graph`, FAQ, and zero-reload i18n (`/en/` and `/es/` return `301`). |
+| `GET` | `/robots.txt`, `/sitemap.xml`, `/llms.txt`, `/manifest.webmanifest` | None | Technical SEO, AI crawler guidance, and dynamic sitemap (`ETag` + `304`) including live `/c/{slug}` menus. |
+| `GET` | `/favicon.ico`, `/apple-touch-icon.png` | None | Root icon assets served from `static/icons/`. |
+| `GET` | `/solucoes`, `/en/solutions`, `/es/soluciones` | Optional | Business vertical solutions hub. |
+| `GET` | `/cardapio-digital/{slug}`, `/en/digital-menu/{slug}`, `/es/menu-digital/{slug}` | Optional | Eight localized business vertical pages (restaurants, burger shops, cafés, snack bars, pizzerias, açaí shops, bakeries, bars). |
+| `GET` | `/ferramentas`, `/en/tools`, `/es/herramientas` | Optional | Free hospitality tools hub. |
+| `GET` | `/ferramentas/{slug}`, `/en/tools/{slug}`, `/es/herramientas/{slug}` | Optional | Menu QR generator, CMV food-cost calculator, and printable tabletop QR placard creator. |
+| `GET` | `/api/tools/qr.svg`, `/api/tools/qr.png` | None | Rate-limited (60/min/IP) HTTP/HTTPS-validated SVG and 1024px PNG QR code endpoints. |
+| `GET` | `/guias`, `/en/guides`, `/es/guias` | Optional | Practical hospitality guides hub. |
+| `GET` | `/guias/{slug}`, `/en/guides/{slug}`, `/es/guias/{slug}` | Optional | Four localized deep-dive guides with Answer-First GEO summaries and `Article` JSON-LD. |
 | `GET` | `/c/{slug}`, `/c/{slug}/` | None | Static published menu served from disk (**0 SQLite queries**); `ETag` + `304` + branded `404`. |
 | `GET` | `/c/{slug}/{*file}` | None | Static published CSS & media (**0 SQLite queries**); `immutable` cache headers. |
 | `GET` | `/static/i18n/{file}` | None | Serves embedded `pt-BR.json`, `en.json`, `es.json` with `ETag`, `304`, and `immutable` caching. |
-| `GET` | `/static/*` | None | Serves CSS, JS, and favicon assets. |
+| `GET` | `/static/*` | None | Serves CSS, JS, OG images, and icon assets. |
 | `GET` | `/healthz` | None | Liveness probe (`{"status":"ok"}`). |
 | `GET` | `/readyz` | None | Readiness probe executing `SELECT sqlite_version()`. |
 

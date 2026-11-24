@@ -1,0 +1,68 @@
+{% extends "layouts/base.html" %}
+{% import "components/lang_switcher.html" as languages %}
+
+{% block head_extra %}
+<link rel="stylesheet" href="/static/css/landing.css">
+<link rel="stylesheet" href="/static/css/seo-pages.css">
+{% block seo_head %}{% endblock %}
+{% endblock %}
+
+{% block header %}
+<header class="landing-header">
+  <div class="landing-container landing-header-inner">
+    <a class="landing-brand" href="{{ nav.home_url }}">
+      <img src="/static/icons/favicon.svg" alt="" width="48" height="48">
+      <span data-i18n="app.name">{{ page.t("app.name") }}</span>
+    </a>
+    <nav class="landing-nav" aria-label="{{ page.t("nav.primary_label") }}" data-i18n-aria="nav.primary_label">
+      <a href="{{ nav.home_url }}" data-i18n="seo.home">{{ page.t("seo.home") }}</a>
+      <a href="{{ nav.solutions_url }}" data-i18n="seo.solutions">{{ page.t("seo.solutions") }}</a>
+      <a href="{{ nav.tools_url }}" data-i18n="seo.tools">{{ page.t("seo.tools") }}</a>
+      <a href="{{ nav.guides_url }}" data-i18n="seo.guides">{{ page.t("seo.guides") }}</a>
+    </nav>
+    <div class="landing-account">
+      {% if nav.is_logged_in %}
+      <a class="btn landing-button landing-button-pink" href="/dashboard" data-i18n="landing.open_panel">{{ page.t("landing.open_panel") }}</a>
+      {% else %}
+      <a class="btn landing-button landing-login" href="/login" data-i18n="nav.login">{{ page.t("nav.login") }}</a>
+      <a class="btn landing-button landing-button-pink" href="/register" data-i18n="landing.create_menu">{{ page.t("landing.create_menu") }}</a>
+      {% endif %}
+    </div>
+    {{ languages::seo_picker(page.locale_code, page.t("lang.switcher_label"), nav.alt_pt_url, nav.alt_en_url, nav.alt_es_url, true) }}
+  </div>
+</header>
+{% endblock %}
+
+{% block content %}
+<main id="main-content" class="seo-page">
+  {% block seo_main %}{% endblock %}
+
+  <section class="landing-container landing-final">
+    <div class="landing-cta">
+      <div>
+        <h2 data-i18n="seo.cta_title">{{ page.t("seo.cta_title") }}</h2>
+        <p data-i18n="seo.cta_subtitle">{{ page.t("seo.cta_subtitle") }}</p>
+      </div>
+      {% if nav.is_logged_in %}
+      <a class="btn landing-button landing-button-yellow" href="/dashboard" data-i18n="landing.open_panel">{{ page.t("landing.open_panel") }}</a>
+      {% else %}
+      <a class="btn landing-button landing-button-yellow" href="/register" data-i18n="landing.create_menu">{{ page.t("landing.create_menu") }}</a>
+      {% endif %}
+    </div>
+  </section>
+</main>
+{% endblock %}
+
+{% block footer %}
+{% let home_url = nav.home_url %}
+{% let home_pt_url = nav.home_pt_url %}
+{% let home_en_url = nav.home_en_url %}
+{% let home_es_url = nav.home_es_url %}
+{% let solutions_url = nav.solutions_url %}
+{% let tools_url = nav.tools_url %}
+{% let guides_url = nav.guides_url %}
+{% let segments = nav.segments %}
+{% let tools = nav.tools %}
+{% let guides = nav.guides %}
+{% include "landing/footer.html" %}
+{% endblock %}

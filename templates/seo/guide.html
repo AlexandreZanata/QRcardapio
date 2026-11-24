@@ -1,0 +1,100 @@
+{% extends "seo/layout.html" %}
+
+{% block seo_main %}
+<article class="landing-container seo-shell seo-article">
+  <nav class="seo-breadcrumb" aria-label="{{ page.t("seo.breadcrumb_label") }}">
+    <a href="{{ nav.home_url }}">{{ page.t("seo.home") }}</a>
+    <span aria-hidden="true">/</span>
+    <a href="{{ nav.guides_url }}">{{ page.t("seo.guides") }}</a>
+    <span aria-hidden="true">/</span>
+    <span aria-current="page">{{ guide.title }}</span>
+  </nav>
+
+  <header class="seo-hero">
+    <p class="seo-meta-pill">{{ guide.read_minutes }} {{ page.t("seo.read_time") }} · {{ guide.published_date }}</p>
+    <h1>{{ guide.title }}</h1>
+    <div class="seo-answer-box">
+      <p class="seo-answer-kicker">{{ page.t("seo.answer_label") }}</p>
+      <p>{{ guide.answer_summary }}</p>
+    </div>
+  </header>
+
+  {% for sec in guide.sections %}
+  <section class="seo-section">
+    <h2>{{ sec.heading }}</h2>
+    {% for para in sec.paragraphs %}
+    <p>{{ para }}</p>
+    {% endfor %}
+    {% if !sec.bullets.is_empty() %}
+    <ul class="seo-checklist">
+      {% for bullet in sec.bullets %}
+      <li>{{ bullet }}</li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </section>
+  {% endfor %}
+
+  {% if let Some(table) = guide.comparison_table %}
+  <section class="seo-section seo-band">
+    <h2>{{ table.title }}</h2>
+    <div class="seo-table-wrap">
+      <table class="seo-table">
+        <thead>
+          <tr>
+            <th>{{ table.headers[0] }}</th>
+            <th>{{ table.headers[1] }}</th>
+            <th>{{ table.headers[2] }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in table.rows %}
+          <tr>
+            <td><strong>{{ row[0] }}</strong></td>
+            <td>{{ row[1] }}</td>
+            <td>{{ row[2] }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {% endif %}
+
+  <section class="seo-section">
+    <h2>{{ page.t("seo.faq_heading") }}</h2>
+    <div class="seo-faq-list">
+      {% for (q, a) in guide.faqs %}
+      <details class="seo-faq-item">
+        <summary>{{ q }}</summary>
+        <p>{{ a }}</p>
+      </details>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="seo-section">
+    <h2>{{ page.t("seo.next_steps") }}</h2>
+    <div class="seo-card-grid seo-card-grid-2">
+      <a class="seo-card seo-card-link" href="{{ related_segment.href }}">
+        <h3>{{ related_segment.name }}</h3>
+        <p>{{ related_segment.short_desc }}</p>
+      </a>
+      <a class="seo-card seo-card-link" href="{{ related_tool.href }}">
+        <h3>{{ related_tool.name }}</h3>
+        <p>{{ related_tool.short_desc }}</p>
+      </a>
+    </div>
+    {% if !other_guides.is_empty() %}
+    <div class="seo-card-grid seo-card-grid-3 seo-other-guides">
+      {% for g in other_guides %}
+      <a class="seo-card seo-card-link" href="{{ g.href }}">
+        <h3>{{ g.title }}</h3>
+        <p>{{ g.short_desc }}</p>
+      </a>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </section>
+</article>
+{% endblock %}

@@ -4,15 +4,53 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>{{ page.t(page.title_key) }}</title>
-  <meta name="description" content="{{ page.t("landing.meta_description") }}">
+  <title>{{ page.seo_title() }}</title>
+  <meta name="description" content="{{ page.seo_description() }}">
+  <meta name="robots" content="{{ page.seo.robots }}">
+  <meta name="theme-color" content="#263be8">
+  <meta name="application-name" content="QR Cardápio">
+  <meta name="apple-mobile-web-app-title" content="QR Cardápio">
+  {% if !page.seo.canonical.is_empty() %}
+  <link rel="canonical" href="{{ page.seo.canonical }}">
+  {% endif %}
+  {% for alt in page.seo.alternates %}
+  <link rel="alternate" hreflang="{{ alt.hreflang }}" href="{{ alt.href }}">
+  {% endfor %}
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
   <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="manifest" href="/manifest.webmanifest">
+  {% if page.seo.emit_social %}
+  <meta property="og:type" content="{{ page.seo.og_type }}">
+  <meta property="og:site_name" content="QR Cardápio">
+  <meta property="og:locale" content="{{ page.seo.og_locale }}">
+  {% for alt_loc in page.seo.og_locale_alternates %}
+  <meta property="og:locale:alternate" content="{{ alt_loc }}">
+  {% endfor %}
+  <meta property="og:title" content="{{ page.seo_title() }}">
+  <meta property="og:description" content="{{ page.seo_description() }}">
+  <meta property="og:url" content="{{ page.seo.canonical }}">
+  <meta property="og:image" content="{{ page.seo.og_image }}">
+  <meta property="og:image:secure_url" content="{{ page.seo.og_image }}">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="{{ page.seo.og_image_alt }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ page.seo_title() }}">
+  <meta name="twitter:description" content="{{ page.seo_description() }}">
+  <meta name="twitter:image" content="{{ page.seo.og_image }}">
+  <meta name="twitter:image:alt" content="{{ page.seo.og_image_alt }}">
+  {% endif %}
+  {% if !page.seo.json_ld.is_empty() %}
+  <script type="application/ld+json">{{ page.seo.json_ld|safe }}</script>
+  {% endif %}
   <link rel="stylesheet" href="/static/css/tokens.css">
   <link rel="stylesheet" href="/static/css/app.css">
   <link rel="stylesheet" href="/static/css/language-picker.css">
   {% block head_extra %}{% endblock %}
 </head>
-<body data-page-title-key="{{ page.title_key }}">
+<body{% if !page.title_key.is_empty() %} data-page-title-key="{{ page.title_key }}"{% endif %}>
   <a class="skip-link" href="#main-content" data-i18n="common.skip_to_content">{{ page.t("common.skip_to_content") }}</a>
 
   {% block header %}

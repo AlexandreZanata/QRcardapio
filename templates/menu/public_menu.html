@@ -5,10 +5,28 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ establishment_name }} — QR Cardápio</title>
-  {% if !establishment_description.is_empty() %}
-  <meta name="description" content="{{ establishment_description }}">
+  <meta name="description" content="{{ meta_description }}">
+  <meta name="robots" content="{{ robots_meta }}">
+  <meta name="theme-color" content="#263be8">
+  {% if !canonical_url.is_empty() %}
+  <link rel="canonical" href="{{ canonical_url }}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="QR Cardápio">
+  <meta property="og:title" content="{{ establishment_name }} — QR Cardápio">
+  <meta property="og:description" content="{{ meta_description }}">
+  <meta property="og:url" content="{{ canonical_url }}">
+  <meta property="og:image" content="{{ og_image_url }}">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{ establishment_name }} — QR Cardápio">
+  <meta name="twitter:description" content="{{ meta_description }}">
+  <meta name="twitter:image" content="{{ og_image_url }}">
   {% endif %}
+  {% if !json_ld.is_empty() %}
+  <script type="application/ld+json">{{ json_ld|safe }}</script>
+  {% endif %}
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
   <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/static/css/tokens.css">
   <link rel="stylesheet" href="/static/css/menu.css">
   <link rel="stylesheet" href="/static/css/language-picker.css">

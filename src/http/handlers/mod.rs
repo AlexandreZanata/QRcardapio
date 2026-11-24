@@ -13,4 +13,5 @@ pub mod product_multipart;
 pub mod products;
 pub mod public;
 pub mod qr;
+pub mod seo;
 pub mod settings;

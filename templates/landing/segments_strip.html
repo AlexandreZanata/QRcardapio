@@ -1,0 +1,17 @@
+<section id="segments" class="landing-container seo-landing-segments" aria-labelledby="segments-heading">
+  <div class="seo-section-head">
+    <div>
+      <h2 id="segments-heading" data-i18n="landing.segments_title">{{ page.t("landing.segments_title") }}</h2>
+      <p data-i18n="landing.segments_subtitle">{{ page.t("landing.segments_subtitle") }}</p>
+    </div>
+    <a class="btn landing-button" href="{{ solutions_url }}" data-i18n="landing.segments_all">{{ page.t("landing.segments_all") }}</a>
+  </div>
+  <div class="seo-card-grid seo-card-grid-4">
+    {% for seg in segments %}
+    <a class="seo-card seo-card-link" href="{{ seg.href }}">
+      <h3>{{ seg.name }}</h3>
+      <p>{{ seg.short_desc }}</p>
+    </a>
+    {% endfor %}
+  </div>
+</section>

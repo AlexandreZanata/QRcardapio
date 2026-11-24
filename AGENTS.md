@@ -77,12 +77,12 @@ cargo test --locked
 
 When changing dependencies, run `cargo audit` and `cargo build --release --locked`.
 When modifying architecture, schemas, routes, UI patterns, or performance paths, update the corresponding document under `docs/` and `docs/agents/PROJECT_STATE.md`.
-After passing all required checks above, **always commit and push the changes to GitHub (`origin main`)** before finishing any task.
+Because `main` is protected by Pull Request and required GitHub CI checks (`branch-policy`, `seo-contracts`, `quality`), always create a branch conforming to [Branch Policy](docs/agents/BRANCH_POLICY.md), commit after passing all checks above, push the feature branch to GitHub (`origin <branch>`), and merge only via green Pull Request.
 
 ## 7. Authoritative Documentation Links
 
 - [System Overview](docs/architecture/OVERVIEW.md) | [Dependencies](docs/architecture/DEPENDENCIES.md)
-- [Database & SQLite](docs/architecture/DATABASE.md) | [Static Publishing](docs/architecture/PUBLISHING.md) | [HTTP Contracts](docs/architecture/HTTP.md)
+- [Database & SQLite](docs/architecture/DATABASE.md) | [Static Publishing](docs/architecture/PUBLISHING.md) | [HTTP Contracts](docs/architecture/HTTP.md) | [SEO & GEO](docs/architecture/SEO.md)
 - [Domain Model](docs/domain/MODEL.md) | [Design System & i18n](docs/design/DESIGN_SYSTEM.md)
 - [Security](docs/security/SECURITY.md) | [Performance & Benchmarks](docs/performance/PERFORMANCE.md)
-- [Operations Runbook](docs/operations/RUNBOOK.md) | [Agent Workflow](docs/agents/WORKFLOW.md) | [Project State](docs/agents/PROJECT_STATE.md)
+- [Operations Runbook](docs/operations/RUNBOOK.md) | [Agent Workflow](docs/agents/WORKFLOW.md) | [Branch Policy](docs/agents/BRANCH_POLICY.md) | [Project State](docs/agents/PROJECT_STATE.md)

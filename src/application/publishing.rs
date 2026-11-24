@@ -124,7 +124,14 @@ pub async fn write_static_snapshot(
     let theme_href = format!("/c/{slug_str}/{theme_filename}");
     let media_base = format!("/c/{slug_str}/media");
 
-    let html = render_public_menu_html(snapshot, Locale::PtBr, false, &media_base, &theme_href)?;
+    let html = render_public_menu_html(
+        snapshot,
+        Locale::PtBr,
+        false,
+        &media_base,
+        &theme_href,
+        &config.public_base_url,
+    )?;
 
     // Collect referenced content-addressed filenames.
     let mut keep_media: HashSet<String> = HashSet::new();

@@ -87,6 +87,7 @@ pub async fn preview_menu_page(
         true,
         "/dashboard/media",
         "/dashboard/theme.css",
+        &state.config.public_base_url,
     )?;
     Ok((StatusCode::OK, Html(html)).into_response())
 }

@@ -199,9 +199,39 @@ pub async fn record_unpublish(
     Ok(())
 }
 
+pub struct PublishedMenuSitemapRow {
+    pub slug: String,
+    pub lastmod: String,
+}
+
 pub async fn list_published_establishment_ids(pool: &SqlitePool) -> AppResult<Vec<String>> {
     let ids = sqlx::query_scalar("SELECT id FROM establishments WHERE is_published = 1")
         .fetch_all(pool)
         .await?;
     Ok(ids)
+}
+
+pub async fn list_published_menus_for_sitemap(
+    pool: &SqlitePool,
+    limit: i64,
+) -> AppResult<Vec<PublishedMenuSitemapRow>> {
+    let rows = sqlx::query(
+        "SELECT slug, COALESCE(last_published_at, updated_at) AS lastmod
+         FROM establishments
+         WHERE is_published = 1
+         ORDER BY COALESCE(last_published_at, updated_at) DESC, id ASC
+         LIMIT ?",
+    )
+    .bind(limit)
+    .fetch_all(pool)
+    .await?;
+
+    use sqlx::Row;
+    Ok(rows
+        .into_iter()
+        .map(|row| PublishedMenuSitemapRow {
+            slug: row.get("slug"),
+            lastmod: row.get("lastmod"),
+        })
+        .collect())
 }

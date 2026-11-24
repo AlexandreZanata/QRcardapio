@@ -8,3 +8,4 @@ pub mod i18n;
 pub mod infrastructure;
 pub mod qr;
 pub mod rendering;
+pub mod seo;
