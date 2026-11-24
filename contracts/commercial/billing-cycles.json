@@ -1,0 +1,11 @@
+{
+  "contract": "commercial.billing_cycles",
+  "contract_version": 1,
+  "rounding": "half_up_per_line",
+  "payment_grace_days": 0,
+  "cycles": [
+    { "code": "monthly", "months": 1, "discount_bps": 0, "gateway_cycle": "MONTHLY" },
+    { "code": "semiannual", "months": 6, "discount_bps": 500, "gateway_cycle": "SEMIANNUALLY" },
+    { "code": "annual", "months": 12, "discount_bps": 1000, "gateway_cycle": "YEARLY" }
+  ]
+}

@@ -1,0 +1,35 @@
+.module-eyebrow {
+  margin: 0 0 var(--space-1);
+  color: var(--ink-secondary);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.module-catalog { margin-top: var(--space-6); }
+.module-catalog > h2 { margin-bottom: var(--space-2); }
+
+.module-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: var(--space-4);
+  margin: var(--space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.module-card { display: flex; flex-direction: column; gap: var(--space-2); }
+.module-card p { margin: 0; }
+.module-card-entry { border-color: var(--qr-blue, var(--border-subtle)); }
+
+.module-card-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.module-card-head h3 { margin: 0; font-size: 1.05rem; }
+.module-price { margin-top: auto; }

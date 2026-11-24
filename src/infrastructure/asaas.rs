@@ -11,7 +11,8 @@ use serde_json::{Number, json};
 use uuid::Uuid;
 
 use crate::config::{AsaasConfig, AsaasEnvironment};
-use crate::domain::billing::{BillingPlan, CHECKOUT_MINUTES, billing_now};
+use crate::domain::billing::{CHECKOUT_MINUTES, billing_now};
+use crate::domain::commercial::{BillingCycle, Quote, catalog};
 
 pub const BILLING_PATH: &str = "/dashboard/billing";
 
@@ -79,7 +80,7 @@ impl AsaasClient {
         &self,
         public_base: &str,
         reference: Uuid,
-        plan: BillingPlan,
+        quote: &Quote,
     ) -> Result<Uuid, GatewayError> {
         #[derive(Deserialize)]
         struct Checkout {
@@ -88,7 +89,7 @@ impl AsaasClient {
 
         let response = self
             .request(reqwest::Method::POST, "/checkouts")
-            .json(&checkout_payload(public_base, reference, plan))
+            .json(&checkout_payload(public_base, reference, quote))
             .send()
             .await
             .map_err(|_| GatewayError::Transport)?;
@@ -197,16 +198,19 @@ impl AsaasClient {
     }
 }
 
-fn checkout_payload(public_base: &str, reference: Uuid, plan: BillingPlan) -> serde_json::Value {
+fn checkout_payload(public_base: &str, reference: Uuid, quote: &Quote) -> serde_json::Value {
     let callback = format!("{public_base}{BILLING_PATH}?checkout={reference}");
-    let price = format!("{}.{:02}", plan.price() / 100, plan.price() % 100)
+    let total = quote.total_centavos;
+    let price = format!("{}.{:02}", total / 100, total % 100)
         .parse::<Number>()
-        .expect("valid plan price");
-    let (cycle, description) = match plan {
-        BillingPlan::Monthly => ("MONTHLY", "Assinatura mensal"),
-        BillingPlan::Semiannual => ("SEMIANNUALLY", "Assinatura semestral"),
-        BillingPlan::Annual => ("YEARLY", "Assinatura anual"),
+        .expect("valid quote total");
+    let cycle = catalog().cycle(quote.cycle).gateway_cycle.as_str();
+    let period = match quote.cycle {
+        BillingCycle::Monthly => "Assinatura mensal",
+        BillingCycle::Semiannual => "Assinatura semestral",
+        BillingCycle::Annual => "Assinatura anual",
     };
+    let description = format!("{period}: {}", quote.offer_names());
     json!({
         "externalReference": reference.to_string(),
         "billingTypes": ["CREDIT_CARD"],
@@ -232,11 +236,12 @@ mod tests {
     #[test]
     fn sends_each_plan_as_a_recurring_total() {
         for (plan, cycle, price) in [
-            (BillingPlan::Monthly, "MONTHLY", "29.90"),
-            (BillingPlan::Semiannual, "SEMIANNUALLY", "170.43"),
-            (BillingPlan::Annual, "YEARLY", "322.92"),
+            (BillingCycle::Monthly, "MONTHLY", "29.90"),
+            (BillingCycle::Semiannual, "SEMIANNUALLY", "170.43"),
+            (BillingCycle::Annual, "YEARLY", "322.92"),
         ] {
-            let payload = checkout_payload("https://menu.example.test", Uuid::nil(), plan);
+            let quote = catalog().entry_quote(plan);
+            let payload = checkout_payload("https://menu.example.test", Uuid::nil(), &quote);
             assert_eq!(payload["subscription"]["cycle"], cycle);
             assert_eq!(payload["items"][0]["value"].to_string(), price);
         }
@@ -245,8 +250,12 @@ mod tests {
     #[test]
     fn hosted_recurring_checkout_uses_the_plan_price_and_origin() {
         let reference = Uuid::nil();
-        let payload =
-            checkout_payload("https://menu.example.test", reference, BillingPlan::Monthly);
+        let quote = catalog().entry_quote(BillingCycle::Monthly);
+        let payload = checkout_payload("https://menu.example.test", reference, &quote);
+        assert_eq!(
+            payload["items"][0]["description"],
+            "Assinatura mensal: QR Menu"
+        );
         assert_eq!(payload["billingTypes"], json!(["CREDIT_CARD"]));
         assert_eq!(payload["chargeTypes"], json!(["RECURRENT"]));
         assert_eq!(payload["items"][0]["value"].to_string(), "29.90");

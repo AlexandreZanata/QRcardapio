@@ -73,3 +73,20 @@ Execute `BENCH_CPU=0 ./scripts/bench_billing.sh` ou escolha um núcleo permitido
 - Na primeira execução, o RSS da aplicação passou de **13.652 KiB** para **18.176 KiB**. Na execução com eventos inéditos, encerrou em **18.500 KiB**.
 
 As amostras medem latência de resposta completa e não incluem TLS público, tráfego externo, chamadas ao Asaas nem carga sustentada na VPS de produção. Varie a quantidade de conexões e a mistura de rotas para dimensionar a implantação.
+
+## Commercial foundation verification — 24/11/2026
+
+Same host as the baseline (16 threads, 31 GiB, release build, `scripts/bench_run.sh`). These numbers cover menu and dashboard paths only; they are **not** evidence of order-processing capacity (see [SCALING_STRATEGY](../architecture/SCALING_STRATEGY.md)).
+
+| Path | Billing | RPS | p50 | p95 | p99 | Baseline RPS |
+|---|---|---|---|---|---|---|
+| `GET /c/{slug}` (static, 32 conn.) | — | 25 467 | 1.15 ms | 2.19 ms | 3.05 ms | 28 795 (HTML now 44.7 KB vs 33.3 KB) |
+| `GET /c/cafe-da-praca` during 5 publishes | — | 27 098 | 1.08 ms | 2.06 ms | 2.94 ms | 26 881 |
+| `GET /dashboard` (16 conn.) | not enforced | 3 466 | 4.54 ms | 5.51 ms | 6.46 ms | 3 334 |
+| `GET /dashboard` (16 conn.) | enforced (entitlement query) | 2 544 | 6.25 ms | 7.13 ms | 7.60 ms | — |
+| `GET /dashboard/billing` (16 conn.) | enforced (module catalog) | 3 062 | 5.10 ms | 6.42 ms | 7.42 ms | — |
+| `POST /dashboard/publish`, 20 sequential | enforced (authorize + render + outbox) | — | avg 9 ms end-to-end | — | — | — |
+
+Memory: 14.6 MB RSS idle, 61.4 MB after load. Database scaling with `bench-gen` matched the baseline (100 000 establishments: 768.9 MB, 19.5 s).
+
+Query plans: the entitlement view and the rebuilt `billing_coverage` view force an index-driven join order (`commercial_contracts` or `billing_checkouts` by establishment, then `idx_billing_payments_subscription`). Without it SQLite scanned every payment of the environment on each request, a cost that grows with the customer base. Contract periods and grants are read in one `UNION ALL` round trip. The enforced dashboard still performs one extra pooled query per request; caching the decision per request batch is unnecessary at current traffic. The enforced script lives in the session notes, not in `scripts/`, because it needs Asaas-shaped configuration.

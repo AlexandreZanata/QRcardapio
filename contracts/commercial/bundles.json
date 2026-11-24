@@ -1,0 +1,72 @@
+{
+  "contract": "commercial.bundles",
+  "contract_version": 1,
+  "bundles": [
+    {
+      "code": "start",
+      "name": "QR Start",
+      "lifecycle": "planned",
+      "affiliate_eligible": true,
+      "current_version": 1,
+      "versions": [
+        {
+          "version": 1,
+          "effective_from": "2026-11-24",
+          "monthly_price_centavos": 8490,
+          "modules": [
+            { "code": "menu", "version": 1 },
+            { "code": "delivery", "version": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "business",
+      "name": "QR Business",
+      "lifecycle": "planned",
+      "affiliate_eligible": true,
+      "current_version": 1,
+      "versions": [
+        {
+          "version": 1,
+          "effective_from": "2026-11-24",
+          "monthly_price_centavos": 16990,
+          "modules": [
+            { "code": "menu", "version": 1 },
+            { "code": "delivery", "version": 1 },
+            { "code": "tables", "version": 1 },
+            { "code": "kitchen", "version": 1 },
+            { "code": "fleet", "version": 1 },
+            { "code": "loyalty", "version": 1 },
+            { "code": "analytics", "version": 1 }
+          ]
+        }
+      ]
+    },
+    {
+      "code": "complete",
+      "name": "QR Complete",
+      "lifecycle": "planned",
+      "affiliate_eligible": true,
+      "current_version": 1,
+      "versions": [
+        {
+          "version": 1,
+          "effective_from": "2026-11-24",
+          "monthly_price_centavos": 21990,
+          "modules": [
+            { "code": "menu", "version": 1 },
+            { "code": "delivery", "version": 1 },
+            { "code": "tables", "version": 1 },
+            { "code": "kitchen", "version": 1 },
+            { "code": "fleet", "version": 1 },
+            { "code": "loyalty", "version": 1 },
+            { "code": "analytics", "version": 1 },
+            { "code": "pos", "version": 1 },
+            { "code": "connect", "version": 1 }
+          ]
+        }
+      ]
+    }
+  ]
+}

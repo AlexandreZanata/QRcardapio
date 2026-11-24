@@ -1,0 +1,89 @@
+{
+  "contract": "modules.pos",
+  "contract_version": 1,
+  "module": "pos",
+  "status": "planned",
+  "phase": 10,
+  "standalone": true,
+  "core_dependencies": [
+    "identity",
+    "establishments",
+    "members",
+    "tenancy",
+    "i18n",
+    "catalog",
+    "commercial",
+    "entitlements",
+    "events",
+    "orders",
+    "order_payments"
+  ],
+  "optional_integrations": [
+    "tables",
+    "kitchen",
+    "loyalty",
+    "analytics",
+    "connect"
+  ],
+  "capabilities": [
+    "pos.sale.create",
+    "pos.cash_register.manage"
+  ],
+  "operations": [
+    "pos.sale.register",
+    "pos.cash_register.close",
+    "pos.cash_register.open",
+    "pos.cash_movement.register",
+    "pos.sale.cancel"
+  ],
+  "entities": [
+    "Operator",
+    "CashRegister",
+    "CashSession",
+    "CashMovement",
+    "Sale (Order with channel counter)",
+    "NonFiscalReceipt",
+    "StockItem",
+    "StockMovement"
+  ],
+  "state_machines": [
+    "cash_session",
+    "order",
+    "order_payment"
+  ],
+  "events": {
+    "publishes": [
+      "PosSaleRegistered",
+      "CashRegisterOpened",
+      "CashRegisterClosed",
+      "OrderCreated",
+      "PaymentConfirmed",
+      "PaymentRefunded",
+      "OrderCancelled",
+      "OrderCompleted"
+    ],
+    "consumes": [
+      "TableBillClosed"
+    ]
+  },
+  "http": [
+    {
+      "method": "GET",
+      "path": "/dashboard/pos",
+      "audience": "member",
+      "status": "planned"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/pos/sessions",
+      "audience": "member",
+      "status": "planned"
+    }
+  ],
+  "after_expiry": "No new sales. Open cash sessions can be counted and closed; refunds and history stay available.",
+  "release_gates": [
+    "receipts are labeled non-fiscal",
+    "cash session totals reconcile to the centavo",
+    "fiscal issuance stays a separate future domain"
+  ]
+}

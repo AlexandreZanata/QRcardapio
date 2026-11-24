@@ -1,7 +1,9 @@
 use chrono::NaiveDate;
 use sqlx::{Sqlite, SqlitePool, Transaction};
 
+use super::commercial_contracts;
 use crate::domain::billing::BillingPlan;
+use crate::domain::commercial::Quote;
 use crate::error::AppResult;
 use crate::infrastructure::database::begin_immediate;
 
@@ -69,6 +71,8 @@ pub async fn paid_coverage(
     .await?)
 }
 
+/// Reserves a checkout for the entry offer (QR Menu) on a cycle. Kept for the legacy
+/// "Plano Essencial" flow and its tests; new code calls [`reserve_contract_checkout`].
 pub async fn reserve_checkout(
     pool: &SqlitePool,
     env: &str,
@@ -76,6 +80,20 @@ pub async fn reserve_checkout(
     reference: &str,
     today: NaiveDate,
     plan: BillingPlan,
+) -> AppResult<bool> {
+    let quote = crate::domain::commercial::catalog().entry_quote(plan);
+    reserve_contract_checkout(pool, env, est, reference, today, &quote).await
+}
+
+/// Reserves a checkout and stores its commercial contract snapshot atomically. The gateway
+/// amount (`billing_checkouts.price_centavos`) is the quote total computed by the backend.
+pub async fn reserve_contract_checkout(
+    pool: &SqlitePool,
+    env: &str,
+    est: &str,
+    reference: &str,
+    today: NaiveDate,
+    quote: &Quote,
 ) -> AppResult<bool> {
     let mut tx = begin_immediate(pool).await?;
     // A creating row has never exposed a link. Allow recovery after the provider's
@@ -95,11 +113,16 @@ pub async fn reserve_checkout(
             SELECT 1 FROM billing_coverage
             WHERE environment = ? AND establishment_id = ? AND due_date <= ? AND paid_through > ?
          ) ON CONFLICT DO NOTHING",
-    ).bind(reference).bind(env).bind(est).bind(plan.months()).bind(plan.price())
+    ).bind(reference).bind(env).bind(est).bind(quote.cycle.months()).bind(quote.total_centavos)
         .bind(env).bind(est).bind(today).bind(today)
         .execute(&mut *tx).await?;
+    let reserved = result.rows_affected() == 1;
+    if reserved {
+        commercial_contracts::insert_contract(&mut tx, reference, env, est, reference, quote)
+            .await?;
+    }
     tx.commit().await?;
-    Ok(result.rows_affected() == 1)
+    Ok(reserved)
 }
 
 pub async fn finish_checkout(
@@ -275,6 +298,7 @@ pub async fn reconcile_subscription(
     .execute(&mut *tx)
     .await?;
     if res.rows_affected() == 1 {
+        commercial_contracts::activate_for_subscription(&mut tx, env, subscription, None).await?;
         let today = crate::domain::billing::billing_now().date_naive();
         let now = chrono::Utc::now().to_rfc3339();
         super::affiliate_ledger::sync_subscription_commissions(

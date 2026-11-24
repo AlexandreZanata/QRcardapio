@@ -1,0 +1,165 @@
+{
+  "contract": "commercial.modules",
+  "contract_version": 1,
+  "currency": "BRL",
+  "modules": [
+    {
+      "code": "menu",
+      "name": "QR Menu",
+      "lifecycle": "available",
+      "phase": 1,
+      "affiliate_eligible": true,
+      "requires_modules": [],
+      "current_version": 1,
+      "versions": [
+        {
+          "version": 1,
+          "effective_from": "2026-11-23",
+          "monthly_price_centavos": 2990,
+          "capabilities": ["menu.publish"]
+        }
+      ]
+    },
+    {
+      "code": "delivery",
+      "name": "QR Delivery",
+      "lifecycle": "planned",
+      "phase": 4,
+      "affiliate_eligible": true,
+      "requires_modules": [],
+      "current_version": 1,
+      "versions": [
+        {
+          "version": 1,
+          "effective_from": "2026-11-24",
+          "monthly_price_centavos": 6990,
+          "capabilities": [
+            "delivery.storefront.publish",
+            "delivery.order.create",
+            "delivery.order.manage",
+            "delivery.settings.manage"
+          ]
+        }
+      ]
+    },
+    {
+      "code": "tables",
+      "name": "QR Tables",
+      "lifecycle": "planned",
+      "phase": 5,
+      "affiliate_eligible": true,
+      "requires_modules": [],
+      "current_version": 1,
+      "versions": [
+        {
+          "version": 1,
+          "effective_from": "2026-11-24",
+          "monthly_price_centavos": 3990,
+          "capabilities": ["tables.session.manage", "tables.order.create", "tables.bill.manage"]
+        }
+      ]
+    },
+    {
+      "code": "kitchen",
+      "name": "QR Kitchen",
+      "lifecycle": "planned",
+      "phase": 6,
+      "affiliate_eligible": true,
+      "requires_modules": [],
+      "current_version": 1,
+      "versions": [
+        {
+          "version": 1,
+          "effective_from": "2026-11-24",
+          "monthly_price_centavos": 2490,
+          "capabilities": ["kitchen.ticket.create", "kitchen.ticket.manage", "kitchen.station.manage"]
+        }
+      ]
+    },
+    {
+      "code": "fleet",
+      "name": "QR Fleet",
+      "lifecycle": "planned",
+      "phase": 7,
+      "affiliate_eligible": true,
+      "requires_modules": [],
+      "current_version": 1,
+      "versions": [
+        {
+          "version": 1,
+          "effective_from": "2026-11-24",
+          "monthly_price_centavos": 2990,
+          "capabilities": ["fleet.delivery.create", "fleet.delivery.assign", "fleet.driver.manage"]
+        }
+      ]
+    },
+    {
+      "code": "loyalty",
+      "name": "QR Loyalty",
+      "lifecycle": "planned",
+      "phase": 8,
+      "affiliate_eligible": true,
+      "requires_modules": [],
+      "current_version": 1,
+      "versions": [
+        {
+          "version": 1,
+          "effective_from": "2026-11-24",
+          "monthly_price_centavos": 1990,
+          "capabilities": ["loyalty.points.manage", "loyalty.reward.manage"]
+        }
+      ]
+    },
+    {
+      "code": "analytics",
+      "name": "QR Analytics",
+      "lifecycle": "planned",
+      "phase": 9,
+      "affiliate_eligible": true,
+      "requires_modules": [],
+      "current_version": 1,
+      "versions": [
+        {
+          "version": 1,
+          "effective_from": "2026-11-24",
+          "monthly_price_centavos": 1990,
+          "capabilities": ["analytics.reports.advanced", "analytics.import"]
+        }
+      ]
+    },
+    {
+      "code": "pos",
+      "name": "QR POS",
+      "lifecycle": "planned",
+      "phase": 10,
+      "affiliate_eligible": true,
+      "requires_modules": [],
+      "current_version": 1,
+      "versions": [
+        {
+          "version": 1,
+          "effective_from": "2026-11-24",
+          "monthly_price_centavos": 6990,
+          "capabilities": ["pos.sale.create", "pos.cash_register.manage"]
+        }
+      ]
+    },
+    {
+      "code": "connect",
+      "name": "QR Connect",
+      "lifecycle": "planned",
+      "phase": 11,
+      "affiliate_eligible": true,
+      "requires_modules": [],
+      "current_version": 1,
+      "versions": [
+        {
+          "version": 1,
+          "effective_from": "2026-11-24",
+          "monthly_price_centavos": 2490,
+          "capabilities": ["connect.api.use", "connect.webhook.manage"]
+        }
+      ]
+    }
+  ]
+}

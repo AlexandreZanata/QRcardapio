@@ -7,9 +7,11 @@ use axum_extra::extract::CookieJar;
 use serde::Deserialize;
 
 use crate::app::AppState;
-use crate::application::billing::publication_allowed;
+use crate::application::entitlements::{Denial, Enforcement, authorize, can_publish_menu};
 use crate::application::publishing::{publish_establishment, unpublish_establishment};
 use crate::domain::account::AccountRole;
+use crate::domain::billing::billing_now;
+use crate::domain::entitlements::Operation;
 use crate::error::{AppError, AppResult};
 use crate::http::middleware::auth::{TenantContext, verify_csrf};
 use crate::http::middleware::locale::RequestLocale;
@@ -35,7 +37,7 @@ pub async fn overview_page(
     let est = &tenant.establishment;
     let categories = list_categories_for_est(&state.pool, &est.id).await?;
     let products = list_products_for_est(&state.pool, &est.id).await?;
-    let can_publish = publication_allowed(&state.pool, state.asaas.as_ref(), &est.id).await?;
+    let can_publish = can_publish_menu(&state.pool, state.asaas.as_ref(), &est.id).await?;
     let (jar, flash) = take_flash(jar);
 
     let tpl = OverviewTemplate {
@@ -130,12 +132,16 @@ pub async fn publish_submit(
 ) -> AppResult<Response> {
     verify_csrf(&tenant.auth, &form._csrf)?;
 
-    if !publication_allowed(&state.pool, state.asaas.as_ref(), &tenant.establishment.id).await? {
+    if let Err(denial) = authorize_operation(&state, &tenant, Operation::PublishMenu).await? {
+        let target = match denial {
+            Denial::NotEntitled(_) => "/dashboard/billing",
+            _ => "/dashboard",
+        };
         return Ok(with_flash_redirect(
             jar,
-            "/dashboard/billing",
+            target,
             true,
-            "error.subscription_required",
+            denial.i18n_key(),
             state.config.cookie_secure,
         ));
     }
@@ -172,6 +178,9 @@ pub async fn unpublish_submit(
     Form(form): Form<CsrfForm>,
 ) -> AppResult<Response> {
     verify_csrf(&tenant.auth, &form._csrf)?;
+    if let Err(denial) = authorize_operation(&state, &tenant, Operation::UnpublishMenu).await? {
+        return Err(denial.into_error());
+    }
     unpublish_establishment(
         &state.pool,
         &state.config,
@@ -187,4 +196,21 @@ pub async fn unpublish_submit(
         "flash.unpublished",
         state.config.cookie_secure,
     ))
+}
+
+async fn authorize_operation(
+    state: &AppState,
+    tenant: &TenantContext,
+    operation: Operation,
+) -> AppResult<Result<(), Denial>> {
+    Ok(authorize(
+        &state.pool,
+        Enforcement::from_gateway(state.asaas.as_ref()),
+        &tenant.establishment.id,
+        tenant.role,
+        operation,
+        billing_now().date_naive(),
+    )
+    .await?
+    .map(|_| ()))
 }

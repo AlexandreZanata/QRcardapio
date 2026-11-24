@@ -1,0 +1,595 @@
+{
+  "contract": "commerce.state_machines",
+  "contract_version": 1,
+  "status": "planned",
+  "description": "Independent state machines of Commerce Core (phase 3). A transition in one machine never implies a transition in another: a delivered order is not paid, a confirmed payment does not finish preparation. Cross-machine effects happen only through outbox events consumed idempotently.",
+  "machines": {
+    "order": {
+      "aggregate": "order",
+      "initial": "placed",
+      "terminal": [
+        "rejected",
+        "completed",
+        "cancelled"
+      ],
+      "states": [
+        "placed",
+        "accepted",
+        "rejected",
+        "preparing",
+        "ready",
+        "completed",
+        "cancelled"
+      ],
+      "transitions": [
+        {
+          "from": "placed",
+          "to": "accepted",
+          "actors": [
+            "owner",
+            "manager",
+            "cashier",
+            "waiter"
+          ],
+          "event": "OrderAccepted"
+        },
+        {
+          "from": "placed",
+          "to": "rejected",
+          "actors": [
+            "owner",
+            "manager",
+            "cashier",
+            "system"
+          ],
+          "event": "OrderRejected",
+          "notes": "System rejection only when the acceptance window expires."
+        },
+        {
+          "from": "placed",
+          "to": "cancelled",
+          "actors": [
+            "consumer"
+          ],
+          "event": "OrderCancelled"
+        },
+        {
+          "from": "accepted",
+          "to": "preparing",
+          "actors": [
+            "owner",
+            "manager",
+            "kitchen_operator",
+            "system"
+          ],
+          "event": "OrderPreparing",
+          "notes": "System transition on KitchenTicketStarted."
+        },
+        {
+          "from": "preparing",
+          "to": "ready",
+          "actors": [
+            "owner",
+            "manager",
+            "kitchen_operator",
+            "system"
+          ],
+          "event": "OrderReady",
+          "notes": "System transition when every kitchen ticket of the order emitted KitchenTicketReady."
+        },
+        {
+          "from": "accepted",
+          "to": "ready",
+          "actors": [
+            "owner",
+            "manager",
+            "cashier",
+            "waiter"
+          ],
+          "event": "OrderReady",
+          "notes": "Fast path for establishments without QR Kitchen, including counter (POS) sales."
+        },
+        {
+          "from": "ready",
+          "to": "completed",
+          "actors": [
+            "owner",
+            "manager",
+            "cashier",
+            "waiter",
+            "courier",
+            "system"
+          ],
+          "event": "OrderCompleted",
+          "notes": "System transition on DeliveryCompleted or pickup confirmation."
+        },
+        {
+          "from": "accepted",
+          "to": "cancelled",
+          "actors": [
+            "owner",
+            "manager"
+          ],
+          "event": "OrderCancelled",
+          "compensations": [
+            "refund confirmed payments",
+            "cancel kitchen tickets",
+            "cancel pending deliveries"
+          ]
+        },
+        {
+          "from": "preparing",
+          "to": "cancelled",
+          "actors": [
+            "owner",
+            "manager"
+          ],
+          "event": "OrderCancelled",
+          "compensations": [
+            "refund confirmed payments",
+            "cancel kitchen tickets",
+            "cancel pending deliveries"
+          ]
+        },
+        {
+          "from": "ready",
+          "to": "cancelled",
+          "actors": [
+            "owner",
+            "manager"
+          ],
+          "event": "OrderCancelled",
+          "compensations": [
+            "refund confirmed payments",
+            "cancel pending deliveries"
+          ]
+        }
+      ],
+      "concurrency": "Optimistic: every transition is an UPDATE ... WHERE id = ? AND establishment_id = ? AND state = <expected> AND version = ?; zero rows affected returns 409 with the current state.",
+      "notes": "Automatic loyalty points are credited only after completion, so cancellation never needs a loyalty compensation; refunds after completion reverse points through PaymentRefunded."
+    },
+    "order_payment": {
+      "aggregate": "order_payment",
+      "initial": "pending",
+      "terminal": [
+        "failed",
+        "expired",
+        "cancelled",
+        "refunded",
+        "chargeback_lost"
+      ],
+      "states": [
+        "pending",
+        "confirmed",
+        "failed",
+        "expired",
+        "cancelled",
+        "partially_refunded",
+        "refunded",
+        "chargeback_open",
+        "chargeback_lost"
+      ],
+      "transitions": [
+        {
+          "from": "pending",
+          "to": "confirmed",
+          "actors": [
+            "gateway",
+            "owner",
+            "manager",
+            "cashier",
+            "waiter",
+            "courier"
+          ],
+          "event": "PaymentConfirmed",
+          "notes": "Pay-on-delivery is confirmed by staff with the collected method; online methods only by authenticated gateway webhooks."
+        },
+        {
+          "from": "pending",
+          "to": "failed",
+          "actors": [
+            "gateway"
+          ],
+          "event": null
+        },
+        {
+          "from": "pending",
+          "to": "expired",
+          "actors": [
+            "system"
+          ],
+          "event": null
+        },
+        {
+          "from": "pending",
+          "to": "cancelled",
+          "actors": [
+            "system",
+            "owner",
+            "manager"
+          ],
+          "event": null
+        },
+        {
+          "from": "confirmed",
+          "to": "partially_refunded",
+          "actors": [
+            "owner",
+            "manager",
+            "gateway"
+          ],
+          "event": "PaymentRefunded"
+        },
+        {
+          "from": "partially_refunded",
+          "to": "partially_refunded",
+          "actors": [
+            "owner",
+            "manager",
+            "gateway"
+          ],
+          "event": "PaymentRefunded"
+        },
+        {
+          "from": "confirmed",
+          "to": "refunded",
+          "actors": [
+            "owner",
+            "manager",
+            "gateway"
+          ],
+          "event": "PaymentRefunded"
+        },
+        {
+          "from": "partially_refunded",
+          "to": "refunded",
+          "actors": [
+            "owner",
+            "manager",
+            "gateway"
+          ],
+          "event": "PaymentRefunded"
+        },
+        {
+          "from": "confirmed",
+          "to": "chargeback_open",
+          "actors": [
+            "gateway"
+          ],
+          "event": null
+        },
+        {
+          "from": "chargeback_open",
+          "to": "confirmed",
+          "actors": [
+            "gateway"
+          ],
+          "event": null
+        },
+        {
+          "from": "chargeback_open",
+          "to": "chargeback_lost",
+          "actors": [
+            "gateway"
+          ],
+          "event": "PaymentRefunded"
+        },
+        {
+          "from": "partially_refunded",
+          "to": "chargeback_open",
+          "actors": [
+            "gateway"
+          ],
+          "event": null
+        }
+      ],
+      "invariants": [
+        "sum(refunds) <= confirmed amount",
+        "amounts are integer centavos",
+        "gateway events are deduplicated by (environment, provider event id) and ordered by provider timestamp"
+      ]
+    },
+    "preparation": {
+      "aggregate": "kitchen_ticket_item",
+      "initial": "queued",
+      "terminal": [
+        "handed_off",
+        "cancelled"
+      ],
+      "states": [
+        "queued",
+        "in_progress",
+        "ready",
+        "handed_off",
+        "cancelled"
+      ],
+      "transitions": [
+        {
+          "from": "queued",
+          "to": "in_progress",
+          "actors": [
+            "kitchen_operator",
+            "owner",
+            "manager"
+          ],
+          "event": null
+        },
+        {
+          "from": "in_progress",
+          "to": "ready",
+          "actors": [
+            "kitchen_operator",
+            "owner",
+            "manager"
+          ],
+          "event": null
+        },
+        {
+          "from": "ready",
+          "to": "handed_off",
+          "actors": [
+            "kitchen_operator",
+            "waiter",
+            "courier",
+            "owner",
+            "manager"
+          ],
+          "event": null
+        },
+        {
+          "from": "queued",
+          "to": "cancelled",
+          "actors": [
+            "owner",
+            "manager",
+            "system"
+          ],
+          "event": null
+        },
+        {
+          "from": "in_progress",
+          "to": "cancelled",
+          "actors": [
+            "owner",
+            "manager",
+            "system"
+          ],
+          "event": null
+        },
+        {
+          "from": "ready",
+          "to": "cancelled",
+          "actors": [
+            "owner",
+            "manager",
+            "system"
+          ],
+          "event": null,
+          "notes": "Order cancelled after the item was ready but before hand-off."
+        }
+      ],
+      "notes": "Ticket-level events KitchenTicketCreated, KitchenTicketStarted and KitchenTicketReady aggregate item states."
+    },
+    "delivery": {
+      "aggregate": "delivery",
+      "initial": "pending",
+      "terminal": [
+        "delivered",
+        "returned",
+        "cancelled"
+      ],
+      "states": [
+        "pending",
+        "assigned",
+        "picked_up",
+        "delivered",
+        "failed",
+        "returned",
+        "cancelled"
+      ],
+      "transitions": [
+        {
+          "from": "pending",
+          "to": "assigned",
+          "actors": [
+            "owner",
+            "manager"
+          ],
+          "event": "DeliveryAssigned"
+        },
+        {
+          "from": "assigned",
+          "to": "pending",
+          "actors": [
+            "owner",
+            "manager",
+            "courier"
+          ],
+          "event": null,
+          "notes": "Unassign or courier declines."
+        },
+        {
+          "from": "assigned",
+          "to": "picked_up",
+          "actors": [
+            "courier"
+          ],
+          "event": null
+        },
+        {
+          "from": "picked_up",
+          "to": "delivered",
+          "actors": [
+            "courier",
+            "owner",
+            "manager"
+          ],
+          "event": "DeliveryCompleted",
+          "notes": "Requires proof of delivery when configured."
+        },
+        {
+          "from": "picked_up",
+          "to": "failed",
+          "actors": [
+            "courier"
+          ],
+          "event": "DeliveryFailed"
+        },
+        {
+          "from": "failed",
+          "to": "assigned",
+          "actors": [
+            "owner",
+            "manager"
+          ],
+          "event": "DeliveryAssigned"
+        },
+        {
+          "from": "failed",
+          "to": "returned",
+          "actors": [
+            "courier",
+            "owner",
+            "manager"
+          ],
+          "event": null
+        },
+        {
+          "from": "pending",
+          "to": "cancelled",
+          "actors": [
+            "owner",
+            "manager",
+            "system"
+          ],
+          "event": null
+        },
+        {
+          "from": "assigned",
+          "to": "cancelled",
+          "actors": [
+            "owner",
+            "manager",
+            "system"
+          ],
+          "event": null
+        }
+      ]
+    },
+    "table_session": {
+      "aggregate": "table_session",
+      "initial": "open",
+      "terminal": [
+        "closed",
+        "voided"
+      ],
+      "states": [
+        "open",
+        "bill_requested",
+        "closed",
+        "voided"
+      ],
+      "transitions": [
+        {
+          "from": "open",
+          "to": "bill_requested",
+          "actors": [
+            "consumer",
+            "waiter",
+            "owner",
+            "manager"
+          ],
+          "event": null
+        },
+        {
+          "from": "bill_requested",
+          "to": "open",
+          "actors": [
+            "waiter",
+            "owner",
+            "manager"
+          ],
+          "event": null
+        },
+        {
+          "from": "bill_requested",
+          "to": "closed",
+          "actors": [
+            "waiter",
+            "cashier",
+            "owner",
+            "manager"
+          ],
+          "event": "TableBillClosed",
+          "notes": "Requires settled balance or explicit pending-balance authorization."
+        },
+        {
+          "from": "open",
+          "to": "closed",
+          "actors": [
+            "waiter",
+            "cashier",
+            "owner",
+            "manager"
+          ],
+          "event": "TableBillClosed",
+          "notes": "Requires settled balance or explicit pending-balance authorization."
+        },
+        {
+          "from": "open",
+          "to": "voided",
+          "actors": [
+            "owner",
+            "manager"
+          ],
+          "event": null,
+          "notes": "Only sessions without items."
+        }
+      ]
+    },
+    "cash_session": {
+      "aggregate": "cash_session",
+      "initial": "open",
+      "terminal": [
+        "closed"
+      ],
+      "states": [
+        "open",
+        "counting",
+        "closed"
+      ],
+      "transitions": [
+        {
+          "from": "open",
+          "to": "counting",
+          "actors": [
+            "cashier",
+            "owner",
+            "manager"
+          ],
+          "event": null
+        },
+        {
+          "from": "counting",
+          "to": "open",
+          "actors": [
+            "owner",
+            "manager"
+          ],
+          "event": null
+        },
+        {
+          "from": "counting",
+          "to": "closed",
+          "actors": [
+            "cashier",
+            "owner",
+            "manager"
+          ],
+          "event": "CashRegisterClosed"
+        }
+      ],
+      "notes": "CashRegisterOpened is emitted at creation. Withdrawals (sangria) and supplies (suprimento) are immutable movements while open."
+    }
+  }
+}

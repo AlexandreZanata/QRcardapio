@@ -2,11 +2,12 @@ use chrono::{DateTime, Utc};
 use serde_json::{Value, json};
 use sqlx::SqlitePool;
 
-use crate::application::billing::publication_allowed;
+use crate::application::entitlements::{Enforcement, authorize, can_publish_menu};
 use crate::application::publishing::{
     PublishLocks, publish_establishment, unpublish_establishment,
 };
 use crate::config::Config;
+use crate::domain::entitlements::{MemberRole, Operation as GuardedOperation};
 use crate::domain::establishment::{
     AccentColor, Slug, sanitize_optional_text, validate_non_empty_name,
 };
@@ -36,7 +37,7 @@ pub async fn read_settings(
         .await?
         .ok_or(AppError::NotFound("error.not_found"))?;
     let counts = queries::menu_summary_counts(pool, &est.id).await?;
-    let can_publish = publication_allowed(pool, asaas, &est.id).await?;
+    let can_publish = can_publish_menu(pool, asaas, &est.id).await?;
     let accent_contrast_ink = AccentColor::parse(&est.accent_color)
         .map(|c| c.contrast_ink())
         .unwrap_or("#FFFFFF");
@@ -195,9 +196,17 @@ pub async fn publish(
     if !has_active_owner_write_grant(pool, grant, now).await? {
         return Err(AppError::Forbidden("error.forbidden"));
     }
-    if !publication_allowed(pool, asaas, &grant.establishment_id).await? {
-        return Err(AppError::Forbidden("error.subscription_required"));
-    }
+    // The menu.write OAuth grant is owner-only, which narrows the operation's role set.
+    authorize(
+        pool,
+        Enforcement::from_gateway(asaas),
+        &grant.establishment_id,
+        MemberRole::Owner,
+        GuardedOperation::PublishMenu,
+        crate::domain::billing::billing_now().date_naive(),
+    )
+    .await?
+    .map_err(|denial| denial.into_error())?;
     let outcome = publish_establishment(pool, config, locks, &grant.establishment_id).await?;
     let est = find_establishment_by_id(pool, &grant.establishment_id)
         .await?

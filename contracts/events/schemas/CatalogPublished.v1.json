@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "qrcardapio:event:CatalogPublished:1",
+  "title": "CatalogPublished v1 payload",
+  "description": "A static public snapshot was atomically published. The QR Menu emits channel 'menu'; QR Delivery will emit 'storefront'.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["channel", "publication_version", "html_bytes", "asset_count"],
+  "properties": {
+    "channel": { "enum": ["menu", "storefront"] },
+    "publication_version": { "type": "integer", "minimum": 1 },
+    "html_bytes": { "type": "integer", "minimum": 0 },
+    "asset_count": { "type": "integer", "minimum": 0 }
+  }
+}

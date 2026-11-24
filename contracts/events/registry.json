@@ -1,0 +1,411 @@
+{
+  "contract": "events.registry",
+  "contract_version": 1,
+  "description": "Domain events written to the SQLite transactional outbox (domain_events). Implemented events are produced by domain::events::EventType; tests enforce parity and schema presence. Planned events are design contracts and are not emitted. Module contracts list under 'publishes' every event their operations cause, including Commerce Core events written on their behalf; 'producer' names the component that writes the row. Point amounts are positive magnitudes; the event type gives the direction.",
+  "envelope": {
+    "required": [
+      "event_id",
+      "event_type",
+      "event_version",
+      "establishment_id",
+      "aggregate_type",
+      "aggregate_id",
+      "correlation_id",
+      "causation_id",
+      "occurred_at",
+      "payload"
+    ],
+    "ordering": "Monotonic per aggregate (domain_events.seq). No global ordering guarantee across aggregates.",
+    "idempotency": "Producers set dedupe_key when a state transition can be observed more than once (webhook redelivery, retries). Consumers must be idempotent by event_id.",
+    "privacy": "Payloads carry identifiers and integer amounts only. Never emails, names, phones, addresses, card data or tokens."
+  },
+  "events": [
+    {
+      "type": "SubscriptionActivated",
+      "version": 1,
+      "status": "implemented",
+      "producer": "commercial",
+      "aggregate": "commercial_contract",
+      "schema": "schemas/SubscriptionActivated.v1.json",
+      "dedupe": "contract id"
+    },
+    {
+      "type": "EntitlementGranted",
+      "version": 1,
+      "status": "implemented",
+      "producer": "entitlements",
+      "aggregate": "entitlement_grant",
+      "schema": "schemas/EntitlementGranted.v1.json",
+      "dedupe": "grant id"
+    },
+    {
+      "type": "EntitlementRevoked",
+      "version": 1,
+      "status": "implemented",
+      "producer": "entitlements",
+      "aggregate": "entitlement_grant",
+      "schema": "schemas/EntitlementRevoked.v1.json",
+      "dedupe": "grant id"
+    },
+    {
+      "type": "EstablishmentSuspended",
+      "version": 1,
+      "status": "implemented",
+      "producer": "core.establishments",
+      "aggregate": "establishment",
+      "schema": "schemas/EstablishmentSuspended.v1.json",
+      "dedupe": null
+    },
+    {
+      "type": "EstablishmentReinstated",
+      "version": 1,
+      "status": "implemented",
+      "producer": "core.establishments",
+      "aggregate": "establishment",
+      "schema": "schemas/EstablishmentReinstated.v1.json",
+      "dedupe": null
+    },
+    {
+      "type": "CatalogPublished",
+      "version": 1,
+      "status": "implemented",
+      "producer": "core.publishing",
+      "aggregate": "establishment",
+      "schema": "schemas/CatalogPublished.v1.json",
+      "dedupe": "channel + establishment id + publication version"
+    },
+    {
+      "type": "SubscriptionChanged",
+      "version": 1,
+      "status": "planned",
+      "producer": "commercial",
+      "aggregate": "commercial_contract",
+      "payload": {
+        "contract_id": "string",
+        "supersedes_contract_id": "string",
+        "effective_on": "date",
+        "total_centavos": "integer",
+        "cycle": "string"
+      }
+    },
+    {
+      "type": "SubscriptionExpired",
+      "version": 1,
+      "status": "planned",
+      "producer": "commercial",
+      "aggregate": "commercial_contract",
+      "payload": {
+        "contract_id": "string",
+        "ended_on": "date"
+      }
+    },
+    {
+      "type": "OrderCreated",
+      "version": 1,
+      "status": "planned",
+      "producer": "commerce",
+      "aggregate": "order",
+      "payload": {
+        "order_id": "string",
+        "channel": "string",
+        "total_centavos": "integer",
+        "item_count": "integer",
+        "catalog_version": "integer"
+      }
+    },
+    {
+      "type": "OrderAccepted",
+      "version": 1,
+      "status": "planned",
+      "producer": "commerce",
+      "aggregate": "order",
+      "payload": {
+        "order_id": "string",
+        "promised_at": "datetime"
+      }
+    },
+    {
+      "type": "OrderRejected",
+      "version": 1,
+      "status": "planned",
+      "producer": "commerce",
+      "aggregate": "order",
+      "payload": {
+        "order_id": "string",
+        "reason_code": "string"
+      }
+    },
+    {
+      "type": "OrderPreparing",
+      "version": 1,
+      "status": "planned",
+      "producer": "commerce",
+      "aggregate": "order",
+      "payload": {
+        "order_id": "string"
+      }
+    },
+    {
+      "type": "OrderReady",
+      "version": 1,
+      "status": "planned",
+      "producer": "commerce",
+      "aggregate": "order",
+      "payload": {
+        "order_id": "string",
+        "fulfillment": "string"
+      }
+    },
+    {
+      "type": "OrderCompleted",
+      "version": 1,
+      "status": "planned",
+      "producer": "commerce",
+      "aggregate": "order",
+      "payload": {
+        "order_id": "string",
+        "completed_at": "datetime"
+      }
+    },
+    {
+      "type": "OrderCancelled",
+      "version": 1,
+      "status": "planned",
+      "producer": "commerce",
+      "aggregate": "order",
+      "payload": {
+        "order_id": "string",
+        "reason_code": "string",
+        "cancelled_by": "string"
+      }
+    },
+    {
+      "type": "PaymentConfirmed",
+      "version": 1,
+      "status": "planned",
+      "producer": "commerce.payments",
+      "aggregate": "order_payment",
+      "payload": {
+        "payment_id": "string",
+        "order_id": "string",
+        "amount_centavos": "integer",
+        "method": "string"
+      }
+    },
+    {
+      "type": "PaymentRefunded",
+      "version": 1,
+      "status": "planned",
+      "producer": "commerce.payments",
+      "aggregate": "order_payment",
+      "payload": {
+        "payment_id": "string",
+        "order_id": "string",
+        "amount_centavos": "integer",
+        "refund_id": "string"
+      }
+    },
+    {
+      "type": "TableSessionOpened",
+      "version": 1,
+      "status": "planned",
+      "producer": "tables",
+      "aggregate": "table_session",
+      "payload": {
+        "session_id": "string",
+        "table_id": "string"
+      }
+    },
+    {
+      "type": "TableBillClosed",
+      "version": 1,
+      "status": "planned",
+      "producer": "tables",
+      "aggregate": "table_session",
+      "payload": {
+        "session_id": "string",
+        "total_centavos": "integer"
+      }
+    },
+    {
+      "type": "KitchenTicketCreated",
+      "version": 1,
+      "status": "planned",
+      "producer": "kitchen",
+      "aggregate": "kitchen_ticket",
+      "payload": {
+        "ticket_id": "string",
+        "order_id": "string|null",
+        "station_id": "string"
+      }
+    },
+    {
+      "type": "KitchenTicketStarted",
+      "version": 1,
+      "status": "planned",
+      "producer": "kitchen",
+      "aggregate": "kitchen_ticket",
+      "payload": {
+        "ticket_id": "string",
+        "order_id": "string|null"
+      }
+    },
+    {
+      "type": "KitchenTicketReady",
+      "version": 1,
+      "status": "planned",
+      "producer": "kitchen",
+      "aggregate": "kitchen_ticket",
+      "payload": {
+        "ticket_id": "string",
+        "order_id": "string|null"
+      }
+    },
+    {
+      "type": "DeliveryCreated",
+      "version": 1,
+      "status": "planned",
+      "producer": "fleet",
+      "aggregate": "delivery",
+      "payload": {
+        "delivery_id": "string",
+        "order_id": "string|null",
+        "source": "string"
+      }
+    },
+    {
+      "type": "DeliveryAssigned",
+      "version": 1,
+      "status": "planned",
+      "producer": "fleet",
+      "aggregate": "delivery",
+      "payload": {
+        "delivery_id": "string",
+        "courier_id": "string"
+      }
+    },
+    {
+      "type": "DeliveryCompleted",
+      "version": 1,
+      "status": "planned",
+      "producer": "fleet",
+      "aggregate": "delivery",
+      "payload": {
+        "delivery_id": "string",
+        "order_id": "string|null",
+        "completed_at": "datetime"
+      }
+    },
+    {
+      "type": "DeliveryFailed",
+      "version": 1,
+      "status": "planned",
+      "producer": "fleet",
+      "aggregate": "delivery",
+      "payload": {
+        "delivery_id": "string",
+        "order_id": "string|null",
+        "reason_code": "string"
+      }
+    },
+    {
+      "type": "LoyaltyPointsGranted",
+      "version": 1,
+      "status": "planned",
+      "producer": "loyalty",
+      "aggregate": "loyalty_wallet",
+      "payload": {
+        "wallet_id": "string",
+        "entry_id": "string",
+        "points": "integer",
+        "source_event_id": "string|null"
+      }
+    },
+    {
+      "type": "LoyaltyPointsReversed",
+      "version": 1,
+      "status": "planned",
+      "producer": "loyalty",
+      "aggregate": "loyalty_wallet",
+      "payload": {
+        "wallet_id": "string",
+        "entry_id": "string",
+        "reverses_entry_id": "string",
+        "points": "integer"
+      }
+    },
+    {
+      "type": "LoyaltyPointsRedeemed",
+      "version": 1,
+      "status": "planned",
+      "producer": "loyalty",
+      "aggregate": "loyalty_wallet",
+      "payload": {
+        "wallet_id": "string",
+        "entry_id": "string",
+        "reward_id": "string",
+        "points": "integer"
+      }
+    },
+    {
+      "type": "LoyaltyPointsDebited",
+      "version": 1,
+      "status": "planned",
+      "producer": "loyalty",
+      "aggregate": "loyalty_wallet",
+      "payload": {
+        "wallet_id": "string",
+        "entry_id": "string",
+        "points": "integer"
+      }
+    },
+    {
+      "type": "LoyaltyPointsExpired",
+      "version": 1,
+      "status": "planned",
+      "producer": "loyalty",
+      "aggregate": "loyalty_wallet",
+      "payload": {
+        "wallet_id": "string",
+        "entry_id": "string",
+        "points": "integer",
+        "expired_on": "date"
+      }
+    },
+    {
+      "type": "PosSaleRegistered",
+      "version": 1,
+      "status": "planned",
+      "producer": "pos",
+      "aggregate": "order",
+      "payload": {
+        "order_id": "string",
+        "cash_session_id": "string",
+        "total_centavos": "integer"
+      }
+    },
+    {
+      "type": "CashRegisterOpened",
+      "version": 1,
+      "status": "planned",
+      "producer": "pos",
+      "aggregate": "cash_session",
+      "payload": {
+        "cash_session_id": "string",
+        "opening_float_centavos": "integer"
+      }
+    },
+    {
+      "type": "CashRegisterClosed",
+      "version": 1,
+      "status": "planned",
+      "producer": "pos",
+      "aggregate": "cash_session",
+      "payload": {
+        "cash_session_id": "string",
+        "expected_centavos": "integer",
+        "counted_centavos": "integer"
+      }
+    }
+  ]
+}

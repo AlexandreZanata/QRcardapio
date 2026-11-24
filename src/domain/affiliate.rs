@@ -1,9 +1,14 @@
-use crate::domain::billing::MONTHLY_PRICE_CENTAVOS;
+use crate::domain::billing::entry_monthly_price_centavos;
 use crate::error::{AppError, AppResult};
 
 pub use super::affiliate_math::*;
 
-pub const MAX_FIXED_MONTHLY_CENTAVOS: i64 = MONTHLY_PRICE_CENTAVOS;
+/// Fixed commissions are capped at the entry offer's monthly price (per establishment,
+/// never multiplied by the number of contracted modules).
+pub fn max_fixed_monthly_centavos() -> i64 {
+    entry_monthly_price_centavos()
+}
+
 pub const MAX_PERCENT_BPS: i64 = 10_000;
 pub const MIN_HOLD_DAYS: i64 = 0;
 pub const MAX_HOLD_DAYS: i64 = 90;

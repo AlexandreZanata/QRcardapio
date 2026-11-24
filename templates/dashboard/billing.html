@@ -1,5 +1,9 @@
 {% extends "layouts/dashboard.html" %}
 
+{% block page_styles %}
+<link rel="stylesheet" href="/static/css/modules.css">
+{% endblock %}
+
 {% block content %}
 <div class="page-top">
   <div>
@@ -11,6 +15,7 @@
 
 <div class="grid-2">
   <section class="card" aria-labelledby="billing-plan-title">
+    <p class="module-eyebrow">{{ plan.offer_name }}</p>
     <h2 id="billing-plan-title" data-i18n="{{ plan.name_key }}">{{ page.t(plan.name_key) }}</h2>
     <p><strong>{{ plan.price }}</strong> <span data-i18n="{{ plan.period_key }}">{{ page.t(plan.period_key) }}</span></p>
     <p data-i18n="billing.payment_method">{{ page.t("billing.payment_method") }}</p>
@@ -29,6 +34,7 @@
     <form method="post" action="/dashboard/billing/checkout">
       <input type="hidden" name="_csrf" value="{{ csrf_token }}">
       <input type="hidden" name="plan" value="{{ plan.key }}">
+      <input type="hidden" name="offer" value="{{ plan.offer }}">
       <button class="btn panel-action panel-action-primary" type="submit" data-i18n="billing.subscribe">{{ page.t("billing.subscribe") }}</button>
     </form>
     {% endif %}
@@ -60,4 +66,31 @@
     {% endif %}
   </section>
 </div>
+
+<section class="module-catalog" aria-labelledby="module-catalog-title">
+  <h2 id="module-catalog-title" data-i18n="commercial.modules_heading">{{ page.t("commercial.modules_heading") }}</h2>
+  <p class="field-hint" data-i18n="commercial.modules_intro">{{ page.t("commercial.modules_intro") }}</p>
+  <ul class="module-grid">
+    {% for module in modules %}
+    <li class="card module-card{% if module.is_entry %} module-card-entry{% endif %}">
+      <div class="module-card-head">
+        <h3>{{ module.name }}</h3>
+        <span class="badge {{ module.badge }}" data-i18n="{{ module.status_key }}">{{ page.t(module.status_key) }}</span>
+      </div>
+      <p data-i18n="{{ module.description_key }}">{{ page.t(module.description_key) }}</p>
+      {% if let Some(price) = module.price %}
+      <p class="module-price"><strong>{{ price }}</strong> <span data-i18n="billing.per_month">{{ page.t("billing.per_month") }}</span></p>
+      {% else %}
+      <p class="field-hint" data-i18n="commercial.not_for_sale">{{ page.t("commercial.not_for_sale") }}</p>
+      {% endif %}
+      {% if let Some(date) = module.active_until %}
+      <p class="field-hint">
+        <span data-i18n="commercial.active_until">{{ page.t("commercial.active_until") }}</span>
+        <time datetime="{{ date }}">{{ date.format("%d/%m/%Y") }}</time>
+      </p>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
 {% endblock %}

@@ -8,6 +8,7 @@ Every coding agent modifying QR Cardápio must follow this sequence:
 4. **Respect modularity (No King Files)**: Add new queries in the entity-specific file under `src/infrastructure/database/queries/`, keep handlers thin, and keep source files focused (~50–350 lines).
 5. **Keep i18n parity**: Update `i18n/pt-BR.json`, `i18n/en.json`, and `i18n/es.json` together with identical keys, and add `data-i18n*` hooks on UI elements.
 6. **Verify security & isolation**: Check `TenantContext`, `AND establishment_id = ?`, `_csrf` validation, strict CSP compliance (no inline JS or `style=""`), and `resolve_safe_subpath`.
+6a. **Commercial rules**: gate protected operations with `application::entitlements::authorize` (never plan names); prices only from `contracts/commercial/`; keep `contracts/`, `docs/modules/` and `docs/business/MODULE_CATALOG.md` in sync (`cargo test --test commercial_contracts`).
 7. **Write/update tests**: Cover behavior, tenant isolation, and edge cases in `tests/`.
 8. **Run mandatory verification**:
    ```bash

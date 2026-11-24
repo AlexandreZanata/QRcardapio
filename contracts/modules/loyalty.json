@@ -1,0 +1,84 @@
+{
+  "contract": "modules.loyalty",
+  "contract_version": 1,
+  "module": "loyalty",
+  "status": "planned",
+  "phase": 8,
+  "standalone": true,
+  "core_dependencies": [
+    "identity",
+    "establishments",
+    "members",
+    "tenancy",
+    "i18n",
+    "commercial",
+    "entitlements",
+    "events",
+    "customers",
+    "notifications",
+    "orders",
+    "order_payments"
+  ],
+  "optional_integrations": [
+    "delivery",
+    "tables",
+    "pos",
+    "analytics",
+    "connect"
+  ],
+  "capabilities": [
+    "loyalty.points.manage",
+    "loyalty.reward.manage"
+  ],
+  "operations": [
+    "loyalty.points.credit",
+    "loyalty.points.reverse",
+    "loyalty.points.debit",
+    "loyalty.reward.configure",
+    "loyalty.reward.redeem"
+  ],
+  "entities": [
+    "LoyaltyProgram",
+    "LoyaltyWallet",
+    "LoyaltyLedgerEntry",
+    "Reward",
+    "Redemption",
+    "Campaign"
+  ],
+  "state_machines": [],
+  "events": {
+    "publishes": [
+      "LoyaltyPointsGranted",
+      "LoyaltyPointsReversed",
+      "LoyaltyPointsRedeemed",
+      "LoyaltyPointsDebited",
+      "LoyaltyPointsExpired"
+    ],
+    "consumes": [
+      "OrderCompleted",
+      "PaymentConfirmed",
+      "PaymentRefunded",
+      "OrderCancelled"
+    ]
+  },
+  "http": [
+    {
+      "method": "GET",
+      "path": "/dashboard/loyalty",
+      "audience": "member",
+      "status": "planned"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/loyalty/entries",
+      "audience": "member",
+      "status": "planned"
+    }
+  ],
+  "after_expiry": "No new credits or redemptions. Reversals, balances and exports stay available.",
+  "release_gates": [
+    "ledger is append-only with unique source event per credit",
+    "reversal on refund is automatic",
+    "expiration is deterministic"
+  ]
+}

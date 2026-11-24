@@ -2,7 +2,9 @@ use askama::Template;
 use chrono::NaiveDate;
 
 use super::PageMeta;
+use crate::application::commercial::{ModuleOverview, ModuleStanding};
 use crate::domain::billing::BillingPlan;
+use crate::domain::commercial::{ENTRY_OFFER, catalog};
 use crate::i18n::{Locale, format_price};
 
 #[derive(Template)]
@@ -24,10 +26,50 @@ pub struct BillingTemplate {
     pub checkout_url: Option<String>,
     pub can_reconcile: bool,
     pub cancellable_id: Option<String>,
+    pub modules: Vec<ModuleCard>,
+}
+
+/// One catalog module on the subscription page. Planned modules have no price or action.
+pub struct ModuleCard {
+    pub name: String,
+    pub description_key: String,
+    pub status_key: &'static str,
+    pub badge: &'static str,
+    pub price: Option<String>,
+    pub active_until: Option<NaiveDate>,
+    pub is_entry: bool,
+}
+
+impl ModuleCard {
+    pub fn from_overview(module: ModuleOverview) -> Self {
+        let badge = match module.standing {
+            ModuleStanding::Contracted => "badge-success",
+            ModuleStanding::Expired => "badge-warn",
+            ModuleStanding::Suspended => "badge-danger",
+            ModuleStanding::Available | ModuleStanding::InDevelopment => "badge-neutral",
+        };
+        let active_until = match module.standing {
+            ModuleStanding::Contracted => module.decision.as_ref().and_then(|d| d.ends_on),
+            _ => None,
+        };
+        Self {
+            description_key: format!("module.{}.description", module.code),
+            is_entry: module.code == ENTRY_OFFER,
+            name: module.name,
+            status_key: module.standing.i18n_key(),
+            badge,
+            price: module
+                .monthly_price_centavos
+                .map(|price| format_price(price, Locale::PtBr)),
+            active_until,
+        }
+    }
 }
 
 pub struct PlanOffer {
     pub key: &'static str,
+    pub offer: &'static str,
+    pub offer_name: String,
     pub name_key: &'static str,
     pub period_key: &'static str,
     pub price: String,
@@ -48,8 +90,13 @@ impl PlanOffer {
             ),
             BillingPlan::Annual => ("billing.annual", "billing.per_year", "plan-annual"),
         };
+        let entry = catalog()
+            .module(ENTRY_OFFER)
+            .expect("validated catalog defines the entry offer");
         Self {
             key: plan.key(),
+            offer: ENTRY_OFFER,
+            offer_name: entry.name.clone(),
             name_key,
             period_key,
             price: format_price(price_centavos, Locale::PtBr),

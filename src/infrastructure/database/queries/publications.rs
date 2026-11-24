@@ -4,6 +4,7 @@ use sqlx::SqlitePool;
 use uuid::Uuid;
 
 use super::mappers::{row_to_category, row_to_establishment, row_to_media, row_to_product};
+use crate::domain::events::{EventType, NewEvent};
 use crate::domain::publication::{MediaAsset, MenuSnapshot, SnapshotCategory, SnapshotProduct};
 use crate::error::AppResult;
 use crate::infrastructure::database::begin_immediate;
@@ -139,6 +140,20 @@ pub async fn record_publication_success(
     .bind(now)
     .execute(&mut *tx)
     .await?;
+
+    let event = NewEvent::new(
+        EventType::CatalogPublished,
+        est_id,
+        est_id,
+        serde_json::json!({
+            "channel": "menu",
+            "publication_version": new_version,
+            "html_bytes": html_bytes,
+            "asset_count": asset_count,
+        }),
+    )
+    .deduplicated(format!("CatalogPublished:menu:{est_id}:{new_version}"));
+    super::domain_events::append(&mut tx, &event).await?;
 
     tx.commit().await?;
     Ok(())

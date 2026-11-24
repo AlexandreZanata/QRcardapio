@@ -1,0 +1,102 @@
+{
+  "contract": "modules.tables",
+  "contract_version": 1,
+  "module": "tables",
+  "status": "planned",
+  "phase": 5,
+  "standalone": true,
+  "core_dependencies": [
+    "identity",
+    "establishments",
+    "members",
+    "tenancy",
+    "i18n",
+    "catalog",
+    "commercial",
+    "entitlements",
+    "events",
+    "orders",
+    "order_payments",
+    "notifications"
+  ],
+  "optional_integrations": [
+    "menu",
+    "kitchen",
+    "loyalty",
+    "analytics",
+    "pos",
+    "connect"
+  ],
+  "capabilities": [
+    "tables.session.manage",
+    "tables.order.create",
+    "tables.bill.manage"
+  ],
+  "operations": [
+    "tables.session.open",
+    "tables.bill.close",
+    "tables.order.place",
+    "tables.waiter.call",
+    "tables.item.transfer"
+  ],
+  "entities": [
+    "Table",
+    "TableQrToken",
+    "TableSession",
+    "SessionJoinCode",
+    "Tab",
+    "WaiterCall",
+    "BillSplit",
+    "ItemTransfer"
+  ],
+  "state_machines": [
+    "table_session",
+    "order",
+    "order_payment"
+  ],
+  "events": {
+    "publishes": [
+      "TableSessionOpened",
+      "TableBillClosed",
+      "OrderCreated",
+      "OrderCancelled",
+      "PaymentConfirmed",
+      "PaymentRefunded"
+    ],
+    "consumes": [
+      "KitchenTicketReady"
+    ]
+  },
+  "http": [
+    {
+      "method": "GET",
+      "path": "/t/{table_token}",
+      "audience": "consumer",
+      "status": "planned"
+    },
+    {
+      "method": "POST",
+      "path": "/api/tables/v1/sessions/{session_id}/orders",
+      "audience": "consumer",
+      "status": "planned"
+    },
+    {
+      "method": "POST",
+      "path": "/api/tables/v1/sessions/{session_id}/waiter-calls",
+      "audience": "consumer",
+      "status": "planned"
+    },
+    {
+      "method": "GET",
+      "path": "/dashboard/tables",
+      "audience": "member",
+      "status": "planned"
+    }
+  ],
+  "after_expiry": "No new sessions or orders. Open sessions can be settled and closed; history stays available.",
+  "release_gates": [
+    "session join codes rotate per session",
+    "remote ordering blocked outside an open session",
+    "split and transfer keep integer totals exact"
+  ]
+}

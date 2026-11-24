@@ -1,0 +1,85 @@
+{
+  "contract": "modules.kitchen",
+  "contract_version": 1,
+  "module": "kitchen",
+  "status": "planned",
+  "phase": 6,
+  "standalone": true,
+  "core_dependencies": [
+    "identity",
+    "establishments",
+    "members",
+    "tenancy",
+    "i18n",
+    "catalog",
+    "commercial",
+    "entitlements",
+    "events",
+    "orders"
+  ],
+  "optional_integrations": [
+    "delivery",
+    "tables",
+    "pos",
+    "analytics",
+    "connect"
+  ],
+  "capabilities": [
+    "kitchen.ticket.create",
+    "kitchen.ticket.manage",
+    "kitchen.station.manage"
+  ],
+  "operations": [
+    "kitchen.ticket.progress",
+    "kitchen.ticket.create",
+    "kitchen.station.configure"
+  ],
+  "entities": [
+    "KitchenSector",
+    "Station",
+    "RoutingRule",
+    "KitchenTicket",
+    "KitchenTicketItem",
+    "DelayAlert"
+  ],
+  "state_machines": [
+    "preparation"
+  ],
+  "events": {
+    "publishes": [
+      "KitchenTicketCreated",
+      "KitchenTicketReady",
+      "KitchenTicketStarted"
+    ],
+    "consumes": [
+      "OrderAccepted",
+      "OrderCancelled"
+    ]
+  },
+  "http": [
+    {
+      "method": "GET",
+      "path": "/dashboard/kitchen/display/{station_id}",
+      "audience": "member",
+      "status": "planned"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/kitchen/tickets",
+      "audience": "member",
+      "status": "planned"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/kitchen/items/{id}/transition",
+      "audience": "member",
+      "status": "planned"
+    }
+  ],
+  "after_expiry": "No new tickets. Tickets already queued can be finished or cancelled.",
+  "release_gates": [
+    "display refresh under 2 s without polling storms",
+    "idempotent ticket creation per order",
+    "manual tickets without any other module"
+  ]
+}

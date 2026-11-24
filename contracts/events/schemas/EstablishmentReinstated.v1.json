@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "qrcardapio:event:EstablishmentReinstated:1",
+  "title": "EstablishmentReinstated v1 payload",
+  "description": "An operator lifted an administrative or security suspension.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["previous_status"],
+  "properties": {
+    "previous_status": { "enum": ["suspended_admin", "suspended_security"] }
+  }
+}

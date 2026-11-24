@@ -7,6 +7,8 @@ Copy and fill out this checklist when planning or completing significant changes
 - [ ] Kept files cohesive and modular (no monolithic "king files")
 - [ ] Verified tenant isolation (`TenantContext` + `establishment_id` query filtering)
 - [ ] Verified CSRF token validation on new/modified `POST` handlers
+- [ ] Gated new protected operations through `authorize` (lifecycle, suspension, role, enforcement, capability) and updated `contracts/` + module docs
+- [ ] Kept money in integer centavos sourced from the commercial catalog (no hard-coded prices)
 - [ ] Verified strict CSP compliance (zero inline `<script>` or `style="..."`)
 - [ ] Updated `i18n/pt-BR.json`, `i18n/en.json`, `i18n/es.json` with identical keys + `data-i18n` attributes
 - [ ] Added/updated automated unit and integration tests

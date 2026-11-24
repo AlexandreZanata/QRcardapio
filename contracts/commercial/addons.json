@@ -1,0 +1,63 @@
+{
+  "contract": "commercial.addons",
+  "contract_version": 1,
+  "addons": [
+    {
+      "code": "custom_domain",
+      "name": "Custom domain",
+      "lifecycle": "planned",
+      "pricing": "recurring",
+      "affiliate_eligible": false,
+      "current_version": 1,
+      "notes": "Domain registration is not included. Requires a module with a public storefront or menu.",
+      "versions": [
+        {
+          "version": 1,
+          "effective_from": "2026-11-24",
+          "monthly_price_centavos": 1490,
+          "capabilities": ["branding.custom_domain"]
+        }
+      ]
+    },
+    {
+      "code": "assisted_onboarding",
+      "name": "Assisted onboarding",
+      "lifecycle": "planned",
+      "pricing": "one_time_quote",
+      "affiliate_eligible": false,
+      "current_version": null,
+      "notes": "One-off service quoted per establishment. Never part of the recurring subscription total.",
+      "versions": []
+    },
+    {
+      "code": "native_apps",
+      "name": "Exclusive native apps",
+      "lifecycle": "planned",
+      "pricing": "custom_quote",
+      "affiliate_eligible": false,
+      "current_version": null,
+      "notes": "Custom contract. Native development is out of scope until phase 12.",
+      "versions": []
+    },
+    {
+      "code": "exclusive_integrations",
+      "name": "Exclusive integrations",
+      "lifecycle": "planned",
+      "pricing": "custom_quote",
+      "affiliate_eligible": false,
+      "current_version": null,
+      "notes": "Custom contract for integrations that QR Connect does not cover.",
+      "versions": []
+    },
+    {
+      "code": "external_usage",
+      "name": "Resources with external costs",
+      "lifecycle": "planned",
+      "pricing": "usage_based",
+      "affiliate_eligible": false,
+      "current_version": null,
+      "notes": "Pass-through billing of third-party costs (SMS, maps, cloud OCR) under a published usage policy.",
+      "versions": []
+    }
+  ]
+}
