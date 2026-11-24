@@ -1,32 +1,45 @@
 {% extends "seo/layout.html" %}
+{% import "components/icons.html" as icons %}
+{% import "seo/breadcrumb.html" as breadcrumb %}
+
+{% block seo_head %}
+<link rel="stylesheet" href="/static/css/segment-pages.css">
+{% endblock %}
 
 {% block seo_main %}
-<div class="landing-container seo-shell">
-  <nav class="seo-breadcrumb" aria-label="{{ page.t("seo.breadcrumb_label") }}">
-    <a href="{{ nav.home_url }}">{{ page.t("seo.home") }}</a>
-    <span aria-hidden="true">/</span>
-    <a href="{{ nav.solutions_url }}">{{ page.t("seo.solutions") }}</a>
-    <span aria-hidden="true">/</span>
-    <span aria-current="page">{{ seg.name }}</span>
-  </nav>
+{% let visual = self.visual() %}
+<div class="segment-page" data-segment="{{ visual.art }}">
+  <div class="landing-container segment-intro">
+    {{ breadcrumb::trail(nav.home_url, seg.name, nav.solutions_url, "seo.solutions") }}
 
-  <header class="seo-hero">
-    <h1>{{ seg.h1 }}</h1>
-    <div class="seo-answer-box">
-      <p class="seo-answer-kicker">{{ page.t("seo.answer_label") }}</p>
-      <p>{{ seg.answer_summary }}</p>
-    </div>
-    <div class="landing-actions">
-      <a class="btn landing-button landing-button-blue" href="/register">{{ page.t("landing.create_menu") }}</a>
-      <a class="btn landing-button" href="{{ nav.tools_url }}">{{ page.t("seo.tools") }}</a>
-    </div>
-  </header>
+    <header class="segment-hero">
+      <div class="segment-hero-copy">
+        <h1>{{ seg.h1 }}</h1>
+        <div class="segment-answer">
+          <p class="segment-answer-label" data-i18n="seo.answer_label">{{ page.t("seo.answer_label") }}</p>
+          <p>{{ seg.answer_summary }}</p>
+        </div>
+        <div class="landing-actions">
+          <a class="btn landing-button landing-button-blue" href="/register" data-i18n="landing.create_menu">{{ page.t("landing.create_menu") }}</a>
+          <a class="btn landing-button" href="{{ nav.tools_url }}" data-i18n="seo.tools">{{ page.t("seo.tools") }}</a>
+        </div>
+      </div>
+      <div class="segment-hero-scene" aria-hidden="true">
+        <svg viewBox="0 0 480 380" class="segment-hero-art" aria-hidden="true" focusable="false"><use href="/static/icons/segment-scenes.svg#{{ visual.art }}"></use></svg>
+      </div>
+    </header>
+  </div>
 
-  <section class="seo-section">
-    <h2>{{ seg.pain_heading }}</h2>
-    <div class="seo-card-grid seo-card-grid-3">
+  <section class="landing-container segment-section" aria-labelledby="segment-benefit-heading">
+    <div class="landing-section-heading">
+      <h2 id="segment-benefit-heading">{{ seg.pain_heading }}</h2>
+    </div>
+    <div class="segment-three">
       {% for (title, body) in seg.pain_points %}
-      <article class="seo-card">
+      <article class="segment-benefit segment-card">
+        {% if loop.first %}{{ icons::sticker(visual.sticker) }}
+        {% else if loop.last %}{{ icons::sticker("placard") }}
+        {% else %}{{ icons::sticker("palette") }}{% endif %}
         <h3>{{ title }}</h3>
         <p>{{ body }}</p>
       </article>
@@ -34,53 +47,79 @@
     </div>
   </section>
 
-  <section class="seo-section seo-band">
-    <h2>{{ seg.blueprint_title }}</h2>
-    <div class="seo-card-grid seo-card-grid-3">
-      {% for (cat_name, items) in seg.blueprint_categories %}
-      <article class="seo-card seo-blueprint-card">
-        <h3>{{ cat_name }}</h3>
-        <ul class="seo-list">
-          {% for item in items %}
-          <li>{{ item }}</li>
-          {% endfor %}
-        </ul>
-      </article>
-      {% endfor %}
+  <section class="segment-menu segment-band" aria-labelledby="segment-menu-heading">
+    <div class="landing-container">
+      <div class="landing-section-heading">
+        <h2 id="segment-menu-heading">{{ seg.blueprint_title }}</h2>
+      </div>
+      <div class="segment-three">
+        {% for category in self.sample_menu() %}
+        <article class="segment-card segment-menu-card">
+          <h3>{{ category.name }}</h3>
+          <ul role="list">
+            {% for item in category.items %}
+            <li>
+              <span>{{ item.name }}</span>
+              {% if !item.price.is_empty() %}<strong>{{ item.price }}</strong>{% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        </article>
+        {% endfor %}
+      </div>
     </div>
   </section>
 
-  <section class="seo-section">
-    <h2>{{ seg.tips_heading }}</h2>
-    <ul class="seo-checklist">
-      {% for tip in seg.operational_tips %}
-      <li>{{ tip }}</li>
+  <div class="landing-container segment-section segment-help">
+    <section class="segment-tips" aria-labelledby="segment-tips-heading">
+      {{ icons::sticker(visual.sticker) }}
+      <h2 id="segment-tips-heading">{{ seg.tips_heading }}</h2>
+      <ul role="list">
+        {% for tip in seg.operational_tips %}
+        <li>
+          <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="/static/icons/segment-scenes.svg#tip-check"></use></svg>
+          <span>{{ tip }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </section>
+
+    <section class="segment-faq" aria-labelledby="segment-faq-heading">
+      <div class="landing-section-heading">
+        <h2 id="segment-faq-heading" data-i18n="seo.faq_heading">{{ page.t("seo.faq_heading") }}</h2>
+      </div>
+      <div class="segment-questions">
+        {% for (q, a) in seg.faqs %}
+        <details class="segment-question" name="segment-faq">
+          <summary>
+            <span>{{ q }}</span>
+            <svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><use href="/static/icons/segment-scenes.svg#question-tab"></use></svg>
+          </summary>
+          <p>{{ a }}</p>
+        </details>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <section class="landing-container segment-section segment-related" aria-labelledby="segment-related-heading">
+    <div class="landing-section-heading">
+      <h2 id="segment-related-heading" data-i18n="seo.related_segments">{{ page.t("seo.related_segments") }}</h2>
+    </div>
+    <ul class="segment-three" role="list">
+      {% for rel in related_segments %}
+      <li>
+        <a class="segment-card segment-related-card" href="{{ rel.href }}" aria-labelledby="related-segment-{{ loop.index }}" aria-describedby="related-description-{{ loop.index }}">
+          <div class="segment-related-art">
+            {{ icons::sticker(rel.sticker) }}
+            <svg viewBox="0 0 40 40" aria-hidden="true" focusable="false"><use href="/static/icons/segment-scenes.svg#next-sticker"></use></svg>
+          </div>
+          <h3 id="related-segment-{{ loop.index }}">{{ rel.name }}</h3>
+          <p id="related-description-{{ loop.index }}">{{ rel.short_desc }}</p>
+        </a>
+      </li>
       {% endfor %}
     </ul>
-  </section>
-
-  <section class="seo-section">
-    <h2>{{ page.t("seo.faq_heading") }}</h2>
-    <div class="seo-faq-list">
-      {% for (q, a) in seg.faqs %}
-      <details class="seo-faq-item">
-        <summary>{{ q }}</summary>
-        <p>{{ a }}</p>
-      </details>
-      {% endfor %}
-    </div>
-  </section>
-
-  <section class="seo-section">
-    <h2>{{ page.t("seo.related_segments") }}</h2>
-    <div class="seo-card-grid seo-card-grid-3">
-      {% for rel in related_segments %}
-      <a class="seo-card seo-card-link" href="{{ rel.href }}">
-        <h3>{{ rel.name }}</h3>
-        <p>{{ rel.short_desc }}</p>
-      </a>
-      {% endfor %}
-    </div>
   </section>
 </div>
 {% endblock %}

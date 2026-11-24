@@ -1,14 +1,9 @@
 {% extends "seo/layout.html" %}
+{% import "seo/breadcrumb.html" as breadcrumb %}
 
 {% block seo_main %}
 <article class="landing-container seo-shell seo-article">
-  <nav class="seo-breadcrumb" aria-label="{{ page.t("seo.breadcrumb_label") }}">
-    <a href="{{ nav.home_url }}">{{ page.t("seo.home") }}</a>
-    <span aria-hidden="true">/</span>
-    <a href="{{ nav.guides_url }}">{{ page.t("seo.guides") }}</a>
-    <span aria-hidden="true">/</span>
-    <span aria-current="page">{{ guide.title }}</span>
-  </nav>
+  {{ breadcrumb::trail(nav.home_url, guide.title, nav.guides_url, "seo.guides") }}
 
   <header class="seo-hero">
     <p class="seo-meta-pill">{{ guide.read_minutes }} {{ page.t("seo.read_time") }} · {{ guide.published_date }}</p>

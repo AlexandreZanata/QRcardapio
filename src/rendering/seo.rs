@@ -7,6 +7,10 @@ use crate::seo::routes::RouteCluster;
 use crate::seo::segments::{SegmentContent, SegmentId, all_segments};
 use crate::seo::tools::{ToolContent, ToolId, all_tools};
 
+mod segment_page;
+pub use segment_page::SegmentPageTemplate;
+use segment_page::SegmentVisual;
+
 #[derive(Debug, Clone)]
 pub struct SegmentCardView {
     pub name: &'static str,
@@ -17,21 +21,11 @@ pub struct SegmentCardView {
 
 impl SegmentCardView {
     pub fn new(segment: &SegmentContent, locale: Locale) -> Self {
-        let sticker = match segment.id {
-            SegmentId::Restaurant => "trade-restaurant",
-            SegmentId::BurgerShop => "trade-burger",
-            SegmentId::CoffeeShop => "trade-cafe",
-            SegmentId::SnackBar => "trade-snack",
-            SegmentId::Pizzeria => "trade-pizza",
-            SegmentId::AcaiShop => "trade-acai",
-            SegmentId::Bakery => "trade-bakery",
-            SegmentId::BarPub => "trade-bar",
-        };
         Self {
             name: segment.name,
             short_desc: segment.short_desc,
             href: segment.id.full_path(locale),
-            sticker,
+            sticker: SegmentVisual::for_id(segment.id).sticker,
         }
     }
 }
@@ -126,15 +120,6 @@ pub fn guide_cards(locale: Locale) -> Vec<GuideCardView> {
 pub struct SegmentsHubTemplate {
     pub page: PageMeta,
     pub nav: SeoNavContext,
-}
-
-#[derive(Template)]
-#[template(path = "seo/segment.html")]
-pub struct SegmentPageTemplate {
-    pub page: PageMeta,
-    pub nav: SeoNavContext,
-    pub seg: &'static SegmentContent,
-    pub related_segments: Vec<SegmentCardView>,
 }
 
 #[derive(Template)]

@@ -1,4 +1,5 @@
 {% extends "seo/layout.html" %}
+{% import "seo/breadcrumb.html" as breadcrumb %}
 
 {% block seo_head %}
 <script src="/static/js/seo-tools.js" defer></script>
@@ -6,13 +7,7 @@
 
 {% block seo_main %}
 <div class="landing-container seo-shell">
-  <nav class="seo-breadcrumb" aria-label="{{ page.t("seo.breadcrumb_label") }}">
-    <a href="{{ nav.home_url }}">{{ page.t("seo.home") }}</a>
-    <span aria-hidden="true">/</span>
-    <a href="{{ nav.tools_url }}">{{ page.t("seo.tools") }}</a>
-    <span aria-hidden="true">/</span>
-    <span aria-current="page">{{ tool.name }}</span>
-  </nav>
+  {{ breadcrumb::trail(nav.home_url, tool.name, nav.tools_url, "seo.tools") }}
 
   <header class="seo-hero">
     <h1>{{ tool.h1 }}</h1>

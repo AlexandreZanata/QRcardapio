@@ -92,3 +92,7 @@ A landing agrupa links secundários no menu Explorar e mantém o seletor de idio
 O cadastro, o login e o consentimento MCP aceitam Google quando as credenciais OAuth estão configuradas. Contas antigas vinculam a identidade na área de segurança. Os testes de contrato cobrem o fluxo OpenID Connect com tokens assinados, cadastro, sessão, vínculo, escolha de plano e retomada do MCP. Os contratos MCP exercitam descoberta, OAuth e ferramentas para ChatGPT, Claude e Google Antigravity.
 
 [Ativação e homologação](../operations/RUNBOOK.md#habilitação-do-login-com-o-google) · [Contrato Google](../architecture/GOOGLE_AUTH.md) · [Contratos MCP](../architecture/MCP.md#contratos-e-homologação)
+
+## Páginas de segmentos
+
+As oito páginas de segmentos combinam uma arte exclusiva, cores por tema, benefícios em cards, um exemplo de cardápio, dicas operacionais, perguntas frequentes e links relacionados. Soluções, ferramentas e guias compartilham o breadcrumb com destaque para a página atual. O layout serve os mesmos textos e caminhos em português, inglês e espanhol.
