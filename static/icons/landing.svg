@@ -69,4 +69,84 @@
   <symbol id="plan-annual" viewBox="0 0 100 100">
     <path d="M50 4L61 18L78 10L80 29L96 37L85 51L96 65L79 71L76 90L60 83L49 97L38 82L21 88L20 71L4 63L14 49L5 35L23 30L25 11L41 18Z" fill="#ffdc38" stroke="#161721" stroke-width="4" stroke-linejoin="round"/>
   </symbol>
+  <symbol id="trade-burger" viewBox="0 0 56 56">
+    <g stroke="#161721" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M6 25c0-9 9-16 22-16s22 7 22 16Z" fill="#ffdc38"/>
+      <path d="m7 27 6 5 6-4 7 4 7-4 7 4 8-5" fill="#ff5596"/>
+      <rect x="6" y="32" width="44" height="7" rx="3.5" fill="#263be8"/>
+      <path d="M9 39h38v3a5 5 0 0 1-5 5H14a5 5 0 0 1-5-5Z" fill="#ffdc38"/>
+      <path d="m18 19 2-1m8-4v2m8 2 2 1" fill="none" stroke-width="2"/>
+    </g>
+  </symbol>
+  <symbol id="trade-restaurant" viewBox="0 0 56 56">
+    <g stroke="#161721" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="29" cy="28" r="16" fill="#eef0ff"/>
+      <circle cx="29" cy="28" r="10" fill="#ffdc38"/>
+      <path d="M7 11v10m-3-10v7a3 3 0 0 0 6 0v-7M7 21v24m44 0V11c-4 1-6 9-6 14h6" fill="#ff5596"/>
+      <path d="m25 28 3 3 5-6" fill="none"/>
+    </g>
+  </symbol>
+  <symbol id="trade-cafe" viewBox="0 0 56 56">
+    <g stroke="#161721" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M41 22h4a6 6 0 0 1 0 12h-5" fill="#ffdc38"/>
+      <path d="M9 20h33v10c0 9-6 14-16 14S9 39 9 30Z" fill="#263be8"/>
+      <path d="M6 45h41l-4 4H10Z" fill="#ffdc38"/>
+      <path d="M18 15c-4-4 4-6 0-10m9 10c-4-4 4-6 0-10m9 10c-4-4 4-6 0-10" fill="none"/>
+      <path d="M15 28v3c0 3 2 5 4 7" fill="none" stroke="#fff9ee" stroke-width="2.1"/>
+    </g>
+  </symbol>
+  <symbol id="trade-pizza" viewBox="0 0 56 56">
+    <g stroke="#161721" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M9 15q18-11 37 0L28 49Z" fill="#ffdc38"/>
+      <path d="M7 16q20-14 41 0l-4 6q-16-11-33 0Z" fill="#efa45b"/>
+      <circle cx="23" cy="25" r="3" fill="#ff5596"/>
+      <circle cx="34" cy="27" r="3" fill="#ff5596"/>
+      <circle cx="28" cy="36" r="3" fill="#ff5596"/>
+    </g>
+  </symbol>
+  <symbol id="trade-bakery" viewBox="0 0 56 56">
+    <g stroke="#161721" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 38c-2-11 12-24 23-27 10-3 17-1 19 6 2 10-7 20-20 26-10 5-20 4-22-5Z" fill="#ffdc38"/>
+      <path d="M19 20c-1 6 2 10 6 12m2-18c-1 5 1 9 5 11m3-14c-1 4 1 7 4 9" fill="none"/>
+      <path d="M8 39c9 5 29-4 39-17" fill="none" stroke="#f08c57" stroke-width="2"/>
+    </g>
+  </symbol>
+  <symbol id="trade-ice-cream" viewBox="0 0 56 56">
+    <g stroke="#161721" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M16 30h24L28 51Z" fill="#ffdc38"/>
+      <path d="M17 26a11 11 0 1 1 21-1 4 4 0 0 1 0 8H19a4 4 0 0 1-2-7Z" fill="#ff5596"/>
+      <path d="m22 36 11 7m-8 2 6-9" fill="none" stroke-width="1.8"/>
+      <path d="M23 19c0-2 2-4 4-4" fill="none" stroke="#fff9ee" stroke-width="2.1"/>
+    </g>
+  </symbol>
+  <symbol id="trade-acai" viewBox="0 0 56 56">
+    <g stroke="#161721" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m38 24 6-13 7-4" fill="none"/>
+      <path d="M10 28c1-7 7-12 13-11 3-4 12-4 16 1 3 2 6 6 7 10Z" fill="#9c72e3"/>
+      <path d="M8 28h40c-2 11-8 17-20 17S10 39 8 28Z" fill="#ff5596"/>
+      <path d="M20 45v4h16v-4" fill="#ffdc38"/>
+      <circle cx="21" cy="23" r="1.7" fill="#ffdc38" stroke-width="1.4"/>
+      <circle cx="33" cy="20" r="2" fill="#ffdc38" stroke-width="1.4"/>
+      <path d="M15 34h26" fill="none" stroke="#fff9ee" stroke-width="2"/>
+    </g>
+  </symbol>
+  <symbol id="trade-truck" viewBox="0 0 56 56">
+    <g stroke="#161721" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M5 14h31v25H5Zm31 7h8l7 9v9H36Z" fill="#263be8"/>
+      <path d="M40 24h3l6 7h-9Z" fill="#fff9ee"/>
+      <path d="M10 18h21v13H10Z" fill="#fff9ee"/>
+      <path d="M10 18h21v5H10Z" fill="#ffdc38"/>
+      <path d="M5 37h46v4H5Z" fill="#ff5596"/>
+      <circle cx="14" cy="42" r="4.5" fill="#ffdc38"/>
+      <circle cx="42" cy="42" r="4.5" fill="#ffdc38"/>
+    </g>
+  </symbol>
+  <symbol id="trade-bar" viewBox="0 0 56 56">
+    <g stroke="#161721" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M40 23h5a6 6 0 0 1 0 12h-5" fill="#ff5596"/>
+      <path d="M12 22h28l-3 23H15Z" fill="#ffdc38"/>
+      <path d="M12 23a5 5 0 0 1 0-10 6 6 0 0 1 8-3 6 6 0 0 1 10 0 6 6 0 0 1 8 3 5 5 0 0 1 0 10Z" fill="#fff9ee"/>
+      <path d="M21 28v11m9-11v11" fill="none" stroke-width="2"/>
+    </g>
+  </symbol>
 </svg>

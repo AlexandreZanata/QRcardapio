@@ -134,7 +134,7 @@
 .landing-mcp-connector h3 { margin: 0; font-size: clamp(1.02rem, 1.7vw, 1.42rem); line-height: 1.2; }
 
 .landing-mcp-connector a,
-.landing-mcp-setup a {
+.landing-mcp-technical a {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
@@ -157,35 +157,108 @@
 .landing-mcp-model img { flex: none; }
 
 .landing-mcp-setup {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 0.48fr);
-  gap: 0.8rem 1.5rem;
-  align-items: start;
-  padding: clamp(0.95rem, 2.8vw, 1.75rem);
-  border: 1px solid var(--landing-rule);
-  border-radius: 0.85rem;
-  background: #fffdf8;
+  padding: clamp(1rem, 2.75vw, 1.8rem);
+  border: 2px solid var(--landing-ink);
+  border-radius: 1rem;
+  background: var(--landing-paper);
+  box-shadow: 3px 4px 0 var(--landing-ink);
   scroll-margin-block-start: 1rem;
 }
 
-.landing-mcp-setup h3 { margin: 0 0 0.42rem; font-size: clamp(1.15rem, 2vw, 1.45rem); }
-.landing-mcp-setup p { margin: 0 0 0.5rem; color: #3f3f51; font-size: 0.91rem; }
-
-.landing-mcp-address {
-  display: grid;
-  gap: 0.23rem;
-  padding: 0.58rem 0.72rem;
-  border: 1px solid #d5dafa;
-  border-radius: 0.55rem;
-  background: #eef0ff;
-  overflow-wrap: anywhere;
+.landing-mcp-setup-header,
+.landing-mcp-steps li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
 }
 
-.landing-mcp-address span { font-weight: 760; }
-.landing-mcp-address code { color: #141d49; font-size: 0.89rem; }
+.landing-mcp-setup-header { margin-bottom: 1.1rem; }
+.landing-mcp-setup-icon,
+.landing-mcp-step-icon {
+  display: grid;
+  flex: none;
+  width: 2.35rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid var(--landing-ink);
+  border-radius: 0.55rem;
+  background: #eef0ff;
+}
 
-.landing-mcp-technical { grid-column: 1 / -1; border-top: 1px solid var(--landing-rule); }
-.landing-mcp-technical summary { min-height: 44px; padding-top: 0.55rem; cursor: pointer; font-weight: 760; }
+.landing-mcp-setup-icon { width: 2.75rem; background: var(--landing-pink); }
+.landing-mcp-steps li:nth-child(2) .landing-mcp-step-icon { background: #fff3bc; }
+.landing-mcp-setup h3 { margin: 0 0 0.14rem; font-size: clamp(1.25rem, 2.4vw, 1.75rem); line-height: 1.15; }
+.landing-mcp-setup h4 { margin: 0 0 0.18rem; font-size: 1rem; line-height: 1.3; }
+.landing-mcp-setup p { margin: 0; color: #3f3f51; font-size: 0.92rem; }
+
+.landing-mcp-setup-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.76fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.landing-mcp-steps { display: grid; gap: 0.65rem; margin: 0; padding: 0; list-style: none; }
+.landing-mcp-steps li {
+  padding: 0.7rem;
+  border: 1px solid var(--landing-rule);
+  border-radius: 0.65rem;
+  background: #fff;
+}
+
+.landing-mcp-connection {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.8rem;
+  border: 1px solid #c7cef8;
+  border-radius: 0.7rem;
+  background: #eef0ff;
+}
+
+.landing-mcp-connection .landing-mcp-address-label { color: var(--landing-ink); font-weight: 850; }
+.landing-mcp-address {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.42rem 0.65rem;
+  padding: 0.45rem 0.6rem;
+  border: 1px solid #c7cef8;
+  border-radius: 0.55rem;
+  background: #fff;
+}
+
+.landing-mcp-address code { flex: 1; min-width: min(100%, 12rem); color: #141d49; font-size: 0.88rem; overflow-wrap: anywhere; }
+.landing-mcp-copy-button { min-height: 44px; padding: 0.35rem 0.55rem; color: #1a2aad; background: #eef0ff; }
+.landing-mcp-copy-button:hover { background: #e2e7ff; }
+.landing-mcp-copy-button[hidden] { display: none; }
+.landing-mcp-guide { justify-self: start; min-height: 44px; margin: 0.2rem 0.2rem 0.2rem 0; text-align: left; }
+.landing-mcp-guide .panel-icon { flex: none; }
+
+.landing-mcp-technical { margin-top: 0.9rem; border-top: 1px solid var(--landing-rule); }
+.landing-mcp-technical summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding-inline: 0.35rem;
+  cursor: pointer;
+  font-weight: 780;
+}
+
+.landing-mcp-technical summary::-webkit-details-marker { display: none; }
+.landing-mcp-technical summary::after {
+  content: "";
+  flex: none;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-right: 0.25rem;
+  border-right: 2px solid;
+  border-bottom: 2px solid;
+  transform: rotate(45deg);
+}
+
+.landing-mcp-technical[open] summary::after { transform: rotate(225deg); }
 .landing-mcp-technical p { max-width: 85ch; }
 
 @media (max-width: 52rem) {
@@ -195,7 +268,7 @@
 
 @media (max-width: 43rem) {
   .landing-mcp-connectors,
-  .landing-mcp-setup { grid-template-columns: minmax(0, 1fr); }
+  .landing-mcp-setup-grid { grid-template-columns: minmax(0, 1fr); }
   .landing-mcp-connector { align-items: center; }
   .landing-mcp-actions .btn { min-height: 44px; }
 }

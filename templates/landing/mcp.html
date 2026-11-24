@@ -1,8 +1,8 @@
 {% import "components/icons.html" as icons %}
 
-{% macro connector(name, image, guide, guide_key, show_gemini=false) %}
+{% macro connector(name, image, guide, guide_key, show_gemini=false, mark_size=30) %}
 <li class="landing-mcp-connector">
-  <span class="landing-mcp-logo"><img src="/static/icons/ai/{{ image }}.svg" width="30" height="30" alt="" loading="lazy" decoding="async"></span>
+  <span class="landing-mcp-logo"><img src="/static/icons/ai/{{ image }}.svg" width="{{ mark_size }}" height="{{ mark_size }}" alt="" loading="lazy" decoding="async"></span>
   <div>
     <h3>{{ name }}</h3>
     <a href="{{ guide }}" data-i18n="{{ guide_key }}">{{ page.t(guide_key) }}</a>
@@ -57,29 +57,54 @@
     </div>
 
     <ul class="landing-mcp-connectors" aria-label="{{ page.t("landing.mcp_clients") }}" data-i18n-aria="landing.mcp_clients">
-      {{ connector("ChatGPT", "chatgpt", "https://developers.openai.com/plugins/build/auth", "landing.mcp_chatgpt_guide") }}
+      {{ connector("ChatGPT", "chatgpt", "https://developers.openai.com/plugins/build/auth", "landing.mcp_chatgpt_guide", mark_size=50) }}
       {{ connector("Claude", "claude", "https://claude.com/docs/connectors/building/authentication", "landing.mcp_claude_guide") }}
       {{ connector("Google Antigravity", "antigravity", "https://antigravity.google/docs/mcp", "landing.mcp_antigravity_guide", show_gemini=true) }}
     </ul>
 
-    <div id="ativar-integracao-ia" class="landing-mcp-setup" aria-labelledby="landing-mcp-setup-title">
-      <div class="landing-mcp-setup-copy">
-        <h3 id="landing-mcp-setup-title" data-i18n="landing.mcp_setup_title">{{ page.t("landing.mcp_setup_title") }}</h3>
-        <p data-i18n="landing.mcp_access">{{ page.t("landing.mcp_access") }}</p>
-        <p data-i18n="landing.mcp_activation">{{ page.t("landing.mcp_activation") }}</p>
-      </div>
-      <div class="landing-mcp-setup-links">
-        <p class="landing-mcp-address">
-          <span data-i18n="landing.mcp_server">{{ page.t("landing.mcp_server") }}</span>
-          <code>{{ mcp_endpoint }}</code>
-        </p>
-        <a href="https://github.com/AlexandreZanata/QRcardapio/blob/main/docs/operations/RUNBOOK.md#integrar-chatgpt-claude-e-antigravity" data-i18n="landing.mcp_runbook">{{ page.t("landing.mcp_runbook") }}</a>
+    <section id="ativar-integracao-ia" class="landing-mcp-setup" aria-labelledby="landing-mcp-setup-title">
+      <header class="landing-mcp-setup-header">
+        <span class="landing-mcp-setup-icon">{{ icons::panel("link") }}</span>
+        <div>
+          <h3 id="landing-mcp-setup-title" data-i18n="landing.mcp_setup_title">{{ page.t("landing.mcp_setup_title") }}</h3>
+          <p data-i18n="landing.mcp_setup_intro">{{ page.t("landing.mcp_setup_intro") }}</p>
+        </div>
+      </header>
+      <div class="landing-mcp-setup-grid">
+        <ol class="landing-mcp-steps">
+          <li>
+            <span class="landing-mcp-step-icon">{{ icons::panel("settings") }}</span>
+            <div>
+              <h4 data-i18n="landing.mcp_setup_enable">{{ page.t("landing.mcp_setup_enable") }}</h4>
+              <p data-i18n="landing.mcp_activation">{{ page.t("landing.mcp_activation") }}</p>
+            </div>
+          </li>
+          <li>
+            <span class="landing-mcp-step-icon">{{ icons::panel("lock") }}</span>
+            <div>
+              <h4 data-i18n="landing.mcp_setup_authorize">{{ page.t("landing.mcp_setup_authorize") }}</h4>
+              <p data-i18n="landing.mcp_access">{{ page.t("landing.mcp_access") }}</p>
+            </div>
+          </li>
+        </ol>
+        <div class="landing-mcp-connection">
+          <p class="landing-mcp-address-label" data-i18n="landing.mcp_server">{{ page.t("landing.mcp_server") }}</p>
+          <div class="landing-mcp-address">
+            <code id="landing-mcp-endpoint">{{ mcp_endpoint }}</code>
+            <button class="btn landing-mcp-copy-button" type="button" data-copy-target="landing-mcp-endpoint" hidden>
+              <span aria-live="polite" data-i18n="common.copy">{{ page.t("common.copy") }}</span>
+            </button>
+          </div>
+          <a class="btn landing-button landing-button-yellow landing-mcp-guide" href="https://github.com/AlexandreZanata/QRcardapio/blob/main/docs/operations/RUNBOOK.md#integrar-chatgpt-claude-e-antigravity">
+            <span data-i18n="landing.mcp_runbook">{{ page.t("landing.mcp_runbook") }}</span> {{ icons::panel("next") }}
+          </a>
+        </div>
       </div>
       <details class="landing-mcp-technical">
-        <summary data-i18n="landing.mcp_validation_title">{{ page.t("landing.mcp_validation_title") }}</summary>
+        <summary><span data-i18n="landing.mcp_validation_title">{{ page.t("landing.mcp_validation_title") }}</span></summary>
         <p data-i18n="landing.mcp_validation">{{ page.t("landing.mcp_validation") }}</p>
         <a href="https://github.com/AlexandreZanata/QRcardapio/commit/827064dbcbbc1b2bd67de7d97027ca2b48b0dfb4" data-i18n="landing.mcp_source">{{ page.t("landing.mcp_source") }}</a>
       </details>
-    </div>
+    </section>
   </div>
 </section>
