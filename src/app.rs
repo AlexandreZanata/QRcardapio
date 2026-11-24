@@ -13,7 +13,7 @@ use tower_http::trace::TraceLayer;
 use crate::application::publishing::PublishLocks;
 use crate::config::Config;
 use crate::http::handlers::{
-    admin, auth, billing, categories, dashboard, health, mcp, menu_editor, ocr, onboarding,
+    admin, auth, billing, categories, dashboard, google, health, mcp, menu_editor, ocr, onboarding,
     products, public, qr, seo, settings,
 };
 use crate::http::middleware::branded_errors::branded_errors;
@@ -21,6 +21,7 @@ use crate::http::middleware::security_headers::security_headers_middleware;
 use crate::i18n::Catalog;
 use crate::infrastructure::asaas::AsaasClient;
 use crate::infrastructure::assets::AssetProcessor;
+use crate::infrastructure::google::GoogleOidc;
 use crate::infrastructure::ocr::OcrService;
 use crate::infrastructure::security::PasswordService;
 use crate::infrastructure::security::rate_limit::AppRateLimiters;
@@ -36,12 +37,14 @@ pub struct AppState {
     pub rate_limiters: AppRateLimiters,
     pub publish_locks: PublishLocks,
     pub asaas: Option<AsaasClient>,
+    pub google: Option<GoogleOidc>,
 }
 
 impl AppState {
     pub fn new(config: Config, pool: SqlitePool) -> Self {
         let assets = AssetProcessor::new(config.media_dir());
         let asaas = config.asaas.clone().map(AsaasClient::new);
+        let google = config.google.clone().map(GoogleOidc::new);
         Self {
             config: Arc::new(config),
             pool,
@@ -52,6 +55,7 @@ impl AppState {
             rate_limiters: AppRateLimiters::new(),
             publish_locks: PublishLocks::default(),
             asaas,
+            google,
         }
     }
 }
@@ -59,6 +63,7 @@ impl AppState {
 pub fn build_router(state: AppState) -> Router {
     let static_dir = state.config.static_dir.clone();
     let mcp_routes = mcp::routes(state.config.mcp_enabled);
+    let google_routes = google::routes(state.google.is_some());
 
     let upload_routes = Router::new()
         .route("/dashboard/products", post(products::create_product_submit))
@@ -209,6 +214,7 @@ pub fn build_router(state: AppState) -> Router {
         .merge(ocr_upload_routes)
         .merge(billing_webhook)
         .merge(mcp_routes)
+        .merge(google_routes)
         .nest_service("/static", ServeDir::new(static_dir))
         .with_state(state)
         .layer(middleware::from_fn(branded_errors))

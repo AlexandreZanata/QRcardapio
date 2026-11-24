@@ -1,5 +1,5 @@
 use axum::extract::Request;
-use axum::http::header::{CACHE_CONTROL, HeaderName, HeaderValue};
+use axum::http::header::{CACHE_CONTROL, HeaderName, HeaderValue, REFERRER_POLICY};
 use axum::middleware::Next;
 use axum::response::Response;
 
@@ -44,4 +44,15 @@ pub async fn security_headers_middleware(req: Request, next: Next) -> Response {
     }
 
     res
+}
+
+pub async fn no_store(request: Request, next: Next) -> Response {
+    let mut response = next.run(request).await;
+    response
+        .headers_mut()
+        .insert(CACHE_CONTROL, HeaderValue::from_static("no-store"));
+    response
+        .headers_mut()
+        .insert(REFERRER_POLICY, HeaderValue::from_static("no-referrer"));
+    response
 }

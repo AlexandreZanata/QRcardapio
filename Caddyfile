@@ -10,6 +10,13 @@
 		-Server
 	}
 
+	@private_oauth path /auth/google/* /account/security /account/google/* /mcp /mcp/oauth/* /.well-known/oauth-authorization-server /.well-known/oauth-protected-resource /.well-known/oauth-protected-resource/mcp
+	header @private_oauth {
+		Cache-Control "no-store"
+		Referrer-Policy "no-referrer"
+		defer
+	}
+
 	# Static published public menus served directly off disk without hitting Rust or SQLite.
 	handle_path /c/* {
 		root * /srv/published

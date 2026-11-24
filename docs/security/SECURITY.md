@@ -34,3 +34,9 @@ A verificação de 23/11/2026 incluiu o RustSec atualizado, o Gitleaks com saíd
 ## MCP para aplicativos de IA
 
 A autorização delega acesso de proprietário a um estabelecimento por vez. Identidades e callbacks oficiais são pré-cadastrados. O fluxo exige PKCE S256, código de uso único, consentimento com CSRF e tokens vinculados ao recurso. O endpoint aceita bearer no cabeçalho e limita corpo, taxa por origem de autenticação e taxa de ferramentas por estabelecimento. Os dados e as credenciais de cobrança ficam fora das ferramentas. As escritas MCP são limitadas ao rascunho e verificam a versão de cada item. Logs HTTP registram o caminho sem os parâmetros de consulta do OAuth.
+
+## Identidade Google
+
+O fluxo usa PKCE S256, estado de uso único vinculado ao cookie e nonce assinado. O servidor exige assinatura do Google e valida emissor, destinatário e validade antes de abrir uma sessão. Contas existentes só recebem um vínculo depois de autenticação local, verificação de CSRF e conferência do mesmo e-mail na sessão que iniciou o vínculo. A identidade persistida usa o `sub` estável. A recuperação assistida continua exigindo que o suporte verifique o titular.
+
+[Controles do fluxo Google](../architecture/GOOGLE_AUTH.md)

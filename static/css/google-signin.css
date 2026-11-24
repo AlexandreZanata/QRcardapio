@@ -1,0 +1,23 @@
+.btn.google-signin {
+  background: #fff;
+  border: 1px solid #747775;
+  color: #1f1f1f;
+  font-family: "Google Sans", Roboto, system-ui, sans-serif;
+  font-size: 0.875rem;
+  font-weight: 500;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  min-height: 40px;
+  text-decoration: none;
+}
+
+.btn.google-signin:hover,
+.btn.google-signin:focus-visible {
+  background: #f0f4f9;
+  color: #1f1f1f;
+}
+
+.google-signin img {
+  flex-shrink: 0;
+  object-fit: contain;
+}

@@ -82,3 +82,13 @@ All `POST` routes verify `_csrf` against the server session's `csrf_token` in co
 - Os documentos OAuth de descoberta estão em `/.well-known/oauth-protected-resource/mcp`, `/.well-known/oauth-protected-resource` e `/.well-known/oauth-authorization-server`.
 - `GET /mcp/oauth/authorize` inicia a solicitação. `GET` e `POST /mcp/oauth/consent` apresentam e decidem o consentimento. `POST /mcp/oauth/login` autentica quando necessário. `POST /mcp/oauth/token` troca códigos PKCE ou renova tokens.
 - `GET /dashboard/integrations` lista os vínculos do proprietário. `POST /dashboard/integrations/revoke` exige sessão, proprietário e `_csrf` para revogar um vínculo. Veja [Arquitetura MCP](MCP.md).
+
+## Cadastro e login com o Google
+
+- `GET /auth/google/start` inicia autorização Google. O parâmetro `plan` preserva a seleção de assinatura quando disponível.
+- `GET /auth/google/callback` valida e consome a solicitação do navegador e redireciona com uma sessão local ou mensagem traduzida.
+- `GET /account/security` exibe o vínculo da conta autenticada. `POST /auth/google/link` e `POST /account/google/unlink` exigem CSRF e sessão local.
+- `GET /mcp/oauth/google/start?flow=…` exige a solicitação MCP válida do mesmo navegador. A configuração inicial pode continuar por `/onboarding?mcp=…`, com nova validação da solicitação no consentimento.
+- As rotas de identidade usam `Cache-Control: no-store` e `Referrer-Policy: no-referrer`.
+
+[Fluxo e contratos de login](GOOGLE_AUTH.md)

@@ -23,6 +23,8 @@ Disallow: /login
 Disallow: /register
 Disallow: /logout
 Disallow: /reset-password
+Disallow: /auth/
+Disallow: /account/
 Disallow: /mcp
 Disallow: /webhooks/
 Disallow: /healthz

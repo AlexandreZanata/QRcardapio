@@ -9,8 +9,10 @@ pub struct ConsentTemplate<'a> {
     pub flow: &'a str,
     pub provider: &'a str,
     pub establishment: Option<&'a str>,
+    pub callback_host: &'a str,
     pub read_write: bool,
     pub csrf: &'a str,
+    pub google_enabled: bool,
     pub email: &'a str,
     pub error: Option<&'a str>,
 }

@@ -9,6 +9,7 @@ license = "MIT"
 [dependencies]
 argon2 = "0.6.0"
 askama = { version = "0.16.1", features = ["serde_json"] }
+aws-lc-rs = { version = "1.19.0", default-features = false, features = ["non-fips"] }
 axum = { version = "0.8.9", features = ["multipart"] }
 axum-extra = { version = "0.12.6", features = ["cookie"] }
 base64 = "0.23.1"
@@ -20,7 +21,7 @@ governor = "0.10.4"
 hex = "0.4.3"
 image = { version = "0.25.10", default-features = false, features = ["jpeg", "png", "webp"] }
 qrcode = { version = "0.15.0", default-features = false, features = ["svg", "image"] }
-reqwest = { version = "0.13.5", default-features = false, features = ["json", "query", "rustls"] }
+reqwest = { version = "0.13.5", default-features = false, features = ["form", "json", "query", "rustls"] }
 serde = { version = "1.0.229", features = ["derive"] }
 serde_json = { version = "1.0.154", features = ["arbitrary_precision"] }
 sha2 = "0.11.1"

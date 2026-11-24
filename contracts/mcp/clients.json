@@ -1,0 +1,25 @@
+{
+  "endpoint": "/mcp",
+  "protected_resource": "/.well-known/oauth-protected-resource/mcp",
+  "authorization_server": "/.well-known/oauth-authorization-server",
+  "scopes": ["menu.read", "menu.write"],
+  "legacy_protocol_versions": ["2025-11-25", "2025-06-18", "2025-03-26"],
+  "modern_protocol_version": "2026-07-28",
+  "clients": [
+    {
+      "name": "ChatGPT",
+      "client_id": "https://chatgpt.com/oauth/client.json",
+      "redirect_uri": "https://chatgpt.com/connector_platform_oauth_redirect"
+    },
+    {
+      "name": "Claude",
+      "client_id": "https://claude.ai/oauth/mcp-oauth-client-metadata",
+      "redirect_uri": "https://claude.ai/api/mcp/auth_callback"
+    },
+    {
+      "name": "Google Antigravity",
+      "client_id": "https://antigravity.google/oauth/client-metadata.json",
+      "redirect_uri": "https://antigravity.google/oauth-callback"
+    }
+  ]
+}

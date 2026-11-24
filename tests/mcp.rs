@@ -1,3 +1,6 @@
+#[path = "mcp/contracts.rs"]
+mod contracts;
+
 #[path = "mcp/support.rs"]
 mod support;
 

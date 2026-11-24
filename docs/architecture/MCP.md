@@ -16,8 +16,18 @@ O recurso protegido é a origem `PUBLIC_BASE_URL` com `/mcp`. `/.well-known/oaut
 
 A lista de clientes e callbacks conhecidos fica em `src/domain/mcp.rs`. Ela usa as identidades publicadas por ChatGPT, Claude e Google Antigravity. A resolução é local. Novos clientes ou callbacks devem ser verificados contra a documentação e os metadados oficiais antes de entrar na lista. Não há registro dinâmico aberto nem consulta a URLs de cliente fornecidas na requisição.
 
-O navegador inicia a autorização, faz login se precisar e confirma o acesso ao estabelecimento exibido. Na tela de conclusão, o link de retorno segue para o callback oficial preservando `state` e `iss`. O login reutiliza a autenticação e o limitador do QR Cardápio. O POST de consentimento valida `_csrf` e a solicitação associada ao navegador. O acesso é concedido a proprietários, com associação entre token, conta, estabelecimento, cliente e recurso, verificada em cada requisição.
+O navegador inicia a autorização, faz login se precisar e confirma o acesso ao estabelecimento exibido. O consentimento mostra o domínio de retorno do conector. Na tela de conclusão, o link de retorno segue para o callback oficial preservando `state` e `iss`. O login reutiliza a autenticação e o limitador do QR Cardápio. O POST de consentimento valida `_csrf` e a solicitação associada ao navegador. O acesso é concedido a proprietários, com associação entre token, conta, estabelecimento, cliente e recurso, verificada em cada requisição.
 
 `menu.read` permite leitura. `menu.write` permite edição e inclui leitura. Códigos de autorização são de uso único, válidos por dois minutos e vinculados ao callback e ao desafio PKCE. Tokens de acesso têm duração máxima de uma hora. O token de renovação é rotativo e tem validade máxima de 30 dias desde o vínculo. O painel permite revogar o acesso. Redefinir a senha revoga vínculos e códigos pendentes da conta. Apenas os hashes de códigos e tokens são persistidos.
 
 [Streamable HTTP do MCP](https://modelcontextprotocol.io/specification/2025-11-25/basic/transports) · [Versionamento moderno do MCP](https://modelcontextprotocol.io/specification/2026-07-28/basic/versioning) · [OAuth para MCP](https://modelcontextprotocol.io/specification/2025-11-25/basic/authorization)
+
+## Contratos e homologação
+
+Os contratos [dos clientes e do transporte](../../contracts/mcp/clients.json) e [das ferramentas](../../contracts/mcp/tools.json) são executados por `cargo test --locked --test mcp`. Para cada cliente, a suíte cobre descoberta, autorização com PKCE, consumo único de código, recurso vinculado, versões de protocolo, esquema das ferramentas, edição idempotente de rascunho, renovação e revogação. Os testes existentes cobrem acesso a categorias de outros estabelecimentos e integridade da publicação.
+
+Quando o Google estiver ativo, o consentimento também oferece **Continuar com o Google**. A sessão local devolve o navegador à mesma solicitação MCP. A primeira conta conclui o cadastro do estabelecimento antes de autorizar. A suíte do Google simula esse fluxo até emitir o token MCP.
+
+A homologação externa usa uma implantação HTTPS com `MCP_ENABLED=true` e `https://qrcardapio.com.br/mcp`. Em cada aplicativo, autorize o conector, leia um rascunho, crie uma categoria de teste e confira a mudança na prévia do painel. Revogue o conector e confirme que a próxima chamada exige autenticação novamente. O contrato do Claude cobre o conector remoto Claude com callback hospedado.
+
+[ChatGPT Plugins](https://developers.openai.com/plugins/build/auth) · [Autenticação de conectores Claude](https://claude.com/docs/connectors/building/authentication) · [MCP no Google Antigravity](https://antigravity.google/docs/mcp)
