@@ -69,6 +69,52 @@ async fn verify_client(name: &str) {
         .unwrap();
     assert!(challenge.contains(&format!("{ORIGIN}{}", contract.protected_resource)));
     assert!(challenge.contains(&format!("scope=\"{}\"", contract.scopes.join(" "))));
+    assert!(
+        !challenge.contains("error=\"invalid_token\""),
+        "RFC 6750 §3.1: unauthenticated probe must not include invalid_token error"
+    );
+
+    let bad_token = rpc(&app, "invalid-token", "tools/list", json!({})).await;
+    assert_eq!(bad_token.status(), StatusCode::UNAUTHORIZED);
+    assert!(
+        bad_token.headers()[header::WWW_AUTHENTICATE]
+            .to_str()
+            .unwrap()
+            .contains("error=\"invalid_token\"")
+    );
+
+    let client_origin = reqwest::Url::parse(&client.client_id)
+        .unwrap()
+        .origin()
+        .ascii_serialization();
+    let preflight = request(
+        &app,
+        "OPTIONS",
+        &contract.endpoint,
+        &[("origin", &client_origin)],
+        String::new(),
+    )
+    .await;
+    assert_eq!(preflight.status(), StatusCode::NO_CONTENT);
+    assert_eq!(
+        preflight.headers()[header::ACCESS_CONTROL_ALLOW_ORIGIN],
+        client_origin
+    );
+    assert!(
+        preflight.headers()[header::ACCESS_CONTROL_ALLOW_HEADERS]
+            .to_str()
+            .unwrap()
+            .contains("MCP-Protocol-Version")
+    );
+    let blocked_origin = request(
+        &app,
+        "OPTIONS",
+        &contract.endpoint,
+        &[("origin", "https://evil.example")],
+        String::new(),
+    )
+    .await;
+    assert_eq!(blocked_origin.status(), StatusCode::FORBIDDEN);
     let resource = json_body(
         request(
             &app,
@@ -160,6 +206,16 @@ async fn verify_client(name: &str) {
         StatusCode::BAD_REQUEST
     );
     let access = tokens["access_token"].as_str().unwrap();
+    let delete_mcp = request(
+        &app,
+        "DELETE",
+        &contract.endpoint,
+        &[("authorization", &format!("Bearer {access}"))],
+        String::new(),
+    )
+    .await;
+    assert_eq!(delete_mcp.status(), StatusCode::METHOD_NOT_ALLOWED);
+    assert_eq!(delete_mcp.headers()[header::ALLOW], "POST");
     verify_protocols(&app, &contract, access).await;
 
     let changes = json!({"operation_key":"contract-batch",

@@ -8,7 +8,8 @@ use serde_json::{Value, json};
 use super::{RESOURCE_METADATA, tools};
 use crate::app::AppState;
 use crate::application::mcp::oauth;
-use crate::domain::mcp::{READ_WRITE, is_url_token};
+use crate::domain::mcp::{READ_WRITE, has_scope, is_allowed_origin, is_url_token};
+use crate::i18n::Locale;
 use crate::infrastructure::database::queries::mcp_oauth::{self as queries, Grant};
 use crate::infrastructure::security::sha256_hex;
 
@@ -16,7 +17,7 @@ const MODERN: &str = "2026-07-28";
 const LEGACY: &[&str] = &["2025-11-25", "2025-06-18", "2025-03-26"];
 const META_VERSION: &str = "io.modelcontextprotocol/protocolVersion";
 const META_SERVER_INFO: &str = "io.modelcontextprotocol/serverInfo";
-const INSTRUCTIONS: &str = "Edite apenas o cardápio em rascunho. Leia antes de alterar registros existentes e confirme preços com o proprietário. Depois, compartilhe o link do painel para revisão e publicação.";
+const INSTRUCTIONS: &str = "Use get_account_settings e get_menu_draft antes de alterar a conta ou o cardápio. Preserve updated_at ao editar ou excluir registros, informe preços em centavos inteiros e confirme preços, exclusões e publicações com o proprietário. O slug não pode mudar após a primeira publicação. Use publish_menu ou unpublish_menu apenas quando o proprietário solicitar.";
 
 pub async fn stream(State(state): State<AppState>, headers: HeaderMap) -> Response {
     match authenticate(&state, &headers).await {
@@ -134,12 +135,13 @@ pub async fn call(
             let Some(scope) = tools::scope(name) else {
                 return rpc_error(StatusCode::OK, id, -32602, "Unknown tool");
             };
-            if !grant
-                .scope
-                .split_ascii_whitespace()
-                .any(|allowed| allowed == scope)
-            {
-                return challenge(&state, StatusCode::FORBIDDEN, "insufficient_scope", id);
+            if !has_scope(&grant.scope, scope) {
+                return challenge(
+                    &state,
+                    StatusCode::FORBIDDEN,
+                    Some("insufficient_scope"),
+                    id,
+                );
             }
             if state
                 .rate_limiters
@@ -158,16 +160,32 @@ pub async fn call(
                 .get("arguments")
                 .cloned()
                 .unwrap_or_else(|| json!({}));
+            let locale = Locale::parse(&grant.preferred_locale).unwrap_or(Locale::PtBr);
             let mut result = match tools::execute(&state, &grant, name, args).await {
                 Ok(data) => {
                     json!({"content":[{"type":"text","text":data.to_string()}],"structuredContent":data})
                 }
-                Err(error) => {
-                    if error.status_code().is_server_error() {
-                        tracing::error!(%error, tool = name, "MCP tool failed");
+                Err(failure) => {
+                    if failure.error.status_code().is_server_error() {
+                        tracing::error!(error = %failure.error, tool = name, "MCP tool failed");
                     }
-                    let text = state.catalog.t(crate::i18n::Locale::PtBr, error.i18n_key());
-                    json!({"isError":true,"content":[{"type":"text","text":text}],"structuredContent":{"code":error.i18n_key()}})
+                    let base_text = state.catalog.t(locale, failure.error.i18n_key());
+                    let text = match &failure.hint {
+                        Some(hint) => format!("{base_text} ({hint})"),
+                        None => base_text.to_string(),
+                    };
+                    let mut structured = json!({"code": failure.error.i18n_key()});
+                    if let Some(hint) = failure.hint {
+                        structured["detail"] = json!(hint);
+                    }
+                    if let Some(extra) = failure.extra.and_then(|v| v.as_object().cloned())
+                        && let Some(obj) = structured.as_object_mut()
+                    {
+                        for (k, v) in extra {
+                            obj.insert(k, v);
+                        }
+                    }
+                    json!({"isError":true,"content":[{"type":"text","text":text}],"structuredContent":structured})
                 }
             };
             if modern {
@@ -186,13 +204,9 @@ pub async fn call(
 
 async fn authenticate(state: &AppState, headers: &HeaderMap) -> Result<Grant, Box<Response>> {
     if let Some(origin) = headers.get(header::ORIGIN) {
-        let allowed = origin.to_str().is_ok_and(|origin| {
-            origin == state.config.public_base_url
-                || matches!(
-                    origin,
-                    "https://chatgpt.com" | "https://claude.ai" | "https://antigravity.google"
-                )
-        });
+        let allowed = origin
+            .to_str()
+            .is_ok_and(|origin| is_allowed_origin(origin, &state.config.public_base_url));
         if !allowed {
             return Err(Box::new(rpc_error(
                 StatusCode::FORBIDDEN,
@@ -202,8 +216,8 @@ async fn authenticate(state: &AppState, headers: &HeaderMap) -> Result<Grant, Bo
             )));
         }
     }
-    let raw = headers
-        .get(header::AUTHORIZATION)
+    let auth_header = headers.get(header::AUTHORIZATION);
+    let raw = auth_header
         .and_then(|value| value.to_str().ok())
         .and_then(|header| header.split_once(' '))
         .filter(|(scheme, token)| {
@@ -232,24 +246,32 @@ async fn authenticate(state: &AppState, headers: &HeaderMap) -> Result<Grant, Bo
             }
         }
     }
+    // RFC 6750 §3.1: omit error/error_description when no credentials were provided.
+    let error_code = auth_header.map(|_| "invalid_token");
     Err(Box::new(challenge(
         state,
         StatusCode::UNAUTHORIZED,
-        "invalid_token",
+        error_code,
         Value::Null,
     )))
 }
 
-fn challenge(state: &AppState, status: StatusCode, code: &str, id: Value) -> Response {
+fn challenge(state: &AppState, status: StatusCode, code: Option<&str>, id: Value) -> Response {
     let message = if status == StatusCode::FORBIDDEN {
         "Authorize the requested menu scope"
     } else {
         "Connect your QR Cardapio account"
     };
-    let value = format!(
-        "Bearer resource_metadata=\"{}{RESOURCE_METADATA}\", scope=\"{READ_WRITE}\", error=\"{code}\", error_description=\"{message}\"",
-        state.config.public_base_url
-    );
+    let value = match code {
+        Some(code) => format!(
+            "Bearer resource_metadata=\"{}{RESOURCE_METADATA}\", scope=\"{READ_WRITE}\", error=\"{code}\", error_description=\"{message}\"",
+            state.config.public_base_url
+        ),
+        None => format!(
+            "Bearer resource_metadata=\"{}{RESOURCE_METADATA}\", scope=\"{READ_WRITE}\"",
+            state.config.public_base_url
+        ),
+    };
     let Ok(header_value) = HeaderValue::from_str(&value) else {
         return rpc_error(
             StatusCode::INTERNAL_SERVER_ERROR,

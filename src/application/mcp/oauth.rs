@@ -139,6 +139,8 @@ pub async fn token(
             let requested = form
                 .scope
                 .as_deref()
+                .map(str::trim)
+                .filter(|scope| !scope.is_empty())
                 .map(|scope| normalize_scope(Some(scope)).ok_or(OAuthError::InvalidScope))
                 .transpose()?;
             queries::rotate_refresh(
@@ -170,7 +172,11 @@ pub fn resource(origin: &str) -> String {
 
 fn validate_resource(requested: Option<&str>, origin: &str) -> Result<String, OAuthError> {
     let resource = resource(origin);
-    if requested.is_some_and(|request| request != resource) {
+    if requested
+        .map(str::trim)
+        .filter(|request| !request.is_empty())
+        .is_some_and(|request| request != resource)
+    {
         return Err(OAuthError::InvalidTarget);
     }
     Ok(resource)

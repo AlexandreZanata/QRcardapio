@@ -62,7 +62,7 @@ impl AppState {
 
 pub fn build_router(state: AppState) -> Router {
     let static_dir = state.config.static_dir.clone();
-    let mcp_routes = mcp::routes(state.config.mcp_enabled);
+    let mcp_routes = mcp::routes(&state);
     let google_routes = google::routes(state.google.is_some());
 
     let upload_routes = Router::new()

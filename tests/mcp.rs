@@ -1,3 +1,6 @@
+#[path = "mcp/account_and_publish.rs"]
+mod account_and_publish;
+
 #[path = "mcp/contracts.rs"]
 mod contracts;
 
@@ -101,7 +104,7 @@ async fn oauth_and_mcp_keep_ai_menu_edits_tenant_scoped_and_unpublished() {
         "2026-07-28"
     );
     let catalog = json_body(rpc(&app, access, "tools/list", json!({})).await).await;
-    assert_eq!(catalog["result"]["tools"].as_array().unwrap().len(), 2);
+    assert_eq!(catalog["result"]["tools"].as_array().unwrap().len(), 6);
 
     let input = json!({"operation_key":"draft-first-1", "new_categories":[{"text":{"name":"Bebidas"},"products":[{"text":{"name":"Café coado"},"price_centavos":550}]}]});
     let first = tool(&app, access, "apply_menu_changes", input.clone()).await;
