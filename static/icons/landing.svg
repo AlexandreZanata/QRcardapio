@@ -1,4 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="explore-menu" viewBox="0 0 36 36">
+    <path d="M9 5 28 3q4 0 4 4l1 21q0 4-4 5l-20 1q-4 0-5-5L3 10q0-4 6-5Z" fill="#161721"/>
+    <path d="M8 3 26 2q4 0 5 4l1 20q0 4-4 5L8 32q-4 0-5-4L2 8q0-4 6-5Z" fill="#ffdc38" stroke="#161721" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="m9.5 10.5 15-1m-14.5 15 15-1" fill="none" stroke="#161721" stroke-width="3.1" stroke-linecap="round"/>
+    <path d="m9.5 17.5 15-1" fill="none" stroke="#263be8" stroke-width="3.1" stroke-linecap="round"/>
+  </symbol>
   <symbol id="bolt" viewBox="0 0 56 56">
     <path d="M25 5h19L33 24h13L13 52l9-21H10z" fill="#ffdc38" stroke="#161721" stroke-width="3.6" stroke-linejoin="round"/>
   </symbol>

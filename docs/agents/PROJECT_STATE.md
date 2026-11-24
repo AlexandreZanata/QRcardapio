@@ -85,7 +85,7 @@ O endpoint MCP remoto usa OAuth 2.1 com PKCE, descoberta RFC 9728/8414, `WWW-Aut
 
 ## Navegação da landing
 
-A landing agrupa links secundários no menu Explorar e mantém o seletor de idioma na mesma linha da marca. O menu também reúne as ações de conta em telas estreitas. Os oito segmentos têm cards ilustrados, e cada pergunta frequente tem uma arte própria. O sprite inclui a seta dos segmentos, os controles da FAQ e o selo da arte do Google Maps. O rodapé compartilhado organiza os links em Produto, Para seu negócio, Ferramentas e Guias.
+A landing agrupa links secundários no menu Explorar, ao lado das ações da conta no desktop, e mantém o seletor de idioma na mesma linha da marca. O menu tem um ícone próprio de três traços e reúne as ações de conta em telas estreitas. Os oito segmentos têm cards ilustrados, e cada pergunta frequente tem uma arte própria. O sprite inclui a seta dos segmentos, os controles da FAQ e o selo da arte do Google Maps. O rodapé compartilhado organiza os links em Produto, Para seu negócio, Ferramentas e Guias.
 
 ## Login com o Google e contratos MCP
 
