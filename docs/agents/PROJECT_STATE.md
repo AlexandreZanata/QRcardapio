@@ -92,3 +92,9 @@ A landing agrupa links secundários no menu Explorar e mantém o seletor de idio
 O cadastro, o login e o consentimento MCP aceitam Google quando as credenciais OAuth estão configuradas. Contas antigas vinculam a identidade na área de segurança. Os testes de contrato cobrem o fluxo OpenID Connect com tokens assinados, cadastro, sessão, vínculo, escolha de plano e retomada do MCP. Os contratos MCP exercitam descoberta, OAuth e ferramentas para ChatGPT, Claude e Google Antigravity.
 
 [Ativação e homologação](../operations/RUNBOOK.md#habilitação-do-login-com-o-google) · [Contrato Google](../architecture/GOOGLE_AUTH.md) · [Contratos MCP](../architecture/MCP.md#contratos-e-homologação)
+
+## Autodeploy na VPS (Pull + Sigstore)
+
+Implementado em `.github/workflows/deploy-bundle.yml` e `deploy/vps/` sem armazenar chaves SSH, IPs ou segredos de servidor no GitHub:
+- Todo merge em `main` valida fmt, clippy, suíte completa Rust, testes unitários Python do agente e `cargo audit`, empacota `qrcardapio-<sha12>-linux-amd64.tar.gz`, gera atestação criptográfica Sigstore (`actions/attest-build-provenance`) e publica na release `deploy-main`.
+- Na VPS, `qrcardapio-deploy.timer` executa `deploy/vps/qrcardapio-deploy-agent.py` a cada 60s (com `ETag`, `flock`, verificação de `refs/heads/main`, SHA-256, `gh attestation verify --bundle`, backup online SQLite via `VACUUM INTO`, cutover atômico via symlink `/opt/qrcardapio/current`, smoke checks de saúde/SEO/MCP, `republish-all` e rollback automático em caso de falha). Veja [Runbook](../operations/RUNBOOK.md#autodeploy-seguro-na-vps-pull-com-atestação-sigstore).

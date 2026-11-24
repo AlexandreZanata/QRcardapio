@@ -1,0 +1,57 @@
+# Example isolated Caddy site block for QR Cardapio behind Cloudflare (SSL Full)
+# with a local self-signed origin certificate and atomic `/opt/qrcardapio/current` symlink.
+
+(qrcardapio_tls) {
+	tls /etc/caddy/qrcardapio.com.br/origin.crt /etc/caddy/qrcardapio.com.br/origin.key
+}
+
+qrcardapio.com.br {
+	import qrcardapio_tls
+	encode zstd gzip
+
+	header {
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none'; form-action 'self'"
+		-Server
+	}
+
+	@private_oauth path /auth/google/* /account/security /account/google/* /mcp /mcp/oauth/* /.well-known/oauth-authorization-server /.well-known/oauth-protected-resource /.well-known/oauth-protected-resource/mcp
+	header @private_oauth {
+		Cache-Control "no-store"
+		Referrer-Policy "no-referrer"
+		defer
+	}
+
+	handle /static/i18n/* {
+		reverse_proxy 127.0.0.1:8090 {
+			header_up X-Forwarded-For {client_ip}
+		}
+	}
+
+	handle_path /static/* {
+		root * /opt/qrcardapio/current/static
+		header Cache-Control "public, max-age=86400"
+		file_server
+	}
+
+	handle {
+		reverse_proxy 127.0.0.1:8090 {
+			header_up X-Forwarded-For {client_ip}
+		}
+	}
+
+	handle_errors 5xx {
+		root * /opt/qrcardapio/current/static
+		header Cache-Control "no-store"
+		rewrite * /errors/unavailable.html
+		file_server
+	}
+}
+
+www.qrcardapio.com.br {
+	import qrcardapio_tls
+	redir https://qrcardapio.com.br{uri} permanent
+}
