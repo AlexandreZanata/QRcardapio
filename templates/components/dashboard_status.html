@@ -1,0 +1,8 @@
+{% import "components/icons.html" as icons %}
+
+{% macro status(tone, icon, label) %}
+<li class="dashboard-status dashboard-status-{{ tone }}">
+  {{ icons::panel(icon) }}
+  <span data-i18n="{{ label }}">{{ page.t(label) }}</span>
+</li>
+{% endmacro %}

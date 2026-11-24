@@ -15,6 +15,10 @@ Dashboard pages share a dark sidebar, a workspace header with a language switche
 
 The dashboard uses the original `static/icons/dashboard.svg` illustrations for navigation, metrics, and actions. The Guide button opens a keyboard-accessible dialog and highlights controls annotated by `components/guide_hint.html`. It scrolls each control into view, reveals collapsed fields for its explanation, and restores the previous view on close. The component reads translated instructions from the page catalog.
 
+### Visão geral do cardápio
+
+Os selos da visão geral usam `components/dashboard_status.html` com texto e ícones próprios para No ar, Atualizado, Alterações pendentes e Rascunho. Os três indicadores reutilizam o componente de métricas do painel. A folha `dashboard-overview.css` dá aos cartões da visão geral fundos em azul, rosa e amarelo, contornos escuros e ilustrações do sprite do painel. Em telas estreitas, os cartões se empilham e os selos quebram de linha.
+
 ### Dashboard forms
 
 Use the Askama macros in `templates/components/form_fields.html` for labeled text and URL fields, textareas, lists, checkboxes, and file inputs. Settings and onboarding also share the permanent address and brand color controls. Use the compact control variants for editable table rows. Pass catalog keys for labels, placeholders, and help text, and attach tutorial hints through `guide_key`.
