@@ -1,0 +1,12 @@
+[Unit]
+Description=Poll CI-verified QR Cardapio main releases every minute
+
+[Timer]
+OnBootSec=45s
+OnUnitActiveSec=60s
+RandomizedDelaySec=10s
+Persistent=true
+Unit=qrcardapio-deploy.service
+
+[Install]
+WantedBy=timers.target

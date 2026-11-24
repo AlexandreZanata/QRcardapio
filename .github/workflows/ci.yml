@@ -64,6 +64,9 @@ jobs:
       - name: Run test suite
         run: cargo test --locked
 
+      - name: Run deploy agent unit tests
+        run: python3 -m unittest discover -s deploy/vps -p 'test_*.py' -v
+
       - name: Check release build
         run: cargo build --release --locked
 

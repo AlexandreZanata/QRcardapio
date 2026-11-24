@@ -116,3 +116,25 @@ docker compose up -d --build app
 Em homologação, crie uma conta Google nova, termine o cadastro do estabelecimento, saia e volte a entrar. Teste também o vínculo usando uma conta existente com senha. Verifique a navegação do plano pago se o Asaas estiver habilitado e repita o login na tela de consentimento de cada conector MCP. Para abrir ao público, conclua as etapas de publicação, verificação de marca e domínio solicitadas pelo console.
 
 [Configuração OAuth para web](https://developers.google.com/identity/protocols/oauth2/web-server) · [Políticas de autenticação](https://developers.google.com/identity/verification/authentication-policy-compliance)
+
+## Autodeploy seguro na VPS (pull com atestação Sigstore)
+
+O autodeploy de produção usa arquitetura **pull** sem chaves SSH, IPs ou segredos de VPS armazenados no GitHub:
+
+1. **Empacotamento e assinatura no CI (`.github/workflows/deploy-bundle.yml`)**:
+   - Acionado apenas em `push` para `main` (após merge via PR).
+   - Executa `cargo fmt --check`, `cargo clippy --all-targets --all-features -- -D warnings`, `cargo test --locked`, `python3 -m unittest discover -s deploy/vps -p 'test_*.py' -v` e `cargo audit`.
+   - Compila o binário release em `ubuntu-24.04`, empacota `bin/qrcardapio`, `static/` e `release.json` em `qrcardapio-<sha12>-linux-amd64.tar.gz`, gera atestação criptográfica de proveniência (`actions/attest-build-provenance`) com bundle Sigstore offline e publica na release `deploy-main` enviando `manifest.json` por último.
+2. **Agente pull na VPS (`deploy/vps/qrcardapio-deploy-agent.py`)**:
+   - Executado a cada 60 segundos por `qrcardapio-deploy.timer` (com `flock` e trava de segurança `ConditionPathExists=/etc/qrcardapio/auto-deploy.enabled`).
+   - Consulta a release pública `deploy-main` usando `ETag` (`304 Not Modified` não consome limite de API).
+   - Valida que `manifest.json` aponta para o HEAD atual de `refs/heads/main`, verifica SHA-256 exato e valida a assinatura offline com `gh attestation verify --bundle ... --signer-workflow ... --source-ref refs/heads/main --source-digest <sha> --deny-self-hosted-runners`.
+   - Extrai o pacote com proteção contra path traversal e symlinks para `/opt/qrcardapio/releases/<sha12>`, testa `--help`, gera backup online do SQLite (`db backup` via `VACUUM INTO` em `/var/backups/qrcardapio/`), troca atomicamente o symlink `/opt/qrcardapio/current`, reinicia apenas `qrcardapio.service` (sem tocar no Caddy ou em outros projetos), valida `/healthz`, `/readyz`, páginas SEO e descoberta MCP, e executa `republish-all`.
+   - **Rollback automático**: se o reinício ou qualquer verificação falhar, o agente restaura imediatamente o symlink `/opt/qrcardapio/current` para a release anterior, reinicia `qrcardapio.service`, confirma recuperação e grava o SHA com falha para evitar loop de reinício.
+
+### Controles operacionais na VPS
+
+- **Pausar autodeploy (kill-switch)**: `rm -f /etc/qrcardapio/auto-deploy.enabled`
+- **Reativar autodeploy**: `touch /etc/qrcardapio/auto-deploy.enabled`
+- **Executar imediatamente**: `systemctl start qrcardapio-deploy.service && journalctl -u qrcardapio-deploy.service -n 50 --no-pager`
+- **Rollback manual instantâneo**: `ln -sfn /opt/qrcardapio/releases/<sha-anterior> /opt/qrcardapio/current && systemctl restart qrcardapio.service`
