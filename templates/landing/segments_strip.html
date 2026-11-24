@@ -1,17 +1,25 @@
-<section id="segments" class="landing-container seo-landing-segments" aria-labelledby="segments-heading">
-  <div class="seo-section-head">
+{% import "components/icons.html" as icons %}
+
+<section id="segments" class="landing-container landing-segments" aria-labelledby="segments-heading">
+  <div class="landing-section-heading landing-segments-head">
     <div>
       <h2 id="segments-heading" data-i18n="landing.segments_title">{{ page.t("landing.segments_title") }}</h2>
       <p data-i18n="landing.segments_subtitle">{{ page.t("landing.segments_subtitle") }}</p>
     </div>
     <a class="btn landing-button" href="{{ solutions_url }}" data-i18n="landing.segments_all">{{ page.t("landing.segments_all") }}</a>
   </div>
-  <div class="seo-card-grid seo-card-grid-4">
+  <ul class="landing-segments-grid" role="list">
     {% for seg in segments %}
-    <a class="seo-card seo-card-link" href="{{ seg.href }}">
-      <h3>{{ seg.name }}</h3>
-      <p>{{ seg.short_desc }}</p>
-    </a>
+    <li>
+      <a class="landing-segment-card" href="{{ seg.href }}" aria-labelledby="landing-segment-title-{{ loop.index }}" aria-describedby="landing-segment-desc-{{ loop.index }}">
+        <div class="landing-segment-art">
+          {{ icons::sticker(seg.sticker) }}
+          <span class="landing-segment-arrow" aria-hidden="true">↗</span>
+        </div>
+        <h3 id="landing-segment-title-{{ loop.index }}">{{ seg.name }}</h3>
+        <p id="landing-segment-desc-{{ loop.index }}">{{ seg.short_desc }}</p>
+      </a>
+    </li>
     {% endfor %}
-  </div>
+  </ul>
 </section>

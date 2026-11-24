@@ -82,3 +82,7 @@ A landing apresenta o conector MCP, as marcas dos três clientes e a etapa de re
 O bloco de ativação separa pré-requisitos, autorização e endereço. A faixa de tipos de comércio tem nove ícones, animação contínua, um controle lateral para pausar e uma versão estática para a preferência por movimento reduzido.
 
 O endpoint MCP remoto usa OAuth com PKCE e vincula ChatGPT, Claude e Antigravity ao estabelecimento autorizado pelo proprietário. As ferramentas consultam e editam o rascunho em lotes atômicos, com idempotência e verificação da versão dos itens. A publicação continua no painel. A integração é configurada com `MCP_ENABLED=true` e HTTPS. Veja [Arquitetura MCP](../architecture/MCP.md) e [configuração dos clientes](../operations/RUNBOOK.md#integrar-chatgpt-claude-e-antigravity).
+
+## Navegação da landing
+
+A landing agrupa links secundários no menu Explorar e mantém o seletor de idioma na mesma linha da marca. O menu também reúne as ações de conta em telas estreitas. Os oito segmentos têm cards ilustrados, e cada pergunta frequente tem uma arte própria. O rodapé compartilhado organiza os links em Produto, Para seu negócio, Ferramentas e Guias.

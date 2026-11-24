@@ -1,0 +1,91 @@
+.seo-footer {
+  border-top: 2px solid var(--landing-ink);
+  background: var(--landing-ink);
+  color: #fff9ee;
+  padding-block: clamp(1.7rem, 4vw, 3.35rem);
+}
+
+.seo-footer-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.9rem 2rem;
+  padding-bottom: clamp(1.4rem, 3vw, 2.1rem);
+  margin-bottom: clamp(1.4rem, 3vw, 2.3rem);
+  border-bottom: 1px solid #50505f;
+}
+
+.seo-footer-brand .landing-brand { color: #fff9ee; }
+.seo-footer-brand p { margin: 0.45rem 0 0; color: #d7d5e1; line-height: 1.45; }
+
+.seo-footer-langs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.seo-footer-langs a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.25rem 0.8rem;
+  border: 1px solid #666577;
+  border-radius: 999px;
+  color: #fff9ee;
+  font-size: 0.87rem;
+  font-weight: 730;
+}
+
+.seo-footer-langs a:hover { background: #303040; }
+.seo-footer-langs a[aria-current="true"] { border-color: var(--landing-yellow); background: var(--landing-yellow); color: var(--landing-ink); }
+
+.seo-footer-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.8fr) minmax(0, 0.95fr) minmax(0, 1.1fr) minmax(0, 1.45fr);
+  align-items: start;
+  gap: 1.5rem clamp(1.4rem, 4.5vw, 4.5rem);
+}
+
+.seo-footer-title {
+  margin: 0 0 0.6rem;
+  color: #fff9ee;
+  font-size: clamp(1.02rem, 1.65vw, 1.2rem);
+  font-weight: 850;
+  letter-spacing: -0.015em;
+}
+
+.seo-footer-list { padding: 0; margin: 0; list-style: none; }
+
+.seo-footer-list a,
+.seo-footer-more {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding-block: 0.28rem;
+  color: #e1dfea;
+  font-size: 0.92rem;
+  line-height: 1.4;
+  text-underline-offset: 0.22em;
+}
+
+.seo-footer-list a:hover,
+.seo-footer-more { color: var(--landing-yellow); }
+
+.seo-footer-more { gap: 0.55rem; margin-top: 0.35rem; font-weight: 800; }
+.seo-footer-account { margin-top: 0.45rem; border-top: 1px solid #50505f; padding-top: 0.35rem; }
+.seo-footer :focus-visible { outline-color: var(--landing-yellow); }
+
+@media (max-width: 62rem) {
+  .seo-footer-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+@media (max-width: 43rem) {
+  .seo-footer-grid > nav { border-top: 1px solid #50505f; padding-top: 0.95rem; }
+  .seo-footer-top { margin-bottom: 0; border-bottom: 0; }
+}
+
+@media (max-width: 25rem) {
+  .seo-footer-grid { column-gap: 0.9rem; }
+  .seo-footer-grid > nav:nth-child(n + 3) { grid-column: 1 / -1; }
+}

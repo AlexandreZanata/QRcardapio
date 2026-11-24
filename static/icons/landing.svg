@@ -149,4 +149,14 @@
       <path d="M21 28v11m9-11v11" fill="none" stroke-width="2"/>
     </g>
   </symbol>
+  <symbol id="trade-snack" viewBox="0 0 56 56">
+    <g stroke="#161721" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M32 17h17l-3 27H34Z" fill="#ff5596"/>
+      <path d="M30 16h21v5H30Z" fill="#fff9ee"/>
+      <path d="m41 16 2-8h7" fill="none"/>
+      <path d="M8 28 22 17c3-2 6-1 8 1l9 10-10 14H11L5 34Z" fill="#ffdc38"/>
+      <path d="M5 33l10 4 10-3 8 1 6-7v6l-8 10H10l-5-6Z" fill="#ff8a49"/>
+      <path d="m15 29 7-5m-3 8 7-5" fill="none"/>
+    </g>
+  </symbol>
 </svg>

@@ -12,6 +12,28 @@ pub struct SegmentCardView {
     pub name: &'static str,
     pub short_desc: &'static str,
     pub href: &'static str,
+    pub sticker: &'static str,
+}
+
+impl SegmentCardView {
+    pub fn new(segment: &SegmentContent, locale: Locale) -> Self {
+        let sticker = match segment.id {
+            SegmentId::Restaurant => "trade-restaurant",
+            SegmentId::BurgerShop => "trade-burger",
+            SegmentId::CoffeeShop => "trade-cafe",
+            SegmentId::SnackBar => "trade-snack",
+            SegmentId::Pizzeria => "trade-pizza",
+            SegmentId::AcaiShop => "trade-acai",
+            SegmentId::Bakery => "trade-bakery",
+            SegmentId::BarPub => "trade-bar",
+        };
+        Self {
+            name: segment.name,
+            short_desc: segment.short_desc,
+            href: segment.id.full_path(locale),
+            sticker,
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -72,11 +94,7 @@ impl SeoNavContext {
 pub fn segment_cards(locale: Locale) -> Vec<SegmentCardView> {
     all_segments(locale)
         .into_iter()
-        .map(|s| SegmentCardView {
-            name: s.name,
-            short_desc: s.short_desc,
-            href: s.id.full_path(locale),
-        })
+        .map(|segment| SegmentCardView::new(segment, locale))
         .collect()
 }
 
@@ -162,14 +180,7 @@ pub struct GuidePageTemplate {
 
 pub fn related_segment_cards(locale: Locale, ids: &[SegmentId]) -> Vec<SegmentCardView> {
     ids.iter()
-        .map(|id| {
-            let s = id.content(locale);
-            SegmentCardView {
-                name: s.name,
-                short_desc: s.short_desc,
-                href: s.id.full_path(locale),
-            }
-        })
+        .map(|id| SegmentCardView::new(id.content(locale), locale))
         .collect()
 }
 
