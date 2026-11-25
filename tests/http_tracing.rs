@@ -38,7 +38,11 @@ async fn request_tracing_records_route_templates_without_tokens() {
     let output = std::fs::read_to_string(log).unwrap();
     assert!(output.contains("/webhooks/inter/{token}"), "{output}");
     assert!(output.contains("<unmatched>"), "{output}");
-    for secret in ["test-private-inter-token", "test-unmatched-token", "test-query"] {
+    for secret in [
+        "test-private-inter-token",
+        "test-unmatched-token",
+        "test-query",
+    ] {
         assert!(!output.contains(secret), "{output}");
     }
 }
