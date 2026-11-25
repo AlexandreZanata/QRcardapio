@@ -206,3 +206,18 @@ pub async fn set_establishment_logo(
     .await?;
     Ok(())
 }
+
+pub(super) async fn mark_menu_draft_changed(
+    conn: &mut sqlx::SqliteConnection,
+    est_id: &str,
+    now: &str,
+) -> AppResult<()> {
+    sqlx::query(
+        "UPDATE establishments SET has_unpublished_changes = 1, updated_at = ? WHERE id = ?",
+    )
+    .bind(now)
+    .bind(est_id)
+    .execute(conn)
+    .await?;
+    Ok(())
+}
