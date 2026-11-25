@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "qrcardapio:event:OrderReady:1",
+  "title": "OrderReady v1 payload",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "order_id",
+    "fulfillment"
+  ],
+  "properties": {
+    "order_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "fulfillment": {
+      "enum": [
+        "delivery",
+        "pickup",
+        "in_venue"
+      ]
+    }
+  }
+}

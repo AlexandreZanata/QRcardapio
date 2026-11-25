@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "qrcardapio:event:OrderCompleted:1",
+  "title": "OrderCompleted v1 payload",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "order_id",
+    "completed_at"
+  ],
+  "properties": {
+    "order_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "completed_at": {
+      "type": "string",
+      "format": "date-time"
+    }
+  }
+}

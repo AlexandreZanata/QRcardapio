@@ -11,16 +11,30 @@ pub enum EventType {
     EstablishmentSuspended,
     EstablishmentReinstated,
     CatalogPublished,
+    OrderCreated,
+    OrderAccepted,
+    OrderRejected,
+    OrderPreparing,
+    OrderReady,
+    OrderCompleted,
+    OrderCancelled,
 }
 
 impl EventType {
-    pub const ALL: [Self; 6] = [
+    pub const ALL: [Self; 13] = [
         Self::SubscriptionActivated,
         Self::EntitlementGranted,
         Self::EntitlementRevoked,
         Self::EstablishmentSuspended,
         Self::EstablishmentReinstated,
         Self::CatalogPublished,
+        Self::OrderCreated,
+        Self::OrderAccepted,
+        Self::OrderRejected,
+        Self::OrderPreparing,
+        Self::OrderReady,
+        Self::OrderCompleted,
+        Self::OrderCancelled,
     ];
 
     pub const fn as_str(self) -> &'static str {
@@ -31,6 +45,13 @@ impl EventType {
             Self::EstablishmentSuspended => "EstablishmentSuspended",
             Self::EstablishmentReinstated => "EstablishmentReinstated",
             Self::CatalogPublished => "CatalogPublished",
+            Self::OrderCreated => "OrderCreated",
+            Self::OrderAccepted => "OrderAccepted",
+            Self::OrderRejected => "OrderRejected",
+            Self::OrderPreparing => "OrderPreparing",
+            Self::OrderReady => "OrderReady",
+            Self::OrderCompleted => "OrderCompleted",
+            Self::OrderCancelled => "OrderCancelled",
         }
     }
 
@@ -45,6 +66,13 @@ impl EventType {
             Self::EstablishmentSuspended
             | Self::EstablishmentReinstated
             | Self::CatalogPublished => "establishment",
+            Self::OrderCreated
+            | Self::OrderAccepted
+            | Self::OrderRejected
+            | Self::OrderPreparing
+            | Self::OrderReady
+            | Self::OrderCompleted
+            | Self::OrderCancelled => "order",
         }
     }
 }

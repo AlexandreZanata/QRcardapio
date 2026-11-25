@@ -1,8 +1,8 @@
 {
   "contract": "commerce.state_machines",
   "contract_version": 1,
-  "status": "planned",
-  "description": "Independent state machines of Commerce Core (phase 3). A transition in one machine never implies a transition in another: a delivered order is not paid, a confirmed payment does not finish preparation. Cross-machine effects happen only through outbox events consumed idempotently.",
+  "status": "partial",
+  "description": "Independent state machines of Commerce Core (phase 3). A transition in one machine never implies a transition in another: a delivered order is not paid, a confirmed payment does not finish preparation. Typed definitions cover all six machines. The order executor is implemented. Other executors and cross-machine consumers are planned.",
   "machines": {
     "order": {
       "aggregate": "order",

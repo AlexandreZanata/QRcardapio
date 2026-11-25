@@ -20,6 +20,7 @@ getrandom = "0.4.3"
 governor = "0.10.4"
 hex = "0.4.3"
 image = { version = "0.25.10", default-features = false, features = ["jpeg", "png", "webp"] }
+jiff = { version = "1.0.3", default-features = false, features = ["std", "static"] }
 qrcode = { version = "0.15.0", default-features = false, features = ["svg", "image"] }
 reqwest = { version = "0.13.5", default-features = false, features = ["form", "json", "query", "rustls"] }
 serde = { version = "1.0.229", features = ["derive"] }

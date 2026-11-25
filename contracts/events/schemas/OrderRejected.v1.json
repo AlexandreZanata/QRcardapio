@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "qrcardapio:event:OrderRejected:1",
+  "title": "OrderRejected v1 payload",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "order_id",
+    "reason_code"
+  ],
+  "properties": {
+    "order_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "reason_code": {
+      "enum": [
+        "closed",
+        "item_unavailable",
+        "address_not_served",
+        "too_busy",
+        "suspected_fraud",
+        "other",
+        "acceptance_timeout"
+      ]
+    }
+  }
+}
