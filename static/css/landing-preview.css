@@ -145,3 +145,48 @@
   .demo-stage::before { inset-inline: 3%; }
   .demo-stage::after { inset-inline-end: 3%; }
 }
+
+.landing-demo .demo-invitation {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-height: clamp(6rem, 21cqw, 8rem);
+  margin: 0.6rem 0.45rem 0.45rem;
+  border: 3px solid var(--landing-ink);
+  border-radius: 1.25rem;
+  background: var(--landing-blue);
+  box-shadow: 4px 5px 0 var(--landing-ink);
+  padding: clamp(0.7rem, 3cqw, 1.15rem);
+  overflow: hidden;
+}
+
+.demo-invitation-art {
+  position: absolute;
+  z-index: -1;
+  inset: 0 auto 0 0;
+  width: 43%;
+  background: var(--landing-pink);
+  clip-path: polygon(0 0, 100% 0, 83% 100%, 0 100%);
+}
+
+.demo-invitation-art img { width: 100%; height: 100%; object-fit: cover; }
+.demo-invitation-art svg {
+  position: absolute;
+  inset: auto 14% 7% auto;
+  width: clamp(2.1rem, 7cqw, 3.2rem);
+  height: auto;
+  transform: rotate(-10deg);
+}
+
+.demo-invitation-action {
+  width: 62%;
+  min-height: 3.45rem;
+  justify-content: space-between;
+  gap: 0.35rem;
+  font-size: clamp(0.94rem, 3.6cqw, 1.25rem);
+  line-height: 1.2;
+}
+.demo-invitation-action svg { flex: none; width: 1.65rem; height: 1.65rem; }
+.demo-invitation-action:focus-visible { outline-color: #fff; }

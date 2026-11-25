@@ -20,6 +20,7 @@ use crate::error::{AppError, AppResult};
 use crate::infrastructure::database::queries::establishment_slug_exists;
 
 mod catalog;
+mod choices;
 use catalog::{CATEGORIES, DESCRIPTION};
 
 const DEMO_ID: &str = "public-demo-bistro-da-praca";
@@ -95,6 +96,7 @@ pub async fn seed_public_demo(pool: &SqlitePool, config: &Config) -> AppResult<(
                     updated_at: SEED_TIME.into(),
                 },
                 image: Some(image),
+                choices: choices::for_product(item.id),
             });
         }
         snapshot.categories.push(category);

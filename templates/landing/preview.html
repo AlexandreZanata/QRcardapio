@@ -30,7 +30,14 @@
       <img src="/static/images/landing-demo-qr.svg" alt="" width="90" height="90">
     </a>
   </div>
-  <figcaption>
-    <span data-i18n="landing.demo_badge">{{ page.t("landing.demo_badge") }}</span>
+  <figcaption class="demo-invitation">
+    <div class="demo-invitation-art" aria-hidden="true">
+      <img src="/static/images/landing-burger.webp" alt="" width="720" height="405" loading="lazy">
+      {{ icons::sticker("menu-book") }}
+    </div>
+    <a class="btn landing-button landing-button-yellow demo-invitation-action" href="{{ demo_menu_path }}" data-public-demo>
+      <span data-i18n="landing.demo_open">{{ page.t("landing.demo_open") }}</span>
+      {{ icons::sticker("segment-arrow") }}
+    </a>
   </figcaption>
 </figure>

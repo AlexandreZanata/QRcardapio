@@ -93,7 +93,11 @@ pub(super) async fn load_menu_snapshot_in(
         products_by_cat
             .entry(product.category_id.clone())
             .or_default()
-            .push(SnapshotProduct { product, image });
+            .push(SnapshotProduct {
+                product,
+                image,
+                choices: Vec::new(),
+            });
     }
     media_map.clear();
 

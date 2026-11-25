@@ -951,5 +951,9 @@
   "error.payer_postal_code_invalid": "Informe um CEP com 8 dígitos.",
   "error.payer_state_invalid": "Informe a sigla de uma UF brasileira.",
   "error.payer_required": "Cadastre os dados do pagador para pagar com Pix ou boleto.",
-  "error.payment_method_unavailable": "Esta forma de pagamento não está disponível."
+  "error.payment_method_unavailable": "Esta forma de pagamento não está disponível.",
+  "landing.demo_open": "Explore o cardápio de demonstração",
+  "public_menu.product_choices": "Ingredientes e adicionais",
+  "public_menu.removable_ingredients": "Ingredientes que podem ser retirados",
+  "public_menu.extras": "Adicionais opcionais"
 }

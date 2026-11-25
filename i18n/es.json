@@ -951,5 +951,9 @@
   "error.payer_postal_code_invalid": "Ingrese un código postal de 8 dígitos.",
   "error.payer_state_invalid": "Ingrese la sigla de un estado brasileño.",
   "error.payer_required": "Registre los datos del pagador para pagar con Pix o boleto.",
-  "error.payment_method_unavailable": "Esta forma de pago no está disponible."
+  "error.payment_method_unavailable": "Esta forma de pago no está disponible.",
+  "landing.demo_open": "Explora el menú de demostración",
+  "public_menu.product_choices": "Ingredientes y extras",
+  "public_menu.removable_ingredients": "Ingredientes que puedes quitar",
+  "public_menu.extras": "Extras opcionales"
 }
