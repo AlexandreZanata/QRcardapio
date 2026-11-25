@@ -335,7 +335,7 @@ The static-menu results in [PERFORMANCE.md](../performance/PERFORMANCE.md) (abou
 | Notifications | 1,000 web push sends per minute with a fake endpoint | Bounded concurrency; checkout latency unaffected |
 | Payments | 1,000 unique gateway events, then full redelivery | ≥ 150 events/s, p95 ≤ 250 ms; redelivery is a no-op |
 
-Results and reproduction instructions live in [PERFORMANCE.md](../performance/PERFORMANCE.md#commerce-core-increment-3). The gateway benchmark applies when online consumer gateways are implemented.
+Results and reproduction instructions live in [PERFORMANCE.md](../performance/PERFORMANCE.md#vps-capacity-validation). The Phase 3 mixed workload serves the existing static menu. The storefront and its HTTP checkout enter the load test in Phase 4. The gateway benchmark applies when online consumer gateways are implemented.
 
 ## 14. Phase 3 completion criteria
 

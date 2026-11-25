@@ -97,7 +97,7 @@ Run `scripts/bench_commerce.sh checkout`, `mixed`, `outbox`, or `push` on Linux.
 
 Rollback smoke test on 2026-11-25 applied migrations `20261125000015` through `20261125000018` on a temporary database initialized by Increment 2. `integrity_check` and `foreign_key_check` passed. Both release binaries returned HTTP 200 for `/readyz` and the public demo. Demo HTML matched after normalizing the build version in static asset URLs.
 
-The full-size outbox run on 2026-11-25 published 43,200 of 100,000 events before it was stopped during local I/O contention. On one pinned logical CPU with SQLite `FULL`, sampled windows recorded 103.3 and 27.5 published events/s. This run used the optimized cursor before the final Commerce write queue change. The 1,000 events/s launch gate remains open.
+The full-size outbox run on 2026-11-25 published 43,200 of 100,000 events before it was stopped during local I/O contention. On one pinned logical CPU with SQLite `FULL`, sampled windows recorded 103.3 and 27.5 published events/s. This run used the optimized cursor before the final Commerce write queue change. It missed the 1,000 events/s launch gate.
 
 The final outbox small-backlog run reached 674 events/s across 200 queued events and 136 events/s across 2,000 ongoing events. The steady-state publication lag was 515 ms at p95 and 613 ms at maximum.
 
@@ -108,9 +108,13 @@ The two 10-minute checkout runs used one pinned logical CPU each and shared an e
 | Orders and staff transitions | 2,391 | 320 | 3.90 | 279 ms | 620 ms |
 | Orders, staff transitions and static menu reads | 2,308 | 260 | 3.78 | 1,315 ms | 3,862 ms |
 
-The mixed run served 53,209 static menu reads. The menu p95 was 0.271 ms, or 1.74× the 0.155 ms pinned baseline. The 30 orders/s sustained load gate remains open.
+The mixed run served 53,209 static menu reads. The menu p95 was 0.271 ms, or 1.74× the 0.155 ms pinned baseline. Both local checkout runs missed the 30 orders/s sustained load gate.
 
 The Web Push benchmark completed all 1,000 synthetic deliveries in 20.747 seconds (2,892/min) after batching outcome writes. Peak concurrency was eight. Checkout p95 was 313 ms in the baseline and 102 ms with sends. The host's changing disk contention prevents attributing that difference to the push workload.
+
+Memory: 14.6 MB RSS idle, 61.4 MB after load. Database scaling with `bench-gen` matched the baseline (100 000 establishments: 768.9 MB, 19.5 s).
+
+Query plans: the entitlement view and the rebuilt `billing_coverage` view force an index-driven join order (`commercial_contracts` or `billing_checkouts` by establishment, then `idx_billing_payments_subscription`). Without it SQLite scanned every payment of the environment on each request, a cost that grows with the customer base. Contract periods and grants are read in one `UNION ALL` round trip. The enforced dashboard still performs one extra pooled query per request; caching the decision per request batch is unnecessary at current traffic. The enforced script lives in the session notes, not in `scripts/`, because it needs Asaas-shaped configuration.
 
 ### VPS capacity validation
 
@@ -122,6 +126,15 @@ Checkout reports new placements and replays separately. It reconciles each order
 
 The VPS baseline on 2026-11-25 used `b7c0793`, ext4, one pinned CPU and SQLite `FULL`. The 90-second checkout sample placed 3,481 orders and replayed 409 requests. Including staff drain, throughput was 36.36 orders/s and combined request p95/p99 were 37.76/339.29 ms. The outbox baseline had published 39,400 of 100,000 events after 292 seconds, with 99% utilization of the pinned CPU and near-zero disk pressure at the observation. The baseline was stopped after it exceeded the time implied by the 1,000 events/s target. These baseline measurements used the host's available memory. The candidate runs cap memory separately.
 
-Memory: 14.6 MB RSS idle, 61.4 MB after load. Database scaling with `bench-gen` matched the baseline (100 000 establishments: 768.9 MB, 19.5 s).
+Candidate `24a42a1` ran on the same VPS with CPU 3 pinned, a 1 GiB memory cap, swap disabled, and SQLite WAL with `synchronous=FULL`. The workloads ran sequentially against separate synthetic fixtures. Formatting, strict Clippy and 185 tests passed on the VPS, including replays during concurrent writes and rollback across consumers after dispatch interruption.
 
-Query plans: the entitlement view and the rebuilt `billing_coverage` view force an index-driven join order (`commercial_contracts` or `billing_checkouts` by establishment, then `idx_billing_payments_subscription`). Without it SQLite scanned every payment of the environment on each request, a cost that grows with the customer base. Contract periods and grants are read in one `UNION ALL` round trip. The enforced dashboard still performs one extra pooled query per request; caching the decision per request batch is unnecessary at current traffic. The enforced script lives in the session notes, not in `scripts/`, because it needs Asaas-shaped configuration.
+| 600-second workload | Orders | Replays | Orders/s | Checkout p95 / p99 | Replay p95 / p99 |
+|---|---:|---:|---:|---:|---:|
+| Orders and staff transitions | 39,290 | 4,416 | 65.32 | 14.615 / 26.230 ms | 0.576 / 1.204 ms |
+| Orders, staff transitions and static menu reads | 41,566 | 4,672 | 69.17 | 14.174 / 25.907 ms | 0.553 / 0.942 ms |
+
+Both runs passed the order throughput and latency gates and completed with zero errors, duplicate orders or monetary discrepancies. The mixed run served 52,933 static menu reads with p95 of 0.798 ms, 1.344× the pinned reference of 0.594 ms, within the 2× limit.
+
+The outbox published all 100,000 queued events for two no-op subscribers in 9.610 seconds (10,406.15 events/s). The steady run published 2,000 events at 200/s, with p95 lag of 216 ms and maximum lag of 255 ms.
+
+Web Push delivered 1,000 synthetic notifications in 13.693 seconds (4,381.71/min), with at most eight sends in flight. Observed checkout p95 rose from 6.295 ms in the reference run to 9.063 ms with active sends, within the benchmark's 300 ms latency budget.
