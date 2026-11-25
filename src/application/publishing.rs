@@ -14,8 +14,8 @@ use crate::domain::publication::MenuSnapshot;
 use crate::error::{AppError, AppResult};
 use crate::i18n::Locale;
 use crate::infrastructure::database::queries::{
-    find_establishment_by_id, list_published_establishment_ids, load_menu_snapshot,
-    record_publication_failure, record_publication_success, record_unpublish,
+    capture_menu_publication, list_published_establishment_ids, record_publication_failure,
+    record_publication_success, record_unpublish,
 };
 use crate::infrastructure::storage::{atomic_write_file, resolve_safe_subpath};
 use crate::rendering::public_menu::{generate_brand_theme_css, render_public_menu_html};
@@ -52,16 +52,37 @@ pub async fn publish_establishment(
     locks: &PublishLocks,
     est_id: &str,
 ) -> AppResult<PublishOutcome> {
+    publish_menu(pool, config, locks, est_id, false)
+        .await?
+        .ok_or(AppError::NotFound("error.not_found"))
+}
+
+async fn publish_menu(
+    pool: &SqlitePool,
+    config: &Config,
+    locks: &PublishLocks,
+    est_id: &str,
+    republishing: bool,
+) -> AppResult<Option<PublishOutcome>> {
     let lock = locks.lock_for(est_id);
     let _guard = lock.lock().await;
     let started = Instant::now();
 
-    let snapshot = load_menu_snapshot(pool, est_id, false)
-        .await?
-        .ok_or(AppError::NotFound("error.not_found"))?;
+    let Some(source) = capture_menu_publication(pool, est_id).await? else {
+        return Ok(None);
+    };
+    let snapshot = &source.snapshot;
+
+    // The guard must use the same database snapshot as rendering the menu.
+    if republishing
+        && (!snapshot.establishment.is_published || snapshot.establishment.has_unpublished_changes)
+    {
+        tracing::info!(establishment_id = %est_id, "republish skipped: no matching live menu");
+        return Ok(None);
+    }
 
     let attempted_version = snapshot.establishment.published_version + 1;
-    let res = write_static_snapshot(config, &snapshot).await;
+    let res = write_static_snapshot(config, snapshot).await;
 
     let elapsed_ms = i64::try_from(started.elapsed().as_millis()).unwrap_or(i64::MAX);
     let now = Utc::now().to_rfc3339();
@@ -70,7 +91,7 @@ pub async fn publish_establishment(
         Ok((html_bytes, asset_count)) => {
             record_publication_success(
                 pool,
-                est_id,
+                &source,
                 attempted_version,
                 html_bytes as i64,
                 asset_count as i64,
@@ -78,12 +99,12 @@ pub async fn publish_establishment(
                 &now,
             )
             .await?;
-            Ok(PublishOutcome {
+            Ok(Some(PublishOutcome {
                 version: attempted_version,
                 html_bytes,
                 asset_count,
                 duration_ms: elapsed_ms,
-            })
+            }))
         }
         Err(err) => {
             tracing::error!(
@@ -218,18 +239,12 @@ pub async fn republish_all(
     let ids = list_published_establishment_ids(pool).await?;
     let mut count = 0usize;
     for id in ids {
-        let Some(est) = find_establishment_by_id(pool, &id).await? else {
-            continue;
-        };
-        // Re-rendering reads the current draft. Establishments with pending draft edits keep
-        // their live snapshot untouched so a deploy never publishes changes the owner did not
-        // publish (and never bypasses the menu.publish capability).
-        if est.has_unpublished_changes {
-            tracing::info!(establishment_id = %id, "republish skipped: draft has unpublished changes");
-            continue;
+        if publish_menu(pool, config, locks, &id, true)
+            .await?
+            .is_some()
+        {
+            count += 1;
         }
-        publish_establishment(pool, config, locks, &id).await?;
-        count += 1;
     }
     Ok(count)
 }

@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use sqlx::SqlitePool;
+use sqlx::{SqliteConnection, SqlitePool};
 use uuid::Uuid;
 
 use super::mappers::{row_to_category, row_to_establishment, row_to_media, row_to_product};
@@ -14,8 +14,17 @@ pub async fn load_menu_snapshot(
     est_id: &str,
     include_hidden: bool,
 ) -> AppResult<Option<MenuSnapshot>> {
-    let mut conn = pool.acquire().await?;
+    let mut tx = pool.begin().await?;
+    let snapshot = load_menu_snapshot_in(&mut tx, est_id, include_hidden).await?;
+    tx.commit().await?;
+    Ok(snapshot)
+}
 
+pub(super) async fn load_menu_snapshot_in(
+    conn: &mut SqliteConnection,
+    est_id: &str,
+    include_hidden: bool,
+) -> AppResult<Option<MenuSnapshot>> {
     let est_row = sqlx::query("SELECT * FROM establishments WHERE id = ?")
         .bind(est_id)
         .fetch_optional(&mut *conn)
@@ -104,23 +113,52 @@ pub async fn load_menu_snapshot(
     }))
 }
 
-pub async fn record_publication_success(
+pub struct MenuPublicationSource {
+    pub snapshot: MenuSnapshot,
+    draft_revision: i64,
+}
+
+pub async fn capture_menu_publication(
     pool: &SqlitePool,
     est_id: &str,
+) -> AppResult<Option<MenuPublicationSource>> {
+    let mut tx = pool.begin().await?;
+    let snapshot = load_menu_snapshot_in(&mut tx, est_id, false).await?;
+    let draft_revision =
+        sqlx::query_scalar("SELECT revision FROM menu_draft_revisions WHERE establishment_id = ?")
+            .bind(est_id)
+            .fetch_optional(&mut *tx)
+            .await?
+            .unwrap_or(0);
+    tx.commit().await?;
+    Ok(snapshot.map(|snapshot| MenuPublicationSource {
+        snapshot,
+        draft_revision,
+    }))
+}
+
+pub async fn record_publication_success(
+    pool: &SqlitePool,
+    source: &MenuPublicationSource,
     new_version: i64,
     html_bytes: i64,
     asset_count: i64,
     duration_ms: i64,
     now: &str,
 ) -> AppResult<()> {
+    let est_id = &source.snapshot.establishment.id;
     let mut tx = begin_immediate(pool).await?;
     sqlx::query(
         "UPDATE establishments
-         SET is_published = 1, published_version = ?, has_unpublished_changes = 0,
+         SET is_published = 1, published_version = ?,
+             has_unpublished_changes = COALESCE((
+                 SELECT revision FROM menu_draft_revisions WHERE establishment_id = establishments.id
+             ), 0) <> ?,
              last_published_at = ?, updated_at = ?
          WHERE id = ?",
     )
     .bind(new_version)
+    .bind(source.draft_revision)
     .bind(now)
     .bind(now)
     .bind(est_id)

@@ -26,13 +26,13 @@ data/published/
 
 1. Acquire per-establishment async mutex (`PublishLocks`) to serialize concurrent publishes for the same tenant.
 2. Validate `slug` (`Slug::validate_existing`) and resolve paths via `resolve_safe_subpath` (blocks path traversal).
-3. Load `MenuSnapshot` in a single short SQLite read (`load_menu_snapshot(pool, est_id, false)`), filtering to `is_visible = 1` categories and products, then immediately release the DB connection.
+3. Capture `MenuSnapshot` and the tenant's draft revision in one short SQLite read transaction. Filter to `is_visible = 1` categories and products, then release the DB connection before writing files. `republish-all` checks the publication and dirty flags on this captured state under the same per-establishment lock.
 4. Generate `theme-{hash8}.css` (computing WCAG AA foreground ink color from `accent_color`).
 5. Render `index.html` using `PublicMenuTemplate` (Askama auto-escapes all user text; embeds ~1.6 KB `#qr-menu-i18n` JSON for zero-reload PT/EN/ES switching; includes canonical URL, Open Graph metadata, and XSS-safe `FoodEstablishment` + `Menu` JSON-LD for published snapshots while keeping `/dashboard/preview` `noindex, nofollow`).
 6. Stage all referenced media files into `published/{slug}/media/` via `atomic_write_file` (`NamedTempFile::new_in(tmp_dir)` -> `write_all` -> `sync_all` -> `persist`). Stage the large variant of the selected cover alongside the product thumbnails.
 7. Stage `theme-{hash8}.css` via `atomic_write_file`.
 8. Atomically replace `published/{slug}/index.html` via `atomic_write_file`.
-9. Update `establishments` (`is_published = 1`, `published_version += 1`, `has_unpublished_changes = 0`, `last_published_at`) and append a `'published'` row in `publications`. Because `/sitemap.xml` queries `is_published = 1`, newly published menus enter the sitemap immediately and leave it upon unpublishing.
+9. Set `is_published`, update `published_version` and `last_published_at`, and append a `'published'` row in `publications`. Clear the dirty flag only if the captured draft revision still matches. Each mutation that marks a draft dirty advances `menu_draft_revisions` even when the flag was already set. Edits committed during rendering stay pending for the next owner publication. Because `/sitemap.xml` queries `is_published = 1`, newly published menus enter the sitemap immediately and leave it upon unpublishing.
 10. Clean up obsolete `theme-*.css` and unreferenced `media/*` files **only after** `index.html` is live.
 
 Already-published menus pick up the visual refresh through the shared stylesheet. They receive a photo cover during their next normal publication.
