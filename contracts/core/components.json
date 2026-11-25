@@ -1,0 +1,136 @@
+{
+  "contract": "core.components",
+  "contract_version": 1,
+  "description": "QR Core is the free shared foundation. It is never sold as a module. Module contracts may only depend on these components, never on another commercial module.",
+  "components": [
+    {
+      "id": "identity",
+      "status": "implemented",
+      "summary": "Accounts, Argon2id passwords, Google sign-in, sessions, CSRF, password recovery."
+    },
+    {
+      "id": "establishments",
+      "status": "implemented",
+      "summary": "Tenant root, slug rules, branding (accent color, logo), Google Maps links."
+    },
+    {
+      "id": "members",
+      "status": "implemented",
+      "summary": "establishment_members with owner and manager roles."
+    },
+    {
+      "id": "permissions",
+      "status": "implemented",
+      "summary": "MemberRole to Permission mapping enforced by application::entitlements::authorize."
+    },
+    {
+      "id": "tenancy",
+      "status": "implemented",
+      "summary": "TenantContext extraction and establishment-scoped queries."
+    },
+    {
+      "id": "operational_state",
+      "status": "implemented",
+      "summary": "Administrative and security suspension (establishment_operational_states)."
+    },
+    {
+      "id": "i18n",
+      "status": "implemented",
+      "summary": "pt-BR, en and es catalogs with zero-reload switching."
+    },
+    {
+      "id": "catalog",
+      "status": "partial",
+      "summary": "Categories, products, prices in centavos, availability and visibility are implemented. Variations, add-on groups and add-on options are planned for Commerce Core."
+    },
+    {
+      "id": "media",
+      "status": "implemented",
+      "summary": "Magic-byte validation, EXIF stripping, content-addressed variants."
+    },
+    {
+      "id": "commercial",
+      "status": "implemented",
+      "summary": "Versioned catalog, quotes, contracts and contract snapshots (Commercial Engine)."
+    },
+    {
+      "id": "entitlements",
+      "status": "implemented",
+      "summary": "Capability resolution from contracts and explicit grants (Entitlement Engine)."
+    },
+    {
+      "id": "saas_billing",
+      "status": "implemented",
+      "summary": "Asaas hosted recurring checkout, authenticated idempotent webhooks, coverage."
+    },
+    {
+      "id": "events",
+      "status": "partial",
+      "summary": "Transactional outbox append is implemented; the dispatcher ships with Commerce Core."
+    },
+    {
+      "id": "audit",
+      "status": "partial",
+      "summary": "Publication log, outbox events for commercial and operational actions. A general admin audit log is planned."
+    },
+    {
+      "id": "business_hours",
+      "status": "planned",
+      "summary": "Weekly hours, exceptions and holiday overrides per establishment."
+    },
+    {
+      "id": "commercial_settings",
+      "status": "planned",
+      "summary": "Service modes, minimum order, fees and checkout settings."
+    },
+    {
+      "id": "customers",
+      "status": "planned",
+      "summary": "Establishment-scoped consumer records with LGPD export and erasure."
+    },
+    {
+      "id": "addresses",
+      "status": "planned",
+      "summary": "Consumer delivery addresses scoped to one establishment."
+    },
+    {
+      "id": "orders",
+      "status": "planned",
+      "summary": "Single Order aggregate shared by every sales channel (Commerce Core)."
+    },
+    {
+      "id": "order_payments",
+      "status": "planned",
+      "summary": "Consumer-to-establishment payments, separate from SaaS billing."
+    },
+    {
+      "id": "notifications",
+      "status": "planned",
+      "summary": "Email, web push and messaging delivery with per-establishment templates."
+    },
+    {
+      "id": "usage_metering",
+      "status": "planned",
+      "summary": "Per-establishment counters for storage, OCR, messages and external costs."
+    },
+    {
+      "id": "publishing",
+      "status": "implemented",
+      "summary": "Atomic static snapshot publication shared by QR Menu and, later, the QR Delivery storefront."
+    }
+  ],
+  "free_tier_limits": {
+    "status": "partial",
+    "implemented": [
+      "Rate limits per IP and per account (governor) on auth, uploads, OCR and billing",
+      "Upload caps: 2 MiB logos, 5 MiB product photos (6 MiB multipart body), 16 MiB OCR requests, 64 KiB webhooks",
+      "OCR concurrency Semaphore(1) with subprocess timeouts",
+      "Mandatory review before OCR results reach the draft"
+    ],
+    "planned": [
+      "Per-establishment storage quota",
+      "Monthly OCR page quota",
+      "Per-establishment notification and external-cost quotas"
+    ]
+  }
+}

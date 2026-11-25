@@ -1,0 +1,27 @@
+{
+  "contract": "commercial.module_lifecycle",
+  "contract_version": 1,
+  "description": "Behavior of each lifecycle state. Implemented by domain::commercial::Lifecycle; tests enforce parity.",
+  "states": [
+    { "state": "planned", "sale": "never", "grants": "never", "renewals": false },
+    { "state": "development", "sale": "never", "grants": "never", "renewals": false },
+    { "state": "internal_preview", "sale": "never", "grants": "explicit_grant_only", "renewals": false },
+    { "state": "beta", "sale": "explicit_enablement", "grants": "always", "renewals": true },
+    { "state": "available", "sale": "standard", "grants": "always", "renewals": true },
+    { "state": "deprecated", "sale": "never", "grants": "always", "renewals": true },
+    { "state": "retired", "sale": "never", "grants": "never", "renewals": false }
+  ],
+  "transitions": [
+    ["planned", "development"],
+    ["development", "planned"],
+    ["development", "internal_preview"],
+    ["internal_preview", "development"],
+    ["internal_preview", "beta"],
+    ["beta", "internal_preview"],
+    ["beta", "available"],
+    ["available", "deprecated"],
+    ["deprecated", "available"],
+    ["deprecated", "retired"]
+  ],
+  "sellable_ever": ["beta", "available", "deprecated", "retired"]
+}

@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "qrcardapio:event:EntitlementRevoked:1",
+  "title": "EntitlementRevoked v1 payload",
+  "description": "An operator revoked an explicit grant before its end date. Capabilities still covered by another source remain active.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["grant_id", "offer", "grant_kind"],
+  "properties": {
+    "grant_id": { "type": "string" },
+    "offer": { "type": "string" },
+    "grant_kind": { "enum": ["trial", "beta", "internal_preview", "courtesy"] }
+  }
+}

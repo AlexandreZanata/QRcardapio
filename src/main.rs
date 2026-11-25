@@ -1,3 +1,5 @@
+mod operator_cli;
+
 use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
@@ -48,6 +50,11 @@ enum Commands {
     SeedPublicDemo,
     /// Republish all currently published menus (useful after template upgrades)
     RepublishAll,
+    /// Audited platform-operator commands: entitlement grants and suspension
+    Operator {
+        #[command(subcommand)]
+        action: operator_cli::OperatorCommands,
+    },
     /// Generate multi-tenant synthetic data for reproducible benchmarks
     BenchGen {
         #[arg(long, default_value_t = 100)]
@@ -154,6 +161,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             pool.close().await;
             println!("Republished {count} menu snapshots.");
         }
+        Commands::Operator { action } => operator_cli::run(&config, action).await?,
         Commands::BenchGen {
             establishments,
             items_per_establishment,

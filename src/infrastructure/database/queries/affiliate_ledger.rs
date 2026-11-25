@@ -44,10 +44,12 @@ pub async fn sync_payment_commissions(
 ) -> AppResult<()> {
     let payment_row = sqlx::query(
         "SELECT p.payment_id, p.subscription_id, p.due_date, p.confirmed_centavos,
-                c.establishment_id, c.plan_months, c.price_centavos
+                c.establishment_id, c.plan_months, c.price_centavos,
+                COALESCE(k.affiliate_eligible_centavos, c.price_centavos) AS eligible_centavos
          FROM billing_payments p
          INNER JOIN billing_checkouts c
              ON c.environment = p.environment AND c.subscription_id = p.subscription_id
+         LEFT JOIN commercial_contracts k ON k.billing_reference = c.reference
          WHERE p.environment = ? AND p.payment_id = ?",
     )
     .bind(env)
@@ -65,6 +67,9 @@ pub async fn sync_payment_commissions(
     let establishment_id: String = payment_row.get("establishment_id");
     let plan_months: i64 = payment_row.get("plan_months");
     let price_centavos: i64 = payment_row.get("price_centavos");
+    // SaaS revenue eligible for commissions (contract snapshot). Add-ons with pass-through
+    // costs are excluded; legacy contracts are fully eligible.
+    let eligible_centavos: i64 = payment_row.get("eligible_centavos");
     let today_str = today.to_string();
 
     let valid_confirmed = confirmed_centavos.is_some_and(|amt| amt == price_centavos);
@@ -109,7 +114,7 @@ pub async fn sync_payment_commissions(
         target.commission_type,
         target.commission_value,
         plan_months,
-        price_centavos,
+        eligible_centavos.min(price_centavos),
         due_date,
         target.hold_days,
     );

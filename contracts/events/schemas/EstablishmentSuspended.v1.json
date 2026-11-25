@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "qrcardapio:event:EstablishmentSuspended:1",
+  "title": "EstablishmentSuspended v1 payload",
+  "description": "An operator suspended new protected operations for an establishment. Published menus and data are preserved.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["status"],
+  "properties": {
+    "status": { "enum": ["suspended_admin", "suspended_security"] }
+  }
+}

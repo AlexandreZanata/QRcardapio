@@ -1,0 +1,25 @@
+{
+  "contract": "modules.menu",
+  "contract_version": 1,
+  "module": "menu",
+  "status": "implemented",
+  "phase": 1,
+  "standalone": true,
+  "core_dependencies": ["identity", "establishments", "members", "tenancy", "i18n", "catalog", "media", "commercial", "entitlements", "saas_billing", "events"],
+  "optional_integrations": ["delivery", "analytics", "connect"],
+  "capabilities": ["menu.publish"],
+  "operations": ["menu.publish", "menu.unpublish", "menu.draft.edit"],
+  "entities": ["Establishment", "Category", "Product", "MediaAsset", "Publication", "OcrImport"],
+  "state_machines": [],
+  "events": { "publishes": ["CatalogPublished"], "consumes": [] },
+  "http": [
+    { "method": "GET", "path": "/c/{slug}", "audience": "public", "status": "implemented" },
+    { "method": "GET", "path": "/dashboard/menu", "audience": "member", "status": "implemented" },
+    { "method": "POST", "path": "/dashboard/publish", "audience": "member", "status": "implemented" },
+    { "method": "POST", "path": "/dashboard/unpublish", "audience": "member", "status": "implemented" },
+    { "method": "GET", "path": "/dashboard/qr", "audience": "member", "status": "implemented" },
+    { "method": "POST", "path": "/mcp", "audience": "mcp_client", "status": "implemented" }
+  ],
+  "after_expiry": "The published snapshot stays online at the same URL and QR Code (legacy policy). Drafts, preview, QR codes and unpublishing stay available. Publishing and republishing require menu.publish.",
+  "release_gates": ["entitlement parity with legacy coverage", "Asaas sandbox homologation", "republish-all after deploy"]
+}

@@ -1,0 +1,79 @@
+{
+  "contract": "modules.analytics",
+  "contract_version": 1,
+  "module": "analytics",
+  "status": "planned",
+  "phase": 9,
+  "standalone": true,
+  "core_dependencies": [
+    "identity",
+    "establishments",
+    "members",
+    "tenancy",
+    "i18n",
+    "commercial",
+    "entitlements",
+    "events"
+  ],
+  "optional_integrations": [
+    "menu",
+    "delivery",
+    "tables",
+    "kitchen",
+    "fleet",
+    "loyalty",
+    "pos",
+    "connect"
+  ],
+  "capabilities": [
+    "analytics.reports.advanced",
+    "analytics.import"
+  ],
+  "operations": [
+    "analytics.report.advanced",
+    "analytics.import.run"
+  ],
+  "entities": [
+    "DailyAggregate",
+    "HourlyAggregate",
+    "ProductAggregate",
+    "ChannelAggregate",
+    "ImportJob",
+    "ExportJob"
+  ],
+  "state_machines": [],
+  "events": {
+    "publishes": [],
+    "consumes": [
+      "CatalogPublished",
+      "OrderCreated",
+      "OrderCompleted",
+      "OrderCancelled",
+      "PaymentConfirmed",
+      "PaymentRefunded",
+      "PosSaleRegistered",
+      "LoyaltyPointsGranted",
+      "OrderRejected",
+      "LoyaltyPointsReversed"
+    ]
+  },
+  "http": [
+    {
+      "method": "GET",
+      "path": "/dashboard/analytics",
+      "audience": "member",
+      "status": "planned"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/analytics/imports",
+      "audience": "member",
+      "status": "planned"
+    }
+  ],
+  "after_expiry": "Advanced reports and imports stop. Basic operational reports inside each module and the QR Core data.export operation remain.",
+  "release_gates": [
+    "incremental aggregation idempotent by event_id",
+    "public menu access counting without cookies or PII"
+  ]
+}

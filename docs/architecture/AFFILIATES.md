@@ -49,3 +49,11 @@ Cada afiliado recebe um link exclusivo (`https://qrcardapio.com.br/r/{codigo}` o
    - Comissões e repasses são isolados por `environment` (`sandbox` vs `production`).
    - O portal do afiliado mascara e-mails dos indicados (`ma***@dominio.com`); o painel admin exibe o e-mail completo e permite desqualificar indicações fraudulentas.
    - Todas as rotas `/admin/affiliates*` exigem `AdminContext`, confirmação explícita de baixa PIX e verificação `_csrf` em tempo constante.
+
+## 9. Modelo modular (Commercial Engine)
+
+- A base de cálculo é a receita SaaS **elegível** confirmada: `commercial_contracts.affiliate_eligible_centavos` (soma das linhas com `affiliate_eligible`), limitada ao valor confirmado. Contratos legados e o QR Menu são 100% elegíveis, portanto as comissões existentes não mudam. Complementos com custo repassado (por exemplo, domínio personalizado) não são elegíveis.
+- A cota fixa continua por estabelecimento e por mês: como existe uma única assinatura consolidada por estabelecimento, ela nunca é multiplicada pela quantidade de módulos. O teto da cota fixa é o preço mensal do módulo de entrada (`max_fixed_monthly_centavos`, vindo do catálogo).
+- Nunca entram na base: vendas de alimentos, taxas de entrega, valores repassados a restaurantes, valores estornados, créditos não pagos e receitas inelegíveis.
+- Regras planejadas para alterações: upgrade ou adição de módulo gera comissão sobre o novo valor elegível somente a partir do próximo pagamento confirmado; downgrade reduz a base dos pagamentos seguintes; descontos reduzem a base porque ela é o valor efetivamente pago; troca de ciclo segue o parcelamento mensal existente (`1`, `6`, `12`); pacotes contam pelo preço do pacote, não pela soma dos módulos. Contratos e lançamentos já gravados nunca são recalculados.
+- Teste: `tests/commercial_engine.rs` (`affiliate_commissions_use_eligible_saas_revenue_once_per_establishment`).

@@ -10,9 +10,10 @@ use axum_extra::extract::cookie::{Cookie, SameSite};
 use crate::app::AppState;
 use crate::application::auth::authenticate_session;
 use crate::domain::account::{Account, AccountRole};
+use crate::domain::entitlements::MemberRole;
 use crate::domain::establishment::Establishment;
 use crate::error::{AppError, AppResult};
-use crate::infrastructure::database::queries::find_establishment_for_account;
+use crate::infrastructure::database::queries::find_membership_for_account;
 use crate::infrastructure::security::constant_time_eq;
 
 pub const SESSION_COOKIE_NAME: &str = "qr_session";
@@ -31,6 +32,8 @@ pub struct OptionalAuth(pub Option<AuthContext>);
 pub struct TenantContext {
     pub auth: AuthContext,
     pub establishment: Establishment,
+    /// Role of the signed-in member in this establishment (operational permission).
+    pub role: MemberRole,
 }
 
 #[derive(Debug, Clone)]
@@ -98,13 +101,15 @@ impl FromRequestParts<AppState> for TenantContext {
         state: &AppState,
     ) -> Result<Self, Self::Rejection> {
         let auth = AuthContext::from_request_parts(parts, state).await?;
-        let est = find_establishment_for_account(&state.pool, &auth.account.id)
+        let membership = find_membership_for_account(&state.pool, &auth.account.id)
             .await
             .map_err(|_| AuthRejection::Status(StatusCode::INTERNAL_SERVER_ERROR))?;
-        match est {
-            Some(establishment) => Ok(Self {
+        match membership {
+            Some((establishment, role)) => Ok(Self {
                 auth,
                 establishment,
+                role: MemberRole::parse(&role)
+                    .ok_or(AuthRejection::Status(StatusCode::FORBIDDEN))?,
             }),
             None => Err(AuthRejection::RedirectOnboarding),
         }

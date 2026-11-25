@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-11-23
+Last updated: 2026-11-24
 
 ## Current Status — MVP Complete
 
@@ -12,6 +12,46 @@ All 5 implementation phases of the **QR Cardápio MVP** (including full native z
 - **Phase 4 — Static Publishing & QR Codes**: Complete & verified (atomic temp+fsync+rename publishing to `published/{slug}/`, content-addressed assets, failure rollback preserving previous live menu, unpublishing, zero-DB disk delivery, high-contrast SVG & >=1024px PNG QR generation, printable sheet).
 - **Phase 5 — Operations, Benchmarks & AI-First Docs**: Complete & verified (`Dockerfile`, `compose.yaml`, `Caddyfile`, `scripts/{dev,backup,restore,bench_run}.sh`, full `AGENTS.md` + `docs/` + 6 ADRs, real benchmarks at 100..100k establishments).
 - **Phase 6 — Local Hybrid OCR & PDF Menu Pre-Registration**: Complete & verified (`migrations/20261123000002_ocr_imports.sql`, pure-Rust menu parser under `src/domain/ocr_parser/`, hybrid `pdftotext` -> `pdftoppm` + pure-Rust image preprocessing + `tesseract` engine under `src/infrastructure/ocr/` with `Semaphore(1)` and timeouts, `ocr_imports` staging persistence, `/dashboard/ocr` upload/paste/review/bulk-apply/discard flow with full `pt-BR`/`en`/`es` i18n and strict multi-tenant + CSRF + rate-limit protection, ADR-006).
+
+## Modular Platform Foundation — Phases 0, 1 and technical part of 2 (2026-11-24)
+
+QR Cardápio is now a free **QR Core** plus independently sold modules. Only **QR Menu** is implemented and sellable; Delivery, Tables, Kitchen, Fleet, Loyalty, Analytics, POS and Connect are `planned` with full contracts and specifications. Delivery is the next module (after Commerce Core).
+
+| Area | Status | Where |
+|---|---|---|
+| Versioned commercial catalog (9 modules, 3 bundles, 5 add-ons, 3 cycles) compiled from JSON | Implemented and tested | `contracts/commercial/`, `src/domain/commercial/`, [MODULE_CATALOG](../business/MODULE_CATALOG.md) |
+| Catalog validation + start-up registry (sold versions immutable, lifecycle transitions guarded) | Implemented and tested | `validation.rs`, `queries/commercial_catalog.rs`, ADR-007 |
+| Backend-only quotes, integer round-half-up per line, immutable contract snapshots | Implemented and tested | `quote.rs`, `cycle.rs`, `commercial_contracts`, [COMMERCIAL_ENGINE](../architecture/COMMERCIAL_ENGINE.md) |
+| Entitlement Engine: capabilities from paid contracts and audited grants; five-dimension `authorize` | Implemented and tested | `src/domain/entitlements/`, `src/application/entitlements.rs`, ADR-008 |
+| QR Menu integrated (dashboard + MCP publish through `authorize`; billing page module catalog) | Implemented and tested | `handlers/{dashboard,billing}.rs`, `application/mcp/account.rs` |
+| Legacy "Plano Essencial" → QR Menu v1 contracts (no new charges, same prices/periods/ids) | Implemented and tested | migration `20261124000009`, `tests/commercial_migration.rs` |
+| Asaas payload from the contract quote; webhook activation event | Implemented, tested with simulated webhooks; **sandbox homologation pending** (no credentials) | `infrastructure/asaas.rs`, `application/billing.rs` |
+| Affiliate commissions on eligible SaaS revenue | Implemented and tested | `affiliate_ledger.rs`, [AFFILIATES](../architecture/AFFILIATES.md) |
+| Transactional outbox (`SubscriptionActivated`, `EntitlementGranted/Revoked`, `EstablishmentSuspended/Reinstated`, `CatalogPublished`) | Append implemented and tested; dispatcher planned (phase 3) | `domain_events`, ADR-009, [EVENT_CONTRACTS](../architecture/EVENT_CONTRACTS.md) |
+| Operator CLI (grants, suspension) | Implemented and tested | `qrcardapio operator …`, [RUNBOOK](../operations/RUNBOOK.md#commercial-operations) |
+| Rollback-tolerant migrator, idempotent expand migration | Implemented and tested | ADR-010, [RUNBOOK](../operations/RUNBOOK.md#rollback-of-the-commercial-foundation-release) |
+| `republish-all` no longer publishes pending drafts after deploys | Fixed | `application/publishing.rs` |
+| Subscription changes (add/remove modules, cycle change, proration, credits) | Planned — blocked until a second module is sellable and Asaas updates are homologated | [SUBSCRIPTION_RULES](../business/SUBSCRIPTION_RULES.md) |
+| Commerce Core, Delivery and later modules | Planned (contracts + specs only) | `contracts/modules/`, `docs/modules/`, [MASTER_ROADMAP](../roadmap/MASTER_ROADMAP.md) |
+
+Contract drift is enforced by `tests/commercial_contracts.rs` (catalog, capabilities, lifecycle, authorization rules, events and schemas, module contracts, state machines, module docs, catalog doc).
+
+### Verification (2026-11-24)
+
+- `cargo fmt --check`, `cargo clippy --all-targets --all-features -- -D warnings`: passed.
+- `cargo test --locked`: passed — 112 tests (49 unit, 63 integration), including the new `commercial_contracts` (10), `commercial_engine` (8), `entitlements` (6) and `commercial_migration` (2).
+- `cargo audit`: 0 vulnerabilities (same 2 unmaintained notices); no dependency changes.
+- `cargo build --release --locked`: passed. Benchmarks: [PERFORMANCE](../performance/PERFORMANCE.md#commercial-foundation-verification--24112026).
+- Not run: Asaas sandbox homologation, live HTTPS smoke test, physical QR scans.
+
+### Known risks and pending items
+
+1. **Asaas sandbox homologation** of the new contract path (checkout payload description now names the offers; values unchanged) — required before declaring the flow homologated.
+2. **Rollback of this specific release** to a pre-existing binary requires the manual runbook procedure (older binaries reject the new migration).
+3. Menus with pending drafts no longer receive template upgrades from `republish-all`; persisted per-publication snapshots are the follow-up.
+4. Publication deletes previous theme/media files immediately; HTML cached by browsers for up to 360 s may request deleted assets (pre-existing).
+5. The landing page still names the offer "Plano Essencial" (marketing copy); billing and contracts call it QR Menu.
+6. `establishment_members.member_role` and MCP `scope` CHECK constraints need expand migrations before new roles/scopes.
 
 ## Landing and Panel Refresh
 

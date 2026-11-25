@@ -1,8 +1,8 @@
 use chrono::{Datelike, Duration, NaiveDate};
 
 use crate::domain::affiliate::{
-    CommissionType, MAX_COOKIE_TTL_DAYS, MAX_FIXED_MONTHLY_CENTAVOS, MAX_HOLD_DAYS,
-    MAX_PERCENT_BPS, MAX_PIX_KEY_LEN, MIN_COOKIE_TTL_DAYS, MIN_HOLD_DAYS,
+    CommissionType, MAX_COOKIE_TTL_DAYS, MAX_HOLD_DAYS, MAX_PERCENT_BPS, MAX_PIX_KEY_LEN,
+    MIN_COOKIE_TTL_DAYS, MIN_HOLD_DAYS, max_fixed_monthly_centavos,
 };
 use crate::domain::product::parse_price_centavos;
 use crate::error::{AppError, AppResult};
@@ -19,7 +19,7 @@ pub struct ScheduledInstallment {
 pub fn validate_commission_value(kind: CommissionType, value: i64) -> AppResult<i64> {
     match kind {
         CommissionType::FixedMonthlyCentavos => {
-            if (0..=MAX_FIXED_MONTHLY_CENTAVOS).contains(&value) {
+            if (0..=max_fixed_monthly_centavos()).contains(&value) {
                 Ok(value)
             } else {
                 Err(AppError::Validation("error.affiliate_commission_invalid"))

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "qrcardapio:event:EntitlementGranted:1",
+  "title": "EntitlementGranted v1 payload",
+  "description": "An operator created an explicit, time-boxed grant of a catalog offer. Free-text reasons stay in entitlement_grants and are never copied into events.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["grant_id", "offer", "grant_kind", "starts_on", "ends_on"],
+  "properties": {
+    "grant_id": { "type": "string" },
+    "offer": { "type": "string" },
+    "grant_kind": { "enum": ["trial", "beta", "internal_preview", "courtesy"] },
+    "starts_on": { "type": "string", "format": "date" },
+    "ends_on": { "type": "string", "format": "date" }
+  }
+}

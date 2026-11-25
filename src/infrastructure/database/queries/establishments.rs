@@ -1,4 +1,4 @@
-use sqlx::{SqliteConnection, SqliteExecutor, SqlitePool};
+use sqlx::{Row, SqliteConnection, SqliteExecutor, SqlitePool};
 
 use super::mappers::row_to_establishment;
 use crate::domain::establishment::Establishment;
@@ -37,6 +37,25 @@ pub async fn find_establishment_for_account<'e>(
     .await?;
 
     Ok(row.map(|r| row_to_establishment(&r)))
+}
+
+/// First establishment of an account together with the member role it holds there.
+pub async fn find_membership_for_account(
+    pool: &SqlitePool,
+    account_id: &str,
+) -> AppResult<Option<(Establishment, String)>> {
+    let row = sqlx::query(
+        "SELECT e.*, m.member_role AS membership_role
+         FROM establishments e
+         INNER JOIN establishment_members m ON m.establishment_id = e.id
+         WHERE m.account_id = ?
+         ORDER BY m.created_at ASC
+         LIMIT 1",
+    )
+    .bind(account_id)
+    .fetch_optional(pool)
+    .await?;
+    Ok(row.map(|r| (row_to_establishment(&r), r.get("membership_role"))))
 }
 
 pub async fn find_establishment_by_id(

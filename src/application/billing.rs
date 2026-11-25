@@ -2,48 +2,37 @@ use chrono::Utc;
 use sqlx::SqlitePool;
 use uuid::Uuid;
 
-use crate::domain::billing::{BillingPlan, billing_now};
+use crate::domain::billing::billing_now;
+use crate::domain::commercial::Quote;
 use crate::error::{AppError, AppResult};
 use crate::infrastructure::asaas::{AsaasClient, Change, GatewayError, Webhook};
-use crate::infrastructure::database::queries::{affiliate_ledger, billing as queries};
+use crate::infrastructure::database::queries::{
+    affiliate_ledger, billing as queries, commercial_contracts,
+};
 
-pub async fn publication_allowed(
-    pool: &SqlitePool,
-    client: Option<&AsaasClient>,
-    est: &str,
-) -> AppResult<bool> {
-    let Some(client) = client else {
-        return Ok(true);
-    };
-    let env = client.config().environment.as_str();
-    Ok(
-        queries::paid_through(pool, env, est, billing_now().date_naive())
-            .await?
-            .is_some(),
-    )
-}
-
+/// Opens a hosted recurring checkout for a backend-computed quote. The commercial contract
+/// snapshot is stored in the same transaction as the checkout reservation.
 pub async fn start_checkout(
     pool: &SqlitePool,
     client: &AsaasClient,
     public_base: &str,
     establishment: &str,
-    plan: BillingPlan,
+    quote: &Quote,
 ) -> AppResult<()> {
     let env = client.config().environment.as_str();
     let reference = Uuid::now_v7();
     let reference_text = reference.to_string();
-    if queries::reserve_checkout(
+    if queries::reserve_contract_checkout(
         pool,
         env,
         establishment,
         &reference_text,
         billing_now().date_naive(),
-        plan,
+        quote,
     )
     .await?
     {
-        match client.create_checkout(public_base, reference, plan).await {
+        match client.create_checkout(public_base, reference, quote).await {
             Ok(id) => {
                 queries::finish_checkout(
                     pool,
@@ -147,6 +136,8 @@ pub async fn process_webhook(pool: &SqlitePool, env: &str, event: Webhook) -> Ap
                     .await?;
             }
             queries::record_subscription(&mut tx, env, &id, status, &at).await?;
+            commercial_contracts::activate_for_subscription(&mut tx, env, &id, Some(&event_id))
+                .await?;
         }
         Change::Payment {
             id,
@@ -189,6 +180,13 @@ pub async fn process_webhook(pool: &SqlitePool, env: &str, event: Webhook) -> Ap
             } else {
                 affiliate_ledger::sync_payment_commissions(&mut tx, env, &id, today, &now).await?;
             }
+            commercial_contracts::activate_for_subscription(
+                &mut tx,
+                env,
+                &subscription_id,
+                Some(&event_id),
+            )
+            .await?;
         }
     }
     tx.commit().await?;

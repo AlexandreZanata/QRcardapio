@@ -208,6 +208,8 @@ pub async fn unpublish_establishment(
     Ok(())
 }
 
+/// Re-renders live snapshots after a template or asset upgrade. Only establishments whose
+/// draft matches the live menu are re-rendered; pending drafts are left for their owners.
 pub async fn republish_all(
     pool: &SqlitePool,
     config: &Config,
@@ -216,10 +218,18 @@ pub async fn republish_all(
     let ids = list_published_establishment_ids(pool).await?;
     let mut count = 0usize;
     for id in ids {
-        if find_establishment_by_id(pool, &id).await?.is_some() {
-            publish_establishment(pool, config, locks, &id).await?;
-            count += 1;
+        let Some(est) = find_establishment_by_id(pool, &id).await? else {
+            continue;
+        };
+        // Re-rendering reads the current draft. Establishments with pending draft edits keep
+        // their live snapshot untouched so a deploy never publishes changes the owner did not
+        // publish (and never bypasses the menu.publish capability).
+        if est.has_unpublished_changes {
+            tracing::info!(establishment_id = %id, "republish skipped: draft has unpublished changes");
+            continue;
         }
+        publish_establishment(pool, config, locks, &id).await?;
+        count += 1;
     }
     Ok(count)
 }

@@ -1,0 +1,87 @@
+{
+  "contract": "modules.fleet",
+  "contract_version": 1,
+  "module": "fleet",
+  "status": "planned",
+  "phase": 7,
+  "standalone": true,
+  "core_dependencies": [
+    "identity",
+    "establishments",
+    "members",
+    "tenancy",
+    "i18n",
+    "commercial",
+    "entitlements",
+    "events",
+    "addresses",
+    "notifications",
+    "orders",
+    "media"
+  ],
+  "optional_integrations": [
+    "delivery",
+    "analytics",
+    "connect"
+  ],
+  "capabilities": [
+    "fleet.delivery.create",
+    "fleet.delivery.assign",
+    "fleet.driver.manage"
+  ],
+  "operations": [
+    "fleet.delivery.assign",
+    "fleet.delivery.complete",
+    "fleet.delivery.register",
+    "fleet.courier.manage"
+  ],
+  "entities": [
+    "Courier",
+    "CourierAvailability",
+    "Delivery",
+    "DeliveryProof",
+    "DeliveryIncident",
+    "CourierPayoutEntry"
+  ],
+  "state_machines": [
+    "delivery"
+  ],
+  "events": {
+    "publishes": [
+      "DeliveryCreated",
+      "DeliveryAssigned",
+      "DeliveryCompleted",
+      "DeliveryFailed"
+    ],
+    "consumes": [
+      "OrderReady",
+      "OrderCancelled"
+    ]
+  },
+  "http": [
+    {
+      "method": "GET",
+      "path": "/dashboard/fleet",
+      "audience": "member",
+      "status": "planned"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/fleet/deliveries",
+      "audience": "member",
+      "status": "planned"
+    },
+    {
+      "method": "GET",
+      "path": "/courier",
+      "audience": "courier",
+      "status": "planned"
+    }
+  ],
+  "after_expiry": "No new deliveries or assignments. Assigned deliveries can be completed; payout records stay available.",
+  "release_gates": [
+    "external deliveries without any order",
+    "courier PWA isolated per establishment",
+    "payout ledger is append-only"
+  ]
+}

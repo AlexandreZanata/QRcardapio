@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "qrcardapio:event:SubscriptionActivated:1",
+  "title": "SubscriptionActivated v1 payload",
+  "description": "First confirmed payment that covers a commercial contract at its exact contracted price.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract_id", "environment", "cycle", "currency", "total_centavos", "offers", "covered_from"],
+  "properties": {
+    "contract_id": { "type": "string" },
+    "environment": { "enum": ["sandbox", "production"] },
+    "cycle": { "enum": ["monthly", "semiannual", "annual"] },
+    "currency": { "const": "BRL" },
+    "total_centavos": { "type": "integer", "minimum": 1 },
+    "offers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "code", "version"],
+        "properties": {
+          "kind": { "enum": ["module", "bundle", "addon"] },
+          "code": { "type": "string" },
+          "version": { "type": "integer", "minimum": 1 }
+        }
+      }
+    },
+    "covered_from": { "type": "string", "format": "date" }
+  }
+}

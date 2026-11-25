@@ -72,3 +72,17 @@ A migração `20261124000008_affiliate_program.sql` adiciona seis tabelas com in
 - `affiliate_commissions`: razão financeiro imutável isolado por `environment` (`sandbox`|`production`), com `UNIQUE(environment, payment_id, installment_index, entry_kind)` cobrindo parcelas mensais (`1..=12`) e estornos negativos (`clawback`), snapshot da cota aplicada e data determinística `available_on`.
 - `affiliate_payouts`: registro de repasses manuais via PIX com `pix_key_snapshot`, comprovante (`reference`), `entries_count`, `paid_by_account_id` e liquidação atômica em `BEGIN IMMEDIATE`.
 - `affiliate_evaluated_payments`: registro idempotente de pagamentos já avaliados na primeira confirmação válida para impedir concessão retroativa em eventos `PAYMENT_RECEIVED` tardios. Veja [Programa de Afiliados](AFFILIATES.md).
+
+## Commercial Engine e Entitlement Engine
+
+A migração `20261124000009_commercial_foundation.sql` é uma migração *expand* idempotente (somente `CREATE … IF NOT EXISTS` e `INSERT … ON CONFLICT DO NOTHING`, sem `ALTER TABLE`):
+
+- `commercial_catalog_offers` / `commercial_catalog_versions`: registro do catálogo visto pelos binários; hash SHA-256 imutável de cada versão vendável e guarda de transição de ciclo de vida.
+- `commercial_contracts`, `commercial_contract_items`, `commercial_contract_capabilities`: snapshot imutável de cada contratação (ciclo, desconto, preço, versão, capacidades, receita elegível a comissão). Chave estrangeira composta `(billing_reference, environment, establishment_id)` garante o mesmo tenant do checkout.
+- `entitlement_grants`: concessões explícitas auditadas (experimentação, beta, prévia interna, cortesia), com no máximo uma experimentação por oferta.
+- `establishment_operational_states`: suspensão administrativa ou de segurança (ausência de linha = ativo).
+- `domain_events`: outbox transacional ([EVENT_CONTRACTS](EVENT_CONTRACTS.md)).
+- Visão `commercial_entitlement_periods`: cobertura paga por capacidade, com a mesma regra de `billing_coverage`.
+- Backfill: cada linha existente de `billing_checkouts` vira um contrato `legacy_plan` do QR Menu v1 preservando preço, ciclo e identificadores do Asaas.
+
+`init_pool` executa as migrações com `ignore_missing = true` (binário antigo aceita banco migrado por versão mais nova; ver [ADR-010](../decisions/ADR-010-expand-contract-migrations.md)) e em seguida sincroniza o registro do catálogo, recusando a inicialização se uma versão vendida tiver mudado.

@@ -1,0 +1,155 @@
+{
+  "contract": "entitlements.capabilities",
+  "contract_version": 1,
+  "description": "Commercial capabilities an establishment can hold. Implemented by domain::entitlements::Capability; tests enforce parity. Capabilities are granted by catalog offers (modules or add-ons) and never by plan names.",
+  "capabilities": [
+    {
+      "id": "menu.publish",
+      "offer": "menu",
+      "status": "implemented",
+      "summary": "Publish or republish the static public menu snapshot (first publication and live updates)."
+    },
+    {
+      "id": "delivery.storefront.publish",
+      "offer": "delivery",
+      "status": "planned",
+      "summary": "Publish the white-label ordering storefront and its versioned catalog snapshot."
+    },
+    {
+      "id": "delivery.order.create",
+      "offer": "delivery",
+      "status": "planned",
+      "summary": "Accept new delivery or pickup orders from consumers."
+    },
+    {
+      "id": "delivery.order.manage",
+      "offer": "delivery",
+      "status": "planned",
+      "summary": "Accept, reject and progress delivery and pickup orders."
+    },
+    {
+      "id": "delivery.settings.manage",
+      "offer": "delivery",
+      "status": "planned",
+      "summary": "Manage delivery zones, fees, minimum order, coupons and service modes."
+    },
+    {
+      "id": "tables.session.manage",
+      "offer": "tables",
+      "status": "planned",
+      "summary": "Open table sessions and handle waiter calls; transfers and closing use tables.bill.manage."
+    },
+    {
+      "id": "tables.order.create",
+      "offer": "tables",
+      "status": "planned",
+      "summary": "Create in-venue orders from a controlled table session."
+    },
+    {
+      "id": "tables.bill.manage",
+      "offer": "tables",
+      "status": "planned",
+      "summary": "Close, split and settle table bills."
+    },
+    {
+      "id": "kitchen.ticket.create",
+      "offer": "kitchen",
+      "status": "planned",
+      "summary": "Create production tickets manually or from orders."
+    },
+    {
+      "id": "kitchen.ticket.manage",
+      "offer": "kitchen",
+      "status": "planned",
+      "summary": "Progress production tickets and item states on the kitchen display."
+    },
+    {
+      "id": "kitchen.station.manage",
+      "offer": "kitchen",
+      "status": "planned",
+      "summary": "Configure kitchen sectors, stations and routing rules."
+    },
+    {
+      "id": "fleet.delivery.create",
+      "offer": "fleet",
+      "status": "planned",
+      "summary": "Register deliveries, including ones originating outside QR Cardápio."
+    },
+    {
+      "id": "fleet.delivery.assign",
+      "offer": "fleet",
+      "status": "planned",
+      "summary": "Assign deliveries to couriers and track their progress."
+    },
+    {
+      "id": "fleet.driver.manage",
+      "offer": "fleet",
+      "status": "planned",
+      "summary": "Manage couriers, availability and operational payouts."
+    },
+    {
+      "id": "loyalty.points.manage",
+      "offer": "loyalty",
+      "status": "planned",
+      "summary": "Credit and debit loyalty points; reversals stay available after expiry."
+    },
+    {
+      "id": "loyalty.reward.manage",
+      "offer": "loyalty",
+      "status": "planned",
+      "summary": "Configure rewards, campaigns and redemptions."
+    },
+    {
+      "id": "analytics.reports.advanced",
+      "offer": "analytics",
+      "status": "planned",
+      "summary": "Advanced cross-channel reports and period comparisons."
+    },
+    {
+      "id": "analytics.import",
+      "offer": "analytics",
+      "status": "planned",
+      "summary": "Import historical sales from CSV."
+    },
+    {
+      "id": "pos.sale.create",
+      "offer": "pos",
+      "status": "planned",
+      "summary": "Register counter sales with non-fiscal receipts."
+    },
+    {
+      "id": "pos.cash_register.manage",
+      "offer": "pos",
+      "status": "planned",
+      "summary": "Open cash register sessions and register withdrawals and supplies; closing stays available after expiry."
+    },
+    {
+      "id": "connect.api.use",
+      "offer": "connect",
+      "status": "planned",
+      "summary": "Use the versioned commercial REST API with scoped credentials."
+    },
+    {
+      "id": "connect.webhook.manage",
+      "offer": "connect",
+      "status": "planned",
+      "summary": "Manage outbound webhooks to external systems."
+    },
+    {
+      "id": "branding.custom_domain",
+      "offer": "custom_domain",
+      "status": "planned",
+      "summary": "Serve public pages from an establishment-owned domain."
+    }
+  ],
+  "reclassified": [
+    {
+      "id": "menu.update",
+      "decision": "Merged into menu.publish. Owners update a live menu by republishing; draft editing is a free QR Core catalog operation and was never gated."
+    },
+    {
+      "id": "menu.qr.generate",
+      "decision": "Reclassified as a free QR Core operation. QR codes point to the permanent /c/{slug} URL and were generated without a subscription before this change; gating them would break existing customers."
+    }
+  ]
+}

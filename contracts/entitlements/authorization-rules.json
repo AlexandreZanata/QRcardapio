@@ -1,0 +1,520 @@
+{
+  "contract": "entitlements.authorization_rules",
+  "contract_version": 1,
+  "description": "Operations, the member roles allowed to perform them, the commercial capability they require and their behavior after a module expires. Implemented operations are enforced by application::entitlements::authorize and domain::entitlements::{Operation, MemberRole}; tests enforce parity. Planned rows are design contracts only.",
+  "evaluation_order": [
+    "module_lifecycle",
+    "establishment_operational_state",
+    "member_permission",
+    "deployment_enforcement",
+    "commercial_entitlement"
+  ],
+  "roles": [
+    {
+      "role": "owner",
+      "scope": "establishment",
+      "status": "implemented"
+    },
+    {
+      "role": "manager",
+      "scope": "establishment",
+      "status": "implemented"
+    },
+    {
+      "role": "platform_admin",
+      "scope": "platform",
+      "status": "implemented"
+    },
+    {
+      "role": "cashier",
+      "scope": "establishment",
+      "status": "planned"
+    },
+    {
+      "role": "waiter",
+      "scope": "establishment",
+      "status": "planned"
+    },
+    {
+      "role": "kitchen_operator",
+      "scope": "establishment",
+      "status": "planned"
+    },
+    {
+      "role": "courier",
+      "scope": "establishment",
+      "status": "planned"
+    },
+    {
+      "role": "consumer",
+      "scope": "storefront",
+      "status": "planned"
+    },
+    {
+      "role": "integration_credential",
+      "scope": "establishment",
+      "status": "planned"
+    },
+    {
+      "role": "system",
+      "scope": "platform",
+      "status": "planned",
+      "notes": "Idempotent outbox consumers acting for one establishment. They run only when the triggering event was produced under a valid operation and re-check the consumer module's own capability."
+    }
+  ],
+  "after_expiry_values": {
+    "deny": "Creates new protected commercial activity; requires an active capability.",
+    "allow": "Free QR Core operation or completion/reversal of existing work; never requires a capability.",
+    "complete_existing": "Allowed only for operations already started while the capability was active; never creates new work."
+  },
+  "operations": [
+    {
+      "operation": "menu.publish",
+      "status": "implemented",
+      "roles": [
+        "owner",
+        "manager"
+      ],
+      "capability": "menu.publish",
+      "after_expiry": "deny",
+      "surfaces": [
+        "dashboard",
+        "mcp"
+      ],
+      "notes": "MCP narrows the role set to owners through the menu.write OAuth grant."
+    },
+    {
+      "operation": "menu.unpublish",
+      "status": "implemented",
+      "roles": [
+        "owner",
+        "manager"
+      ],
+      "capability": null,
+      "after_expiry": "allow",
+      "surfaces": [
+        "dashboard",
+        "mcp"
+      ]
+    },
+    {
+      "operation": "menu.draft.edit",
+      "status": "implemented",
+      "roles": [
+        "owner",
+        "manager"
+      ],
+      "capability": null,
+      "after_expiry": "allow",
+      "surfaces": [
+        "dashboard",
+        "mcp"
+      ]
+    },
+    {
+      "operation": "billing.view",
+      "status": "implemented",
+      "roles": [
+        "owner",
+        "manager"
+      ],
+      "capability": null,
+      "after_expiry": "allow",
+      "surfaces": [
+        "dashboard"
+      ]
+    },
+    {
+      "operation": "billing.manage",
+      "status": "implemented",
+      "roles": [
+        "owner"
+      ],
+      "capability": null,
+      "after_expiry": "allow",
+      "surfaces": [
+        "dashboard"
+      ]
+    },
+    {
+      "operation": "delivery.storefront.publish",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager"
+      ],
+      "capability": "delivery.storefront.publish",
+      "after_expiry": "deny"
+    },
+    {
+      "operation": "delivery.order.place",
+      "status": "planned",
+      "roles": [
+        "consumer"
+      ],
+      "capability": "delivery.order.create",
+      "after_expiry": "deny"
+    },
+    {
+      "operation": "delivery.order.progress",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager",
+        "cashier",
+        "waiter"
+      ],
+      "capability": "delivery.order.manage",
+      "after_expiry": "complete_existing"
+    },
+    {
+      "operation": "delivery.order.refund",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager"
+      ],
+      "capability": null,
+      "after_expiry": "allow"
+    },
+    {
+      "operation": "delivery.settings.update",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager"
+      ],
+      "capability": "delivery.settings.manage",
+      "after_expiry": "deny"
+    },
+    {
+      "operation": "tables.session.open",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager",
+        "waiter"
+      ],
+      "capability": "tables.session.manage",
+      "after_expiry": "deny"
+    },
+    {
+      "operation": "tables.bill.close",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager",
+        "waiter",
+        "cashier"
+      ],
+      "capability": "tables.bill.manage",
+      "after_expiry": "complete_existing"
+    },
+    {
+      "operation": "kitchen.ticket.progress",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager",
+        "kitchen_operator",
+        "waiter",
+        "courier"
+      ],
+      "capability": "kitchen.ticket.manage",
+      "after_expiry": "complete_existing"
+    },
+    {
+      "operation": "fleet.delivery.assign",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager"
+      ],
+      "capability": "fleet.delivery.assign",
+      "after_expiry": "complete_existing"
+    },
+    {
+      "operation": "fleet.delivery.complete",
+      "status": "planned",
+      "roles": [
+        "courier",
+        "owner",
+        "manager"
+      ],
+      "capability": null,
+      "after_expiry": "allow",
+      "notes": "Couriers record their own deliveries; owners and managers may record on their behalf."
+    },
+    {
+      "operation": "loyalty.points.credit",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager",
+        "cashier"
+      ],
+      "capability": "loyalty.points.manage",
+      "after_expiry": "deny"
+    },
+    {
+      "operation": "loyalty.points.reverse",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager"
+      ],
+      "capability": null,
+      "after_expiry": "allow"
+    },
+    {
+      "operation": "analytics.report.advanced",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager"
+      ],
+      "capability": "analytics.reports.advanced",
+      "after_expiry": "deny"
+    },
+    {
+      "operation": "data.export",
+      "status": "planned",
+      "roles": [
+        "owner"
+      ],
+      "capability": null,
+      "after_expiry": "allow",
+      "notes": "QR Core operation (LGPD export). Never tied to a module lifecycle."
+    },
+    {
+      "operation": "pos.sale.register",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager",
+        "cashier"
+      ],
+      "capability": "pos.sale.create",
+      "after_expiry": "deny"
+    },
+    {
+      "operation": "pos.cash_register.close",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager",
+        "cashier"
+      ],
+      "capability": null,
+      "after_expiry": "allow"
+    },
+    {
+      "operation": "connect.api.call",
+      "status": "planned",
+      "roles": [
+        "integration_credential"
+      ],
+      "capability": "connect.api.use",
+      "after_expiry": "deny"
+    },
+    {
+      "operation": "delivery.order.cancel",
+      "status": "planned",
+      "roles": [
+        "consumer"
+      ],
+      "capability": null,
+      "after_expiry": "allow",
+      "notes": "Consumer cancellation while the order is still placed."
+    },
+    {
+      "operation": "tables.order.place",
+      "status": "planned",
+      "roles": [
+        "consumer",
+        "waiter",
+        "owner",
+        "manager"
+      ],
+      "capability": "tables.order.create",
+      "after_expiry": "deny"
+    },
+    {
+      "operation": "tables.waiter.call",
+      "status": "planned",
+      "roles": [
+        "consumer"
+      ],
+      "capability": "tables.session.manage",
+      "after_expiry": "deny"
+    },
+    {
+      "operation": "tables.item.transfer",
+      "status": "planned",
+      "roles": [
+        "waiter",
+        "owner",
+        "manager"
+      ],
+      "capability": "tables.bill.manage",
+      "after_expiry": "complete_existing"
+    },
+    {
+      "operation": "kitchen.ticket.create",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager",
+        "kitchen_operator",
+        "waiter",
+        "cashier"
+      ],
+      "capability": "kitchen.ticket.create",
+      "after_expiry": "deny",
+      "notes": "Manual tickets; tickets created from orders are produced by the system role."
+    },
+    {
+      "operation": "kitchen.station.configure",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager"
+      ],
+      "capability": "kitchen.station.manage",
+      "after_expiry": "deny"
+    },
+    {
+      "operation": "fleet.delivery.register",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager"
+      ],
+      "capability": "fleet.delivery.create",
+      "after_expiry": "deny",
+      "notes": "Includes deliveries originating outside QR Cardápio."
+    },
+    {
+      "operation": "fleet.courier.manage",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager"
+      ],
+      "capability": "fleet.driver.manage",
+      "after_expiry": "deny"
+    },
+    {
+      "operation": "loyalty.points.debit",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager",
+        "cashier"
+      ],
+      "capability": "loyalty.points.manage",
+      "after_expiry": "deny"
+    },
+    {
+      "operation": "loyalty.reward.configure",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager"
+      ],
+      "capability": "loyalty.reward.manage",
+      "after_expiry": "deny"
+    },
+    {
+      "operation": "loyalty.reward.redeem",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager",
+        "cashier"
+      ],
+      "capability": "loyalty.reward.manage",
+      "after_expiry": "deny"
+    },
+    {
+      "operation": "analytics.import.run",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager"
+      ],
+      "capability": "analytics.import",
+      "after_expiry": "deny"
+    },
+    {
+      "operation": "pos.cash_register.open",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager",
+        "cashier"
+      ],
+      "capability": "pos.cash_register.manage",
+      "after_expiry": "deny"
+    },
+    {
+      "operation": "pos.cash_movement.register",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager",
+        "cashier"
+      ],
+      "capability": "pos.cash_register.manage",
+      "after_expiry": "complete_existing",
+      "notes": "Withdrawals (sangria) and supplies (suprimento) on an open session."
+    },
+    {
+      "operation": "pos.sale.cancel",
+      "status": "planned",
+      "roles": [
+        "owner",
+        "manager"
+      ],
+      "capability": null,
+      "after_expiry": "allow"
+    },
+    {
+      "operation": "connect.credential.issue",
+      "status": "planned",
+      "roles": [
+        "owner"
+      ],
+      "capability": "connect.api.use",
+      "after_expiry": "deny"
+    },
+    {
+      "operation": "connect.credential.revoke",
+      "status": "planned",
+      "roles": [
+        "owner"
+      ],
+      "capability": null,
+      "after_expiry": "allow"
+    },
+    {
+      "operation": "connect.webhook.configure",
+      "status": "planned",
+      "roles": [
+        "owner"
+      ],
+      "capability": "connect.webhook.manage",
+      "after_expiry": "deny"
+    },
+    {
+      "operation": "branding.custom_domain.configure",
+      "status": "planned",
+      "roles": [
+        "owner"
+      ],
+      "capability": "branding.custom_domain",
+      "after_expiry": "deny"
+    }
+  ],
+  "suspension": "Administrative and security suspension block operations whose after_expiry is deny. Operations marked allow or complete_existing (unpublishing, regularizing billing, closing cash sessions, revoking credentials, exports) stay available."
+}

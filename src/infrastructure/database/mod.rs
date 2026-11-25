@@ -40,10 +40,16 @@ pub async fn init_pool(config: &Config) -> AppResult<SqlitePool> {
         "SQLite database pool initialized"
     );
 
-    MIGRATOR
+    // Rollback-tolerant: a binary may start on a database migrated by a newer release,
+    // which is safe because schema changes follow expand-contract (ADR-010).
+    let mut migrator = sqlx::migrate::Migrator::with_migrations(MIGRATOR.iter().cloned().collect());
+    migrator.set_ignore_missing(true);
+    migrator
         .run(&pool)
         .await
         .map_err(|e| AppError::Internal(format!("migration failed: {e}")))?;
+
+    queries::commercial_catalog::sync_registry(&pool, crate::domain::commercial::catalog()).await?;
 
     Ok(pool)
 }

@@ -7,18 +7,21 @@ use serde::Deserialize;
 use uuid::Uuid;
 
 use crate::app::AppState;
-use crate::application::billing;
+use crate::application::entitlements::Enforcement;
+use crate::application::{billing, commercial};
 use crate::domain::account::AccountRole;
 use crate::domain::billing::{BillingPlan, billing_now};
+use crate::domain::commercial::ENTRY_OFFER;
+use crate::domain::entitlements::{Operation, OperationalStatus};
 use crate::error::{AppError, AppResult};
 use crate::http::handlers::{dashboard::CsrfForm, onboarding::PlanIntent};
 use crate::http::middleware::auth::{TenantContext, verify_csrf};
 use crate::http::middleware::locale::RequestLocale;
 use crate::http::responses::{take_flash, with_flash_redirect};
 use crate::infrastructure::asaas::{AsaasClient, BILLING_PATH, Webhook};
-use crate::infrastructure::database::queries::{billing as queries, is_establishment_owner};
+use crate::infrastructure::database::queries::{billing as queries, entitlements};
 use crate::infrastructure::security::constant_time_eq;
-use crate::rendering::billing::{BillingTemplate, PlanOffer};
+use crate::rendering::billing::{BillingTemplate, ModuleCard, PlanOffer};
 use crate::rendering::{PageMeta, render_html};
 
 pub async fn page(
@@ -31,10 +34,20 @@ pub async fn page(
     let client = configured_client(&state)?;
     let env = client.config().environment.as_str();
     let est = &tenant.establishment.id;
-    let is_owner = is_establishment_owner(&state.pool, est, &tenant.auth.account.id).await?;
-    let (current, coverage) = tokio::try_join!(
+    let is_owner = Operation::ManageBilling.permits(tenant.role);
+    let today = billing_now().date_naive();
+    let status = entitlements::operational_status(&state.pool, est).await?;
+    let suspended = OperationalStatus::parse(&status) != Some(OperationalStatus::Active);
+    let (current, coverage, modules) = tokio::try_join!(
         queries::current_checkout(&state.pool, env, est),
-        queries::paid_coverage(&state.pool, env, est, billing_now().date_naive()),
+        queries::paid_coverage(&state.pool, env, est, today),
+        commercial::module_overview(
+            &state.pool,
+            Enforcement::from_gateway(Some(client)),
+            est,
+            suspended,
+            today,
+        ),
     )?;
     let paid_through = coverage.as_ref().map(|row| row.paid_through);
     let selected = intent.selected().unwrap_or_default();
@@ -83,6 +96,7 @@ pub async fn page(
             .as_ref()
             .is_some_and(|row| row.checkout_status == "paid" && row.subscription_id.is_none()),
         cancellable_id: current.and_then(|row| row.subscription_id),
+        modules: modules.into_iter().map(ModuleCard::from_overview).collect(),
     };
     Ok((jar, render_html(&tpl, StatusCode::OK)?).into_response())
 }
@@ -91,6 +105,7 @@ pub async fn page(
 pub struct CheckoutForm {
     _csrf: String,
     plan: Option<String>,
+    offer: Option<String>,
 }
 
 pub async fn checkout(
@@ -107,12 +122,15 @@ pub async fn checkout(
             BillingPlan::from_key(key).ok_or(AppError::Validation("error.billing_plan_invalid"))?
         }
     };
+    // Amounts are never accepted from the browser: only offer codes and a cycle.
+    let offer = commercial::parse_offer(form.offer.as_deref().unwrap_or(ENTRY_OFFER))?;
+    let quote = commercial::quote_checkout(&[offer], plan)?;
     billing::start_checkout(
         &state.pool,
         client,
         &state.config.public_base_url,
         &tenant.establishment.id,
-        plan,
+        &quote,
     )
     .await?;
     Ok(Redirect::to(BILLING_PATH))
@@ -207,13 +225,7 @@ fn configured_client(state: &AppState) -> AppResult<&AsaasClient> {
 }
 
 async fn authorize_mutation(state: &AppState, tenant: &TenantContext) -> AppResult<()> {
-    if !is_establishment_owner(
-        &state.pool,
-        &tenant.establishment.id,
-        &tenant.auth.account.id,
-    )
-    .await?
-    {
+    if !Operation::ManageBilling.permits(tenant.role) {
         return Err(AppError::Forbidden("error.billing_owner_required"));
     }
     if state

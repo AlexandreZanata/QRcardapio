@@ -1,0 +1,81 @@
+{
+  "contract": "modules.connect",
+  "contract_version": 1,
+  "module": "connect",
+  "status": "planned",
+  "phase": 11,
+  "standalone": true,
+  "core_dependencies": [
+    "identity",
+    "establishments",
+    "members",
+    "tenancy",
+    "commercial",
+    "entitlements",
+    "events",
+    "usage_metering"
+  ],
+  "optional_integrations": [
+    "menu",
+    "delivery",
+    "tables",
+    "kitchen",
+    "fleet",
+    "loyalty",
+    "analytics",
+    "pos"
+  ],
+  "capabilities": [
+    "connect.api.use",
+    "connect.webhook.manage"
+  ],
+  "operations": [
+    "connect.api.call",
+    "connect.credential.issue",
+    "connect.credential.revoke",
+    "connect.webhook.configure"
+  ],
+  "entities": [
+    "IntegrationCredential",
+    "CredentialScope",
+    "WebhookEndpoint",
+    "WebhookDelivery",
+    "ApiRequestLog",
+    "IdempotencyRecord"
+  ],
+  "state_machines": [],
+  "events": {
+    "publishes": [],
+    "consumes": [
+      "CatalogPublished",
+      "OrderCreated",
+      "OrderAccepted",
+      "OrderCompleted",
+      "OrderCancelled",
+      "PaymentConfirmed",
+      "PaymentRefunded",
+      "DeliveryCompleted"
+    ]
+  },
+  "http": [
+    {
+      "method": "GET",
+      "path": "/api/v1/openapi.json",
+      "audience": "integration_credential",
+      "status": "planned"
+    },
+    {
+      "method": "GET",
+      "path": "/dashboard/integrations/credentials",
+      "audience": "member",
+      "status": "planned"
+    }
+  ],
+  "after_expiry": "Credentials stop authenticating and webhooks stop. Existing MCP connections granted before this module keep their menu.read and menu.write scopes.",
+  "release_gates": [
+    "credentials hashed at rest and revocable",
+    "per-credential rate limits",
+    "OpenAPI published only for implemented endpoints",
+    "existing MCP grants unaffected"
+  ]
+}

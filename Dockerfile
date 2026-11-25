@@ -14,6 +14,7 @@ COPY templates ./templates
 COPY static ./static
 COPY i18n ./i18n
 COPY migrations ./migrations
+COPY contracts ./contracts
 
 RUN cargo build --release --locked
 

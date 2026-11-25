@@ -145,3 +145,39 @@ O QR da arte já imprime `https://qrcardapio.com.br/#demonstracao`. A home encam
 - **Reativar autodeploy**: `touch /etc/qrcardapio/auto-deploy.enabled`
 - **Executar imediatamente**: `systemctl start qrcardapio-deploy.service && journalctl -u qrcardapio-deploy.service -n 50 --no-pager`
 - **Rollback manual instantâneo**: `ln -sfn /opt/qrcardapio/releases/<sha-anterior> /opt/qrcardapio/current && systemctl restart qrcardapio.service`
+
+## Commercial operations
+
+All commands require an existing platform admin (`qrcardapio admin create`) and append an audit event to `domain_events` in the same transaction.
+
+```bash
+# Explicit grant of a module or recurring add-on (trial <= 31 days, one per offer; courtesy/beta/internal_preview <= 366 days)
+qrcardapio operator grant --operator admin@example.com --slug bar-k7m2 --offer menu --kind courtesy --days 30 --reason "pilot"
+# Revoke (other sources of the same capability, such as a paid contract, stay active)
+qrcardapio operator revoke --operator admin@example.com --slug bar-k7m2 --grant-id <uuid>
+# Suspend new protected operations (publishing); published menu, data, unpublish and billing stay available
+qrcardapio operator suspend --operator admin@example.com --slug bar-k7m2 --kind security --reason "phishing report"
+qrcardapio operator reinstate --operator admin@example.com --slug bar-k7m2 --reason "resolved"
+```
+
+Planned modules (`delivery`, `tables`, …) cannot be granted: the lifecycle refuses it. Launching a module or changing a price is a code change in `contracts/commercial/` ([MODULE_CATALOG](../business/MODULE_CATALOG.md#changing-the-catalog)); the binary refuses to start if a sold version was edited or a lifecycle moved illegally — fix the contract, never the registry tables.
+
+Useful read-only checks:
+
+```bash
+sqlite3 /data/db/qrcardapio.sqlite "SELECT id, origin, cycle_code, total_centavos, activated_at FROM commercial_contracts WHERE establishment_id = '<id>' ORDER BY created_at DESC;"
+sqlite3 /data/db/qrcardapio.sqlite "SELECT seq, event_type, aggregate_id, occurred_at FROM domain_events WHERE establishment_id = '<id>' ORDER BY seq;"
+```
+
+`republish-all` (run by the deploy agent) re-renders only menus without pending draft changes; establishments with unpublished edits keep their live snapshot until the owner publishes.
+
+## Rollback of the commercial foundation release
+
+Releases from this one on run migrations with `ignore_missing = true`, so later rollbacks to them are a symlink switch. Binaries released **before** it reject the new migration `20261124000009` (`VersionMissing`) and will not start after an automatic rollback. The new tables are additive, so the safe manual procedure is:
+
+1. Stop the service and take a backup: `qrcardapio db backup --output /var/backups/qrcardapio/pre-rollback.sqlite`.
+2. Remove only the migration bookkeeping row: `sqlite3 /data/db/qrcardapio.sqlite "DELETE FROM _sqlx_migrations WHERE version = 20261124000009;"`. Do not drop the new tables.
+3. Point `/opt/qrcardapio/current` to the previous release and start it. It ignores the commercial tables; checkouts it creates have no contract yet.
+4. On roll-forward the idempotent migration runs again and backfills contracts for any checkout created meanwhile (as `legacy_plan`, QR Menu v1, original price).
+
+Alternative: restore the pre-deploy backup taken by the deploy agent (`/var/backups/qrcardapio/pre-<sha>-*.sqlite`), accepting the loss of writes made after the deploy, then replay missed Asaas webhooks from the Asaas dashboard.

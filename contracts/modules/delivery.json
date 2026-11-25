@@ -1,0 +1,177 @@
+{
+  "contract": "modules.delivery",
+  "contract_version": 1,
+  "module": "delivery",
+  "status": "planned",
+  "phase": 4,
+  "standalone": true,
+  "core_dependencies": [
+    "identity",
+    "establishments",
+    "members",
+    "tenancy",
+    "i18n",
+    "catalog",
+    "media",
+    "commercial",
+    "entitlements",
+    "events",
+    "business_hours",
+    "commercial_settings",
+    "customers",
+    "addresses",
+    "orders",
+    "order_payments",
+    "notifications"
+  ],
+  "optional_integrations": [
+    "menu",
+    "kitchen",
+    "fleet",
+    "loyalty",
+    "analytics",
+    "connect"
+  ],
+  "capabilities": [
+    "delivery.storefront.publish",
+    "delivery.order.create",
+    "delivery.order.manage",
+    "delivery.settings.manage"
+  ],
+  "operations": [
+    "delivery.storefront.publish",
+    "delivery.order.place",
+    "delivery.order.progress",
+    "delivery.order.refund",
+    "delivery.settings.update",
+    "delivery.order.cancel"
+  ],
+  "entities": [
+    "Storefront",
+    "StorefrontSnapshot",
+    "Cart (client-side, per establishment)",
+    "Order",
+    "OrderItem",
+    "OrderItemOption",
+    "OrderPayment",
+    "Customer",
+    "Address",
+    "DeliveryZone",
+    "Coupon",
+    "CheckoutAttempt"
+  ],
+  "state_machines": [
+    "order",
+    "order_payment"
+  ],
+  "events": {
+    "publishes": [
+      "CatalogPublished",
+      "OrderCreated",
+      "OrderAccepted",
+      "OrderRejected",
+      "OrderReady",
+      "OrderCompleted",
+      "OrderCancelled",
+      "PaymentConfirmed",
+      "PaymentRefunded",
+      "OrderPreparing"
+    ],
+    "consumes": [
+      "KitchenTicketReady",
+      "DeliveryCompleted",
+      "DeliveryFailed",
+      "KitchenTicketStarted",
+      "KitchenTicketCreated",
+      "DeliveryCreated"
+    ]
+  },
+  "http": [
+    {
+      "method": "GET",
+      "path": "/s/{slug}",
+      "audience": "consumer",
+      "status": "planned"
+    },
+    {
+      "method": "GET",
+      "path": "/s/{slug}/catalog.v{version}.json",
+      "audience": "consumer",
+      "status": "planned"
+    },
+    {
+      "method": "POST",
+      "path": "/api/storefront/v1/{slug}/quotes",
+      "audience": "consumer",
+      "status": "planned"
+    },
+    {
+      "method": "POST",
+      "path": "/api/storefront/v1/{slug}/orders",
+      "audience": "consumer",
+      "status": "planned"
+    },
+    {
+      "method": "GET",
+      "path": "/api/storefront/v1/{slug}/orders/{order_id}",
+      "audience": "consumer",
+      "status": "planned"
+    },
+    {
+      "method": "GET",
+      "path": "/dashboard/delivery/orders",
+      "audience": "member",
+      "status": "planned"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/delivery/orders/{id}/transition",
+      "audience": "member",
+      "status": "planned"
+    },
+    {
+      "method": "GET",
+      "path": "/dashboard/delivery/settings",
+      "audience": "member",
+      "status": "planned"
+    },
+    {
+      "method": "POST",
+      "path": "/api/storefront/v1/{slug}/orders/{order_id}/cancel",
+      "audience": "consumer",
+      "status": "planned"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/delivery/settings",
+      "audience": "member",
+      "status": "planned"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/delivery/publish",
+      "audience": "member",
+      "status": "planned"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/delivery/orders/{id}/payments/{payment_id}/confirm",
+      "audience": "member",
+      "status": "planned"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/delivery/orders/{id}/refunds",
+      "audience": "member",
+      "status": "planned"
+    }
+  ],
+  "after_expiry": "No new orders or storefront publications. Orders already placed can still be accepted or rejected; accepted orders can be completed, cancelled and refunded; history and exports stay available.",
+  "release_gates": [
+    "Commerce Core order engine with idempotent checkout",
+    "price and availability revalidation against the published snapshot",
+    "per-establishment service worker and cart isolation",
+    "load test of concurrent order writes",
+    "LGPD export and erasure for customers"
+  ]
+}
