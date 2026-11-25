@@ -1,3 +1,5 @@
+#[path = "event_dispatcher/http_contract.rs"]
+mod http_contract;
 #[path = "event_dispatcher/replay.rs"]
 mod replay;
 #[path = "commercial/support.rs"]

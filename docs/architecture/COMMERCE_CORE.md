@@ -2,7 +2,7 @@
 
 ## Status
 
-**In progress, Increment 3.** Commerce Core belongs to QR Core, the free shared foundation listed in [`contracts/core/components.json`](../../contracts/core/components.json). The third increment adds internal checkout, offline collection and refunds, event dispatch with compensation and acceptance expiry, and optional staff Web Push. Channel-facing authorization and public ordering routes arrive with the channel modules.
+**In progress.** Commerce Core belongs to QR Core, the free shared foundation listed in [`contracts/core/components.json`](../../contracts/core/components.json). The third increment adds internal checkout, offline collection and refunds, event dispatch with compensation and acceptance expiry, and optional staff Web Push. The performance and operational increments add capacity evidence, audited replay and a versioned HTTP contract for the outbox. Channel-facing authorization and public ordering routes arrive with the channel modules.
 
 Implemented foundation it builds on: `src/domain/commercial/`, `src/domain/entitlements/` (`Capability`, `MemberRole`, `Operation`, `OperationalStatus`, `GrantKind`, `resolve`), `src/application/{commercial,entitlements,operator}.rs`, migration `20261124000009_commercial_foundation.sql` and the `domain_events` outbox.
 
@@ -396,6 +396,7 @@ Items 1–4, 6 and 9 are implemented in Increment 1. Item 17 is implemented for 
 
 1. Expose the dead-letter recovery page in the platform admin panel and protect replay requests with the authenticated admin session and CSRF.
 2. Audit scheduling atomically and reuse the dispatcher's retries, receipts and aggregate ordering. See the [operator procedure](../operations/RUNBOOK.md#reprocessamento-de-eventos-do-outbox).
+3. Version the three implemented outbox routes in the [Commerce Core OpenAPI contract](../../contracts/openapi/commerce.v1.json). Check diagnostics and replay behavior against the application router, including admin authorization, CSRF, private response headers and stale generations.
 
 ## 16. Decisions still open
 

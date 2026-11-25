@@ -73,6 +73,8 @@ All `POST` routes verify `_csrf` against the server session's `csrf_token` in co
 | `GET` | `/admin/outbox/recovery` | `AdminContext` | `no-store` dead-letter recovery page with event and consumer identifiers. |
 | `POST` | `/admin/outbox/replay` | `AdminContext` and CSRF | Form fields `consumer`, `event_id`, `generation` and `_csrf`. `303` after scheduling, `409` if the observed dead letter can no longer be scheduled. |
 
+The [Commerce Core OpenAPI contract v1](../../contracts/openapi/commerce.v1.json) specifies the session cookie, replay form, diagnostics fields and response headers for these three outbox routes.
+
 ## Assinatura Asaas
 
 - Com o Asaas configurado, o modal do plano encaminha pelo cadastro, login ou configuração do estabelecimento. `GET` e `POST` de `/register`, `/login` e `/onboarding` preservam `?plan=monthly`, `?plan=semiannual` ou `?plan=annual` nos formulários e encaminham a `/dashboard/billing` com o período escolhido após a configuração. Links antigos com `?plan=1` seguem para o mensal. Os destinos são rotas fixas do sistema.

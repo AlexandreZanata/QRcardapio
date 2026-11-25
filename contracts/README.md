@@ -10,10 +10,13 @@ Versioned, validated contracts shared by the code, the tests and the documentati
 | `entitlements/authorization-rules.json` | Operations, roles, after-expiry behavior | Implemented rows mirror `Operation`/`MemberRole`; planned rows are design contracts | Parity test |
 | `events/registry.json`, `events/schemas/*.json` | Domain events | Event names, versions, payload schemas | Parity test (`domain::events::EventType`) |
 | `commerce/state-machines.json` | Commerce Core state machines (planned) | Order, payment, preparation, delivery, table session, cash session | Consistency test, `docs/architecture/COMMERCE_CORE.md` |
+| `openapi/commerce.v1.json` | Commerce Core admin HTTP contract | Outbox diagnostics, recovery page and replay submission | `cargo test --locked --test event_dispatcher http_contract` |
 | `core/components.json` | QR Core components and free-tier limits | Allowed module dependencies | Module contract test |
 | `modules/<code>.json` | Per-module contract | Capabilities, operations, events, entities, planned HTTP surface, release gates | Module contract test, `docs/modules/<CODE>.md` |
 | `mcp/`, `auth/` | Existing MCP and Google sign-in contracts | — | `tests/mcp.rs`, Google tests |
 
 ## OpenAPI
 
-No commercial JSON API exists yet: the dashboard uses server-rendered forms, and the only machine interface is the MCP connector (`mcp/tools.json`). OpenAPI documents (`openapi/commercial.yaml`, `commerce.yaml`, `storefront.yaml`) will be generated only for endpoints that are implemented, starting with Commerce Core (phase 3) and QR Connect (phase 11). Planned endpoints are listed with `"status": "planned"` in `modules/*.json` and must never be published as available APIs.
+The [Commerce Core OpenAPI contract](openapi/commerce.v1.json) versions the private outbox interface. It covers the diagnostic JSON, the recovery page and the form that schedules a replay. Its version is independent of the existing admin URLs. The HTTP contract tests compare the document to responses from the application router.
+
+OpenAPI documents describe implemented endpoints. Planned module endpoints are tracked in `modules/*.json` with `"status": "planned"`.

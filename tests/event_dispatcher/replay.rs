@@ -10,7 +10,7 @@ const NOTIFICATIONS: Consumer = Consumer {
     name: "commerce.notifications",
     ..MAIN
 };
-const FAILING: Consumer = Consumer {
+pub(super) const FAILING: Consumer = Consumer {
     handle: |tx, event| Box::pin(fail_selected(tx, event)),
     ..NOTIFICATIONS
 };
@@ -20,7 +20,7 @@ const OTHER: Consumer = Consumer {
     ..MAIN
 };
 
-async fn admin_login(pool: &SqlitePool) -> AuthSuccess {
+pub(super) async fn admin_login(pool: &SqlitePool) -> AuthSuccess {
     let email = "outbox-admin@example.test";
     support::admin(pool, email).await;
     auth::login(pool, &PasswordService::new(), email, "AdminPassword123")
@@ -28,7 +28,7 @@ async fn admin_login(pool: &SqlitePool) -> AuthSuccess {
         .unwrap()
 }
 
-async fn mark_dead(pool: &SqlitePool) {
+pub(super) async fn mark_dead(pool: &SqlitePool) {
     let mut tx = begin_immediate(pool).await.unwrap();
     event_consumers::record_failure(&mut tx, NOTIFICATIONS.name, 1, 10, None, "error.internal")
         .await

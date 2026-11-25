@@ -103,6 +103,8 @@ Phases 4 to 11 run one at a time. Each module reaches `available` and is consoli
 
 **Deliverables.** Catalog variations, add-on groups and options; customers and addresses (establishment-scoped, LGPD export and erasure); the `Order` aggregate and state machines from `contracts/commerce/state-machines.json`; idempotent order creation; offline `order_payments`; outbox dispatcher with per-consumer checkpoints, retries with backoff and a dead-letter table; business hours and commercial settings; versioned REST contracts.
 
+The [Commerce Core OpenAPI contract v1](../../contracts/openapi/commerce.v1.json) describes the implemented administrative outbox interface. Channel-facing ordering contracts are listed under their respective module phases.
+
 **Completion criteria.** State-machine transitions tested exhaustively, including illegal transitions; idempotency keys tested against retries and concurrent submissions; dispatcher at-least-once delivery with idempotent consumers tested; tenant isolation tests on every new table; integer totals reconcile to the centavo; load test of concurrent order writes on the 1 vCPU target; no sellable module change.
 
 ## Phase 4 — QR Delivery

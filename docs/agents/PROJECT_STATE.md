@@ -79,6 +79,7 @@ The product owner authorized Phase 3 production work in writing on 2026-11-25 wh
 - Both Increment 2 and Increment 3 release binaries started on the migrated SQLite database. The local durable checkout and full-size outbox benchmarks missed the throughput gates in Increment 3.
 - The capacity pass uses a tenant-scoped read for committed checkout replays and rechecks misses inside the write transaction. The dispatcher commits bounded scans and grouped receipts in one transaction per pass. In the isolated VPS environment, 185 tests passed, and the candidate met the measured checkout, mixed traffic, outbox and Web Push thresholds. [VPS evidence](../performance/PERFORMANCE.md#vps-capacity-validation)
 - The platform admin panel exposes dead-letter replay with CSRF, generation checks and an audit record. The worker preserves receipts and aggregate order when it processes the original event. The replay candidate passed 187 functional tests and an HTTP recovery and binary rollback check on the VPS. [Recovery runbook](../operations/RUNBOOK.md#reprocessamento-de-eventos-do-outbox) · [VPS replay validation](../performance/PERFORMANCE.md#vps-replay-validation)
+- The versioned Commerce Core OpenAPI contract covers diagnostics and replay through the existing platform admin routes. It passed validation against the official OpenAPI 3.1 schema on the VPS, along with 189 functional tests. Two router tests check the documented JSON, form and response behavior. [OpenAPI v1](../../contracts/openapi/commerce.v1.json)
 
 ## Landing and Panel Refresh
 
