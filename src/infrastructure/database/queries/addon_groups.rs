@@ -145,3 +145,18 @@ pub async fn unlink_from_product(
     tx.commit().await?;
     Ok(true)
 }
+
+pub async fn linked_ids(
+    pool: &SqlitePool,
+    est_id: &str,
+    product_id: &str,
+) -> AppResult<Vec<String>> {
+    Ok(sqlx::query_scalar(
+        "SELECT group_id FROM product_addon_groups WHERE product_id = ? AND establishment_id = ?
+         ORDER BY position, group_id",
+    )
+    .bind(product_id)
+    .bind(est_id)
+    .fetch_all(pool)
+    .await?)
+}

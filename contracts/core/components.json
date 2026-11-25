@@ -41,7 +41,7 @@
     {
       "id": "catalog",
       "status": "partial",
-      "summary": "Categories, products, tenant-scoped variations and add-ons, and published Commerce Core snapshots are implemented. Editing options in the dashboard is planned."
+      "summary": "Categories, products, tenant-scoped variations and add-ons, and published Commerce Core snapshots are implemented. Dashboard editing for variations, add-ons and product links is implemented."
     },
     {
       "id": "media",
@@ -75,23 +75,23 @@
     },
     {
       "id": "business_hours",
-      "status": "planned",
-      "summary": "Weekly hours, exceptions and holiday overrides per establishment."
+      "status": "implemented",
+      "summary": "Establishment-scoped weekly windows, date exceptions, holidays and timezone-aware service evaluation."
     },
     {
       "id": "commercial_settings",
-      "status": "planned",
-      "summary": "Service modes, minimum order, fees and checkout settings."
+      "status": "partial",
+      "summary": "Service modes, minimum order, acceptance window and manual pause are editable. Delivery fees and checkout integration are planned."
     },
     {
       "id": "customers",
-      "status": "planned",
-      "summary": "Establishment-scoped consumer records with LGPD export and erasure."
+      "status": "implemented",
+      "summary": "Establishment-scoped customer records, normalized phones, and owner-only LGPD export and erasure."
     },
     {
       "id": "addresses",
-      "status": "planned",
-      "summary": "Consumer delivery addresses scoped to one establishment."
+      "status": "partial",
+      "summary": "Establishment-scoped customer addresses with order delivery privacy support. Delivery zone association is planned."
     },
     {
       "id": "orders",

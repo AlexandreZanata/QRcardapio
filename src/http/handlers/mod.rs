@@ -7,6 +7,7 @@ pub mod billing;
 pub mod billing_payer;
 pub mod billing_webhooks;
 pub mod categories;
+pub mod commerce;
 pub mod dashboard;
 pub mod google;
 pub mod health;

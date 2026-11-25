@@ -48,6 +48,9 @@ Lifecycle filter applied on every read: `planned`, `development`, `retired` gran
 | `menu.draft.edit` | owner, manager | — | allow | dashboard, MCP |
 | `billing.view` | owner, manager | — | allow | dashboard |
 | `billing.manage` | owner | — | allow | dashboard |
+| `commerce.hours.manage` | owner, manager | — | allow | dashboard |
+| `customers.manage` | owner, manager | — | allow | dashboard |
+| `data.export`, `data.customer.erase` | owner | — | allow | dashboard |
 
 All other capabilities belong to planned modules and are listed with their planned operations in `contracts/entitlements/authorization-rules.json`.
 
