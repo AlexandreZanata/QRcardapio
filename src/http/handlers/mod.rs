@@ -1,6 +1,7 @@
 pub mod admin;
 pub mod admin_affiliate_detail;
 pub mod admin_affiliates;
+pub mod admin_outbox;
 pub mod affiliates;
 pub mod auth;
 pub mod billing;

@@ -9,7 +9,7 @@ use crate::domain::commerce::order::{
 use crate::domain::commerce::state_machine::{Actor, Machine, transition as machine_transition};
 use crate::domain::events::EventType;
 use crate::error::{AppError, AppResult};
-use crate::infrastructure::database::begin_immediate;
+use crate::infrastructure::database::commerce_writes;
 use crate::infrastructure::database::queries::{order_transitions, orders};
 
 const CONFLICT: AppError = AppError::Conflict("commerce.order_state_conflict");
@@ -24,11 +24,24 @@ pub async fn transition(
     command: TransitionOrder<'_>,
     at: DateTime<Utc>,
 ) -> AppResult<Order> {
-    let mut tx = begin_immediate(pool).await?;
-    let order = orders::get(&mut *tx, establishment_id, order_id)
+    let (_turn, mut tx) = commerce_writes::begin(pool).await?;
+    let changed = transition_in(&mut tx, establishment_id, order_id, command, at).await?;
+    tx.commit().await?;
+    crate::infrastructure::events::dispatcher::notify_committed();
+    Ok(changed)
+}
+
+pub(crate) async fn transition_in(
+    tx: &mut Transaction<'_, Sqlite>,
+    establishment_id: &str,
+    order_id: &str,
+    command: TransitionOrder<'_>,
+    at: DateTime<Utc>,
+) -> AppResult<Order> {
+    let order = orders::get(&mut **tx, establishment_id, order_id)
         .await?
         .ok_or(AppError::NotFound("error.not_found"))?;
-    validate_actor(&mut tx, establishment_id, command).await?;
+    validate_actor(tx, establishment_id, command).await?;
     if order.state != command.expected_state || order.version != command.expected_version {
         return Err(CONFLICT);
     }
@@ -46,12 +59,12 @@ pub async fn transition(
         .ok_or_else(|| AppError::Internal("order transition event is missing".into()))?;
     validate_preconditions(&order, command, at)?;
 
-    let changed = orders::update_state(&mut tx, &order, command, at)
+    let changed = orders::update_state(tx, &order, command, at)
         .await?
         .ok_or(CONFLICT)?;
-    order_transitions::append(&mut tx, &changed, command).await?;
+    order_transitions::append(tx, &changed, command).await?;
     append_order_event(
-        &mut tx,
+        tx,
         &changed,
         event_type,
         event_payload(event_type, &changed, command)?,
@@ -64,7 +77,6 @@ pub async fn transition(
         ),
     )
     .await?;
-    tx.commit().await?;
     Ok(changed)
 }
 

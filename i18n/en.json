@@ -1,4 +1,7 @@
 {
+  "commerce.invalid_push_subscription": "The notification subscription is invalid.",
+  "commerce.push.order_title": "New order",
+  "commerce.push.order_body": "Order #{number} is awaiting acceptance.",
   "mcp.integrations": "AI integrations",
   "mcp.integrations_intro": "Connect ChatGPT, Claude or Antigravity to view and manage your account, menu draft, and publishing.",
   "mcp.endpoint": "MCP server address",
@@ -1039,5 +1042,15 @@
   "commerce.address.state": "State",
   "commerce.address.pick_state": "Choose a state",
   "commerce.address.cep": "Postal code",
-  "commerce.address.reference": "Landmark (optional)"
+  "commerce.address.reference": "Landmark (optional)",
+  "commerce.checkout_repriced": "The menu changed. Review your items and total before confirming.",
+  "commerce.idempotency_mismatch": "This attempt has already been used with different order details.",
+  "commerce.invalid_checkout": "Check your items and order details.",
+  "commerce.invalid_order_price": "The order amount is outside the allowed limits.",
+  "delivery.closed": "This business is currently closed for orders.",
+  "delivery.below_minimum": "The item subtotal is below the order minimum.",
+  "delivery.mode_unavailable": "This service mode is unavailable.",
+  "commerce.invalid_cash_change": "For cash payments, enter an amount for change that is at least the order total.",
+  "commerce.invalid_refund_amount": "Enter a positive amount up to the remaining payment balance.",
+  "commerce.payment_state_conflict": "Refresh the payment and check the available actions."
 }

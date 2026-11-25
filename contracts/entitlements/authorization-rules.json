@@ -58,8 +58,8 @@
     {
       "role": "system",
       "scope": "platform",
-      "status": "planned",
-      "notes": "Idempotent outbox consumers acting for one establishment. They run only when the triggering event was produced under a valid operation and re-check the consumer module's own capability."
+      "status": "implemented",
+      "notes": "Internal Commerce Core workers act for one establishment at a time to expire orders, compensate offline payments, and enqueue staff notifications. This role is not assignable to an account. Future module consumers must re-check their module capability before creating work."
     }
   ],
   "after_expiry_values": {

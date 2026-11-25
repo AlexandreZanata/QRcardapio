@@ -29,6 +29,8 @@ pub enum AfterExpiry {
     Deny,
     /// Free QR Core operation or reversal of existing work.
     Allow,
+    /// For future channel operations that verify the work began before expiry.
+    CompleteExisting,
 }
 
 impl AfterExpiry {
@@ -36,6 +38,7 @@ impl AfterExpiry {
         match self {
             Self::Deny => "deny",
             Self::Allow => "allow",
+            Self::CompleteExisting => "complete_existing",
         }
     }
 }

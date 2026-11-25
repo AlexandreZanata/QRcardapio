@@ -158,28 +158,18 @@
     {
       "type": "PaymentConfirmed",
       "version": 1,
-      "status": "planned",
+      "status": "implemented",
       "producer": "commerce.payments",
       "aggregate": "order_payment",
-      "payload": {
-        "payment_id": "string",
-        "order_id": "string",
-        "amount_centavos": "integer",
-        "method": "string"
-      }
+      "schema": "schemas/PaymentConfirmed.v1.json"
     },
     {
       "type": "PaymentRefunded",
       "version": 1,
-      "status": "planned",
+      "status": "implemented",
       "producer": "commerce.payments",
       "aggregate": "order_payment",
-      "payload": {
-        "payment_id": "string",
-        "order_id": "string",
-        "amount_centavos": "integer",
-        "refund_id": "string"
-      }
+      "schema": "schemas/PaymentRefunded.v1.json"
     },
     {
       "type": "TableSessionOpened",

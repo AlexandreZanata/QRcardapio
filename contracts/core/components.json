@@ -65,8 +65,8 @@
     },
     {
       "id": "events",
-      "status": "partial",
-      "summary": "Transactional outbox append is implemented; the dispatcher ships with Commerce Core."
+      "status": "implemented",
+      "summary": "Transactional outbox append, per-consumer dispatch with receipts, retries, dead letters, and readiness and administrator diagnostics."
     },
     {
       "id": "audit",
@@ -81,7 +81,7 @@
     {
       "id": "commercial_settings",
       "status": "partial",
-      "summary": "Service modes, minimum order, acceptance window and manual pause are editable. Delivery fees and checkout integration are planned."
+      "summary": "Checkout enforces service modes, minimum order, acceptance window and manual pause. Delivery zone and fee rules are planned for QR Delivery."
     },
     {
       "id": "customers",
@@ -96,17 +96,17 @@
     {
       "id": "orders",
       "status": "partial",
-      "summary": "Order aggregate, immutable item snapshots, daily numbering and transactional transitions are implemented. Channel entry points and idempotent checkout are planned."
+      "summary": "Order aggregate, immutable item snapshots, daily numbering, transactional transitions, acceptance expiry and internal idempotent checkout. Channel entry points are planned."
     },
     {
       "id": "order_payments",
-      "status": "planned",
-      "summary": "Consumer-to-establishment payments, separate from SaaS billing."
+      "status": "partial",
+      "summary": "Independent offline ledger for cash, card on delivery and Pix on delivery, including collection, cancellation and refunds. Online gateways and financial accounts are planned."
     },
     {
       "id": "notifications",
-      "status": "planned",
-      "summary": "Email, web push and messaging delivery with per-establishment templates."
+      "status": "partial",
+      "summary": "Opt-in staff Web Push with localized new-order templates, durable delivery records and VAPID. Channel subscription UI, email and messaging are planned."
     },
     {
       "id": "usage_metering",

@@ -1,12 +1,13 @@
 mod lines;
 
 use chrono::{DateTime, NaiveDate, Utc};
+use serde::Serialize;
 use uuid::Uuid;
 
 use super::discount::Discount;
 use super::state_machine::{Actor, OrderState};
 
-pub(crate) use lines::{LineError, OrderItemSnapshot, snapshot_lines};
+pub(crate) use lines::{LineError, OrderItemSnapshot, assess_lines, snapshot_lines};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum OrderChannel {
@@ -136,7 +137,7 @@ pub struct NewOrder {
     pub event_context: OrderEventContext,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct OrderItemSelection {
     pub product_id: String,
     pub variation_id: Option<String>,
@@ -144,7 +145,7 @@ pub struct OrderItemSelection {
     pub addons: Vec<OrderAddonSelection>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct OrderAddonSelection {
     pub option_id: String,
     pub quantity: i64,

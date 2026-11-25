@@ -107,4 +107,12 @@ A migração `20261124000010_multi_provider_billing.sql` (expand) adiciona `prov
 
 - `20261125000013_commerce_business_hours.sql` acrescenta `commercial_settings`, `business_hours` e `business_hour_exceptions`. As janelas são JSON validado e ordenado em minutos locais. Uma exceção com lista vazia fecha a data. Um único write transaction grava a semana completa.
 - `20261125000014_commerce_customers.sql` acrescenta `customers`, `customer_addresses`, `order_customers` e `order_delivery_details`. O telefone normalizado é único entre clientes ativos do mesmo estabelecimento. O apagamento nulifica os campos pessoais, remove endereços e desfaz o vínculo do cliente, preservando pedidos e o bairro para relatórios.
-- Ambas as migrações são aditivas e idempotentes. A vinculação de cliente e cópia do endereço na criação do pedido fazem parte da integração de checkout.
+- Ambas as migrações são aditivas e idempotentes. O checkout vincula o cliente e copia o endereço de entrega na transação que cria o pedido.
+
+### Incremento 3
+
+- `20261125000015_commerce_checkout.sql` acrescenta `checkout_attempts`. Cada tentativa bem-sucedida vincula um hash de chave e um HMAC do corpo ao pedido do mesmo estabelecimento. A chave expira após sete dias. O recibo original pode ser recuperado durante esse prazo mesmo após uma mudança no catálogo ou apagamento do cliente.
+- A mesma migração separa o bairro informado na entrega em `order_delivery_neighborhoods`, apagado junto com os demais dados pessoais. O rótulo de zona retido em `order_delivery_details` é reservado a dados resolvidos pelo estabelecimento.
+- `20261125000016_commerce_order_payments.sql` acrescenta `order_payments`, `payment_refunds` e `order_payment_transitions`. Há no máximo uma cobrança vigente por pedido, no valor do total. Estornos parciais são entradas imutáveis e o saldo a devolver é atualizado na mesma transação. Uma intenção cancelada sem recebimento pode ser substituída.
+- `20261125000017_event_dispatch.sql` acrescenta checkpoints, recibos e a fila de falhas do outbox. `event_dispatch_publications` guarda o instante de publicação por `seq`. Uma trigger registra eventos novos na fila, inclusive durante rollback para o binário anterior.
+- `20261125000018_commerce_notifications.sql` acrescenta o índice parcial de pedidos aguardando aceitação e as tabelas `commerce_push_subscriptions` e `commerce_push_deliveries`. As assinaturas referenciam o vínculo do membro. Cada entrega referencia o evento, pedido e assinatura do mesmo estabelecimento.

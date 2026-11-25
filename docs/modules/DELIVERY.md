@@ -1,6 +1,6 @@
 # QR Delivery
 
-**Status: Planned.** The shared order aggregate and its events are implemented in [Commerce Core](../architecture/COMMERCE_CORE.md). QR Delivery’s routes, screens and channel-specific behavior remain specifications.
+**Status: Planned.** [Commerce Core](../architecture/COMMERCE_CORE.md) provides shared checkout, the order aggregate, offline payments, event processing and staff Web Push. QR Delivery’s routes, screens and channel-specific behavior remain specifications.
 
 | Field | Value |
 |---|---|
@@ -243,10 +243,11 @@ QR Business (16990) and QR Complete (21990) also include `delivery` v1. Delivery
 | `identity`, `establishments`, `members`, `tenancy`, `i18n`, `media` | implemented | Staff auth, slug and branding, roles, `TenantContext`, translations, images |
 | `commercial`, `entitlements` | implemented | Contracts, capabilities, `authorize(...)` |
 | `catalog` | partial | Variations and add-ons arrive with Commerce Core |
-| `events` | partial | Append implemented; dispatcher arrives with Commerce Core |
-| `business_hours`, `commercial_settings`, `customers`, `addresses`, `orders`, `order_payments`, `notifications` | planned | Delivered by Commerce Core (phase 3) |
+| `events` | implemented | Outbox append, dispatcher, retries and dead-letter diagnostics |
+| `business_hours`, `commercial_settings`, `customers`, `addresses` | available to internal callers | Store schedule, settings and customer privacy records, with Delivery zone association pending |
+| `orders`, `order_payments`, `notifications` | available to internal callers | Checkout and order state, offline ledger, and staff Web Push. Delivery owns authorization, routes, UX and subscription registration. |
 
-Infrastructure: Axum 0.8 (`{slug}` paths), SQLx SQLite WAL with `BEGIN IMMEDIATE`, Askama, vanilla JS modules, Caddy. New: a Caddy `handle_path /s/*` block mirroring `/c/*` (including the `/.tmp` 404 rule) and a Web Push (VAPID) crate, which requires `cargo audit`. No Node runtime, broker, maps API or per-tenant database.
+Infrastructure: Axum 0.8 (`{slug}` paths), SQLx SQLite WAL with `BEGIN IMMEDIATE`, Askama, vanilla JS modules, Caddy. Delivery adds a Caddy `handle_path /s/*` block mirroring `/c/*` (including the `/.tmp` 404 rule). Web Push uses the shared VAPID sender in Commerce Core. No Node runtime, broker, maps API or per-tenant database.
 
 ## 14. Published events
 

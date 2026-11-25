@@ -1,5 +1,5 @@
 use chrono::{DateTime, NaiveDate, Utc};
-use sqlx::{Sqlite, SqliteExecutor, Transaction};
+use sqlx::{Sqlite, SqliteExecutor, SqlitePool, Transaction};
 
 use crate::domain::commerce::order::{Fulfillment, Order, OrderChannel, TransitionOrder};
 use crate::error::{AppError, AppResult};
@@ -86,6 +86,28 @@ pub async fn get<'e>(
         .await?
         .map(Order::try_from)
         .transpose()
+}
+
+#[derive(sqlx::FromRow)]
+pub(crate) struct ExpiredOrder {
+    pub establishment_id: String,
+    pub id: String,
+    pub version: i64,
+}
+
+/// Platform maintenance scans the deadline index. Any subsequent write is tenant-scoped.
+pub(crate) async fn expired_batch(
+    pool: &SqlitePool,
+    at: DateTime<Utc>,
+) -> AppResult<Vec<ExpiredOrder>> {
+    Ok(sqlx::query_as(
+        "SELECT establishment_id, id, version FROM orders
+         WHERE state = 'placed' AND acceptance_deadline_at <= ?
+         ORDER BY acceptance_deadline_at, id LIMIT 32",
+    )
+    .bind(at)
+    .fetch_all(pool)
+    .await?)
 }
 
 pub(crate) async fn next_number(

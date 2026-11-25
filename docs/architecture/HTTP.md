@@ -23,7 +23,7 @@ Browser errors without an HTML body use a localized illustrated response with th
 | `GET` | `/static/i18n/{file}` | None | Serves embedded `pt-BR.json`, `en.json`, `es.json` with `ETag`, `304`, and `immutable` caching. |
 | `GET` | `/static/*` | None | Serves CSS, JS, OG images, and icon assets. |
 | `GET` | `/healthz` | None | Liveness probe (`{"status":"ok"}`). |
-| `GET` | `/readyz` | None | Readiness probe executing `SELECT sqlite_version()`. |
+| `GET` | `/readyz` | None | Readiness probe executing `SELECT sqlite_version()`. Optional `warnings` report delayed/dead-letter outbox events or unavailable diagnostics. |
 
 A visita à home com o fragmento `#demonstracao` é encaminhada pelo navegador para o exemplo fixo `/c/bistro-da-praca`. A placa do QR também é um link direto. O destino usa a entrega estática de `/c/{slug}`.
 
@@ -69,6 +69,7 @@ All `POST` routes verify `_csrf` against the server session's `csrf_token` in co
 | Method | Path | Protection | Purpose |
 |---|---|---|---|
 | `GET` | `/admin` | `AdminContext` (`role = 'admin'`) | Operational counts, SQLite version, recent establishments, recent publication metrics. |
+| `GET` | `/admin/outbox` | `AdminContext` (`role = 'admin'`) | `no-store` JSON with pending age, per-consumer lag and dead letters. Event payloads are omitted. |
 
 ## Assinatura Asaas
 
@@ -112,7 +113,7 @@ Todas as rotas abaixo aplicam `Cache-Control: no-store` e limite de corpo de 16 
 
 ## Commerce Core
 
-Increment 1 exposes the catalog publication and order operations through internal Rust interfaces. [The QR Delivery API and storefront remain planned](../modules/DELIVERY.md#16-http-contracts).
+The catalog publication, order transitions, checkout, offline payment ledger and Web Push subscription management have internal Rust interfaces. The current HTTP surface for the dispatcher is `GET /admin/outbox`. A future authorized channel adapter will map `CheckoutOutcome::Repriced` to `409 commerce.checkout_repriced` with the current quote and `commerce.idempotency_mismatch` to `422`. See the [QR Delivery API specification](../modules/DELIVERY.md#16-http-contracts).
 
 ### Commerce Core dashboard (Increment 2)
 

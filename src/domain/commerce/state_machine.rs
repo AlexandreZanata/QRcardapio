@@ -93,9 +93,9 @@ impl MachineEvent {
             Self::OrderReady => Some(EventType::OrderReady),
             Self::OrderCompleted => Some(EventType::OrderCompleted),
             Self::OrderCancelled => Some(EventType::OrderCancelled),
-            Self::PaymentConfirmed
-            | Self::PaymentRefunded
-            | Self::DeliveryAssigned
+            Self::PaymentConfirmed => Some(EventType::PaymentConfirmed),
+            Self::PaymentRefunded => Some(EventType::PaymentRefunded),
+            Self::DeliveryAssigned
             | Self::DeliveryCompleted
             | Self::DeliveryFailed
             | Self::TableBillClosed

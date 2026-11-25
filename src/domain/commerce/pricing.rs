@@ -1,5 +1,7 @@
 //! Checked integer pricing for order lines and totals across sales channels.
 
+use serde::Serialize;
+
 use super::discount::Discount;
 
 pub const MAX_ORDER_TOTAL_CENTAVOS: i64 = 1_000_000;
@@ -27,14 +29,14 @@ pub struct AddonPrice {
     pub quantity: i64,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 #[non_exhaustive]
 pub struct LinePrice {
     pub unit_price_centavos: i64,
     pub line_total_centavos: i64,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
 pub struct OrderTotal {
     pub items_subtotal_centavos: i64,
     pub discount_centavos: i64,

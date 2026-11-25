@@ -87,6 +87,31 @@ Same host as the baseline (16 threads, 31 GiB, release build, `scripts/bench_run
 | `GET /dashboard/billing` (16 conn.) | enforced (module catalog) | 3 062 | 5.10 ms | 6.42 ms | 7.42 ms | — |
 | `POST /dashboard/publish`, 20 sequential | enforced (authorize + render + outbox) | — | avg 9 ms end-to-end | — | — | — |
 
+## Commerce Core Increment 3
+
+Run `scripts/bench_commerce.sh checkout`, `mixed`, `outbox`, or `push` on Linux. `COMMERCE_BENCH_CPU` selects an allowed CPU. The script builds locked release binaries before pinning the workload. Each database is temporary and uses SQLite WAL and `synchronous=FULL`.
+
+- Checkout runs for 600 seconds by default with 200 establishments, 64 clients, approximately 10% retries and concurrent staff transitions. It reconciles the order, item and payment ledger amounts and checks identity uniqueness. The mixed run also requests the static menu through the HTTP router and measures against its own pinned baseline. `COMMERCE_BENCH_SECONDS` shortens smoke runs.
+- The outbox test drains a 100,000-event backlog through two no-op consumers and measures publication lag under steady-state writes. `COMMERCE_OUTBOX_BACKLOG` selects a smaller smoke backlog. Crash recovery is tested separately.
+- Web Push measures encryption, signing, durable claim and acknowledgement with a synthetic provider returning after 100 ms. A separate checkout stream measures p95 with and without active sends. Consumer gateway latency remains a later-phase benchmark because Commerce Core records offline payments.
+
+Rollback smoke test on 2026-11-25 applied migrations `20261125000015` through `20261125000018` on a temporary database initialized by Increment 2. `integrity_check` and `foreign_key_check` passed. Both release binaries returned HTTP 200 for `/readyz` and the public demo. Demo HTML matched after normalizing the build version in static asset URLs.
+
+The full-size outbox run on 2026-11-25 published 43,200 of 100,000 events before it was stopped during local I/O contention. On one pinned logical CPU with SQLite `FULL`, sampled windows recorded 103.3 and 27.5 published events/s. This run used the optimized cursor before the final Commerce write queue change. The 1,000 events/s launch gate remains open.
+
+The final outbox small-backlog run reached 674 events/s across 200 queued events and 136 events/s across 2,000 ongoing events. The steady-state publication lag was 515 ms at p95 and 613 ms at maximum.
+
+The two 10-minute checkout runs used one pinned logical CPU each and shared an ext4 disk with other workloads. Both completed without surfaced SQLite errors, duplicate orders or monetary discrepancies after the Commerce write queue was added.
+
+| Checkout workload | Orders | Replays | Orders/s | Checkout p95 | Checkout p99 |
+|---|---:|---:|---:|---:|---:|
+| Orders and staff transitions | 2,391 | 320 | 3.90 | 279 ms | 620 ms |
+| Orders, staff transitions and static menu reads | 2,308 | 260 | 3.78 | 1,315 ms | 3,862 ms |
+
+The mixed run served 53,209 static menu reads. The menu p95 was 0.271 ms, or 1.74× the 0.155 ms pinned baseline. The 30 orders/s sustained load gate remains open.
+
+The Web Push benchmark completed all 1,000 synthetic deliveries in 20.747 seconds (2,892/min) after batching outcome writes. Peak concurrency was eight. Checkout p95 was 313 ms in the baseline and 102 ms with sends. The host's changing disk contention prevents attributing that difference to the push workload.
+
 Memory: 14.6 MB RSS idle, 61.4 MB after load. Database scaling with `bench-gen` matched the baseline (100 000 establishments: 768.9 MB, 19.5 s).
 
 Query plans: the entitlement view and the rebuilt `billing_coverage` view force an index-driven join order (`commercial_contracts` or `billing_checkouts` by establishment, then `idx_billing_payments_subscription`). Without it SQLite scanned every payment of the environment on each request, a cost that grows with the customer base. Contract periods and grants are read in one `UNION ALL` round trip. The enforced dashboard still performs one extra pooled query per request; caching the decision per request batch is unnecessary at current traffic. The enforced script lives in the session notes, not in `scripts/`, because it needs Asaas-shaped configuration.
