@@ -115,7 +115,29 @@
                 {% if !item.is_available %}
                 <span class="item-unavailable-badge" data-i18n="public_menu.unavailable_badge">{{ unavailable_text }}</span>
                 {% endif %}
-              </div>
+              </div>{% if !item.removals.is_empty() || !item.extras.is_empty() %}
+              <details class="item-choices">
+                <summary data-i18n="public_menu.product_choices">{{ choices_text }}</summary>
+                {% if !item.removals.is_empty() %}
+                <p data-i18n="public_menu.removable_ingredients">{{ removable_text }}</p>
+                <ul class="item-choice-list">
+                  {% for choice in item.removals %}
+                  <li data-pt="{{ choice.name.0 }}" data-en="{{ choice.name.1 }}" data-es="{{ choice.name.2 }}">{{ choice.display_name }}</li>
+                  {% endfor %}
+                </ul>
+                {% endif %}
+                {% if !item.extras.is_empty() %}
+                <p data-i18n="public_menu.extras">{{ extras_text }}</p>
+                <ul class="item-choice-list">
+                  {% for choice in item.extras %}
+                  <li>
+                    <span data-pt="{{ choice.name.0 }}" data-en="{{ choice.name.1 }}" data-es="{{ choice.name.2 }}">{{ choice.display_name }}</span>
+                    {% if let Some((centavos, price)) = choice.price %}<span class="item-extra-price">+ <span data-price-centavos="{{ centavos }}">{{ price }}</span></span>{% endif %}
+                  </li>
+                  {% endfor %}
+                </ul>
+                {% endif %}
+              </details>{% endif %}
             </div>
             {% if let Some(img) = item.image_url %}
             <img class="item-photo" src="{{ img }}" alt="" loading="lazy" width="112" height="112">

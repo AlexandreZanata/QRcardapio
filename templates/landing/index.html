@@ -67,6 +67,19 @@
     {{ sections::benefit("placard", "landing.benefit4_title", "landing.benefit4_body") }}
   </section>
 
+  <div class="landing-container demo-invitation-band" id="explore-cardapio">
+    <a class="demo-invitation" href="{{ demo_menu_path }}" data-public-demo>
+      <picture class="demo-invitation-art" aria-hidden="true">
+        <source media="(max-width: 44rem)" srcset="/static/images/landing-demo-banner-mobile.webp">
+        <img src="/static/images/landing-demo-banner-wide.webp" alt="" width="1800" height="600" loading="lazy" decoding="async">
+      </picture>
+      <span class="btn landing-button landing-button-yellow demo-invitation-action">
+        <span data-i18n="landing.demo_open">{{ page.t("landing.demo_open") }}</span>
+        {{ icons::sticker("segment-arrow") }}
+      </span>
+    </a>
+  </div>
+
   <section id="how-it-works" class="landing-how">
     <div class="landing-container">
       <div class="landing-section-heading">

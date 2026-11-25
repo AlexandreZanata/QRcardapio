@@ -1,0 +1,42 @@
+{% macro input(label, name, value, kind, limit) %}
+<label class="commerce-field">
+  <span data-i18n="{{ label }}">{{ page.t(label) }}</span>
+  <input type="{{ kind }}" name="{{ name }}" value="{{ value }}" maxlength="{{ limit }}">
+</label>
+{% endmacro %}
+
+{% macro number(label, name, value, min, max) %}
+<label class="commerce-field">
+  <span data-i18n="{{ label }}">{{ page.t(label) }}</span>
+  <input type="number" name="{{ name }}" value="{{ value }}" min="{{ min }}" max="{{ max }}" required>
+</label>
+{% endmacro %}
+
+{% macro names(pt, en, es, position) %}
+<div class="commerce-form-grid">
+  <label class="commerce-field">
+    <span data-i18n="commerce.field.name">{{ page.t("commerce.field.name") }}</span>
+    <input type="text" name="name" value="{{ pt }}" maxlength="100" required>
+  </label>
+  {{ input("commerce.field.name_en", "name_en", en, "text", 100) }}
+  {{ input("commerce.field.name_es", "name_es", es, "text", 100) }}
+  {{ number("commerce.field.position", "position", position, 0, 1000000) }}
+</div>
+{% endmacro %}
+
+{% macro price(value) %}
+<label class="commerce-field">
+  <span data-i18n="commerce.field.price">{{ page.t("commerce.field.price") }}</span>
+  <input type="text" name="price" inputmode="decimal" value="{{ value }}" maxlength="16" required>
+</label>
+{% endmacro %}
+
+{% macro check(label, name, checked) %}
+<label class="commerce-check">
+  <input type="checkbox" name="{{ name }}" value="1"{% if checked %} checked{% endif %}>
+  <span data-i18n="{{ label }}">{{ page.t(label) }}</span>
+</label>
+{% endmacro %}
+
+{% macro csrf() %}<input type="hidden" name="_csrf" value="{{ csrf_token }}">{% endmacro %}
+{% macro submit(label) %}<button class="btn btn-primary" type="submit" data-i18n="{{ label }}">{{ page.t(label) }}</button>{% endmacro %}

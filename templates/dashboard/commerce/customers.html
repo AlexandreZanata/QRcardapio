@@ -1,0 +1,124 @@
+{% extends "layouts/dashboard.html" %}
+{% import "dashboard/commerce/fields.html" as fields %}
+{% block page_styles %}<link rel="stylesheet" href="/static/css/dashboard-commerce.css">{% endblock %}
+
+{% macro profile(name, phone, email) %}
+<div class="commerce-form-grid">
+  <label class="commerce-field">
+    <span data-i18n="commerce.field.name">{{ page.t("commerce.field.name") }}</span>
+    <input type="text" name="name" value="{{ name }}" maxlength="80" required>
+  </label>
+  <label class="commerce-field">
+    <span data-i18n="commerce.customer.phone">{{ page.t("commerce.customer.phone") }}</span>
+    <input type="tel" name="phone_e164" value="{{ phone }}" maxlength="32" required>
+  </label>
+  {{ fields::input("commerce.customer.email", "email", email, "email", 254) }}
+</div>
+{% endmacro %}
+
+{% macro address(value, federal_units) %}
+<div class="commerce-form-grid">
+  <label class="commerce-field"><span data-i18n="commerce.address.street">{{ page.t("commerce.address.street") }}</span><input type="text" name="street" maxlength="120" value="{{ value.street }}" required></label>
+  <label class="commerce-field"><span data-i18n="commerce.address.number">{{ page.t("commerce.address.number") }}</span><input type="text" name="street_number" maxlength="20" value="{{ value.street_number }}" required></label>
+  {{ fields::input("commerce.address.complement", "complement", value.complement, "text", 80) }}
+  <label class="commerce-field"><span data-i18n="commerce.address.neighborhood">{{ page.t("commerce.address.neighborhood") }}</span><input type="text" name="neighborhood" maxlength="80" value="{{ value.neighborhood }}" required></label>
+  <label class="commerce-field"><span data-i18n="commerce.address.city">{{ page.t("commerce.address.city") }}</span><input type="text" name="city" maxlength="80" value="{{ value.city }}" required></label>
+  <label class="commerce-field">
+    <span data-i18n="commerce.address.state">{{ page.t("commerce.address.state") }}</span>
+    <select name="uf" required>
+      <option value="" data-i18n="commerce.address.pick_state">{{ page.t("commerce.address.pick_state") }}</option>
+      {% for uf in federal_units %}<option value="{{ uf }}"{% if *uf == value.uf %} selected{% endif %}>{{ uf }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="commerce-field"><span data-i18n="commerce.address.cep">{{ page.t("commerce.address.cep") }}</span><input type="text" inputmode="numeric" name="cep" maxlength="9" value="{{ value.cep }}" required></label>
+  {{ fields::input("commerce.address.reference", "reference", value.reference, "text", 140) }}
+</div>
+{% endmacro %}
+
+{% block content %}
+<div class="commerce-page">
+{% match view %}
+  {% when CustomerView::Index with { customers, previous, next } %}
+  <h1 data-i18n="commerce.customer.title">{{ page.t("commerce.customer.title") }}</h1>
+  <section class="commerce-card commerce-stack">
+    <h2 data-i18n="commerce.customer.new">{{ page.t("commerce.customer.new") }}</h2>
+    <form class="commerce-stack" method="post" action="/dashboard/customers">
+      {{ fields::csrf() }}{{ profile("", "", "") }}
+      <div>{{ fields::submit("commerce.action.save") }}</div>
+    </form>
+  </section>
+  {% if customers.is_empty() %}
+    <p data-i18n="commerce.customer.empty">{{ page.t("commerce.customer.empty") }}</p>
+  {% else %}
+    <div class="commerce-stack">
+      {% for customer in customers %}
+      <a class="commerce-card commerce-row" href="/dashboard/customers/{{ customer.id }}">
+        <strong>{{ customer.name }}</strong><span>{{ customer.phone_e164 }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  {% endif %}
+  <div class="commerce-actions">
+    {% if let Some(previous) = previous %}<a class="btn btn-secondary" href="/dashboard/customers?page={{ previous }}" data-i18n="commerce.action.previous">{{ page.t("commerce.action.previous") }}</a>{% endif %}
+    {% if let Some(next) = next %}<a class="btn btn-secondary" href="/dashboard/customers?page={{ next }}" data-i18n="commerce.action.next">{{ page.t("commerce.action.next") }}</a>{% endif %}
+  </div>
+  {% when CustomerView::Detail with (detail) %}
+  {% let customer = detail.customer %}
+  {% let addresses = detail.addresses %}
+  <a href="/dashboard/customers" data-i18n="commerce.customer.title">{{ page.t("commerce.customer.title") }}</a>
+  <h1>{{ customer.name }}</h1>
+  <section class="commerce-card">
+    {% let email = customer.email.as_deref().unwrap_or_default() %}
+    <form class="commerce-stack" action="/dashboard/customers/{{ customer.id }}" method="post">
+      {{ fields::csrf() }}{{ profile(customer.name, customer.phone_e164, email) }}
+      <div>{{ fields::submit("commerce.action.save") }}</div>
+    </form>
+  </section>
+  <section class="commerce-card commerce-stack">
+    <h2 data-i18n="commerce.customer.addresses">{{ page.t("commerce.customer.addresses") }}</h2>
+    {% for entry in addresses %}
+      <details class="commerce-entry">
+        <summary>{{ entry.address.street }}, {{ entry.address.street_number }} · {{ entry.address.neighborhood }}</summary>
+        <form class="commerce-stack" method="post" action="/dashboard/customers/{{ customer.id }}/addresses">
+          {{ fields::csrf() }}
+          <input type="hidden" name="id" value="{{ entry.id }}">
+          {{ address(entry.address, detail.states) }}
+          <div class="commerce-actions">
+            {{ fields::submit("commerce.action.save") }}
+            <button class="btn btn-secondary" type="submit" formaction="/dashboard/customers/{{ customer.id }}/addresses/{{ entry.id }}/delete" formnovalidate data-i18n="commerce.action.remove">{{ page.t("commerce.action.remove") }}</button>
+          </div>
+        </form>
+      </details>
+    {% endfor %}
+    <details class="commerce-entry"{% if addresses.is_empty() %} open{% endif %}>
+      <summary data-i18n="commerce.customer.new_address">{{ page.t("commerce.customer.new_address") }}</summary>
+      <form class="commerce-stack" method="post" action="/dashboard/customers/{{ customer.id }}/addresses">
+        {{ fields::csrf() }}{{ address(detail.blank_address, detail.states) }}
+        <div>{{ fields::submit("commerce.action.save") }}</div>
+      </form>
+    </details>
+  </section>
+  {% if detail.can_export || detail.can_erase %}
+    <section class="commerce-card commerce-stack">
+      <h2 data-i18n="commerce.customer.privacy">{{ page.t("commerce.customer.privacy") }}</h2>
+      {% if detail.can_export %}
+        <form method="post" action="/dashboard/customers/{{ customer.id }}/export">
+          {{ fields::csrf() }}{{ fields::submit("commerce.customer.export") }}
+        </form>
+      {% endif %}
+      {% if detail.can_erase %}
+        <details class="commerce-entry">
+          <summary data-i18n="commerce.customer.erase">{{ page.t("commerce.customer.erase") }}</summary>
+          <form class="commerce-stack" method="post" action="/dashboard/customers/{{ customer.id }}/erase">
+            {{ fields::csrf() }}
+            <p data-i18n="commerce.customer.erase_hint">{{ page.t("commerce.customer.erase_hint") }}</p>
+            <label class="commerce-check"><input type="checkbox" name="confirm" value="1" required><span data-i18n="commerce.customer.erase_confirm_label">{{ page.t("commerce.customer.erase_confirm_label") }}</span></label>
+            <div>{{ fields::submit("commerce.customer.erase") }}</div>
+          </form>
+        </details>
+      {% endif %}
+    </section>
+  {% endif %}
+{% endmatch %}
+</div>
+{% endblock %}

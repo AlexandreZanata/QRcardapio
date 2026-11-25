@@ -1,0 +1,117 @@
+{% extends "layouts/dashboard.html" %}
+{% import "dashboard/commerce/fields.html" as fields %}
+{% block page_styles %}<link rel="stylesheet" href="/static/css/dashboard-commerce.css">{% endblock %}
+{% block content %}
+<div class="commerce-page">
+  <a href="/dashboard/menu" data-i18n="nav.menu">{{ page.t("nav.menu") }}</a>
+  <h1 data-i18n="{{ page.title_key }}">{{ page.t(page.title_key) }}</h1>
+  {% match view %}
+    {% when CatalogView::Groups with { groups } %}
+    <div class="commerce-stack">
+      {% for group in groups %}
+        <a class="commerce-card commerce-row" href="/dashboard/menu/addons/{{ group.id }}">
+          <strong data-pt="{{ group.name }}" data-en="{{ group.name_en }}" data-es="{{ group.name_es }}">{{ group.name }}</strong>
+          <span aria-hidden="true">›</span>
+        </a>
+      {% endfor %}
+      <section class="commerce-card">
+        <h2 data-i18n="commerce.catalog.new_group">{{ page.t("commerce.catalog.new_group") }}</h2>
+        <form class="commerce-stack" method="post" action="/dashboard/menu/addons">
+          {{ fields::csrf() }}
+          {{ fields::names("", "", "", 0) }}
+          <div class="commerce-form-grid">{{ fields::number("commerce.field.min_select", "min_select", 0, 0, 20) }}{{ fields::number("commerce.field.max_select", "max_select", 1, 0, 20) }}</div>
+          <div>{{ fields::submit("commerce.action.save") }}</div>
+        </form>
+      </section>
+    </div>
+    {% when CatalogView::Group with { group, options } %}
+    <a href="/dashboard/menu/addons" data-i18n="commerce.catalog.back_to_groups">{{ page.t("commerce.catalog.back_to_groups") }}</a>
+    <section class="commerce-card">
+      <h2>{{ group.name }}</h2>
+      <form class="commerce-stack" method="post" action="/dashboard/menu/addons">
+        {{ fields::csrf() }}
+        <input type="hidden" name="id" value="{{ group.id }}">
+        {{ fields::names(group.name, group.name_en, group.name_es, group.position) }}
+        <div class="commerce-form-grid">{{ fields::number("commerce.field.min_select", "min_select", group.min_select, 0, 20) }}{{ fields::number("commerce.field.max_select", "max_select", group.max_select, 0, 20) }}</div>
+        <div>{{ fields::submit("commerce.action.save") }}</div>
+      </form>
+      <details class="commerce-delete">
+        <summary data-i18n="commerce.catalog.remove_group">{{ page.t("commerce.catalog.remove_group") }}</summary>
+        <form action="/dashboard/menu/addons/{{ group.id }}/delete" method="post">
+          {{ fields::csrf() }}
+          <p data-i18n="commerce.catalog.remove_group_hint">{{ page.t("commerce.catalog.remove_group_hint") }}</p>
+          {{ fields::submit("commerce.action.confirm_remove") }}
+        </form>
+      </details>
+    </section>
+    <section class="commerce-card commerce-stack">
+      <h2 data-i18n="commerce.catalog.extras">{{ page.t("commerce.catalog.extras") }}</h2>
+      {% for option in options %}
+        <details class="commerce-entry">
+          <summary>{{ option.name }} <span data-price-centavos="{{ option.price_centavos }}">{{ page.price(*option.price_centavos) }}</span></summary>
+          <form class="commerce-stack" action="/dashboard/menu/addons/{{ group.id }}/options" method="post">
+            {{ fields::csrf() }}
+            <input type="hidden" name="id" value="{{ option.id }}">
+            {{ fields::names(option.name, option.name_en, option.name_es, option.position) }}
+            <div class="commerce-form-grid">{{ fields::price(page.price(*option.price_centavos)) }}{{ fields::number("commerce.field.max_quantity", "max_quantity", option.max_quantity, 1, 99) }}</div>
+            {{ fields::check("commerce.field.available", "available", option.is_available) }}
+            <div class="commerce-actions">{{ fields::submit("commerce.action.save") }}<button class="btn btn-secondary" formaction="/dashboard/menu/addons/{{ group.id }}/options/{{ option.id }}/delete" type="submit" formnovalidate data-i18n="commerce.action.remove">{{ page.t("commerce.action.remove") }}</button></div>
+          </form>
+        </details>
+      {% endfor %}
+      <details class="commerce-entry"{% if options.is_empty() %} open{% endif %}>
+        <summary data-i18n="commerce.catalog.new_extra">{{ page.t("commerce.catalog.new_extra") }}</summary>
+        <form class="commerce-stack" method="post" action="/dashboard/menu/addons/{{ group.id }}/options">
+          {{ fields::csrf() }}{{ fields::names("", "", "", 0) }}
+          <div class="commerce-form-grid">{{ fields::price("0,00") }}{{ fields::number("commerce.field.max_quantity", "max_quantity", 1, 1, 99) }}</div>
+          {{ fields::check("commerce.field.available", "available", true) }}
+          <div>{{ fields::submit("commerce.action.save") }}</div>
+        </form>
+      </details>
+    </section>
+    {% when CatalogView::Product with { id, name, variations, groups } %}
+    <h2>{{ name }}</h2>
+    <section class="commerce-card commerce-stack">
+      <h3 data-i18n="commerce.catalog.variations">{{ page.t("commerce.catalog.variations") }}</h3>
+      {% for variation in variations %}
+        <details class="commerce-entry">
+          <summary>{{ variation.name }} <span data-price-centavos="{{ variation.price_centavos }}">{{ page.price(*variation.price_centavos) }}</span></summary>
+          <form class="commerce-stack" action="/dashboard/products/{{ id }}/options" method="post">
+            {{ fields::csrf() }}
+            <input type="hidden" name="id" value="{{ variation.id }}">
+            {{ fields::names(variation.name, variation.name_en, variation.name_es, variation.position) }}
+            {{ fields::price(page.price(*variation.price_centavos)) }}
+            {{ fields::check("commerce.field.available", "available", variation.is_available) }}
+            <div class="commerce-actions">{{ fields::submit("commerce.action.save") }}<button class="btn btn-secondary" formaction="/dashboard/products/{{ id }}/options/{{ variation.id }}/delete" type="submit" formnovalidate data-i18n="commerce.action.remove">{{ page.t("commerce.action.remove") }}</button></div>
+          </form>
+        </details>
+      {% endfor %}
+      <details class="commerce-entry"{% if variations.is_empty() %} open{% endif %}>
+        <summary data-i18n="commerce.catalog.new_variation">{{ page.t("commerce.catalog.new_variation") }}</summary>
+        <form class="commerce-stack" method="post" action="/dashboard/products/{{ id }}/options">
+          {{ fields::csrf() }}{{ fields::names("", "", "", 0) }}
+          {{ fields::price("") }}{{ fields::check("commerce.field.available", "available", true) }}
+          <div>{{ fields::submit("commerce.action.save") }}</div>
+        </form>
+      </details>
+    </section>
+    <section class="commerce-card commerce-stack">
+      <h3 data-i18n="commerce.catalog.groups">{{ page.t("commerce.catalog.groups") }}</h3>
+      {% for item in groups %}
+        <form class="commerce-row commerce-entry" method="post" action="/dashboard/products/{{ id }}/addon-groups">
+          {{ fields::csrf() }}
+          <input type="hidden" name="group_id" value="{{ item.group.id }}">
+          <a href="/dashboard/menu/addons/{{ item.group.id }}">{{ item.group.name }}</a>
+          {% if item.linked %}
+            <button class="btn btn-secondary" type="submit" data-i18n="commerce.catalog.unlink">{{ page.t("commerce.catalog.unlink") }}</button>
+          {% else %}
+            <input type="hidden" name="position" value="{{ item.group.position }}">
+            {{ fields::submit("commerce.catalog.link") }}
+          {% endif %}
+        </form>
+      {% endfor %}
+      <a href="/dashboard/menu/addons" data-i18n="commerce.catalog.manage_groups">{{ page.t("commerce.catalog.manage_groups") }}</a>
+    </section>
+  {% endmatch %}
+</div>
+{% endblock %}

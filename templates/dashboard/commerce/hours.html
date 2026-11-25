@@ -1,0 +1,85 @@
+{% extends "layouts/dashboard.html" %}
+{% import "dashboard/commerce/fields.html" as fields %}
+{% block page_styles %}<link rel="stylesheet" href="/static/css/dashboard-commerce.css">{% endblock %}
+{% block content %}
+<div class="commerce-page">
+  <h1 data-i18n="commerce.hours.title">{{ page.t("commerce.hours.title") }}</h1>
+  <section class="commerce-card commerce-stack">
+    <div class="commerce-row">
+      <h2 data-i18n="commerce.hours.settings">{{ page.t("commerce.hours.settings") }}</h2>
+      {% if paused %}<span class="badge badge-neutral" data-i18n="commerce.hours.paused">{{ page.t("commerce.hours.paused") }}</span>
+      {% else if open %}<span class="badge badge-neutral" data-i18n="commerce.hours.open">{{ page.t("commerce.hours.open") }}</span>
+      {% else %}<span class="badge badge-neutral" data-i18n="commerce.hours.closed">{{ page.t("commerce.hours.closed") }}</span>{% endif %}
+    </div>
+    <form class="commerce-stack" method="post" action="/dashboard/hours">
+      {{ fields::csrf() }}
+      <div class="commerce-form-grid">
+        <label class="commerce-field">
+          <span data-i18n="commerce.hours.zone">{{ page.t("commerce.hours.zone") }}</span>
+          <select name="time_zone">
+            {% for zone in zones %}<option value="{{ zone }}"{% if *zone == settings.time_zone %} selected{% endif %}>{{ zone }}</option>{% endfor %}
+          </select>
+        </label>
+        <label class="commerce-field">
+          <span data-i18n="commerce.hours.minimum">{{ page.t("commerce.hours.minimum") }}</span>
+          <input type="text" name="minimum" inputmode="decimal" value="{{ page.price(*settings.minimum_centavos) }}" maxlength="16" required>
+        </label>
+        {{ fields::number("commerce.hours.acceptance", "acceptance_minutes", settings.acceptance_minutes, 3, 30) }}
+      </div>
+      <div class="commerce-actions">
+        {{ fields::check("commerce.hours.delivery", "delivery", settings.delivery) }}
+        {{ fields::check("commerce.hours.pickup", "pickup", settings.pickup) }}
+      </div>
+      <div>{{ fields::submit("commerce.action.save") }}</div>
+    </form>
+    <form class="commerce-actions" method="post" action="/dashboard/hours/pause">
+      {{ fields::csrf() }}
+      <label class="commerce-field">
+        <span data-i18n="commerce.hours.pause">{{ page.t("commerce.hours.pause") }}</span>
+        <select name="duration">
+          <option value="15" data-i18n="commerce.hours.pause_15">{{ page.t("commerce.hours.pause_15") }}</option>
+          <option value="30" data-i18n="commerce.hours.pause_30">{{ page.t("commerce.hours.pause_30") }}</option>
+          <option value="60" data-i18n="commerce.hours.pause_60">{{ page.t("commerce.hours.pause_60") }}</option>
+          <option value="indefinite" data-i18n="commerce.hours.pause_indefinite">{{ page.t("commerce.hours.pause_indefinite") }}</option>
+          <option value="resume"{% if paused %} selected{% endif %} data-i18n="commerce.hours.resume">{{ page.t("commerce.hours.resume") }}</option>
+        </select>
+      </label>
+      {{ fields::submit("commerce.action.apply") }}
+    </form>
+  </section>
+  <section class="commerce-card commerce-stack">
+    <h2 data-i18n="commerce.hours.week">{{ page.t("commerce.hours.week") }}</h2>
+    <p data-i18n="commerce.hours.interval_hint">{{ page.t("commerce.hours.interval_hint") }}</p>
+    <form class="commerce-stack" method="post" action="/dashboard/hours/week">
+      {{ fields::csrf() }}
+      <div class="commerce-form-grid">
+        {% for day in days %}{{ fields::input(day.key, day.field, day.windows, "text", 180) }}{% endfor %}
+      </div>
+      <div>{{ fields::submit("commerce.action.save") }}</div>
+    </form>
+  </section>
+  <section class="commerce-card commerce-stack">
+    <h2 data-i18n="commerce.hours.exceptions">{{ page.t("commerce.hours.exceptions") }}</h2>
+    {% for (date, windows) in exceptions %}
+      <form class="commerce-stack commerce-entry" method="post" action="/dashboard/hours/exceptions">
+        {{ fields::csrf() }}
+        <input type="hidden" name="date" value="{{ date }}">
+        <time datetime="{{ date }}">{{ date }}</time>
+        {{ fields::input("commerce.hours.exception_windows", "windows", windows, "text", 180) }}
+        <div class="commerce-actions">
+          {{ fields::submit("commerce.action.save") }}
+          <button class="btn btn-secondary" type="submit" formaction="/dashboard/hours/exceptions/delete" data-i18n="commerce.action.remove">{{ page.t("commerce.action.remove") }}</button>
+        </div>
+      </form>
+    {% endfor %}
+    <form class="commerce-stack" method="post" action="/dashboard/hours/exceptions">
+      {{ fields::csrf() }}
+      <div class="commerce-form-grid">
+        <label class="commerce-field"><span data-i18n="commerce.hours.date">{{ page.t("commerce.hours.date") }}</span><input type="date" name="date" required></label>
+        {{ fields::input("commerce.hours.exception_windows", "windows", "", "text", 180) }}
+      </div>
+      <div>{{ fields::submit("commerce.action.save") }}</div>
+    </form>
+  </section>
+</div>
+{% endblock %}

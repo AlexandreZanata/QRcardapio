@@ -278,13 +278,52 @@
     },
     {
       "operation": "data.export",
-      "status": "planned",
+      "status": "implemented",
       "roles": [
         "owner"
       ],
       "capability": null,
       "after_expiry": "allow",
+      "surfaces": ["dashboard"],
       "notes": "QR Core operation (LGPD export). Never tied to a module lifecycle."
+    },
+    {
+      "operation": "commerce.hours.manage",
+      "status": "implemented",
+      "roles": [
+        "owner",
+        "manager"
+      ],
+      "capability": null,
+      "after_expiry": "allow",
+      "surfaces": [
+        "dashboard"
+      ]
+    },
+    {
+      "operation": "customers.manage",
+      "status": "implemented",
+      "roles": [
+        "owner",
+        "manager"
+      ],
+      "capability": null,
+      "after_expiry": "allow",
+      "surfaces": [
+        "dashboard"
+      ]
+    },
+    {
+      "operation": "data.customer.erase",
+      "status": "implemented",
+      "roles": [
+        "owner"
+      ],
+      "capability": null,
+      "after_expiry": "allow",
+      "surfaces": [
+        "dashboard"
+      ]
     },
     {
       "operation": "pos.sale.register",

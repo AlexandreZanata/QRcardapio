@@ -113,3 +113,7 @@ Todas as rotas abaixo aplicam `Cache-Control: no-store` e limite de corpo de 16 
 ## Commerce Core
 
 Increment 1 exposes the catalog publication and order operations through internal Rust interfaces. [The QR Delivery API and storefront remain planned](../modules/DELIVERY.md#16-http-contracts).
+
+### Commerce Core dashboard (Increment 2)
+
+`GET /dashboard/products/{id}/options` and `GET /dashboard/menu/addons` let owners and managers manage variations and reusable add-on groups. Tenant-scoped forms save, remove and link entities through POST actions. `GET /dashboard/hours` configures modalities, minimum, acceptance, pauses, weekly windows and date exceptions. `GET /dashboard/customers` and customer detail pages support customer and address management. Owner-only POST actions at `/dashboard/customers/{id}/export` and `/dashboard/customers/{id}/erase` require CSRF. The export is a JSON attachment with `Cache-Control: no-store`. Erasure requires explicit form confirmation.

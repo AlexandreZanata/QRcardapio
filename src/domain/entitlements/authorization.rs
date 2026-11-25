@@ -49,15 +49,23 @@ pub enum Operation {
     EditMenuDraft,
     ViewBilling,
     ManageBilling,
+    ManageBusinessHours,
+    ManageCustomers,
+    ExportData,
+    EraseCustomer,
 }
 
 impl Operation {
-    pub const ALL: [Self; 5] = [
+    pub const ALL: [Self; 9] = [
         Self::PublishMenu,
         Self::UnpublishMenu,
         Self::EditMenuDraft,
         Self::ViewBilling,
         Self::ManageBilling,
+        Self::ManageBusinessHours,
+        Self::ManageCustomers,
+        Self::ExportData,
+        Self::EraseCustomer,
     ];
 
     pub const fn as_str(self) -> &'static str {
@@ -67,24 +75,29 @@ impl Operation {
             Self::EditMenuDraft => "menu.draft.edit",
             Self::ViewBilling => "billing.view",
             Self::ManageBilling => "billing.manage",
+            Self::ManageBusinessHours => "commerce.hours.manage",
+            Self::ManageCustomers => "customers.manage",
+            Self::ExportData => "data.export",
+            Self::EraseCustomer => "data.customer.erase",
         }
     }
 
     pub const fn roles(self) -> &'static [MemberRole] {
         match self {
-            Self::ManageBilling => &[MemberRole::Owner],
-            Self::PublishMenu | Self::UnpublishMenu | Self::EditMenuDraft | Self::ViewBilling => {
-                &[MemberRole::Owner, MemberRole::Manager]
-            }
+            Self::ManageBilling | Self::ExportData | Self::EraseCustomer => &[MemberRole::Owner],
+            Self::PublishMenu
+            | Self::UnpublishMenu
+            | Self::EditMenuDraft
+            | Self::ViewBilling
+            | Self::ManageBusinessHours
+            | Self::ManageCustomers => &[MemberRole::Owner, MemberRole::Manager],
         }
     }
 
     pub const fn capability(self) -> Option<Capability> {
         match self {
             Self::PublishMenu => Some(Capability::MenuPublish),
-            Self::UnpublishMenu | Self::EditMenuDraft | Self::ViewBilling | Self::ManageBilling => {
-                None
-            }
+            _ => None,
         }
     }
 

@@ -206,6 +206,7 @@ pub fn build_router(state: AppState) -> Router {
         .route("/dashboard/publish", post(dashboard::publish_submit))
         .route("/dashboard/unpublish", post(dashboard::unpublish_submit))
         .route("/dashboard/menu", get(menu_editor::menu_editor_page))
+        .merge(crate::http::handlers::commerce::router())
         .route(
             "/dashboard/categories/new",
             get(categories::new_category_page),

@@ -141,3 +141,7 @@ A galeria de Soluções reutiliza as cenas e as paletas das páginas individuais
 A ação **Continuar com o Google** reaproveita um componente Askama nas telas de login, cadastro e consentimento MCP. O botão usa a marca oficial servida localmente e os três catálogos do projeto. O painel de segurança permite vincular ou desvincular o provedor conforme as opções de entrada da conta.
 
 [Diretrizes de marca do Google](https://developers.google.com/identity/branding-guidelines)
+
+## Landing demonstration and Commerce Core dashboard
+
+The landing's demo card spans the content width immediately before the three-step section. A full-bleed food photo sits behind the yellow action and the landing’s outlined card. The page loads a panoramic WebP on desktop and a separately framed WebP on narrow screens. The QR and the highlighted action both open the same demonstration. The public demo uses native `details` disclosures to list removable ingredients and priced extras, localized through the embedded public-menu bundle. Shared dashboard commerce fields and cards use the existing panel tokens and work in one column on narrow screens.

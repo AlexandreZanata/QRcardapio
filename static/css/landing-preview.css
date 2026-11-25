@@ -134,14 +134,83 @@
 .demo-qr:hover { background: #ffe77a; text-decoration: none; }
 .demo-qr img { width: 100%; height: auto; border-radius: 0.45cqw; margin-top: 0.55cqw; }
 
-.landing-demo figcaption {
-  color: #514b48;
-  margin-top: 0.35rem;
-  font-size: 0.85rem;
-  text-align: center;
-}
-
 @media (max-width: 36rem) {
   .demo-stage::before { inset-inline: 3%; }
   .demo-stage::after { inset-inline-end: 3%; }
+}
+
+.demo-invitation-band { margin-block: 0.35rem clamp(1.75rem, 4vw, 3.75rem); }
+
+.demo-invitation {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  align-items: center;
+  min-height: clamp(8rem, 15.5vw, 13.5rem);
+  border: 3px solid var(--landing-ink);
+  border-radius: clamp(1rem, 2vw, 1.65rem);
+  background: var(--landing-blue);
+  box-shadow: 5px 6px 0 var(--landing-ink);
+  overflow: hidden;
+}
+
+.demo-invitation:hover { text-decoration: none; }
+.demo-invitation:hover .demo-invitation-action { background: #ffe77a; }
+.demo-invitation:focus-visible { outline: 3px solid var(--landing-blue); outline-offset: 4px; }
+
+.demo-invitation::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 35%, rgb(16 18 38 / 38%));
+}
+
+.demo-invitation-art {
+  position: absolute;
+  z-index: -2;
+  inset: 0;
+}
+
+.demo-invitation-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 62%;
+}
+
+.demo-invitation-action {
+  grid-column: 2;
+  min-height: clamp(3.3rem, 5.25vw, 5rem);
+  margin-inline: clamp(0.65rem, 3.5vw, 3.5rem);
+  padding: clamp(0.55rem, 0.85vw, 0.85rem) clamp(0.8rem, 2.2vw, 1.75rem);
+  justify-content: space-between;
+  gap: clamp(0.55rem, 1.5vw, 1.35rem);
+  font-size: clamp(1.2rem, 3vw, 2.6rem);
+  letter-spacing: -0.025em;
+  text-align: start;
+  line-height: 1.08;
+}
+.demo-invitation-action svg {
+  flex: none;
+  width: clamp(2.5rem, 5vw, 4.75rem);
+  height: clamp(2.5rem, 5vw, 4.75rem);
+}
+
+@media (max-width: 44rem) {
+  .demo-invitation {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: end;
+    min-height: clamp(11.5rem, 42vw, 16rem);
+  }
+  .demo-invitation::after { background: linear-gradient(0deg, rgb(16 18 38 / 52%), transparent 60%); }
+  .demo-invitation-art img { object-position: center 55%; }
+  .demo-invitation-action {
+    grid-column: 1;
+    margin: 0.55rem;
+    font-size: clamp(1.12rem, 4.8vw, 1.55rem);
+  }
+  .demo-invitation-action svg { width: clamp(2.5rem, 7vw, 3.2rem); height: clamp(2.5rem, 7vw, 3.2rem); }
 }

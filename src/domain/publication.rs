@@ -63,6 +63,14 @@ pub struct SnapshotCategory {
 pub struct SnapshotProduct {
     pub product: Product,
     pub image: Option<MediaAsset>,
+    pub choices: Vec<MenuItemChoice>,
+}
+
+#[derive(Debug, Clone)]
+pub struct MenuItemChoice {
+    pub name: (&'static str, &'static str, &'static str),
+    /// A price is present on extras. A choice without a price is a removable ingredient.
+    pub price_centavos: Option<i64>,
 }
 
 #[derive(Debug, Clone)]

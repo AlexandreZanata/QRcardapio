@@ -2,7 +2,7 @@
 
 ## Status
 
-**In progress, Increment 1.** Commerce Core belongs to QR Core, the free shared foundation listed in [`contracts/core/components.json`](../../contracts/core/components.json). This increment implements typed state machines, integer pricing, tenant-scoped catalog options, internal published snapshots, order persistence, and transactional order events. HTTP and UI surfaces, checkout, consumer payments, and the dispatcher are planned.
+**In progress, Increment 2.** Commerce Core belongs to QR Core, the free shared foundation listed in [`contracts/core/components.json`](../../contracts/core/components.json). This increment implements typed state machines, integer pricing, tenant-scoped catalog options, internal published snapshots, order persistence, and transactional order events. Increment 2 ships tenant dashboard forms for variations, add-on groups, hours and customer records. Checkout, consumer payments, the public ordering API and the dispatcher are planned.
 
 Implemented foundation it builds on: `src/domain/commercial/`, `src/domain/entitlements/` (`Capability`, `MemberRole`, `Operation`, `OperationalStatus`, `GrantKind`, `resolve`), `src/application/{commercial,entitlements,operator}.rs`, migration `20261124000009_commercial_foundation.sql` and the `domain_events` outbox (append only).
 
@@ -15,9 +15,9 @@ Commerce Core is the single order engine shared by every selling channel. Module
 | Core component | Status today | Commerce Core deliverable |
 |---|---|---|
 | `catalog` | partial (catalog rows, options and internal published snapshots) | Variations, add-on groups, add-on options, published catalog snapshots per channel |
-| `business_hours` | planned | Weekly hours, date exceptions, holiday overrides, pause switch |
-| `commercial_settings` | planned | Service modes, minimum order, fees, acceptance window, checkout settings |
-| `customers`, `addresses` | planned | Establishment-scoped consumer records with LGPD export and erasure |
+| `business_hours` | implemented | Weekly hours, date exceptions, holiday overrides, pause switch |
+| `commercial_settings` | partial (modes, pause, minimum and acceptance settings) | Service modes, minimum order, fees, acceptance window, checkout settings |
+| `customers`, `addresses` | implemented for the dashboard and privacy operations | Establishment-scoped consumer records with LGPD export and erasure |
 | `orders` | partial (aggregate, item snapshots, numbering, transition executor) | The `Order` aggregate and its state machine |
 | `order_payments` | planned | Consumer-to-establishment payments, separate from SaaS billing |
 | `notifications` | planned | Email and web push sent by outbox consumers, per-establishment templates |
@@ -211,16 +211,20 @@ Increment 1 adds options to the shared draft catalog as new tables (expand-only,
 | Add-on option (`addon_options`) | Belongs to one group; `price_centavos >= 0` (removals such as "sem cebola" are free options); `max_quantity >= 1`; `is_available`. |
 | Tenancy | Every row has `establishment_id`; linking verifies product, group and option belong to the same establishment. |
 | Draft vs published | Edits mark `has_unpublished_changes = 1`. Ordering channels never read draft tables (section 8). |
-| QR Menu | May render variations and options read-only in the static menu on next publication. |
+| Dashboard | Owners and managers manage draft variations, reusable groups, options and product links. The fictitious public menu renders its own read-only optional ingredients and extras. |
 
 ## 6. Customers and addresses
 
 - `customers` are scoped to one establishment; the same person ordering from two restaurants is two unrelated records. There is no cross-establishment consumer identity and no consumer password.
 - Identity key: `(establishment_id, phone_e164)`, unique among non-erased rows. Name is required (1–80 chars); email is optional and unused in the MVP.
-- `customer_addresses` belong to one customer and one establishment and reference a delivery zone of the same establishment. Orders copy the address into `order_delivery_details`, so later edits never change a placed order.
+- `customer_addresses` belong to one customer and one establishment. The order privacy tables retain order links and delivery details when checkout begins writing them. Delivery zone association arrives with QR Delivery.
 - The establishment is the LGPD controller of its consumers' data; QR Cardápio is the processor. Event payloads never contain names, phones, emails or addresses (registry privacy rule), so erasure never rewrites `domain_events`.
 - **Export**: the owner (`data.export`, a QR Core operation: owner only, no capability, `allow`, never tied to a module lifecycle and available during suspension) downloads one JSON document with the profile, addresses and that customer's orders.
-- **Erasure**: in one transaction, PII columns in `customers`, `customer_addresses` and `order_delivery_details` are nulled, `erased_at` is set and addresses are deleted. **Retention exceptions**: order amounts, items, dates, states, payment and refund identifiers are kept de-identified for legal and accounting obligations; the delivery zone and neighborhood label are kept for reports. Erased data disappears from backups as they rotate out of the runbook retention window.
+- **Erasure**: in one transaction, PII columns in `customers`, `customer_addresses` and `order_delivery_details` are nulled, `erased_at` is set, addresses are deleted and retained orders are detached from the customer. **Retention exceptions**: order amounts, items, dates, states, payment and refund identifiers are kept de-identified for legal and accounting obligations; the delivery zone and neighborhood label are kept for reports. Erased data disappears from backups as they rotate out of the runbook retention window.
+
+### Service hours and commercial settings
+
+The tenant dashboard persists pickup and delivery independently, an integer minimum, a 3–30 minute acceptance window, weekly intervals and date-specific overrides. Date overrides replace the entire local day's recurring hours, including spillover from a previous day. An overnight interval belongs to its opening date. Schedule evaluation returns both the shift date and the business date, whose cutoff is 04:00 local time. Pauses apply immediately in schedule evaluation and can last 15, 30 or 60 minutes, or until resumed. The checkout increment will apply these settings to new orders. [ADR-013](../decisions/ADR-013-commerce-core-increment-2.md)
 
 ## 7. Order financial invariants
 
@@ -285,7 +289,7 @@ Commerce Core appends every machine event in the transaction of its transition, 
 
 ## 12. Conceptual SQLite persistence model
 
-The catalog and order tables shown below scope tenant rows and parent references by `establishment_id`. Increment 1 migrations cover options, snapshots, orders, order items and options, and the order transition log. Remaining rows in the table describe planned DDL. See [DATABASE.md](DATABASE.md#commerce-core).
+The catalog and order tables shown below scope tenant rows and parent references by `establishment_id`. Increment 1 migrations cover options, snapshots, orders, order items and options, and the order transition log. Increment 2 adds business hours, date exceptions, commercial settings, customers, addresses, order customer links and delivery privacy details. Remaining rows describe planned DDL. See [DATABASE.md](DATABASE.md#commerce-core).
 
 | Table | Key columns | Constraints and indexes |
 |---|---|---|
@@ -365,9 +369,9 @@ Items 1–4, 6 and 9 are implemented in Increment 1. Item 17 is implemented for 
 17. Register emitted events as `implemented` with JSON Schemas and keep [EVENT_CONTRACTS.md](EVENT_CONTRACTS.md) (referenced by ADR-009) in sync.
 18. Update `DATABASE.md`, `HTTP.md`, `SECURITY.md`, `PROJECT_STATE.md`; open the PR.
 
-### Next increments
+### Implementation sequence
 
-**Increment 2**
+**Increment 2 delivered**
 
 1. Add owner and manager dashboard editing for variations, reusable add-on groups, product links, and option availability. Test session and role checks, CSRF, tenant ownership, and `pt-BR`/`en`/`es` parity under the existing CSP.
 2. Implement weekly hours, date exceptions, holiday overrides, pause, service modes, minimum order and acceptance settings. Define behavior for overnight intervals and their business dates.
@@ -393,5 +397,5 @@ Items 1–4, 6 and 9 are implemented in Increment 1. Item 17 is implemented for 
 - Whether online orders appear in the order center before `PaymentConfirmed`.
 - Financial account model (provider subaccount vs establishment-owned credentials) and provider choice.
 - Real-time transport for order centers (ETag polling vs server-sent events, which needs a contract addition).
-- Customer data retention period for inactive customers; half-and-half pizza pricing rule; per-establishment timezone default (`America/Sao_Paulo`).
+- Customer data retention period for inactive customers and half-and-half pizza pricing. The dashboard now uses `America/Sao_Paulo` as the default timezone.
 - Final benchmark thresholds in section 13.

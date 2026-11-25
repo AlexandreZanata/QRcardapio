@@ -430,3 +430,21 @@ body {
   color: var(--menu-accent-ink);
   font-weight: 800;
 }
+
+.item-choices {
+  margin-block-start: 0.2rem;
+  border-block-start: 1px solid var(--border-subtle);
+  font-size: 0.84rem;
+}
+
+.item-choices summary {
+  cursor: pointer;
+  min-height: 2.75rem;
+  padding-block: 0.65rem;
+  font-weight: 750;
+}
+
+.item-choices p { margin: 0.35rem 0; font-weight: 750; }
+.item-choice-list { margin: 0 0 0.65rem; padding-inline-start: 1.15rem; color: var(--ink-secondary); }
+.item-choice-list li + li { margin-top: 0.25rem; }
+.item-extra-price { margin-inline-start: 0.25rem; font-weight: 700; white-space: nowrap; }
