@@ -11,11 +11,11 @@ The engine answers, for one establishment and one capability on one date: does i
 | 1 | Module availability | `Lifecycle::grants()` of the offer that owns the capability | `ModuleUnavailable` | `error.module_unavailable` |
 | 2 | Establishment operational state | `establishment_operational_states` (`active`, `suspended_admin`, `suspended_security`) | `EstablishmentSuspended` | `error.establishment_suspended` |
 | 3 | Member permission | `MemberRole` from `establishment_members` (loaded into `TenantContext.role`) vs `Operation::roles()` | `PermissionDenied` | `error.permission_denied` |
-| 4 | Deployment feature flag | `Enforcement::from_gateway` — billing enforced only when Asaas is configured | — | — |
+| 4 | Deployment feature flag | `state.billing.enforcement()` derives enforcement and environment from `application::payments::BillingGateways` | — | — |
 | 5 | Commercial entitlement | contracts with confirmed coverage + explicit grants | `NotEntitled(decision)` | `error.subscription_required` |
 
 ```rust
-authorize(&pool, Enforcement::from_gateway(state.asaas.as_ref()), &est_id,
+authorize(&pool, state.billing.enforcement(), &est_id,
           tenant.role, Operation::PublishMenu, billing_now().date_naive()).await?
 ```
 
