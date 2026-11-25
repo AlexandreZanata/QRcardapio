@@ -12,7 +12,7 @@ Scanning a restaurant table QR Code is an overwhelmingly read-heavy event. Gener
 
 ```text
 data/published/
-├── .tmp/                              # Temp files on the SAME filesystem for atomic rename(2)
+├── .tmp/                              # Private staging, retirement markers, and publication locks
 └── {slug}/
     ├── index.html                     # Escaped standalone HTML5 with embedded #qr-menu-i18n JSON
     ├── theme-{hash8}.css              # Content-hashed CSS variables for brand accent & contrast ink
@@ -24,7 +24,7 @@ data/published/
 
 ## Atomic Publication Lifecycle (`src/application/publishing.rs`)
 
-1. Acquire per-establishment async mutex (`PublishLocks`) to serialize concurrent publishes for the same tenant.
+1. Acquire the establishment's async mutex and an exclusive filesystem lock under `published/.tmp/publish-locks/`. Dashboard, MCP and CLI publications sharing the same data directory keep both locks until the publication completes. Other establishments can publish independently.
 2. Validate `slug` (`Slug::validate_existing`) and resolve paths via `resolve_safe_subpath` (blocks path traversal).
 3. Capture `MenuSnapshot` and the tenant's draft revision in one short SQLite read transaction. Filter to `is_visible = 1` categories and products, then release the DB connection before writing files. `republish-all` checks the publication and dirty flags on this captured state under the same per-establishment lock.
 4. Generate `theme-{hash8}.css` (computing WCAG AA foreground ink color from `accent_color`).
@@ -39,7 +39,7 @@ Already-published menus pick up the visual refresh through the shared stylesheet
 
 An optional Google review invitation is rendered into the static HTML on publication. The direct review link takes precedence over the general Google Maps profile link. Removing both links and publishing removes the invitation. Public scans do not fetch any Google data or open the Google link until the visitor chooses it.
 
-Owner profile updates use the same per-establishment lock as publishing. The update statement also checks the stored publication version so a form opened before publication cannot rename a published path.
+Owner profile updates use the same per-establishment async mutex within the HTTP process. The update statement also checks the stored publication version so a form opened before publication cannot rename a published path.
 
 ## Public demonstration menu
 
@@ -58,7 +58,7 @@ Owner profile updates use the same per-establishment lock as publishing. The upd
 
 ## Unpublishing
 
-`unpublish_establishment` acquires the per-slug mutex, deletes `published/{slug}/`, sets `is_published = 0` and `has_unpublished_changes = 1`, and records `'unpublished'` in `publications`. Public requests to `/c/{slug}` immediately return `404`.
+`unpublish_establishment` acquires both locks for the establishment and reloads its current publication version. It deletes `published/{slug}/`, sets `is_published = 0` and `has_unpublished_changes = 1`, and records `'unpublished'` in `publications`. Public requests to `/c/{slug}` immediately return `404`.
 
 ## Assinatura e arquivos em preparação
 

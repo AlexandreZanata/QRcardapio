@@ -171,6 +171,8 @@ sqlite3 /data/db/qrcardapio.sqlite "SELECT seq, event_type, aggregate_id, occurr
 
 `republish-all` (run by the deploy agent) re-renders only menus without pending draft changes; establishments with unpublished edits keep their live snapshot until the owner publishes.
 
+Dashboard publication and `republish-all` share per-establishment lock files in `DATA_DIR/published/.tmp/publish-locks/`. The filesystem releases the locks when a process exits. Preserve that directory while the service or a publication command is running.
+
 ## Rollback of the commercial foundation release
 
 Releases from this one on run migrations with `ignore_missing = true`, so later rollbacks to them are a symlink switch. Binaries released **before** it reject the new migration `20261124000009` (`VersionMissing`) and will not start after an automatic rollback. The new tables are additive, so the safe manual procedure is:

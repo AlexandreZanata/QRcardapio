@@ -1,11 +1,9 @@
 use std::borrow::Cow;
-use std::collections::{HashMap, HashSet};
-use std::sync::{Arc, Mutex};
+use std::collections::HashSet;
 use std::time::{Instant, SystemTime};
 
 use chrono::Utc;
 use sqlx::SqlitePool;
-use tokio::sync::Mutex as AsyncMutex;
 
 use crate::config::Config;
 use crate::domain::establishment::{Establishment, Slug};
@@ -13,29 +11,16 @@ use crate::domain::publication::MenuSnapshot;
 use crate::error::{AppError, AppResult};
 use crate::i18n::Locale;
 use crate::infrastructure::database::queries::{
-    capture_menu_publication, list_published_establishment_ids, record_publication_failure,
-    record_publication_success, record_unpublish,
+    capture_menu_publication, find_establishment_by_id, list_published_establishment_ids,
+    record_publication_failure, record_publication_success, record_unpublish,
 };
 use crate::infrastructure::storage::{atomic_write_file, resolve_safe_subpath};
 use crate::rendering::public_menu::{generate_brand_theme_css, render_public_menu_html};
 
+mod locks;
 mod retired_assets;
+pub use locks::PublishLocks;
 use retired_assets::RetiredAssets;
-
-#[derive(Clone, Default)]
-pub struct PublishLocks {
-    inner: Arc<Mutex<HashMap<String, Arc<AsyncMutex<()>>>>>,
-}
-
-impl PublishLocks {
-    pub fn lock_for(&self, est_id: &str) -> Arc<AsyncMutex<()>> {
-        let mut guard = self.inner.lock().expect("publish lock map poisoned");
-        guard
-            .entry(est_id.to_string())
-            .or_insert_with(|| Arc::new(AsyncMutex::new(())))
-            .clone()
-    }
-}
 
 #[derive(Debug, Clone)]
 pub struct PublishOutcome {
@@ -66,8 +51,9 @@ async fn publish_menu(
     est_id: &str,
     republishing: bool,
 ) -> AppResult<Option<PublishOutcome>> {
-    let lock = locks.lock_for(est_id);
-    let _guard = lock.lock().await;
+    let _guard = locks
+        .lock_for_publication(&config.published_tmp_dir(), est_id)
+        .await?;
     let started = Instant::now();
 
     let Some(source) = capture_menu_publication(pool, est_id).await? else {
@@ -226,8 +212,12 @@ pub async fn unpublish_establishment(
     locks: &PublishLocks,
     est: &Establishment,
 ) -> AppResult<()> {
-    let lock = locks.lock_for(&est.id);
-    let _guard = lock.lock().await;
+    let _guard = locks
+        .lock_for_publication(&config.published_tmp_dir(), &est.id)
+        .await?;
+    let est = find_establishment_by_id(pool, &est.id)
+        .await?
+        .ok_or(AppError::NotFound("error.not_found"))?;
 
     let slug = Slug::validate_existing(&est.slug)?;
     let pub_dir = resolve_safe_subpath(&config.published_dir(), slug.as_str())?;
