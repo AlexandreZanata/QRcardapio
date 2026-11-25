@@ -1,5 +1,5 @@
 use chrono::NaiveDate;
-use sqlx::SqlitePool;
+use sqlx::{SqliteConnection, SqlitePool};
 
 use crate::domain::commerce::business_hours::{CommercialSettings, Schedule, Windows};
 use crate::error::{AppError, AppResult};
@@ -7,21 +7,29 @@ use crate::infrastructure::database::begin_immediate;
 
 pub async fn load(pool: &SqlitePool, establishment: &str) -> AppResult<Schedule> {
     let mut tx = pool.begin().await?;
+    let schedule = load_in(&mut tx, establishment).await?;
+    tx.commit().await?;
+    Ok(schedule)
+}
+
+pub(crate) async fn load_in(
+    conn: &mut SqliteConnection,
+    establishment: &str,
+) -> AppResult<Schedule> {
     type SettingsRow = (String, bool, bool, i64, i64, bool, Option<i64>);
     let settings: Option<SettingsRow> = sqlx::query_as(
         "SELECT time_zone, delivery, pickup, minimum_centavos, acceptance_minutes, paused, paused_until
          FROM commercial_settings WHERE establishment_id = ?",
     )
     .bind(establishment)
-    .fetch_optional(&mut *tx)
+    .fetch_optional(&mut *conn)
     .await?;
     let weekly: Vec<(i64, String)> = sqlx::query_as(
         "SELECT weekday, windows_json FROM business_hours WHERE establishment_id = ? ORDER BY weekday",
-    ).bind(establishment).fetch_all(&mut *tx).await?;
+    ).bind(establishment).fetch_all(&mut *conn).await?;
     let exceptions: Vec<(NaiveDate, String)> = sqlx::query_as(
         "SELECT local_date, windows_json FROM business_hour_exceptions WHERE establishment_id = ? ORDER BY local_date",
-    ).bind(establishment).fetch_all(&mut *tx).await?;
-    tx.commit().await?;
+    ).bind(establishment).fetch_all(&mut *conn).await?;
 
     let mut schedule = Schedule::default();
     if let Some((

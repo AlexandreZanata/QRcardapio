@@ -56,6 +56,13 @@ impl Default for CommercialSettings {
 }
 
 impl CommercialSettings {
+    pub fn serves(&self, mode: ServiceMode) -> bool {
+        match mode {
+            ServiceMode::Delivery => self.delivery,
+            ServiceMode::Pickup => self.pickup,
+        }
+    }
+
     pub fn paused_at(&self, time: DateTime<Utc>) -> bool {
         self.paused
             && self
@@ -180,11 +187,7 @@ pub struct OpenService {
 
 impl Schedule {
     pub fn service_at(&self, instant: DateTime<Utc>, mode: ServiceMode) -> Option<OpenService> {
-        let enabled = match mode {
-            ServiceMode::Delivery => self.settings.delivery,
-            ServiceMode::Pickup => self.settings.pickup,
-        };
-        if !enabled || self.settings.paused_at(instant) {
+        if !self.settings.serves(mode) || self.settings.paused_at(instant) {
             return None;
         }
         let time_zone = zone(&self.settings.time_zone)?;

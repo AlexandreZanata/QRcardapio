@@ -3,11 +3,12 @@ use axum::extract::{Path, State};
 use axum::http::header::{CACHE_CONTROL, CONTENT_TYPE, ETAG, IF_NONE_MATCH};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
+use chrono::Utc;
 use serde::Serialize;
 
 use crate::app::AppState;
 use crate::i18n::Locale;
-use crate::infrastructure::database::query_sqlite_version;
+use crate::infrastructure::database::{queries::event_dispatch_status, query_sqlite_version};
 
 #[derive(Serialize)]
 pub struct HealthResponse {
@@ -19,6 +20,8 @@ struct ReadyResponse {
     status: &'static str,
     sqlite_version: String,
     i18n_version: String,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    warnings: Vec<&'static str>,
 }
 
 pub async fn healthz() -> Json<HealthResponse> {
@@ -27,15 +30,26 @@ pub async fn healthz() -> Json<HealthResponse> {
 
 pub async fn readyz(State(state): State<AppState>) -> Response {
     match query_sqlite_version(&state.pool).await {
-        Ok(version) => (
-            StatusCode::OK,
-            Json(ReadyResponse {
-                status: "ready",
-                sqlite_version: version,
-                i18n_version: state.catalog.version_hash().to_string(),
-            }),
-        )
-            .into_response(),
+        Ok(version) => {
+            let warnings = match event_dispatch_status::lag_warning(&state.pool, Utc::now()).await {
+                Ok(true) => vec!["outbox_lag"],
+                Ok(false) => Vec::new(),
+                Err(err) => {
+                    tracing::warn!(error = %err, "outbox readiness indicator unavailable");
+                    vec!["outbox_unavailable"]
+                }
+            };
+            (
+                StatusCode::OK,
+                Json(ReadyResponse {
+                    status: "ready",
+                    sqlite_version: version,
+                    i18n_version: state.catalog.version_hash().to_string(),
+                    warnings,
+                }),
+            )
+                .into_response()
+        }
         Err(err) => {
             tracing::error!(error = %err, "readiness check failed");
             (

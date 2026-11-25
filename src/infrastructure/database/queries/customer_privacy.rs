@@ -13,7 +13,7 @@ pub struct CustomerExport {
     orders: Vec<Value>,
 }
 
-/// Use a consistent read transaction so an export sees a profile and orders from one revision.
+/// Use a consistent read transaction to export the profile, order and entered address together.
 pub async fn export(
     pool: &SqlitePool,
     establishment: &str,
@@ -30,7 +30,9 @@ pub async fn export(
             'delivery_fee_centavos', o.delivery_fee_centavos, 'total_centavos', o.total_centavos,
             'delivery', json((SELECT json_object('recipient_name', d.recipient_name, 'recipient_phone', d.recipient_phone,
                  'street', d.street, 'street_number', d.street_number, 'complement', d.complement,
-                 'neighborhood', d.neighborhood_label, 'city', d.city, 'uf', d.uf, 'cep', d.cep, 'reference', d.reference)
+                 'neighborhood', COALESCE((SELECT n.neighborhood FROM order_delivery_neighborhoods n
+                     WHERE n.order_id = d.order_id AND n.establishment_id = d.establishment_id), d.neighborhood_label),
+                 'city', d.city, 'uf', d.uf, 'cep', d.cep, 'reference', d.reference)
                  FROM order_delivery_details d WHERE d.order_id = o.id AND d.establishment_id = o.establishment_id)),
             'items', json((SELECT json_group_array(json_object('name', i.name, 'quantity', i.quantity,
                  'variation', i.variation_name, 'unit_price_centavos', i.unit_price_centavos,
@@ -55,7 +57,7 @@ pub async fn export(
     })
 }
 
-/// Erase private fields and detach orders while preserving their commercial facts and event log.
+/// Erase entered address text and detach orders while preserving trusted labels and commercial facts.
 pub async fn erase(
     pool: &SqlitePool,
     establishment: &str,
@@ -75,6 +77,7 @@ pub async fn erase(
         .bind(establishment)
         .execute(&mut *tx)
         .await?;
+    // The erased_at update also deletes private neighborhoods through the migration trigger.
     sqlx::query(
         "UPDATE order_delivery_details SET recipient_name = NULL, recipient_phone = NULL,
              street = NULL, street_number = NULL, complement = NULL, city = NULL, uf = NULL,

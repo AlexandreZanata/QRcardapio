@@ -1,6 +1,7 @@
 pub mod asaas;
 pub mod assets;
 pub mod database;
+pub mod events;
 pub mod gateway;
 pub mod google;
 pub mod inter;
@@ -8,3 +9,4 @@ pub mod ocr;
 pub mod security;
 pub mod storage;
 pub mod stripe;
+pub mod web_push;

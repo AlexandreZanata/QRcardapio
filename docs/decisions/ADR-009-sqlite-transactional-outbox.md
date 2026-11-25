@@ -3,6 +3,8 @@
 - **Status**: Accepted
 - **Date**: 2026-11-24
 
+Commerce Core Increment 3 implements the dispatcher and stores publication timestamps in an additive companion table. See [Event Contracts](../architecture/EVENT_CONTRACTS.md#dispatcher) for the current design.
+
 ## Context
 
 Future modules (Delivery, Kitchen, Fleet, Loyalty, Analytics) must react to each other's state changes without a broker, while the platform keeps running on a single small VPS. A message broker (Kafka, RabbitMQ, Redis streams) would add cost and an extra failure domain. Commercial changes already happen inside `BEGIN IMMEDIATE` SQLite transactions.

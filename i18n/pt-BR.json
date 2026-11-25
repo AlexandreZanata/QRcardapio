@@ -1,4 +1,7 @@
 {
+  "commerce.invalid_push_subscription": "A inscrição de notificações é inválida.",
+  "commerce.push.order_title": "Novo pedido",
+  "commerce.push.order_body": "Pedido nº {number} aguardando aceitação.",
   "mcp.integrations": "Integrações de IA",
   "mcp.integrations_intro": "Conecte ChatGPT, Claude ou Antigravity para consultar e ajustar sua conta, cardápio e publicação.",
   "mcp.endpoint": "Endereço do servidor MCP",
@@ -1039,5 +1042,15 @@
   "commerce.address.state": "Estado",
   "commerce.address.pick_state": "Selecione o estado",
   "commerce.address.cep": "CEP",
-  "commerce.address.reference": "Referência (opcional)"
+  "commerce.address.reference": "Referência (opcional)",
+  "commerce.checkout_repriced": "O cardápio mudou. Revise os itens e o total antes de confirmar.",
+  "commerce.idempotency_mismatch": "Esta tentativa já foi usada com outros dados de pedido.",
+  "commerce.invalid_checkout": "Confira os itens e os dados do pedido.",
+  "commerce.invalid_order_price": "O valor do pedido ultrapassa os limites permitidos.",
+  "delivery.closed": "O estabelecimento não está aceitando pedidos neste horário.",
+  "delivery.below_minimum": "O subtotal dos itens está abaixo do pedido mínimo.",
+  "delivery.mode_unavailable": "Esta modalidade de atendimento não está disponível.",
+  "commerce.invalid_cash_change": "Informe um valor para troco igual ou superior ao total ao escolher dinheiro.",
+  "commerce.invalid_refund_amount": "Informe um valor positivo até o saldo restante do pagamento.",
+  "commerce.payment_state_conflict": "Atualize o pagamento e confira as operações disponíveis."
 }

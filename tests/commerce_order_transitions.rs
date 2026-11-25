@@ -14,6 +14,97 @@ use qrcardapio::domain::commerce::state_machine::{Actor, OrderState};
 use qrcardapio::error::AppError;
 use qrcardapio::infrastructure::database::queries::{domain_events, orders};
 
+#[tokio::test]
+async fn acceptance_timer_rejects_once_and_dispatcher_cancels_only_uncollected_payment() {
+    use qrcardapio::application::commerce::{order_expiry, payments, worker};
+    use qrcardapio::domain::commerce::order_payment::{OfflineMethod, OfflinePaymentChoice};
+    use qrcardapio::domain::commerce::state_machine::OrderPaymentState;
+    use qrcardapio::infrastructure::database::queries::order_payments;
+    use qrcardapio::infrastructure::events::dispatcher::dispatch_batch;
+
+    let harness = support::harness(false).await;
+    let (owner, establishment) = support::owner(&harness.pool, "order-expiry").await;
+    let now = fixture::at("2026-11-25T15:00:00.123Z");
+    let placement = fixture::catalog(&harness, &establishment, now).await;
+    let expiring = create(&harness.pool, &establishment, &placement, now)
+        .await
+        .unwrap();
+    let accepted = create(&harness.pool, &establishment, &placement, now)
+        .await
+        .unwrap();
+    let payment = payments::create_pending(
+        &harness.pool,
+        &establishment,
+        &expiring.id,
+        OfflinePaymentChoice {
+            method: OfflineMethod::Cash,
+            change_for_centavos: None,
+        },
+        now,
+    )
+    .await
+    .unwrap();
+    let expiration = expiring.acceptance_deadline_at;
+    transition(
+        &harness.pool,
+        &establishment,
+        &accepted.id,
+        owner_transition(
+            &accepted,
+            &owner.account.id,
+            OrderAction::Accept {
+                promised_at: expiration + Duration::minutes(20),
+            },
+        ),
+        now,
+    )
+    .await
+    .unwrap();
+    assert_eq!(
+        order_expiry::expire_due(&harness.pool, expiration - Duration::milliseconds(1))
+            .await
+            .unwrap(),
+        0
+    );
+    let (first, second) = tokio::join!(
+        order_expiry::expire_due(&harness.pool, expiration),
+        order_expiry::expire_due(&harness.pool, expiration)
+    );
+    assert_eq!(first.unwrap() + second.unwrap(), 1);
+    for _ in 0..2 {
+        dispatch_batch(&harness.pool, worker::CONSUMERS, expiration)
+            .await
+            .unwrap();
+    }
+    let expiring = orders::get(&harness.pool, &establishment, &expiring.id)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(expiring.state, OrderState::Rejected);
+    assert_eq!(expiring.reason_code.as_deref(), Some("acceptance_timeout"));
+    let accepted = orders::get(&harness.pool, &establishment, &accepted.id)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(accepted.state, OrderState::Accepted);
+    let payment = order_payments::get(&harness.pool, &establishment, &expiring.id, &payment.id)
+        .await
+        .unwrap()
+        .unwrap();
+    assert_eq!(payment.state, OrderPaymentState::Cancelled);
+    assert_eq!(payment.version, 2);
+    let events = domain_events::list_for_establishment(&harness.pool, &establishment)
+        .await
+        .unwrap();
+    assert_eq!(
+        events
+            .iter()
+            .filter(|event| event.event_type == "OrderRejected")
+            .count(),
+        1
+    );
+}
+
 fn owner_transition<'a>(
     order: &Order,
     account: &'a str,

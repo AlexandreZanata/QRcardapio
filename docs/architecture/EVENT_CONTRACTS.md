@@ -1,6 +1,6 @@
 # Event Contracts and Transactional Outbox
 
-Status: outbox append **implemented and tested**; dispatcher and consumers **planned** for Commerce Core (phase 3). Decision record: [ADR-009](../decisions/ADR-009-sqlite-transactional-outbox.md). Registry: [`contracts/events/registry.json`](../../contracts/events/registry.json).
+Status: outbox append, dispatch and internal Commerce Core consumers are implemented and tested. Decision record: [ADR-009](../decisions/ADR-009-sqlite-transactional-outbox.md). Registry: [`contracts/events/registry.json`](../../contracts/events/registry.json).
 
 ## Envelope (`domain_events`)
 
@@ -31,6 +31,8 @@ Rules: append in the **same transaction** as the state change (`queries::domain_
 | `OrderAccepted` v1 / `OrderRejected` v1 | `commerce::order_transitions` | A placed order was accepted or rejected. |
 | `OrderPreparing` v1 / `OrderReady` v1 / `OrderCompleted` v1 | `commerce::order_transitions` | The order entered preparation, became ready or was completed. |
 | `OrderCancelled` v1 | `commerce::order_transitions` | An allowed cancellation committed with an enumerated reason and actor kind. |
+| `PaymentConfirmed` v1 | `commerce::payments` | Authorized staff recorded collection of an offline order payment. |
+| `PaymentRefunded` v1 | `commerce::payments` | Authorized staff recorded a partial or full offline refund. |
 
 `tests/commercial_contracts.rs` enforces that every Rust `EventType` is registered as implemented with a strict JSON Schema (no additional properties, no personal-data fields) and that every planned event has a version and payload description.
 
@@ -38,16 +40,15 @@ Order creation and every applied order transition append exactly one order event
 
 ## Planned events
 
-Subscription lifecycle (`SubscriptionChanged`, `SubscriptionExpired`), commerce payments (`PaymentConfirmed`, `PaymentRefunded`), tables, kitchen, fleet, loyalty and POS events are listed in the registry with their payloads. None is emitted today.
+Later subscription lifecycle (`SubscriptionChanged`, `SubscriptionExpired`), tables, kitchen, fleet, loyalty and POS events are listed in the registry with their payloads.
 
-## Dispatcher (phase 3 design)
+## Dispatcher
 
-The canonical design is [COMMERCE_CORE §11](COMMERCE_CORE.md#11-planned-dispatcher). Summary:
+See [Commerce Core §11](COMMERCE_CORE.md#11-dispatcher) for worker and notification behavior.
 
 1. One in-process Tokio task polls `domain_events` by `seq`; no broker and no extra process.
 2. Per-consumer checkpoints (`event_consumer_checkpoints`), receipts (`event_consumer_receipts`, PK `(consumer, event_id)`) and failures (`event_consumer_failures`). A handler's writes, its receipt and its checkpoint commit in one `BEGIN IMMEDIATE` transaction, so replays never duplicate effects.
 3. Exponential backoff up to 10 attempts, then dead-letter per consumer; later events of the same aggregate are parked for that consumer to keep per-aggregate order, other aggregates continue.
-4. Consumers act as the planned `system` role and re-check their own module capability before creating new work; compensations of existing work keep running after expiry.
-5. `published_at` (low-water mark) and its partial index arrive with the dispatcher in an expand-only migration.
-6. `SubscriptionExpired` is produced by a daily job comparing coverage with the previous run.
-7. Retention: events older than 13 months are archived by `VACUUM INTO` snapshot before deletion; financial and audit events follow the legal retention policy.
+4. The Commerce Core `system` consumers scope their work to the recorded tenant. Future module consumers must re-check their own capability before creating protected work.
+5. `event_dispatch_publications.published_at` and the partial pending index track publication independently of the source event. Acknowledgement requires a receipt from each subscribed consumer.
+6. A daily `SubscriptionExpired` producer and event archival are planned. Financial and audit events follow the legal retention policy.

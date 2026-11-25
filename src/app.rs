@@ -14,9 +14,9 @@ use crate::application::payments::BillingGateways;
 use crate::application::publishing::PublishLocks;
 use crate::config::Config;
 use crate::http::handlers::{
-    admin, admin_affiliates, affiliates, auth, billing, billing_payer, billing_webhooks,
-    categories, dashboard, google, health, mcp, menu_editor, ocr, onboarding, products, public, qr,
-    seo, settings,
+    admin, admin_affiliates, admin_outbox, affiliates, auth, billing, billing_payer,
+    billing_webhooks, categories, dashboard, google, health, mcp, menu_editor, ocr, onboarding,
+    products, public, qr, seo, settings,
 };
 use crate::http::middleware::branded_errors::branded_errors;
 use crate::http::middleware::security_headers::{no_store, security_headers_middleware};
@@ -266,6 +266,7 @@ pub fn build_router(state: AppState) -> Router {
         .route("/dashboard/ocr/{id}/apply", post(ocr::ocr_apply_submit))
         .route("/dashboard/ocr/{id}/discard", post(ocr::ocr_discard_submit))
         .route("/admin", get(admin::admin_page))
+        .route("/admin/outbox", get(admin_outbox::outbox))
         .route("/c/{slug}", get(public::serve_published_menu))
         .route("/c/{slug}/", get(public::serve_published_menu))
         .route("/c/{slug}/{*file}", get(public::serve_published_asset))

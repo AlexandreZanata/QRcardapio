@@ -5,7 +5,7 @@ use sqlx::{SqliteConnection, SqlitePool};
 use super::{addon_groups, addon_options, product_variations, publications};
 use crate::domain::commerce::catalog_snapshot::{CatalogAddonGroup, CatalogContent};
 use crate::error::{AppError, AppResult};
-use crate::infrastructure::database::begin_immediate;
+use crate::infrastructure::database::commerce_writes;
 
 #[derive(Debug, Clone, PartialEq, Eq, sqlx::FromRow)]
 pub struct CatalogSnapshot {
@@ -73,7 +73,7 @@ pub async fn publish(
     channel: &str,
     now: &str,
 ) -> AppResult<CatalogSnapshot> {
-    let mut tx = begin_immediate(pool).await?;
+    let (_turn, mut tx) = commerce_writes::begin(pool).await?;
     let menu = publications::load_menu_snapshot_in(&mut tx, est_id, false)
         .await?
         .ok_or(AppError::NotFound("error.not_found"))?;
@@ -126,7 +126,7 @@ pub async fn publish_product_availability(
     is_available: bool,
     now: &str,
 ) -> AppResult<CatalogSnapshot> {
-    let mut tx = begin_immediate(pool).await?;
+    let (_turn, mut tx) = commerce_writes::begin(pool).await?;
     let previous = current_in(&mut tx, est_id, channel)
         .await?
         .ok_or(AppError::NotFound("error.not_found"))?;

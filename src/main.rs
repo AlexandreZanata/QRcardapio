@@ -203,6 +203,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 async fn run_server(config: Config) -> Result<(), Box<dyn std::error::Error>> {
+    let push_sender = qrcardapio::infrastructure::web_push::WebPushSender::from_env()?;
     let pool = init_pool(&config).await?;
     seed_public_demo(&pool, &config).await?;
     let bind_addr = config.bind_addr;
@@ -252,6 +253,10 @@ async fn run_server(config: Config) -> Result<(), Box<dyn std::error::Error>> {
 
     let router = build_router(state);
     let listener = TcpListener::bind(bind_addr).await?;
+    let commerce_pool = pool.clone();
+    let commerce = tokio::spawn(async move {
+        qrcardapio::application::commerce::worker::run(&commerce_pool, push_sender).await;
+    });
     tracing::info!(addr = %bind_addr, "QR Cardapio server listening");
 
     axum::serve(
@@ -262,6 +267,8 @@ async fn run_server(config: Config) -> Result<(), Box<dyn std::error::Error>> {
     .await?;
 
     maintenance.abort();
+    commerce.abort();
+    let _ = commerce.await;
     pool.close().await;
     tracing::info!("server shut down gracefully");
     Ok(())

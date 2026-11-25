@@ -1,8 +1,10 @@
 pub mod business_hours;
 pub mod catalog_options;
 pub mod catalog_snapshot;
+pub mod checkout;
 pub mod customer;
 pub mod discount;
 pub mod order;
+pub mod order_payment;
 pub mod pricing;
 pub mod state_machine;

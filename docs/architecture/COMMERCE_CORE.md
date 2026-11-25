@@ -2,9 +2,9 @@
 
 ## Status
 
-**In progress, Increment 2.** Commerce Core belongs to QR Core, the free shared foundation listed in [`contracts/core/components.json`](../../contracts/core/components.json). This increment implements typed state machines, integer pricing, tenant-scoped catalog options, internal published snapshots, order persistence, and transactional order events. Increment 2 ships tenant dashboard forms for variations, add-on groups, hours and customer records. Checkout, consumer payments, the public ordering API and the dispatcher are planned.
+**In progress, Increment 3.** Commerce Core belongs to QR Core, the free shared foundation listed in [`contracts/core/components.json`](../../contracts/core/components.json). The third increment adds internal checkout, offline collection and refunds, event dispatch with compensation and acceptance expiry, and optional staff Web Push. Channel-facing authorization and public ordering routes arrive with the channel modules.
 
-Implemented foundation it builds on: `src/domain/commercial/`, `src/domain/entitlements/` (`Capability`, `MemberRole`, `Operation`, `OperationalStatus`, `GrantKind`, `resolve`), `src/application/{commercial,entitlements,operator}.rs`, migration `20261124000009_commercial_foundation.sql` and the `domain_events` outbox (append only).
+Implemented foundation it builds on: `src/domain/commercial/`, `src/domain/entitlements/` (`Capability`, `MemberRole`, `Operation`, `OperationalStatus`, `GrantKind`, `resolve`), `src/application/{commercial,entitlements,operator}.rs`, migration `20261124000009_commercial_foundation.sql` and the `domain_events` outbox.
 
 Authoritative contracts: [`contracts/commerce/state-machines.json`](../../contracts/commerce/state-machines.json), [`contracts/events/registry.json`](../../contracts/events/registry.json), [`contracts/entitlements/authorization-rules.json`](../../contracts/entitlements/authorization-rules.json), [`contracts/entitlements/capabilities.json`](../../contracts/entitlements/capabilities.json). When this document and a contract disagree, the contract wins and this document is fixed. See also [EVENT_CONTRACTS.md](EVENT_CONTRACTS.md) and the [module catalog](../business/MODULE_CATALOG.md). First consumer: [QR Delivery](../modules/DELIVERY.md).
 
@@ -18,10 +18,10 @@ Commerce Core is the single order engine shared by every selling channel. Module
 | `business_hours` | implemented | Weekly hours, date exceptions, holiday overrides, pause switch |
 | `commercial_settings` | partial (modes, pause, minimum and acceptance settings) | Service modes, minimum order, fees, acceptance window, checkout settings |
 | `customers`, `addresses` | implemented for the dashboard and privacy operations | Establishment-scoped consumer records with LGPD export and erasure |
-| `orders` | partial (aggregate, item snapshots, numbering, transition executor) | The `Order` aggregate and its state machine |
-| `order_payments` | planned | Consumer-to-establishment payments, separate from SaaS billing |
-| `notifications` | planned | Email and web push sent by outbox consumers, per-establishment templates |
-| `events` | partial (append implemented) | The outbox dispatcher (section 11) |
+| `orders` | internal checkout, transitions and acceptance expiry | The `Order` aggregate and its state machine |
+| `order_payments` | offline ledger implemented | Consumer-to-establishment payments, separate from SaaS billing |
+| `notifications` | opt-in staff Web Push implemented | Durable push deliveries and locale-specific new-order copy. Email, messaging and template editing remain planned. |
+| `events` | implemented | The outbox dispatcher (section 11) |
 
 Rules that keep the boundary:
 
@@ -76,7 +76,7 @@ Suspension (top-level `suspension` rule) blocks only `deny` operations, so every
 
 ## 3. State machines
 
-Six independent machines are defined in `contracts/commerce/state-machines.json`. `domain::commerce::state_machine` embeds the JSON with `include_str!`, parses the definitions once into typed states and actors, and exposes transition lookup. `tests/commerce_contracts.rs` checks every combination of machine, source state, target state and actor, plus the initial and terminal states and event names. Increment 1 persists only the `order` machine. **A transition in one machine never implies a transition in another.**
+Six independent machines are defined in `contracts/commerce/state-machines.json`. `domain::commerce::state_machine` embeds the JSON with `include_str!`, parses the definitions once into typed states and actors, and exposes transition lookup. `tests/commerce_contracts.rs` checks every combination of machine, source state, target state and actor, plus the initial and terminal states and event names. Commerce Core persists `order` and the offline transitions of `order_payment`. **A transition in one machine never implies a transition in another.**
 
 | Fact | Never implies |
 |---|---|
@@ -193,7 +193,7 @@ There is no loyalty compensation (section 3.1). QR Loyalty consumes `OrderCancel
 
 ## 4. Concurrency control
 
-- Every write runs in a `BEGIN IMMEDIATE` transaction (`begin_immediate()`, `busy_timeout = 5000`), so writers queue on SQLite's lock instead of failing on snapshot upgrade.
+- Commerce Core write services enter a FIFO queue per SQLite file before opening a pooled `BEGIN IMMEDIATE` transaction. This avoids racing the busy handler on several connections under checkout load. SQLite remains responsible for coordinating other writers and processes (`busy_timeout = 5000`).
 - Every state-machine aggregate row carries `state` and `version INTEGER NOT NULL DEFAULT 1`. A transition is exactly: `UPDATE <table> SET state = ?, version = version + 1, <timestamps> WHERE id = ? AND establishment_id = ? AND state = <expected> AND version = ?`. Zero rows affected returns `409` with the current state and version (contract rule).
 - In the same transaction: append a row to the aggregate's transition log, write side-effect rows owned by the same order (for example the coupon redemption release), and append the outbox event. The HTTP response is sent only after commit.
 - Dashboard forms carry `expected_version` next to `_csrf`; two staff members accepting the same order produce exactly one `OrderAccepted` and one `409`.
@@ -224,7 +224,7 @@ Increment 1 adds options to the shared draft catalog as new tables (expand-only,
 
 ### Service hours and commercial settings
 
-The tenant dashboard persists pickup and delivery independently, an integer minimum, a 3–30 minute acceptance window, weekly intervals and date-specific overrides. Date overrides replace the entire local day's recurring hours, including spillover from a previous day. An overnight interval belongs to its opening date. Schedule evaluation returns both the shift date and the business date, whose cutoff is 04:00 local time. Pauses apply immediately in schedule evaluation and can last 15, 30 or 60 minutes, or until resumed. The checkout increment will apply these settings to new orders. [ADR-013](../decisions/ADR-013-commerce-core-increment-2.md)
+The tenant dashboard persists pickup and delivery independently, an integer minimum, a 3–30 minute acceptance window, weekly intervals and date-specific overrides. Date overrides replace the entire local day's recurring hours, including spillover from a previous day. An overnight interval belongs to its opening date. Checkout uses the service mode, pause, minimum, and business date at the establishment's 04:00 local cutoff. A durable acceptance deadline lets the system reject expired placed orders after a restart. [ADR-013](../decisions/ADR-013-commerce-core-increment-2.md)
 
 ## 7. Order financial invariants
 
@@ -243,18 +243,17 @@ The tenant dashboard persists pickup and delivery independently, an integer mini
 
 ## 8. Checkout against the published snapshot
 
-Increment 1 provides an internal publication transaction for `catalog_snapshots`. The calling operation resolves the catalog channel server-side. The transaction promotes only the channel’s tenant-scoped visible catalog rows into an immutable canonical JSON payload with SHA-256 and an incremental version. The checkout and storefront increments will wire this publication boundary into authorized operations and add matching static files. Checkout reads only the **current published snapshot** of that channel, never draft tables. Sold-out toggles from an order center create a new snapshot version derived from the current one with only availability changed, so unpublished draft edits never leak.
+Published catalog snapshots are immutable canonical JSON with SHA-256 and an incremental version per establishment and channel. Checkout reads the **current published snapshot** while holding the write lock used to place the order. Availability-only updates derive a version from the previous published snapshot. Future channel adapters resolve the channel server-side and publish matching storefront files.
 
-1. Resolve the establishment from the slug server-side and call `authorize(...)` for the channel operation (lifecycle, operational state, role, enforcement, capability).
-2. Validate business hours, pause switch, service mode, zone and minimum order.
-3. Price the cart against the current snapshot (section 7).
-4. If any line is unavailable or the computed total differs from `expected_total_centavos`, return `409` with code `commerce.checkout_repriced`, the current `catalog_version` and a fresh quote. Nothing is persisted; the client must show the differences and get explicit reconfirmation.
-5. `BEGIN IMMEDIATE`: re-check that the snapshot version is still current (else back to step 4), insert `checkout_attempts`, upsert the customer, consume the coupon with a conditional `UPDATE`, insert order, items, options, delivery details and a `pending` payment, append `OrderCreated` (`dedupe_key` = order public id), commit.
-6. Respond `201` with the order public id and tracking path.
+1. A channel adapter is responsible for resolving the tenant and authorizing its operation before using `checkout::quote` and `checkout::place_order`. Fee and discount inputs come from the server. QR Delivery will supply zone and coupon rules.
+2. `BEGIN IMMEDIATE` serializes checkout with catalog and settings writes. A live attempt returns the original receipt when its request hash matches, or `commerce.idempotency_mismatch` (`422`) when it differs. The attempt expires after seven days.
+3. Validate hours, mode, pause, minimum and selections against the current published snapshot. A changed version, unavailable line or changed total returns `CheckoutOutcome::Repriced` with the current version and quote. The future HTTP adapter returns `409 commerce.checkout_repriced` so the customer can reconfirm.
+4. Atomically upsert the customer, write immutable order items and details, create a pending offline payment, append `OrderCreated` and record the attempt. `place_order_in` gives a trusted channel adapter a savepoint and the new order ID to consume a coupon in the same outer transaction. Replays return the original public ID and skip this hook.
+5. A future storefront returns `201` with the public ID and tracking path.
 
 ## 9. SaaS billing vs Commerce Payments
 
-| Aspect | SaaS billing (implemented) | Commerce Payments (planned) |
+| Aspect | SaaS billing | Commerce Payments |
 |---|---|---|
 | Who pays whom | Establishment pays the platform | Consumer pays the establishment |
 | Provider account | Platform's central Asaas account | Per-establishment financial account; never the platform's central account |
@@ -266,30 +265,36 @@ Increment 1 provides an internal publication transaction for `catalog_snapshots`
 
 They never share credentials, beneficiaries, state, webhook endpoints or ledgers. A test asserts that no commerce payment can be created against the platform account.
 
-- **MVP (pay on delivery)**: methods `cash` (with optional `change_for_centavos >= total`), `card_on_delivery`, `pix_on_delivery` (the establishment's own key shown as text). Staff confirm collection; no money touches the platform.
+- **Offline ledger**: methods `cash` (with optional `change_for_centavos >= total`), `card_on_delivery`, `pix_on_delivery`. A payment's requested and collected methods are distinct. Confirmation, cancellation and partial or full refunds record audited actors and versions. Cancelling or rejecting the order cancels uncollected intents or marks the remaining refundable balance due. Staff record the actual refund after returning the money independently.
 - **Future online payments**: each establishment connects a financial account it owns (for example a provider subaccount under its own KYC, or its own provider credentials). Pix dinâmico charges carry the exact outstanding amount and expire (`pending → expired`); confirmation only by authenticated webhook, never by the browser. Card payments use provider-hosted or tokenized forms so card data never reaches our servers. Daily reconciliation per financial account compares provider records with `order_payments` and opens issues on mismatch; it never silently adjusts amounts.
 
 ## 10. Outbox usage
 
-Implemented today: `domain_events` with the registry envelope, a global `seq` (ordering is guaranteed per aggregate only, through the `(aggregate_type, aggregate_id, seq)` index) and a nullable unique `dedupe_key`. No dispatcher-only column exists yet (ADR-009). The existing SaaS and QR Menu events remain implemented, including `CatalogPublished:menu:{establishment_id}:{version}`. Commerce Core appends `OrderCreated`, `OrderAccepted`, `OrderRejected`, `OrderPreparing`, `OrderReady`, `OrderCompleted`, and `OrderCancelled`.
+`domain_events` has the registry envelope, a global `seq`, per-aggregate ordering and a nullable unique `dedupe_key`. Commerce Core appends `OrderCreated`, `OrderAccepted`, `OrderRejected`, `OrderPreparing`, `OrderReady`, `OrderCompleted`, `OrderCancelled`, `PaymentConfirmed` and `PaymentRefunded`.
 
-Commerce Core appends every machine event in the transaction of its transition, with optional typed correlation and causation IDs supplied by the calling operation. Checkout attempts and dispatcher receipts arrive in later increments. The registry `producer` names the component that writes the row (`commerce`, `commerce.payments`); module contracts still list these events under `publishes` when their operations cause them. Point amounts in loyalty events are positive magnitudes and the event type gives the direction. Event-level details live in [EVENT_CONTRACTS.md](EVENT_CONTRACTS.md).
+Commerce Core appends machine events in the transaction of the transition, with correlation and causation IDs where applicable. The registry `producer` names the component that writes the row (`commerce`, `commerce.payments`). A channel contract lists an event under `publishes` when its operation causes that event. See [EVENT_CONTRACTS.md](EVENT_CONTRACTS.md).
 
-## 11. Planned dispatcher
+## 11. Dispatcher
 
-- **Single in-process task** (Tokio) polling `domain_events` by `seq` every 250 ms when idle and immediately after a commit notification; batch size 200. No broker.
+- **Single in-process task** (Tokio) scans `domain_events` by `seq` every 250 ms when idle. Commerce commits can wake it early, with a 20 ms window to group nearby commits into one write batch. The scan budget is 200 events per consumer per batch.
 - **Per-consumer checkpoints**: `event_consumer_checkpoints(consumer, last_seq)`. Each consumer reads events of its subscribed types with `seq > last_seq` in `seq` order.
 - **Idempotent consumers**: the handler's writes, an `event_consumer_receipts(consumer, event_id)` row and the checkpoint advance commit in one `BEGIN IMMEDIATE` transaction, so a crash replays without duplicate effects. Handlers with external effects (push, email, provider calls) store an outbound record keyed by `event_id` before calling out.
-- **Authorization**: consumers act as the planned `system` role for the event's establishment. They run only for events produced under a valid operation and re-check the consumer module's own capability before creating new work (for example Kitchen tickets from `OrderAccepted`). Compensations of existing work (cancelling tickets or deliveries, reversing points) follow the `allow` and `complete_existing` rules and keep running after expiry.
-- **Order engine consumers** (registered today under the channel module's `consumes`, for example `delivery.json`): `KitchenTicketCreated`, `KitchenTicketStarted` and `KitchenTicketReady` drive `accepted → preparing → ready`; `DeliveryCompleted` drives `ready → completed`; events with `order_id = null` are ignored.
+- **Authorization**: the platform `system` actor is limited to internal workers. Commerce payment compensation and staff notifications operate on the tenant and order that emitted the event. Future module consumers must re-check their capability before creating new commercial work. Existing-work compensation can continue through suspension or expiry.
+- **Registered consumers**: `commerce.payments` handles `OrderRejected` and `OrderCancelled`. `commerce.notifications` durably queues opted-in staff alerts for `OrderCreated` while it is awaiting acceptance. The timer uses persisted deadlines and records an ordinary `OrderRejected` event with `acceptance_timeout`.
 - **Retries**: exponential backoff with jitter (1 s, 5 s, 30 s, 2 min, 10 min, 1 h), up to 10 attempts, recorded in `event_consumer_failures`.
 - **Dead letter**: after the last attempt the event is marked `dead` for that consumer, later events of the **same aggregate** are parked for that consumer to preserve per-aggregate order, and other aggregates continue. Platform admins can replay or discard from `/admin` (planned).
-- **`published_at`** (new nullable column, added by an expand-only migration with the dispatcher): set when every subscribed consumer's checkpoint has passed the event (low-water mark), or immediately when nobody subscribes.
-- **Observability**: per-consumer lag (`max(seq) − last_seq`), dead-letter count and oldest pending age exposed to `/admin` and `/readyz` warnings.
+- **Publication**: `event_dispatch_publications.published_at` records acknowledgement when all subscribed consumers have receipts, or when no consumer subscribed. A checkpoint can advance past a failed event to deliver other aggregates. The failure row keeps the affected aggregate parked and the event unpublished.
+- **Observability**: `/admin/outbox` returns per-consumer lag, retry/parking counts, dead-letter metadata and oldest pending age. `/readyz` remains ready with an `outbox_lag` warning for dead letters or pending age over 30 seconds.
+
+### Staff Web Push
+
+The event consumer commits one outbound record per event and opted-in staff subscription. A separate worker claims up to eight deliveries with short leases, then opens network connections outside the write transaction. It retries temporary failures within the order's acceptance window and drops invalid subscriptions. VAPID and encrypted payloads use [RFC 8292](https://www.rfc-editor.org/rfc/rfc8292) and [RFC 8291](https://www.rfc-editor.org/rfc/rfc8291). A stable message `Topic` and `tag` identify deliveries if the process exits after submitting to a push service and before recording the outcome.
+
+Set `COMMERCE_VAPID_PRIVATE_KEY_FILE` to a P-256 PKCS#8 DER private key and `COMMERCE_VAPID_CONTACT` to a contact URI to run the sender. With both unset, no Web Push requests are sent. Browser permission and channel subscription endpoints belong to the channel adapter.
 
 ## 12. Conceptual SQLite persistence model
 
-The catalog and order tables shown below scope tenant rows and parent references by `establishment_id`. Increment 1 migrations cover options, snapshots, orders, order items and options, and the order transition log. Increment 2 adds business hours, date exceptions, commercial settings, customers, addresses, order customer links and delivery privacy details. Remaining rows describe planned DDL. See [DATABASE.md](DATABASE.md#commerce-core).
+The catalog and order tables scope tenant rows and parent references by `establishment_id`. The following conceptual list includes the planned gateway tables. See [DATABASE.md](DATABASE.md#commerce-core) for deployed column names and migrations.
 
 | Table | Key columns | Constraints and indexes |
 |---|---|---|
@@ -316,7 +321,7 @@ The catalog and order tables shown below scope tenant rows and parent references
 | `event_consumer_receipts` | consumer, event_id, processed_at | PK `(consumer, event_id)` |
 | `event_consumer_failures` | consumer, event_id, seq, aggregate, attempts, next_attempt_at, status | Index `(consumer, status, next_attempt_at)` |
 
-`domain_events` additionally gets the `published_at` column and a partial index `WHERE published_at IS NULL` for the dispatcher.
+`event_dispatch_publications` holds the `published_at` value and the partial pending index separately from `domain_events`, so the additive migration can be reapplied. Staff subscriptions and delivery leases are stored in `commerce_push_subscriptions` and `commerce_push_deliveries`.
 
 ## 13. Benchmarks required before launch
 
@@ -330,7 +335,7 @@ The static-menu results in [PERFORMANCE.md](../performance/PERFORMANCE.md) (abou
 | Notifications | 1,000 web push sends per minute with a fake endpoint | Bounded concurrency; checkout latency unaffected |
 | Payments | 1,000 unique gateway events, then full redelivery | ≥ 150 events/s, p95 ≤ 250 ms; redelivery is a no-op |
 
-Results go into `docs/performance/PERFORMANCE.md` with the script (`scripts/bench_commerce.sh`, planned).
+Results and reproduction instructions live in [PERFORMANCE.md](../performance/PERFORMANCE.md#commerce-core-increment-3). The gateway benchmark applies when online consumer gateways are implemented.
 
 ## 14. Phase 3 completion criteria
 
@@ -377,13 +382,13 @@ Items 1–4, 6 and 9 are implemented in Increment 1. Item 17 is implemented for 
 2. Implement weekly hours, date exceptions, holiday overrides, pause, service modes, minimum order and acceptance settings. Define behavior for overnight intervals and their business dates.
 3. Add tenant-scoped customers and addresses with phone normalization, export, erasure and tested retention exceptions.
 
-**Increment 3**
+**Increment 3 delivered**
 
-1. Add checkout with idempotency, snapshot revalidation, repricing, and atomic order creation. Cover same-key retries, changed request hashes, and concurrent checkout against an updated snapshot.
-2. Implement the offline consumer payment ledger, including independent confirmation, cancellation and refunds, with invariants for exact balances.
-3. Add outbox checkpoints, receipts, retries, dead letter and per-aggregate parking. Add acceptance expiry and payment compensations with crash recovery tests.
-4. Add the lifecycle and operation rules required by the implemented entry points, complete the Phase 3 notification component and permission coverage, and record section 13 benchmarks and rollback evidence.
-5. Close the section 14 gates before starting Phase 4. QR Delivery then wires the shared foundation into the storefront, cart, delivery and pickup settings, tracking and order center. Asaas homologation remains required before `beta` or `available`.
+1. Checkout covers idempotency, snapshot and settings revalidation, repricing and atomic order creation. Channel adapters can extend placement with a transactional coupon hook.
+2. The offline consumer payment ledger records independent confirmation, cancellation and refunds, with exact balances and immutable history.
+3. The dispatcher adds receipts, checkpoints, retries and per-aggregate dead-letter parking. The system handles acceptance expiry, payment compensation and staff Web Push.
+4. `/admin/outbox` uses platform-admin authorization. Internal callers must retain tenant scoping and verify the channel operation when a channel is introduced. [Performance and rollback evidence](../performance/PERFORMANCE.md#commerce-core-increment-3) records validation and remaining release gates.
+5. QR Delivery will wire the core into the storefront, cart, delivery and pickup settings, coupons, tracking and order center after the Phase 3 gates. Asaas homologation remains required before `beta` or `available`.
 
 ## 16. Decisions still open
 

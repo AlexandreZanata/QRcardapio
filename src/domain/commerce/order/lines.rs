@@ -34,6 +34,13 @@ pub(crate) fn snapshot_lines<'a>(
     catalog: &'a CatalogContent,
     selections: &[OrderItemSelection],
 ) -> Result<Vec<OrderItemSnapshot<'a>>, LineError> {
+    assess_lines(catalog, selections).collect()
+}
+
+pub(crate) fn assess_lines<'a>(
+    catalog: &'a CatalogContent,
+    selections: &[OrderItemSelection],
+) -> impl Iterator<Item = Result<OrderItemSnapshot<'a>, LineError>> {
     let products: HashMap<_, _> = catalog
         .categories
         .iter()
@@ -41,35 +48,32 @@ pub(crate) fn snapshot_lines<'a>(
         .filter(|product| product.is_available)
         .map(|product| (product.id.as_str(), product))
         .collect();
-    selections
-        .iter()
-        .map(|item| {
-            let product = products
-                .get(item.product_id.as_str())
-                .ok_or(LineError::InvalidSelection)?;
-            let variation = selected_variation(product, item.variation_id.as_deref())?;
-            let addons = selected_addons(product, item)?;
-            let base_price_centavos =
-                variation.map_or(product.price_centavos, |option| option.price_centavos);
-            let addon_prices: Vec<_> = addons
-                .iter()
-                .map(|addon| AddonPrice {
-                    price_centavos: addon.option.price_centavos,
-                    quantity: addon.quantity,
-                })
-                .collect();
-            let price = price_line(base_price_centavos, item.quantity, &addon_prices)
-                .map_err(|_| LineError::Price)?;
-            Ok(OrderItemSnapshot {
-                product,
-                variation,
-                base_price_centavos,
-                quantity: item.quantity,
-                price,
-                addons,
+    selections.iter().map(move |item| {
+        let product = products
+            .get(item.product_id.as_str())
+            .ok_or(LineError::InvalidSelection)?;
+        let variation = selected_variation(product, item.variation_id.as_deref())?;
+        let addons = selected_addons(product, item)?;
+        let base_price_centavos =
+            variation.map_or(product.price_centavos, |option| option.price_centavos);
+        let addon_prices: Vec<_> = addons
+            .iter()
+            .map(|addon| AddonPrice {
+                price_centavos: addon.option.price_centavos,
+                quantity: addon.quantity,
             })
+            .collect();
+        let price = price_line(base_price_centavos, item.quantity, &addon_prices)
+            .map_err(|_| LineError::Price)?;
+        Ok(OrderItemSnapshot {
+            product,
+            variation,
+            base_price_centavos,
+            quantity: item.quantity,
+            price,
+            addons,
         })
-        .collect()
+    })
 }
 
 fn selected_variation<'a>(

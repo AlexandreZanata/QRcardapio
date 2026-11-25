@@ -54,6 +54,8 @@ Lifecycle filter applied on every read: `planned`, `development`, `retired` gran
 
 All other capabilities belong to planned modules and are listed with their planned operations in `contracts/entitlements/authorization-rules.json`.
 
+Commerce Core workers use the platform `system` actor to expire placed orders, reconcile offline collection intents and enqueue staff alerts. The actor is scoped to the persisted tenant and cannot be assigned to an account. Channel-specific member and consumer operations will be authorized when those entry points are implemented. `complete_existing` is reserved for adapters that verify work began while the capability was active.
+
 ## Events
 
 Explicit grants append `EntitlementGranted` / `EntitlementRevoked` to the outbox in the same transaction. Contract-derived entitlements are not copied into events: consumers use `SubscriptionActivated` plus the resolver. Time-based expiry produces no event until a scheduler exists (planned with the outbox dispatcher).

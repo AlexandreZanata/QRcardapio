@@ -64,6 +64,32 @@ pub async fn create(
     Ok(id)
 }
 
+/// Resolve the active profile by normalized phone without finding records of another tenant.
+pub(crate) async fn upsert_for_checkout(
+    conn: &mut SqliteConnection,
+    establishment_id: &str,
+    profile: &CustomerProfile,
+    now: &str,
+) -> AppResult<String> {
+    Ok(sqlx::query_scalar(
+        "INSERT INTO customers (id, establishment_id, name, phone_e164, email, created_at, updated_at)
+         VALUES (?, ?, ?, ?, NULLIF(?, ''), ?, ?)
+         ON CONFLICT (establishment_id, phone_e164) WHERE erased_at IS NULL DO UPDATE SET
+             name = excluded.name, email = COALESCE(excluded.email, customers.email),
+             updated_at = excluded.updated_at
+         WHERE customers.establishment_id = excluded.establishment_id RETURNING id",
+    )
+    .bind(Uuid::now_v7().to_string())
+    .bind(establishment_id)
+    .bind(&profile.name)
+    .bind(&profile.phone_e164)
+    .bind(&profile.email)
+    .bind(now)
+    .bind(now)
+    .fetch_one(conn)
+    .await?)
+}
+
 pub async fn update(
     pool: &SqlitePool,
     establishment: &str,

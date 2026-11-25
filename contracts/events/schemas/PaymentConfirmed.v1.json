@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "qrcardapio:event:PaymentConfirmed:1",
+  "title": "PaymentConfirmed v1 payload",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["payment_id", "order_id", "amount_centavos", "method"],
+  "properties": {
+    "payment_id": {"type": "string", "format": "uuid"},
+    "order_id": {"type": "string", "format": "uuid"},
+    "amount_centavos": {"type": "integer", "minimum": 0, "maximum": 1000000},
+    "method": {"type": "string", "enum": ["cash", "card_on_delivery", "pix_on_delivery"]}
+  }
+}

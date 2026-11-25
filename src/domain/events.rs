@@ -18,10 +18,12 @@ pub enum EventType {
     OrderReady,
     OrderCompleted,
     OrderCancelled,
+    PaymentConfirmed,
+    PaymentRefunded,
 }
 
 impl EventType {
-    pub const ALL: [Self; 13] = [
+    pub const ALL: [Self; 15] = [
         Self::SubscriptionActivated,
         Self::EntitlementGranted,
         Self::EntitlementRevoked,
@@ -35,6 +37,8 @@ impl EventType {
         Self::OrderReady,
         Self::OrderCompleted,
         Self::OrderCancelled,
+        Self::PaymentConfirmed,
+        Self::PaymentRefunded,
     ];
 
     pub const fn as_str(self) -> &'static str {
@@ -52,6 +56,8 @@ impl EventType {
             Self::OrderReady => "OrderReady",
             Self::OrderCompleted => "OrderCompleted",
             Self::OrderCancelled => "OrderCancelled",
+            Self::PaymentConfirmed => "PaymentConfirmed",
+            Self::PaymentRefunded => "PaymentRefunded",
         }
     }
 
@@ -73,6 +79,7 @@ impl EventType {
             | Self::OrderReady
             | Self::OrderCompleted
             | Self::OrderCancelled => "order",
+            Self::PaymentConfirmed | Self::PaymentRefunded => "order_payment",
         }
     }
 }
