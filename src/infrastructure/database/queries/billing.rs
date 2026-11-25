@@ -129,6 +129,23 @@ pub async fn reserve_contract_checkout(
     target: CheckoutTarget,
 ) -> AppResult<bool> {
     let mut tx = begin_immediate(pool).await?;
+    let reserved = reserve_contract_checkout_in_transaction(
+        &mut tx, env, est, reference, today, quote, target,
+    )
+    .await?;
+    tx.commit().await?;
+    Ok(reserved)
+}
+
+pub(crate) async fn reserve_contract_checkout_in_transaction(
+    tx: &mut Transaction<'_, Sqlite>,
+    env: &str,
+    est: &str,
+    reference: &str,
+    today: NaiveDate,
+    quote: &Quote,
+    target: CheckoutTarget,
+) -> AppResult<bool> {
     // A creating row has never exposed a link. Allow recovery after the provider's
     // 30-minute checkout lifetime plus a margin for a delayed creation event.
     sqlx::query(
@@ -138,7 +155,7 @@ pub async fn reserve_contract_checkout(
     )
     .bind(env)
     .bind(est)
-    .execute(&mut *tx)
+    .execute(&mut **tx)
     .await?;
     // Inter has no hosted checkout or provider subscription: our reference is both.
     let local_id =
@@ -159,13 +176,11 @@ pub async fn reserve_contract_checkout(
         .bind(target.provider.as_str()).bind(target.method.as_str()).bind(local_id.as_deref())
         .bind(checkout_status).bind(local_id.as_deref()).bind(subscription_status)
         .bind(env).bind(est).bind(today).bind(today)
-        .execute(&mut *tx).await?;
+        .execute(&mut **tx).await?;
     let reserved = result.rows_affected() == 1;
     if reserved {
-        commercial_contracts::insert_contract(&mut tx, reference, env, est, reference, quote)
-            .await?;
+        commercial_contracts::insert_contract(tx, reference, env, est, reference, quote).await?;
     }
-    tx.commit().await?;
     Ok(reserved)
 }
 

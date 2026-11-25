@@ -1,6 +1,6 @@
 # QR Delivery
 
-**Status: Planned — not implemented, not sellable.** Every endpoint, table, file and event in this document is a specification. None is available.
+**Status: Planned.** The shared order aggregate and its events are implemented in [Commerce Core](../architecture/COMMERCE_CORE.md). QR Delivery’s routes, screens and channel-specific behavior remain specifications.
 
 | Field | Value |
 |---|---|

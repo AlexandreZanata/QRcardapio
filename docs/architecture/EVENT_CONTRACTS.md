@@ -27,12 +27,18 @@ Rules: append in the **same transaction** as the state change (`queries::domain_
 | `EntitlementGranted` v1 / `EntitlementRevoked` v1 | `application::operator` | Explicit grant created / revoked by a platform admin. |
 | `EstablishmentSuspended` v1 / `EstablishmentReinstated` v1 | `application::operator` | Operational status changed. Free-text reasons stay in the table, not in the event. |
 | `CatalogPublished` v1 | `queries::publications::record_publication_success` | A static menu snapshot became live (`channel: "menu"`). |
+| `OrderCreated` v1 | `commerce::order_creation` | An order and its items were persisted from the current channel snapshot. |
+| `OrderAccepted` v1 / `OrderRejected` v1 | `commerce::order_transitions` | A placed order was accepted or rejected. |
+| `OrderPreparing` v1 / `OrderReady` v1 / `OrderCompleted` v1 | `commerce::order_transitions` | The order entered preparation, became ready or was completed. |
+| `OrderCancelled` v1 | `commerce::order_transitions` | An allowed cancellation committed with an enumerated reason and actor kind. |
 
 `tests/commercial_contracts.rs` enforces that every Rust `EventType` is registered as implemented with a strict JSON Schema (no additional properties, no personal-data fields) and that every planned event has a version and payload description.
 
+Order creation and every applied order transition append exactly one order event in the write transaction. All seven schemas require every declared key and reject additional keys. They carry the order UUID and typed fields for channel, amount, count, version, reason, fulfillment and timestamps. `OrderCreated` uses the random public order ID as its dedupe key.
+
 ## Planned events
 
-Subscription lifecycle (`SubscriptionChanged`, `SubscriptionExpired`), orders (`OrderCreated` … `OrderCancelled`), commerce payments (`PaymentConfirmed`, `PaymentRefunded`), tables, kitchen, fleet, loyalty and POS events are listed in the registry with their payloads. None is emitted today.
+Subscription lifecycle (`SubscriptionChanged`, `SubscriptionExpired`), commerce payments (`PaymentConfirmed`, `PaymentRefunded`), tables, kitchen, fleet, loyalty and POS events are listed in the registry with their payloads. None is emitted today.
 
 ## Dispatcher (phase 3 design)
 

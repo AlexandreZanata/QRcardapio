@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::Router;
-use axum::extract::DefaultBodyLimit;
+use axum::extract::{DefaultBodyLimit, MatchedPath};
 use axum::middleware;
 use axum::routing::{get, post};
 use sqlx::SqlitePool;
@@ -193,7 +193,10 @@ pub fn build_router(state: AppState) -> Router {
         .route("/dashboard/billing/reconcile", post(billing::reconcile))
         .route("/dashboard/billing/payer", post(billing_payer::save))
         .route("/dashboard/billing/pix.svg", get(billing_payer::pix_svg))
-        .route("/dashboard/billing/boleto.pdf", get(billing_payer::boleto_pdf))
+        .route(
+            "/dashboard/billing/boleto.pdf",
+            get(billing_payer::boleto_pdf),
+        )
         .route("/dashboard/theme.css", get(dashboard::dashboard_theme_css))
         .route("/dashboard/preview", get(dashboard::preview_menu_page))
         .route(
@@ -279,9 +282,15 @@ pub fn build_router(state: AppState) -> Router {
         .layer(middleware::from_fn(branded_errors))
         .layer(middleware::from_fn(security_headers_middleware))
         .layer(CompressionLayer::new())
-        .layer(TraceLayer::new_for_http().make_span_with(|request: &axum::extract::Request| {
-            tracing::debug_span!("http.request", method = %request.method(), path = %request.uri().path())
-        }))
+        .layer(
+            TraceLayer::new_for_http().make_span_with(|request: &axum::extract::Request| {
+                let path = request
+                    .extensions()
+                    .get::<MatchedPath>()
+                    .map_or("<unmatched>", MatchedPath::as_str);
+                tracing::debug_span!("http.request", method = %request.method(), path)
+            }),
+        )
         .layer(PropagateRequestIdLayer::x_request_id())
         .layer(SetRequestIdLayer::x_request_id(MakeRequestUuid))
 }

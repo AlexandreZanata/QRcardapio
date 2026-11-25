@@ -102,82 +102,58 @@
     {
       "type": "OrderCreated",
       "version": 1,
-      "status": "planned",
+      "status": "implemented",
       "producer": "commerce",
       "aggregate": "order",
-      "payload": {
-        "order_id": "string",
-        "channel": "string",
-        "total_centavos": "integer",
-        "item_count": "integer",
-        "catalog_version": "integer"
-      }
+      "schema": "schemas/OrderCreated.v1.json"
     },
     {
       "type": "OrderAccepted",
       "version": 1,
-      "status": "planned",
+      "status": "implemented",
       "producer": "commerce",
       "aggregate": "order",
-      "payload": {
-        "order_id": "string",
-        "promised_at": "datetime"
-      }
+      "schema": "schemas/OrderAccepted.v1.json"
     },
     {
       "type": "OrderRejected",
       "version": 1,
-      "status": "planned",
+      "status": "implemented",
       "producer": "commerce",
       "aggregate": "order",
-      "payload": {
-        "order_id": "string",
-        "reason_code": "string"
-      }
+      "schema": "schemas/OrderRejected.v1.json"
     },
     {
       "type": "OrderPreparing",
       "version": 1,
-      "status": "planned",
+      "status": "implemented",
       "producer": "commerce",
       "aggregate": "order",
-      "payload": {
-        "order_id": "string"
-      }
+      "schema": "schemas/OrderPreparing.v1.json"
     },
     {
       "type": "OrderReady",
       "version": 1,
-      "status": "planned",
+      "status": "implemented",
       "producer": "commerce",
       "aggregate": "order",
-      "payload": {
-        "order_id": "string",
-        "fulfillment": "string"
-      }
+      "schema": "schemas/OrderReady.v1.json"
     },
     {
       "type": "OrderCompleted",
       "version": 1,
-      "status": "planned",
+      "status": "implemented",
       "producer": "commerce",
       "aggregate": "order",
-      "payload": {
-        "order_id": "string",
-        "completed_at": "datetime"
-      }
+      "schema": "schemas/OrderCompleted.v1.json"
     },
     {
       "type": "OrderCancelled",
       "version": 1,
-      "status": "planned",
+      "status": "implemented",
       "producer": "commerce",
       "aggregate": "order",
-      "payload": {
-        "order_id": "string",
-        "reason_code": "string",
-        "cancelled_by": "string"
-      }
+      "schema": "schemas/OrderCancelled.v1.json"
     },
     {
       "type": "PaymentConfirmed",

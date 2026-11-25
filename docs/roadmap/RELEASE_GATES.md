@@ -82,7 +82,7 @@ From the `release_gates` field of each `contracts/modules/<code>.json`, in addit
 | `pos` | Receipts labeled non-fiscal; cash session totals reconcile to the centavo; fiscal issuance stays a separate future domain | **Planned** |
 | `connect` | Credentials hashed at rest and revocable; per-credential rate limits; OpenAPI published only for implemented endpoints; existing MCP grants unaffected | **Planned** |
 
-QR Menu is `available` because it is the existing product carried over from the Plano Essencial. Its open gates do not block menu publishing for deployments without Asaas, but paid flows are not declared homologated until the Sandbox gate closes.
+QR Menu is `available` because it is the existing product carried over from the Plano Essencial. Its open gates do not block menu publishing for deployments with no configured SaaS billing gateway. Each provider’s paid flows require its own Sandbox homologation.
 
 ## 5. Procedure to move a module one lifecycle step
 

@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "qrcardapio:event:OrderPreparing:1",
+  "title": "OrderPreparing v1 payload",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "order_id"
+  ],
+  "properties": {
+    "order_id": {
+      "type": "string",
+      "format": "uuid"
+    }
+  }
+}

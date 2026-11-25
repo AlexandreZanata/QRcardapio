@@ -1,12 +1,9 @@
 use std::borrow::Cow;
-use std::collections::{HashMap, HashSet};
-use std::path::Path;
-use std::sync::{Arc, Mutex};
-use std::time::Instant;
+use std::collections::HashSet;
+use std::time::{Instant, SystemTime};
 
 use chrono::Utc;
 use sqlx::SqlitePool;
-use tokio::sync::Mutex as AsyncMutex;
 
 use crate::config::Config;
 use crate::domain::establishment::{Establishment, Slug};
@@ -14,26 +11,16 @@ use crate::domain::publication::MenuSnapshot;
 use crate::error::{AppError, AppResult};
 use crate::i18n::Locale;
 use crate::infrastructure::database::queries::{
-    find_establishment_by_id, list_published_establishment_ids, load_menu_snapshot,
+    capture_menu_publication, find_establishment_by_id, list_published_establishment_ids,
     record_publication_failure, record_publication_success, record_unpublish,
 };
 use crate::infrastructure::storage::{atomic_write_file, resolve_safe_subpath};
 use crate::rendering::public_menu::{generate_brand_theme_css, render_public_menu_html};
 
-#[derive(Clone, Default)]
-pub struct PublishLocks {
-    inner: Arc<Mutex<HashMap<String, Arc<AsyncMutex<()>>>>>,
-}
-
-impl PublishLocks {
-    pub fn lock_for(&self, est_id: &str) -> Arc<AsyncMutex<()>> {
-        let mut guard = self.inner.lock().expect("publish lock map poisoned");
-        guard
-            .entry(est_id.to_string())
-            .or_insert_with(|| Arc::new(AsyncMutex::new(())))
-            .clone()
-    }
-}
+mod locks;
+mod retired_assets;
+pub use locks::PublishLocks;
+use retired_assets::RetiredAssets;
 
 #[derive(Debug, Clone)]
 pub struct PublishOutcome {
@@ -52,16 +39,38 @@ pub async fn publish_establishment(
     locks: &PublishLocks,
     est_id: &str,
 ) -> AppResult<PublishOutcome> {
-    let lock = locks.lock_for(est_id);
-    let _guard = lock.lock().await;
+    publish_menu(pool, config, locks, est_id, false)
+        .await?
+        .ok_or(AppError::NotFound("error.not_found"))
+}
+
+async fn publish_menu(
+    pool: &SqlitePool,
+    config: &Config,
+    locks: &PublishLocks,
+    est_id: &str,
+    republishing: bool,
+) -> AppResult<Option<PublishOutcome>> {
+    let _guard = locks
+        .lock_for_publication(&config.published_tmp_dir(), est_id)
+        .await?;
     let started = Instant::now();
 
-    let snapshot = load_menu_snapshot(pool, est_id, false)
-        .await?
-        .ok_or(AppError::NotFound("error.not_found"))?;
+    let Some(source) = capture_menu_publication(pool, est_id).await? else {
+        return Ok(None);
+    };
+    let snapshot = &source.snapshot;
+
+    // The guard must use the same database snapshot as rendering the menu.
+    if republishing
+        && (!snapshot.establishment.is_published || snapshot.establishment.has_unpublished_changes)
+    {
+        tracing::info!(establishment_id = %est_id, "republish skipped: no matching live menu");
+        return Ok(None);
+    }
 
     let attempted_version = snapshot.establishment.published_version + 1;
-    let res = write_static_snapshot(config, &snapshot).await;
+    let res = write_static_snapshot(config, snapshot).await;
 
     let elapsed_ms = i64::try_from(started.elapsed().as_millis()).unwrap_or(i64::MAX);
     let now = Utc::now().to_rfc3339();
@@ -70,7 +79,7 @@ pub async fn publish_establishment(
         Ok((html_bytes, asset_count)) => {
             record_publication_success(
                 pool,
-                est_id,
+                &source,
                 attempted_version,
                 html_bytes as i64,
                 asset_count as i64,
@@ -78,12 +87,12 @@ pub async fn publish_establishment(
                 &now,
             )
             .await?;
-            Ok(PublishOutcome {
+            Ok(Some(PublishOutcome {
                 version: attempted_version,
                 html_bytes,
                 asset_count,
                 duration_ms: elapsed_ms,
-            })
+            }))
         }
         Err(err) => {
             tracing::error!(
@@ -128,6 +137,7 @@ pub(crate) fn write_static_snapshot_with_media<'a>(
     let pub_dir = resolve_safe_subpath(&config.published_dir(), slug_str)?;
     let pub_media_dir = pub_dir.join("media");
     let tmp_dir = config.published_tmp_dir();
+    let retired = RetiredAssets::new(&tmp_dir, slug_str);
 
     std::fs::create_dir_all(&tmp_dir)?;
     std::fs::create_dir_all(&pub_media_dir)?;
@@ -165,6 +175,7 @@ pub(crate) fn write_static_snapshot_with_media<'a>(
     // Stage all media assets first so the HTML never points to missing files.
     for filename in &keep_media {
         let dest = resolve_safe_subpath(&pub_media_dir, filename)?;
+        retired.keep_live("media", filename)?;
         if !dest.exists() {
             let bytes = load_media(filename)?;
             atomic_write_file(&tmp_dir, &dest, &bytes)?;
@@ -173,6 +184,7 @@ pub(crate) fn write_static_snapshot_with_media<'a>(
 
     // Stage fingerprinted theme stylesheet.
     let theme_dest = resolve_safe_subpath(&pub_dir, &theme_filename)?;
+    retired.keep_live("themes", &theme_filename)?;
     if !theme_dest.exists() {
         atomic_write_file(&tmp_dir, &theme_dest, &theme_css_bytes)?;
     }
@@ -182,8 +194,14 @@ pub(crate) fn write_static_snapshot_with_media<'a>(
     let index_dest = pub_dir.join("index.html");
     atomic_write_file(&tmp_dir, &index_dest, html_bytes)?;
 
-    // Clean up obsolete theme files and unreferenced media only after index.html is live.
-    cleanup_stale_files(&pub_dir, &theme_filename, &pub_media_dir, &keep_media);
+    // Cached HTML still references assets from the preceding publication.
+    let now = SystemTime::now();
+    retired.prune(&pub_dir, "themes", now, |name| {
+        name.starts_with("theme-") && name.ends_with(".css") && name != theme_filename
+    });
+    retired.prune(&pub_media_dir, "media", now, |name| {
+        !keep_media.contains(name)
+    });
 
     Ok((html_bytes.len(), keep_media.len()))
 }
@@ -194,14 +212,19 @@ pub async fn unpublish_establishment(
     locks: &PublishLocks,
     est: &Establishment,
 ) -> AppResult<()> {
-    let lock = locks.lock_for(&est.id);
-    let _guard = lock.lock().await;
+    let _guard = locks
+        .lock_for_publication(&config.published_tmp_dir(), &est.id)
+        .await?;
+    let est = find_establishment_by_id(pool, &est.id)
+        .await?
+        .ok_or(AppError::NotFound("error.not_found"))?;
 
     let slug = Slug::validate_existing(&est.slug)?;
     let pub_dir = resolve_safe_subpath(&config.published_dir(), slug.as_str())?;
     if pub_dir.exists() {
         std::fs::remove_dir_all(&pub_dir)?;
     }
+    RetiredAssets::new(&config.published_tmp_dir(), slug.as_str()).clear();
 
     let now = Utc::now().to_rfc3339();
     record_unpublish(pool, &est.id, est.published_version, &now).await?;
@@ -218,42 +241,12 @@ pub async fn republish_all(
     let ids = list_published_establishment_ids(pool).await?;
     let mut count = 0usize;
     for id in ids {
-        let Some(est) = find_establishment_by_id(pool, &id).await? else {
-            continue;
-        };
-        // Re-rendering reads the current draft. Establishments with pending draft edits keep
-        // their live snapshot untouched so a deploy never publishes changes the owner did not
-        // publish (and never bypasses the menu.publish capability).
-        if est.has_unpublished_changes {
-            tracing::info!(establishment_id = %id, "republish skipped: draft has unpublished changes");
-            continue;
+        if publish_menu(pool, config, locks, &id, true)
+            .await?
+            .is_some()
+        {
+            count += 1;
         }
-        publish_establishment(pool, config, locks, &id).await?;
-        count += 1;
     }
     Ok(count)
-}
-
-fn cleanup_stale_files(
-    pub_dir: &Path,
-    active_theme: &str,
-    pub_media_dir: &Path,
-    keep_media: &HashSet<String>,
-) {
-    if let Ok(entries) = std::fs::read_dir(pub_dir) {
-        for entry in entries.flatten() {
-            let name = entry.file_name().to_string_lossy().into_owned();
-            if name.starts_with("theme-") && name.ends_with(".css") && name != active_theme {
-                let _ = std::fs::remove_file(entry.path());
-            }
-        }
-    }
-    if let Ok(entries) = std::fs::read_dir(pub_media_dir) {
-        for entry in entries.flatten() {
-            let name = entry.file_name().to_string_lossy().into_owned();
-            if !keep_media.contains(&name) {
-                let _ = std::fs::remove_file(entry.path());
-            }
-        }
-    }
 }

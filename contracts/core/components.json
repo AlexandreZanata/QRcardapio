@@ -41,7 +41,7 @@
     {
       "id": "catalog",
       "status": "partial",
-      "summary": "Categories, products, prices in centavos, availability and visibility are implemented. Variations, add-on groups and add-on options are planned for Commerce Core."
+      "summary": "Categories, products, tenant-scoped variations and add-ons, and published Commerce Core snapshots are implemented. Editing options in the dashboard is planned."
     },
     {
       "id": "media",
@@ -95,8 +95,8 @@
     },
     {
       "id": "orders",
-      "status": "planned",
-      "summary": "Single Order aggregate shared by every sales channel (Commerce Core)."
+      "status": "partial",
+      "summary": "Order aggregate, immutable item snapshots, daily numbering and transactional transitions are implemented. Channel entry points and idempotent checkout are planned."
     },
     {
       "id": "order_payments",

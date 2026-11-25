@@ -4,6 +4,7 @@ pub mod affiliate_math;
 pub mod billing;
 pub mod billing_cycle;
 pub mod category;
+pub mod commerce;
 pub mod commercial;
 pub mod entitlements;
 pub mod establishment;

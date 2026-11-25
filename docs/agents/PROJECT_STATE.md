@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-11-24
+Last updated: 2026-11-25
 
 ## Current Status — MVP Complete
 
@@ -32,7 +32,7 @@ QR Cardápio is now a free **QR Core** plus independently sold modules. Only **Q
 | Rollback-tolerant migrator, idempotent expand migration | Implemented and tested | ADR-010, [RUNBOOK](../operations/RUNBOOK.md#rollback-of-the-commercial-foundation-release) |
 | `republish-all` no longer publishes pending drafts after deploys | Fixed | `application/publishing.rs` |
 | Subscription changes (add/remove modules, cycle change, proration, credits) | Planned — blocked until a second module is sellable and Asaas updates are homologated | [SUBSCRIPTION_RULES](../business/SUBSCRIPTION_RULES.md) |
-| Commerce Core, Delivery and later modules | Planned (contracts + specs only) | `contracts/modules/`, `docs/modules/`, [MASTER_ROADMAP](../roadmap/MASTER_ROADMAP.md) |
+| Commerce Core, Delivery and later modules | Commerce Core in progress. Delivery and later modules planned | [Commerce Core](../architecture/COMMERCE_CORE.md), [MASTER_ROADMAP](../roadmap/MASTER_ROADMAP.md) |
 
 Contract drift is enforced by `tests/commercial_contracts.rs` (catalog, capabilities, lifecycle, authorization rules, events and schemas, module contracts, state machines, module docs, catalog doc).
 
@@ -49,7 +49,7 @@ Contract drift is enforced by `tests/commercial_contracts.rs` (catalog, capabili
 1. **Asaas sandbox homologation** of the new contract path (checkout payload description now names the offers; values unchanged) — required before declaring the flow homologated.
 2. **Rollback of this specific release** to a pre-existing binary requires the manual runbook procedure (older binaries reject the new migration).
 3. Menus with pending drafts no longer receive template upgrades from `republish-all`; persisted per-publication snapshots are the follow-up.
-4. Publication deletes previous theme/media files immediately; HTML cached by browsers for up to 360 s may request deleted assets (pre-existing).
+4. Retired theme and media files now survive the 360 s HTML cache window. Expired files are pruned by subsequent publications. Explicit unpublish still removes the entire public snapshot immediately.
 5. The landing page still names the offer "Plano Essencial" (marketing copy); billing and contracts call it QR Menu.
 6. `establishment_members.member_role` and MCP `scope` CHECK constraints need expand migrations before new roles/scopes.
 
@@ -66,6 +66,16 @@ The three providers can be active at the same time; the owner chooses the paymen
 | Refunds of Inter charges, Pix Automático, Stripe Pix/Boleto | Planned |
 
 Verification on this branch: `cargo fmt --check`, `cargo clippy -D warnings`, `cargo test --locked` (all suites, including `tests/payment_providers.rs`).
+
+## Commerce Core — Phase 3 (2026-11-25)
+
+The product owner authorized Phase 3 production work in writing on 2026-11-25 while Phase 2 Asaas Sandbox homologation remains pending, under the [Master Roadmap decision rule](../roadmap/MASTER_ROADMAP.md#phase-2--qr-menu-consolidation). The authorization preserves the homologation gate for `beta` and `available` for all modules other than QR Menu. QR Delivery remains `planned`.
+
+- Baseline stop-the-line fixes cover Inter callback token redaction, an early Stripe reversal recorded before settlement, atomic Inter settlement and first-charge reservation, concurrent edits during QR Menu publication, cross-process serialization of publish and unpublish, and asset retention for cached HTML.
+- Increment 1 delivers all six typed machine definitions, checked integer pricing, catalog option persistence, canonical published channel snapshots, and orders with immutable items, per-day numbering and atomic transitions and events.
+- [ADR-012](../decisions/ADR-012-commerce-core-increment-1.md) records the price cap and commercial date, the internal publication boundary, and the interpretation of option quantities.
+- Dashboard option editing, hours, customers, addresses, checkout, offline payments, dispatcher, and Commerce Core benchmarks are pending. See [Commerce Core §15](../architecture/COMMERCE_CORE.md#15-ordered-task-list-to-start-commerce-core).
+- Verification on 2026-11-25 covered formatting, Clippy with warnings denied, all 156 tests, and the locked release build. `cargo audit` reported zero vulnerabilities and two pre-existing unmaintained advisories. A copy of the previous binary started on a temporary database after the expand migrations and returned HTTP `200` from `/readyz`.
 
 ## Landing and Panel Refresh
 

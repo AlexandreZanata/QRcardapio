@@ -18,7 +18,7 @@ The only commercial gate was `application::billing::publication_allowed`, which 
    1. module lifecycle permits operations (`domain::commercial::Lifecycle`);
    2. the establishment is operational (`establishment_operational_states`);
    3. the member role grants the permission (`domain::entitlements::MemberRole`);
-   4. the deployment enforces billing (`EnforcementMode`; without Asaas configured, available modules are not commercially gated, preserving the previous behavior);
+   4. the deployment enforces billing (`state.billing.enforcement()` via `application::payments::BillingGateways`, after [ADR-011](ADR-011-multi-provider-saas-billing.md)). Available modules have no commercial gate in deployments with zero configured gateways;
    5. the establishment holds the capability (resolver above).
    Each denial maps to its own i18n error key so the UI and logs never confuse "you may not" with "you did not buy".
 4. **Continuity.** Operations are classified in `contracts/entitlements/authorization-rules.json`. Only operations that create new protected commercial activity require an active capability; completing or reverting existing work (for example unpublishing a menu) remains available after expiry.

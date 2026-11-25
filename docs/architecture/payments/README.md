@@ -37,6 +37,7 @@ Rules shared by all providers: amounts are integer centavos; coverage starts at 
 |---|---|
 | `billing_checkouts.provider`, `.payment_method`, `.checkout_url` | Which provider holds the subscription; Stripe's hosted URL |
 | `billing_payments.settled_centavos` | Amount restored when a dispute is won |
+| `billing_pending_payment_changes` | Newest normalized refund or dispute fact received before its payment, scoped by environment and payment ID |
 | `billing_payer_profiles` | CPF/CNPJ, name, e-mail and address required by Inter (personal data; owner-managed) |
 | `billing_inter_charges` | One row per Inter cycle: `seuNumero`, request code, status, Pix copy-and-paste, digitable line |
 

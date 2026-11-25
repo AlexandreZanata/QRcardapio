@@ -12,7 +12,7 @@ Scanning a restaurant table QR Code is an overwhelmingly read-heavy event. Gener
 
 ```text
 data/published/
-├── .tmp/                              # Temp files on the SAME filesystem for atomic rename(2)
+├── .tmp/                              # Private staging, retirement markers, and publication locks
 └── {slug}/
     ├── index.html                     # Escaped standalone HTML5 with embedded #qr-menu-i18n JSON
     ├── theme-{hash8}.css              # Content-hashed CSS variables for brand accent & contrast ink
@@ -24,22 +24,22 @@ data/published/
 
 ## Atomic Publication Lifecycle (`src/application/publishing.rs`)
 
-1. Acquire per-establishment async mutex (`PublishLocks`) to serialize concurrent publishes for the same tenant.
+1. Acquire the establishment's async mutex and an exclusive filesystem lock under `published/.tmp/publish-locks/`. Dashboard, MCP and CLI publications sharing the same data directory keep both locks until the publication completes. Other establishments can publish independently.
 2. Validate `slug` (`Slug::validate_existing`) and resolve paths via `resolve_safe_subpath` (blocks path traversal).
-3. Load `MenuSnapshot` in a single short SQLite read (`load_menu_snapshot(pool, est_id, false)`), filtering to `is_visible = 1` categories and products, then immediately release the DB connection.
+3. Capture `MenuSnapshot` and the tenant's draft revision in one short SQLite read transaction. Filter to `is_visible = 1` categories and products, then release the DB connection before writing files. `republish-all` checks the publication and dirty flags on this captured state under the same per-establishment lock.
 4. Generate `theme-{hash8}.css` (computing WCAG AA foreground ink color from `accent_color`).
 5. Render `index.html` using `PublicMenuTemplate` (Askama auto-escapes all user text; embeds ~1.6 KB `#qr-menu-i18n` JSON for zero-reload PT/EN/ES switching; includes canonical URL, Open Graph metadata, and XSS-safe `FoodEstablishment` + `Menu` JSON-LD for published snapshots while keeping `/dashboard/preview` `noindex, nofollow`).
 6. Stage all referenced media files into `published/{slug}/media/` via `atomic_write_file` (`NamedTempFile::new_in(tmp_dir)` -> `write_all` -> `sync_all` -> `persist`). Stage the large variant of the selected cover alongside the product thumbnails.
 7. Stage `theme-{hash8}.css` via `atomic_write_file`.
 8. Atomically replace `published/{slug}/index.html` via `atomic_write_file`.
-9. Update `establishments` (`is_published = 1`, `published_version += 1`, `has_unpublished_changes = 0`, `last_published_at`) and append a `'published'` row in `publications`. Because `/sitemap.xml` queries `is_published = 1`, newly published menus enter the sitemap immediately and leave it upon unpublishing.
-10. Clean up obsolete `theme-*.css` and unreferenced `media/*` files **only after** `index.html` is live.
+9. Record retirement of obsolete assets and prune any whose HTML cache window has elapsed.
+10. Set `is_published`, update `published_version` and `last_published_at`, and append a `'published'` row in `publications`. Clear the dirty flag only if the captured draft revision still matches. Each mutation that marks a draft dirty advances `menu_draft_revisions` even when the flag was already set. Edits committed during rendering stay pending for the next owner publication. Because `/sitemap.xml` queries `is_published = 1`, newly published menus enter the sitemap immediately and leave it upon unpublishing.
 
 Already-published menus pick up the visual refresh through the shared stylesheet. They receive a photo cover during their next normal publication.
 
 An optional Google review invitation is rendered into the static HTML on publication. The direct review link takes precedence over the general Google Maps profile link. Removing both links and publishing removes the invitation. Public scans do not fetch any Google data or open the Google link until the visitor chooses it.
 
-Owner profile updates use the same per-establishment lock as publishing. The update statement also checks the stored publication version so a form opened before publication cannot rename a published path.
+Owner profile updates use the same per-establishment async mutex within the HTTP process. The update statement also checks the stored publication version so a form opened before publication cannot rename a published path.
 
 ## Public demonstration menu
 
@@ -52,12 +52,13 @@ Owner profile updates use the same per-establishment lock as publishing. The upd
 
 ## Caching & CDN Propagation Bounds
 
-- `index.html`: `Cache-Control: public, max-age=60, stale-while-revalidate=300` + strong `ETag`. When placed behind an optional CDN, maximum staleness after an owner republishes is **60 seconds** (or immediate if purged on publish in a future extension).
+- `index.html`: `Cache-Control: public, max-age=60, stale-while-revalidate=300` + strong `ETag`. Caches can reuse the preceding HTML for up to 360 seconds under this policy.
 - `theme-{hash8}.css` & `media/{hash16}_*`: `Cache-Control: public, max-age=31536000, immutable` (new edits emit new content hashes).
+- When assets leave the live menu, a private marker records the retirement time under `published/.tmp/`. Subsequent publications prune retired theme and media files after the HTML cache window. Reusing a file clears its marker before publishing the HTML. An explicit unpublish removes the menu and its retained files immediately.
 
 ## Unpublishing
 
-`unpublish_establishment` acquires the per-slug mutex, deletes `published/{slug}/`, sets `is_published = 0` and `has_unpublished_changes = 1`, and records `'unpublished'` in `publications`. Public requests to `/c/{slug}` immediately return `404`.
+`unpublish_establishment` acquires both locks for the establishment and reloads its current publication version. It deletes `published/{slug}/`, sets `is_published = 0` and `has_unpublished_changes = 1`, and records `'unpublished'` in `publications`. Public requests to `/c/{slug}` immediately return `404`.
 
 ## Assinatura e arquivos em preparação
 

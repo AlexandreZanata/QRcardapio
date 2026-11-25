@@ -66,3 +66,49 @@ pub async fn payment_by_id(
     .fetch_optional(&mut **tx)
     .await?)
 }
+
+#[derive(sqlx::FromRow)]
+pub struct PendingChange {
+    pub event_at: String,
+    pub restore: bool,
+}
+
+/// Records the newest change received before the settlement. Reversal wins at a tie.
+pub async fn remember_payment_change(
+    tx: &mut Transaction<'_, Sqlite>,
+    env: &str,
+    payment_id: &str,
+    at: &str,
+    restore: bool,
+) -> AppResult<()> {
+    sqlx::query(
+        "INSERT INTO billing_pending_payment_changes (environment, payment_id, event_at, restore)
+         VALUES (?, ?, ?, ?)
+         ON CONFLICT(environment, payment_id) DO UPDATE
+         SET event_at = excluded.event_at, restore = excluded.restore
+         WHERE event_at < excluded.event_at
+            OR (event_at = excluded.event_at AND restore > excluded.restore)",
+    )
+    .bind(env)
+    .bind(payment_id)
+    .bind(at)
+    .bind(restore)
+    .execute(&mut **tx)
+    .await?;
+    Ok(())
+}
+
+pub async fn take_payment_change(
+    tx: &mut Transaction<'_, Sqlite>,
+    env: &str,
+    payment_id: &str,
+) -> AppResult<Option<PendingChange>> {
+    Ok(sqlx::query_as(
+        "DELETE FROM billing_pending_payment_changes WHERE environment = ? AND payment_id = ?
+         RETURNING event_at, restore",
+    )
+    .bind(env)
+    .bind(payment_id)
+    .fetch_optional(&mut **tx)
+    .await?)
+}

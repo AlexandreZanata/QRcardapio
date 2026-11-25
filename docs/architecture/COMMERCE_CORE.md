@@ -2,7 +2,7 @@
 
 ## Status
 
-**Planned — not implemented, not sellable.** Phase 3. Commerce Core belongs to QR Core, the free shared foundation listed in [`contracts/core/components.json`](../../contracts/core/components.json), and is never sold as a module. No table, endpoint, consumer or event below exists unless it is explicitly marked *implemented*.
+**In progress, Increment 1.** Commerce Core belongs to QR Core, the free shared foundation listed in [`contracts/core/components.json`](../../contracts/core/components.json). This increment implements typed state machines, integer pricing, tenant-scoped catalog options, internal published snapshots, order persistence, and transactional order events. HTTP and UI surfaces, checkout, consumer payments, and the dispatcher are planned.
 
 Implemented foundation it builds on: `src/domain/commercial/`, `src/domain/entitlements/` (`Capability`, `MemberRole`, `Operation`, `OperationalStatus`, `GrantKind`, `resolve`), `src/application/{commercial,entitlements,operator}.rs`, migration `20261124000009_commercial_foundation.sql` and the `domain_events` outbox (append only).
 
@@ -14,11 +14,11 @@ Commerce Core is the single order engine shared by every selling channel. Module
 
 | Core component | Status today | Commerce Core deliverable |
 |---|---|---|
-| `catalog` | partial (categories, products, prices, availability, visibility) | Variations, add-on groups, add-on options, published catalog snapshots per channel |
+| `catalog` | partial (catalog rows, options and internal published snapshots) | Variations, add-on groups, add-on options, published catalog snapshots per channel |
 | `business_hours` | planned | Weekly hours, date exceptions, holiday overrides, pause switch |
 | `commercial_settings` | planned | Service modes, minimum order, fees, acceptance window, checkout settings |
 | `customers`, `addresses` | planned | Establishment-scoped consumer records with LGPD export and erasure |
-| `orders` | planned | The `Order` aggregate and its state machine |
+| `orders` | partial (aggregate, item snapshots, numbering, transition executor) | The `Order` aggregate and its state machine |
 | `order_payments` | planned | Consumer-to-establishment payments, separate from SaaS billing |
 | `notifications` | planned | Email and web push sent by outbox consumers, per-establishment templates |
 | `events` | partial (append implemented) | The outbox dispatcher (section 11) |
@@ -29,7 +29,7 @@ Rules that keep the boundary:
 - Dependency direction stays `http -> application -> domain` and `infrastructure -> domain`. SQL lives only in `src/infrastructure/database/queries/<entity>.rs`.
 - Module aggregates with their own machines (`table_session`, `kitchen_ticket_item`, `delivery`, `cash_session`) are persisted by their modules. Commerce Core owns the machine definitions and the shared transition executor.
 
-Planned code layout (one responsibility per file, ~50–350 lines):
+Current and planned code layout (one responsibility per file, ~50–350 lines):
 
 ```text
 src/domain/commerce/        state_machine.rs (contract loader + parity), order.rs, order_payment.rs,
@@ -76,7 +76,7 @@ Suspension (top-level `suspension` rule) blocks only `deny` operations, so every
 
 ## 3. State machines
 
-Six independent machines are defined in `contracts/commerce/state-machines.json` and loaded at compile time (`include_str!`) by `domain::commerce::state_machine`; a parity test fails when Rust and JSON differ. **A transition in one machine never implies a transition in another.**
+Six independent machines are defined in `contracts/commerce/state-machines.json`. `domain::commerce::state_machine` embeds the JSON with `include_str!`, parses the definitions once into typed states and actors, and exposes transition lookup. `tests/commerce_contracts.rs` checks every combination of machine, source state, target state and actor, plus the initial and terminal states and event names. Increment 1 persists only the `order` machine. **A transition in one machine never implies a transition in another.**
 
 | Fact | Never implies |
 |---|---|
@@ -197,12 +197,12 @@ There is no loyalty compensation (section 3.1). QR Loyalty consumes `OrderCancel
 - Every state-machine aggregate row carries `state` and `version INTEGER NOT NULL DEFAULT 1`. A transition is exactly: `UPDATE <table> SET state = ?, version = version + 1, <timestamps> WHERE id = ? AND establishment_id = ? AND state = <expected> AND version = ?`. Zero rows affected returns `409` with the current state and version (contract rule).
 - In the same transaction: append a row to the aggregate's transition log, write side-effect rows owned by the same order (for example the coupon redemption release), and append the outbox event. The HTTP response is sent only after commit.
 - Dashboard forms carry `expected_version` next to `_csrf`; two staff members accepting the same order produce exactly one `OrderAccepted` and one `409`.
-- System actors (event consumers, timers) treat "already in the target state or a later state" as success: they record the event receipt and change nothing, so replays and races with staff never surface errors.
+- Planned system actors (event consumers, timers) treat "already in the target state or a later state" as success: they record the event receipt and change nothing, so replays and races with staff never surface errors.
 - Long work (rendering, provider HTTP calls, notification sends) never runs inside a write transaction.
 
 ## 5. Shared catalog evolution
 
-Today only `categories` and `products` exist. Commerce Core adds options as new tables (expand-only, ADR-010), so existing menus and `/c/{slug}` snapshots are unchanged until the owner adds options and republishes.
+Increment 1 adds options to the shared draft catalog as new tables (expand-only, ADR-010). The existing QR Menu publication path continues to render from categories and products. The byte-for-byte republish regression checks the public menu and `republish-all`.
 
 | Concept | Rule |
 |---|---|
@@ -225,7 +225,7 @@ Today only `categories` and `products` exist. Commerce Core adds options as new 
 ## 7. Order financial invariants
 
 1. **Backend pricing only.** Unit prices come from the published catalog snapshot. Client-sent prices are never trusted; the client sends only ids, quantities and `expected_total_centavos`, used solely to detect changes.
-2. **Integer money.** All amounts are `i64` centavos with checked arithmetic (`checked_mul`, `checked_add`); overflow or a total above the order cap is a validation error. JSON amounts are integers; no floats anywhere, including discount math.
+2. **Integer money.** All amounts are `i64` centavos with checked arithmetic (`checked_mul`, `checked_add`); overflow or a total above the order cap of 1,000,000 centavos is a validation error. See [ADR-012](../decisions/ADR-012-commerce-core-increment-1.md). JSON amounts are integers; no floats anywhere, including discount math.
 3. **Line math.** `unit = (variation or product price) + Σ(option price × option quantity)`; `line_total = unit × quantity`; `items_subtotal = Σ line_total`.
 4. **Deterministic discounts.** At most one coupon per order. Percentage: `round_half_up(items_subtotal × bps / 10000)`; fixed: `min(amount, items_subtotal)`. Discounts never apply to the delivery fee and never make a total negative.
 5. **Backend delivery fee.** Derived from the selected zone of the same establishment and the order subtotal; a client-sent fee is ignored.
@@ -239,7 +239,7 @@ Today only `categories` and `products` exist. Commerce Core adds options as new 
 
 ## 8. Checkout against the published snapshot
 
-Publishing an ordering channel writes an immutable row to `catalog_snapshots` (canonical JSON, content hash, version) and the matching static files. Checkout reads only the **current published snapshot** of that channel, never draft tables. Sold-out toggles from an order center create a new snapshot version derived from the current one with only availability changed, so unpublished draft edits never leak.
+Increment 1 provides an internal publication transaction for `catalog_snapshots`. The calling operation resolves the catalog channel server-side. The transaction promotes only the channel’s tenant-scoped visible catalog rows into an immutable canonical JSON payload with SHA-256 and an incremental version. The checkout and storefront increments will wire this publication boundary into authorized operations and add matching static files. Checkout reads only the **current published snapshot** of that channel, never draft tables. Sold-out toggles from an order center create a new snapshot version derived from the current one with only availability changed, so unpublished draft edits never leak.
 
 1. Resolve the establishment from the slug server-side and call `authorize(...)` for the channel operation (lifecycle, operational state, role, enforcement, capability).
 2. Validate business hours, pause switch, service mode, zone and minimum order.
@@ -267,9 +267,9 @@ They never share credentials, beneficiaries, state, webhook endpoints or ledgers
 
 ## 10. Outbox usage
 
-Implemented today: `domain_events` with the registry envelope, a global `seq` (ordering is guaranteed per aggregate only, through the `(aggregate_type, aggregate_id, seq)` index) and a nullable unique `dedupe_key`. No dispatcher-only column exists yet (ADR-009). Implemented events: `SubscriptionActivated`, `EntitlementGranted`, `EntitlementRevoked`, `EstablishmentSuspended`, `EstablishmentReinstated` and `CatalogPublished` (producer `core.publishing`, dedupe channel + establishment id + publication version, implemented as `CatalogPublished:menu:{establishment_id}:{version}`).
+Implemented today: `domain_events` with the registry envelope, a global `seq` (ordering is guaranteed per aggregate only, through the `(aggregate_type, aggregate_id, seq)` index) and a nullable unique `dedupe_key`. No dispatcher-only column exists yet (ADR-009). The existing SaaS and QR Menu events remain implemented, including `CatalogPublished:menu:{establishment_id}:{version}`. Commerce Core appends `OrderCreated`, `OrderAccepted`, `OrderRejected`, `OrderPreparing`, `OrderReady`, `OrderCompleted`, and `OrderCancelled`.
 
-Commerce Core appends every machine event in the transaction of its transition, with `correlation_id` = checkout attempt or request id and `causation_id` = the triggering event id when a consumer caused it. The registry `producer` names the component that writes the row (`commerce`, `commerce.payments`); module contracts still list these events under `publishes` when their operations cause them. Point amounts in loyalty events are positive magnitudes and the event type gives the direction. Event-level details live in [EVENT_CONTRACTS.md](EVENT_CONTRACTS.md).
+Commerce Core appends every machine event in the transaction of its transition, with optional typed correlation and causation IDs supplied by the calling operation. Checkout attempts and dispatcher receipts arrive in later increments. The registry `producer` names the component that writes the row (`commerce`, `commerce.payments`); module contracts still list these events under `publishes` when their operations cause them. Point amounts in loyalty events are positive magnitudes and the event type gives the direction. Event-level details live in [EVENT_CONTRACTS.md](EVENT_CONTRACTS.md).
 
 ## 11. Planned dispatcher
 
@@ -285,7 +285,7 @@ Commerce Core appends every machine event in the transaction of its transition, 
 
 ## 12. Conceptual SQLite persistence model
 
-All tables have `establishment_id` (FK, cascades per existing tenant rules) and every query filters `AND establishment_id = ?`. Final DDL ships in expand-only migrations (ADR-010).
+The catalog and order tables shown below scope tenant rows and parent references by `establishment_id`. Increment 1 migrations cover options, snapshots, orders, order items and options, and the order transition log. Remaining rows in the table describe planned DDL. See [DATABASE.md](DATABASE.md#commerce-core).
 
 | Table | Key columns | Constraints and indexes |
 |---|---|---|
@@ -344,6 +344,8 @@ Results go into `docs/performance/PERFORMANCE.md` with the script (`scripts/benc
 
 ## 15. Ordered task list to start Commerce Core
 
+Items 1–4, 6 and 9 are implemented in Increment 1. Item 17 is implemented for events emitted in this increment.
+
 1. Create a `feat/` branch per [BRANCH_POLICY.md](../agents/BRANCH_POLICY.md).
 2. `domain::commerce::state_machine`: load `state-machines.json` with `include_str!`, typed states and actors, `can_transition(from, to, actor)`; parity test `tests/commerce_contracts.rs`.
 3. `domain::commerce::pricing` and `discount`: line math, half-up basis-point rounding, checked arithmetic, order cap; unit and property tests.
@@ -362,6 +364,22 @@ Results go into `docs/performance/PERFORMANCE.md` with the script (`scripts/benc
 16. Benchmark script and results (section 13).
 17. Register emitted events as `implemented` with JSON Schemas and keep [EVENT_CONTRACTS.md](EVENT_CONTRACTS.md) (referenced by ADR-009) in sync.
 18. Update `DATABASE.md`, `HTTP.md`, `SECURITY.md`, `PROJECT_STATE.md`; open the PR.
+
+### Next increments
+
+**Increment 2**
+
+1. Add owner and manager dashboard editing for variations, reusable add-on groups, product links, and option availability. Test session and role checks, CSRF, tenant ownership, and `pt-BR`/`en`/`es` parity under the existing CSP.
+2. Implement weekly hours, date exceptions, holiday overrides, pause, service modes, minimum order and acceptance settings. Define behavior for overnight intervals and their business dates.
+3. Add tenant-scoped customers and addresses with phone normalization, export, erasure and tested retention exceptions.
+
+**Increment 3**
+
+1. Add checkout with idempotency, snapshot revalidation, repricing, and atomic order creation. Cover same-key retries, changed request hashes, and concurrent checkout against an updated snapshot.
+2. Implement the offline consumer payment ledger, including independent confirmation, cancellation and refunds, with invariants for exact balances.
+3. Add outbox checkpoints, receipts, retries, dead letter and per-aggregate parking. Add acceptance expiry and payment compensations with crash recovery tests.
+4. Add the lifecycle and operation rules required by the implemented entry points, complete the Phase 3 notification component and permission coverage, and record section 13 benchmarks and rollback evidence.
+5. Close the section 14 gates before starting Phase 4. QR Delivery then wires the shared foundation into the storefront, cart, delivery and pickup settings, tracking and order center. Asaas homologation remains required before `beta` or `available`.
 
 ## 16. Decisions still open
 

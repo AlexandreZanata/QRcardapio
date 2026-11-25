@@ -70,7 +70,7 @@ Modular monolith written in **Rust 1.100.0 (Edition 2024)** with **Axum 0.8.9**,
 ## 5. Commercial & Entitlement Rules
 
 - **Prices live only in `contracts/commercial/*.json`.** Never hard-code a price, discount, module code or bundle composition in Rust, templates, SQL or JS. Read them through `domain::commercial::catalog()`; price with `CommercialCatalog::quote` / `apply_discount` (integer centavos, round half up per line).
-- **Never branch on plan or bundle names.** Gate operations with `application::entitlements::authorize(pool, Enforcement::from_gateway(..), est, tenant.role, Operation::X, billing_now().date_naive())`. Add new operations to `domain::entitlements::Operation` and `contracts/entitlements/authorization-rules.json` together.
+- **Never branch on plan or bundle names.** Gate operations with `application::entitlements::authorize(pool, state.billing.enforcement(), est, tenant.role, Operation::X, billing_now().date_naive())`. `state.billing` is an `application::payments::BillingGateways`. Add new operations to `domain::entitlements::Operation` and `contracts/entitlements/authorization-rules.json` together.
 - **Keep the five dimensions separate**: module lifecycle, establishment operational state, member permission, deployment enforcement, commercial entitlement. Each denial has its own i18n key.
 - **Contracts are immutable snapshots.** Never update `commercial_contract_items` or recalculate past charges. Sold catalog versions cannot be edited (the start-up registry refuses it): add a new version.
 - **The browser never sends amounts.** Checkout forms send offer codes (`offer`) and a cycle (`plan`) only.

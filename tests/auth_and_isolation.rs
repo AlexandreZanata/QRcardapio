@@ -18,7 +18,8 @@ use qrcardapio::i18n::Locale;
 use qrcardapio::infrastructure::assets::AssetProcessor;
 use qrcardapio::infrastructure::database::init_pool;
 use qrcardapio::infrastructure::database::queries::{
-    find_establishment_for_account, find_media_asset_for_est, record_publication_success,
+    capture_menu_publication, find_establishment_for_account, find_media_asset_for_est,
+    record_publication_success,
 };
 use qrcardapio::infrastructure::security::PasswordService;
 
@@ -398,7 +399,11 @@ async fn strict_multi_tenant_isolation_and_slug_locking() {
     .unwrap();
     assert_eq!(est_a_updated.slug, "cafe-central");
 
-    record_publication_success(&pool, &est_a.id, 1, 2048, 1, 15, "2026-11-23T15:00:00Z")
+    let publication = capture_menu_publication(&pool, &est_a.id)
+        .await
+        .unwrap()
+        .unwrap();
+    record_publication_success(&pool, &publication, 1, 2048, 1, 15, "2026-11-23T15:00:00Z")
         .await
         .unwrap();
     let est_a_pub = find_establishment_for_account(&pool, &owner_a.account.id)

@@ -90,3 +90,15 @@ A migração `20261124000009_commercial_foundation.sql` é uma migração *expan
 ## Cobrança com vários provedores
 
 A migração `20261124000010_multi_provider_billing.sql` (expand) adiciona `provider`, `payment_method` e `checkout_url` a `billing_checkouts`, `settled_centavos` a `billing_payments`, e cria `billing_payer_profiles` (CPF/CNPJ e endereço do pagador, dado pessoal) e `billing_inter_charges` (uma cobrança Inter por ciclo, reservada antes da chamada à API, com `UNIQUE (billing_reference, cycle_index)`). Identificadores da Stripe e do Inter são gravados como `stripe:<id>`/`inter:<id>` para manter as chaves únicas existentes globais.
+
+`20261124000011_pending_billing_payment_changes.sql` guarda a última reversão ou restauração recebida antes da liquidação de uma cobrança, por ambiente e ID de pagamento. O pipeline consome esse fato na transação que grava a liquidação, antes de avaliar a ativação, a cobertura e as comissões. A reserva da primeira cobrança Inter acompanha a criação do checkout e do contrato, e o estado liquidado acompanha os efeitos financeiros na mesma transação.
+
+## Revisão de rascunhos do cardápio
+
+`20261124000012_menu_draft_revisions.sql` acrescenta `menu_draft_revisions` e um gatilho para avançar a revisão ao marcar o rascunho como alterado. A publicação compara a revisão que capturou com a revisão atual ao registrar o sucesso.
+
+## Commerce Core
+
+- `20261125000011_commerce_catalog_options.sql` acrescenta `product_variations`, `addon_groups`, `addon_options`, `product_addon_groups` e `catalog_snapshots`. Chaves estrangeiras compostas restringem vínculos ao mesmo estabelecimento. Cada snapshot guarda os dados visíveis do canal publicado, o hash SHA-256 do conteúdo e a versão sequencial. Um índice parcial garante um snapshot atual por estabelecimento e canal.
+- `20261125000012_commerce_orders.sql` acrescenta `orders`, `order_items`, `order_item_options` e `order_transitions`. Pedidos referenciam snapshots do mesmo estabelecimento e canal. O número é único por estabelecimento e data comercial. Os itens e adicionais preservam os nomes traduzidos, preços e quantidades da criação. O pedido valida a identidade do total e o teto em centavos. A atualização por estado e versão, o histórico e o outbox são atômicos.
+- `tests/commerce_migrations.rs` executa `MIGRATOR.run_to` até a última versão da base, aplica e reaplica os scripts aditivos, e repete a inicialização com a lista de migrações do binário anterior. Veja [ADR-010](../decisions/ADR-010-expand-contract-migrations.md).
