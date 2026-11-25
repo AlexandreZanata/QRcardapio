@@ -1,7 +1,7 @@
 use aws_lc_rs::hmac;
 use chrono::{DateTime, Duration, Utc};
 use sha2::{Digest, Sha256};
-use sqlx::{Acquire, Sqlite, SqliteConnection, SqlitePool, Transaction};
+use sqlx::{Acquire, Sqlite, SqliteConnection, SqliteExecutor, SqlitePool, Transaction};
 use subtle::ConstantTimeEq;
 use uuid::Uuid;
 
@@ -43,7 +43,8 @@ pub async fn quote(
     let schedule = business_hours::load_in(&mut tx, target.establishment_id).await?;
     let (version, content) = current_catalog(&mut tx, target).await?;
     tx.commit().await?;
-    let (quote, _) = evaluate_cart(&content, version, target, cart, &schedule, now)?;
+    let open_now = schedule.service_at(now, target.mode).is_some();
+    let (quote, _) = evaluate_cart(&content, version, target, cart, &schedule, open_now)?;
     Ok(quote)
 }
 
@@ -53,8 +54,15 @@ pub async fn place_order(
     request: CheckoutRequest,
     now: DateTime<Utc>,
 ) -> AppResult<CheckoutOutcome> {
+    let fingerprint = AttemptFingerprint::new(target, &request)?;
+    if let Some(receipt) = fingerprint
+        .replay(pool, target.establishment_id, now)
+        .await?
+    {
+        return Ok(CheckoutOutcome::Placed(receipt));
+    }
     let (_turn, mut tx) = commerce_writes::begin(pool).await?;
-    let placement = place_locked(&mut tx, target, request, now).await?;
+    let placement = place_locked(&mut tx, target, request, now, &fingerprint).await?;
     tx.commit().await?;
     if placement.new_order_id.is_some() {
         dispatcher::notify_committed();
@@ -77,8 +85,9 @@ pub async fn place_order_in(
     request: CheckoutRequest,
     now: DateTime<Utc>,
 ) -> AppResult<CheckoutPlacement> {
+    let fingerprint = AttemptFingerprint::new(target, &request)?;
     let mut checkout = tx.begin().await?;
-    match place_locked(&mut checkout, target, request, now).await {
+    match place_locked(&mut checkout, target, request, now, &fingerprint).await {
         Ok(placement) => {
             checkout.commit().await?;
             Ok(placement)
@@ -95,20 +104,15 @@ async fn place_locked(
     target: CheckoutTarget<'_>,
     request: CheckoutRequest,
     now: DateTime<Utc>,
+    fingerprint: &AttemptFingerprint,
 ) -> AppResult<CheckoutPlacement> {
-    if request.idempotency_key.get_version_num() != 4 {
-        return Err(INVALID_CART);
-    }
-    let key_hash = Sha256::digest(request.idempotency_key.as_bytes());
-    let request_hash = request_fingerprint(target, &request)?;
-    if let Some((stored_hash, public_id)) =
-        checkout_attempts::find_live(tx, target.establishment_id, &key_hash, now).await?
+    // A concurrent checkout may have committed while this request waited for the writer.
+    if let Some(receipt) = fingerprint
+        .replay(&mut **tx, target.establishment_id, now)
+        .await?
     {
-        if !bool::from(stored_hash.as_slice().ct_eq(request_hash.as_ref())) {
-            return Err(AppError::Validation("commerce.idempotency_mismatch"));
-        }
         return Ok(CheckoutPlacement {
-            outcome: CheckoutOutcome::Placed(CheckoutReceipt { public_id }),
+            outcome: CheckoutOutcome::Placed(receipt),
             new_order_id: None,
         });
     }
@@ -129,7 +133,7 @@ async fn place_locked(
 
     // The write lock protects this snapshot through order creation and attempt recording.
     let (version, content) = current_catalog(tx, target).await?;
-    let (fresh, items) = evaluate_cart(&content, version, target, &request.cart, &schedule, now)?;
+    let (fresh, items) = evaluate_cart(&content, version, target, &request.cart, &schedule, true)?;
     let Some(totals) = fresh.totals.filter(|totals| {
         version == request.cart.catalog_version
             && totals.total_centavos == request.expected_total_centavos
@@ -181,8 +185,14 @@ async fn place_locked(
     if let Some(address) = address {
         order_delivery_details::insert(tx, &order, &customer, &address).await?;
     }
-    payments::create_pending_in(tx, &order, request.payment, now).await?;
-    checkout_attempts::remember(tx, &order, &key_hash, request_hash.as_ref()).await?;
+    payments::create_initial_pending(tx, &order, request.payment, now).await?;
+    checkout_attempts::remember(
+        tx,
+        &order,
+        &fingerprint.key_hash,
+        fingerprint.request_hash.as_ref(),
+    )
+    .await?;
     Ok(CheckoutPlacement {
         outcome: CheckoutOutcome::Placed(CheckoutReceipt {
             public_id: order.public_id,
@@ -232,7 +242,7 @@ fn evaluate_cart<'a>(
     target: CheckoutTarget<'_>,
     cart: &CheckoutCart,
     schedule: &Schedule,
-    now: DateTime<Utc>,
+    open_now: bool,
 ) -> AppResult<(CheckoutQuote, Vec<OrderItemSnapshot<'a>>)> {
     let mut lines = Vec::with_capacity(cart.items.len());
     let mut items = Vec::with_capacity(cart.items.len());
@@ -267,10 +277,44 @@ fn evaluate_cart<'a>(
             totals,
             issue,
             minimum_order_centavos: schedule.settings.minimum_centavos,
-            open_now: schedule.service_at(now, target.mode).is_some(),
+            open_now,
         },
         items,
     ))
+}
+
+struct AttemptFingerprint {
+    key_hash: [u8; 32],
+    request_hash: hmac::Tag,
+}
+
+impl AttemptFingerprint {
+    fn new(target: CheckoutTarget<'_>, request: &CheckoutRequest) -> AppResult<Self> {
+        if request.idempotency_key.get_version_num() != 4 {
+            return Err(INVALID_CART);
+        }
+        Ok(Self {
+            key_hash: Sha256::digest(request.idempotency_key.as_bytes()).into(),
+            request_hash: request_fingerprint(target, request)?,
+        })
+    }
+
+    async fn replay<'e>(
+        &self,
+        executor: impl SqliteExecutor<'e>,
+        establishment_id: &str,
+        now: DateTime<Utc>,
+    ) -> AppResult<Option<CheckoutReceipt>> {
+        let attempt =
+            checkout_attempts::find_live(executor, establishment_id, &self.key_hash, now).await?;
+        let Some((stored_hash, public_id)) = attempt else {
+            return Ok(None);
+        };
+        if !bool::from(stored_hash.as_slice().ct_eq(self.request_hash.as_ref())) {
+            return Err(AppError::Validation("commerce.idempotency_mismatch"));
+        }
+        Ok(Some(CheckoutReceipt { public_id }))
+    }
 }
 
 fn request_fingerprint(

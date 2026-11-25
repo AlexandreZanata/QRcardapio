@@ -24,7 +24,15 @@ if executable is None:
     sys.exit("benchmark executable was not built")
 print(executable)
 ' "$target")
-    taskset -c "$cpu" "$executable" "$filter" --ignored --nocapture
+    local command=(taskset -c "$cpu" "$executable" "$filter" --ignored --nocapture)
+    if [[ -n ${COMMERCE_BENCH_MEMORY_MAX:-} ]]; then
+        printf 'Benchmark: CPU %s, memory cap %s, swap disabled\n' "$cpu" "$COMMERCE_BENCH_MEMORY_MAX"
+        systemd-run --scope --collect --quiet --property="MemoryMax=$COMMERCE_BENCH_MEMORY_MAX" \
+            --property=MemorySwapMax=0 "${command[@]}"
+    else
+        printf 'Benchmark: CPU %s\n' "$cpu"
+        "${command[@]}"
+    fi
 }
 
 checkout() { run_bench commerce_checkout_bench sustained_checkout --test commerce_checkout_bench; }

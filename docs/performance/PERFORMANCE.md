@@ -112,6 +112,16 @@ The mixed run served 53,209 static menu reads. The menu p95 was 0.271 ms, or 1.7
 
 The Web Push benchmark completed all 1,000 synthetic deliveries in 20.747 seconds (2,892/min) after batching outcome writes. Peak concurrency was eight. Checkout p95 was 313 ms in the baseline and 102 ms with sends. The host's changing disk contention prevents attributing that difference to the push workload.
 
+### VPS capacity validation
+
+Run the Commerce Core qualification on the VPS in a dedicated checkout and temporary directory on persistent storage. The fixtures create their own SQLite files. Keep `TMPDIR` on the same persistent filesystem for all scenarios, since a tmpfs run cannot measure durable writes. Run one workload at a time and record the CPU, memory limit, build commit, filesystem and pressure during the run.
+
+Set `COMMERCE_BENCH_CPU` to one allowed CPU and `COMMERCE_BENCH_MEMORY_MAX=1G` to cap the benchmark process in a systemd scope with swap disabled. The scope applies to the executable and leaves the build outside the runtime memory limit. Run `scripts/bench_commerce.sh checkout`, `mixed`, `outbox` and `push` separately, using the default 600-second checkout duration and 100,000-event backlog for qualification.
+
+Checkout reports new placements and replays separately. It reconciles each order against its items and exactly one pending collection record. The mixed workload measures `/c/{slug}` through the application router on the same host. Storefront traffic and public checkout HTTP status are validated when QR Delivery exposes those routes. The outbox benchmark checks the full backlog throughput and the maximum publication delay during the steady phase.
+
+The VPS baseline on 2026-11-25 used `b7c0793`, ext4, one pinned CPU and SQLite `FULL`. The 90-second checkout sample placed 3,481 orders and replayed 409 requests. Including staff drain, throughput was 36.36 orders/s and combined request p95/p99 were 37.76/339.29 ms. The outbox baseline had published 39,400 of 100,000 events after 292 seconds, with 99% utilization of the pinned CPU and near-zero disk pressure at the observation. The baseline was stopped after it exceeded the time implied by the 1,000 events/s target. These baseline measurements used the host's available memory. The candidate runs cap memory separately.
+
 Memory: 14.6 MB RSS idle, 61.4 MB after load. Database scaling with `bench-gen` matched the baseline (100 000 establishments: 768.9 MB, 19.5 s).
 
 Query plans: the entitlement view and the rebuilt `billing_coverage` view force an index-driven join order (`commercial_contracts` or `billing_checkouts` by establishment, then `idx_billing_payments_subscription`). Without it SQLite scanned every payment of the environment on each request, a cost that grows with the customer base. Contract periods and grants are read in one `UNION ALL` round trip. The enforced dashboard still performs one extra pooled query per request; caching the decision per request batch is unnecessary at current traffic. The enforced script lives in the session notes, not in `scripts/`, because it needs Asaas-shaped configuration.

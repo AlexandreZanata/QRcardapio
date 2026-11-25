@@ -98,6 +98,10 @@ async fn interrupted_batch_rolls_back_effects_receipts_and_checkpoint_before_rep
         ],
     )
     .await;
+    let earlier = Consumer {
+        name: "test.earlier",
+        ..MAIN
+    };
     let interrupted = Consumer {
         handle: |tx, event| {
             Box::pin(async move {
@@ -112,18 +116,29 @@ async fn interrupted_batch_rolls_back_effects_receipts_and_checkpoint_before_rep
         ..MAIN
     };
     let worker_pool = pool.clone();
-    let worker =
-        tokio::spawn(async move { dispatch_batch(&worker_pool, &[interrupted], Utc::now()).await });
+    let worker = tokio::spawn(async move {
+        dispatch_batch(&worker_pool, &[earlier, interrupted], Utc::now()).await
+    });
     tokio::time::timeout(std::time::Duration::from_secs(5), MID_BATCH.notified())
         .await
         .unwrap();
     worker.abort();
     assert!(worker.await.unwrap_err().is_cancelled());
     assert!(effects(pool).await.is_empty());
-    assert_eq!(
-        event_consumers::checkpoint(pool, MAIN.name).await.unwrap(),
-        None
-    );
+    for consumer in [earlier, MAIN] {
+        assert_eq!(
+            event_consumers::checkpoint(pool, consumer.name)
+                .await
+                .unwrap(),
+            None
+        );
+    }
+    let receipts: i64 = sqlx::query_scalar("SELECT COUNT(*) FROM event_consumer_receipts")
+        .fetch_one(pool)
+        .await
+        .unwrap();
+    assert_eq!(receipts, 0);
+    assert_eq!(unpublished(pool).await, vec![1, 2]);
     let ready = Utc::now();
     let workers = [MAIN];
     let (recovery, competing) = tokio::join!(

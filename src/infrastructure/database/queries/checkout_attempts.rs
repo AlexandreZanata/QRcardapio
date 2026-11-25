@@ -1,5 +1,5 @@
 use chrono::{DateTime, Duration, Utc};
-use sqlx::{SqliteConnection, SqlitePool};
+use sqlx::{SqliteConnection, SqliteExecutor, SqlitePool};
 
 use crate::domain::commerce::order::Order;
 use crate::error::{AppError, AppResult};
@@ -7,8 +7,8 @@ use crate::infrastructure::database::commerce_writes;
 
 const RETENTION: Duration = Duration::days(7);
 
-pub(crate) async fn find_live(
-    conn: &mut SqliteConnection,
+pub(crate) async fn find_live<'e>(
+    executor: impl SqliteExecutor<'e>,
     establishment_id: &str,
     key_hash: &[u8],
     now: DateTime<Utc>,
@@ -21,7 +21,7 @@ pub(crate) async fn find_live(
     .bind(key_hash)
     .bind(establishment_id)
     .bind(now.timestamp())
-    .fetch_optional(conn)
+    .fetch_optional(executor)
     .await?)
 }
 

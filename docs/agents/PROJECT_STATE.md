@@ -77,6 +77,7 @@ The product owner authorized Phase 3 production work in writing on 2026-11-25 wh
 - Increment 2 adds dashboard editing for variations and add-ons, hours and service settings, and tenant-scoped customers, addresses and privacy operations. The landing highlights the demo in a wide card directly above the three-step section. The public demo displays removable ingredients and optional extras.
 - Increment 3 implements idempotent checkout against the published snapshot, exact offline payment and refund records, dispatcher, timeout rejection and compensation, and optional staff Web Push. Public checkout and notification subscription surfaces belong to QR Delivery. See [Commerce Core §15](../architecture/COMMERCE_CORE.md#15-ordered-task-list-to-start-commerce-core) and the [validation evidence](../performance/PERFORMANCE.md#commerce-core-increment-3).
 - The functional suite passed 184 tests. Both Increment 2 and Increment 3 release binaries started on the migrated SQLite database. The local durable checkout and full-size outbox benchmarks missed the throughput gates, so Phase 3 remains in progress.
+- The capacity pass uses a tenant-scoped read for committed checkout replays and rechecks misses inside the write transaction. The dispatcher commits bounded scans and grouped receipts in one transaction per pass. The [VPS evidence](../performance/PERFORMANCE.md#vps-capacity-validation) covers those changes and the isolated release gates.
 
 ## Landing and Panel Refresh
 

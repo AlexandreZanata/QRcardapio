@@ -1,5 +1,6 @@
 //! Transactional delivery of the SQLite outbox to registered in-process consumers.
 
+use std::collections::HashSet;
 use std::future::Future;
 use std::pin::Pin;
 
@@ -40,79 +41,128 @@ pub struct Consumer {
     pub handle: Handler,
 }
 
-/// Scans up to 200 events per consumer and finalizes one batch of acknowledged publications.
-/// The checkpoint tracks the scan. Receipts and the retry queue track delivery, including gaps.
+/// Scans up to 200 events per consumer and commits their effects and publication together.
+/// The Commerce write queue yields to other writers between batches.
 pub async fn dispatch_batch(
     pool: &SqlitePool,
     consumers: &[Consumer],
     now: DateTime<Utc>,
 ) -> AppResult<usize> {
     let now_ms = now.timestamp_millis();
-    let head = event_consumers::latest_seq(pool).await?;
-    let mut progress = 0;
-    let mut subscriptions = Vec::with_capacity(consumers.len());
-    for consumer in consumers {
-        let event_types: Vec<_> = consumer
-            .event_types
-            .iter()
-            .map(|kind| kind.as_str())
-            .collect();
-        let checkpoint = event_consumers::checkpoint(pool, consumer.name).await?;
-        if checkpoint.is_none_or(|last| last < head)
-            || event_consumers::has_due_retry(pool, consumer.name, now_ms).await?
-        {
-            progress +=
-                scan_consumer(pool, consumer, now_ms, &json!(event_types).to_string()).await?;
-        }
-        subscriptions.push(json!({ "consumer": consumer.name, "event_types": event_types }));
+    let event_types: Vec<Vec<&str>> = consumers
+        .iter()
+        .map(|consumer| {
+            consumer
+                .event_types
+                .iter()
+                .map(|kind| kind.as_str())
+                .collect()
+        })
+        .collect();
+    let subscriptions = consumers
+        .iter()
+        .zip(&event_types)
+        .map(|(consumer, types)| json!({ "consumer": consumer.name, "event_types": types }))
+        .collect();
+    let subscriptions = serde_json::Value::Array(subscriptions).to_string();
+    if !event_consumers::has_work(pool, &subscriptions, now_ms).await?
+        && !event_publications::has_ready(pool, &subscriptions).await?
+    {
+        return Ok(0);
     }
-    progress +=
-        event_publications::mark_ready(pool, &json!(subscriptions).to_string(), now_ms, BATCH_SIZE)
-            .await?;
+
+    let (_turn, mut tx) = commerce_writes::begin(pool).await?;
+    let head = event_consumers::latest_seq(&mut *tx).await?;
+    let mut progress = 0;
+    for (consumer, types) in consumers.iter().zip(&event_types) {
+        progress +=
+            scan_consumer(&mut tx, consumer, head, now_ms, &json!(types).to_string()).await?;
+    }
+    progress += event_publications::mark_ready(&mut tx, &subscriptions, now_ms, BATCH_SIZE).await?;
+    tx.commit().await?;
     Ok(progress)
 }
 
 async fn scan_consumer(
-    pool: &SqlitePool,
+    tx: &mut Transaction<'_, Sqlite>,
     consumer: &Consumer,
+    head: i64,
     now_ms: i64,
     types_json: &str,
 ) -> AppResult<usize> {
-    let (_turn, mut tx) = commerce_writes::begin(pool).await?;
-    let last_seq = match event_consumers::checkpoint(&mut *tx, consumer.name).await? {
+    let last_seq = match event_consumers::checkpoint(&mut **tx, consumer.name).await? {
         Some(seq) => seq,
         None => {
-            event_consumers::advance(&mut tx, consumer.name, 0).await?;
+            event_consumers::advance(tx, consumer.name, 0).await?;
             0
         }
     };
-    let head = event_consumers::latest_seq(&mut *tx).await?;
-    let retries = event_consumers::due_retries(&mut tx, consumer.name, now_ms, BATCH_SIZE).await?;
-    let mut progress = retries.len();
+    let mut progress = scan_retries(tx, consumer, now_ms).await?;
     let budget = BATCH_SIZE - progress as i64;
-    for retry in retries {
-        deliver(&mut tx, consumer, &retry.event, retry.attempts + 1, now_ms).await?;
-    }
     if budget > 0 && head > last_seq {
         let new_events =
-            event_consumers::unscanned(&mut tx, types_json, last_seq, head, budget).await?;
+            event_consumers::unscanned(tx, consumer.name, types_json, last_seq, head, budget)
+                .await?;
         let scanned_through = if new_events.len() < budget as usize {
             head
         } else {
-            new_events.last().map_or(last_seq, |event| event.seq)
+            new_events
+                .last()
+                .map_or(last_seq, |scanned| scanned.event.seq)
         };
         progress += new_events.len();
-        for event in new_events {
-            if event_consumers::is_blocked(&mut tx, consumer.name, event.seq).await? {
-                event_consumers::park(&mut tx, consumer.name, event.seq).await?;
+        scan_fresh(tx, consumer, &new_events, now_ms).await?;
+        event_consumers::advance(tx, consumer.name, scanned_through).await?;
+    }
+    Ok(progress)
+}
+
+async fn scan_retries(
+    tx: &mut Transaction<'_, Sqlite>,
+    consumer: &Consumer,
+    now_ms: i64,
+) -> AppResult<usize> {
+    let retries = event_consumers::due_retries(tx, consumer.name, now_ms, BATCH_SIZE).await?;
+    let mut received = Vec::with_capacity(retries.len());
+    for retry in &retries {
+        if !retry.received {
+            if !deliver(tx, consumer, &retry.event, retry.attempts + 1, now_ms).await? {
+                continue;
+            }
+            received.push(retry.event.event_id.as_str());
+        }
+        event_consumers::clear_failure(tx, consumer.name, retry.event.seq).await?;
+    }
+    event_consumers::record_receipts(tx, consumer.name, &received, now_ms).await?;
+    Ok(retries.len())
+}
+
+async fn scan_fresh(
+    tx: &mut Transaction<'_, Sqlite>,
+    consumer: &Consumer,
+    rows: &[event_consumers::ScannedEvent],
+    now_ms: i64,
+) -> AppResult<()> {
+    let mut received = Vec::with_capacity(rows.len());
+    let mut new_failures = HashSet::new();
+    for row in rows {
+        let event = &row.event;
+        let aggregate = (
+            &event.establishment_id,
+            &event.aggregate_type,
+            &event.aggregate_id,
+        );
+        if row.blocked || new_failures.contains(&aggregate) {
+            event_consumers::park(tx, consumer.name, event.seq).await?;
+        } else if !row.received {
+            if deliver(tx, consumer, event, 1, now_ms).await? {
+                received.push(event.event_id.as_str());
             } else {
-                deliver(&mut tx, consumer, &event, 1, now_ms).await?;
+                new_failures.insert(aggregate);
             }
         }
-        event_consumers::advance(&mut tx, consumer.name, scanned_through).await?;
     }
-    tx.commit().await?;
-    Ok(progress)
+    event_consumers::record_receipts(tx, consumer.name, &received, now_ms).await
 }
 
 async fn deliver(
@@ -121,36 +171,33 @@ async fn deliver(
     event: &StoredEvent,
     attempt: i64,
     now_ms: i64,
-) -> AppResult<()> {
+) -> AppResult<bool> {
     // A failed handler discards its partial writes without discarding other aggregates'
     // work in the bounded transaction. A crash before outer commit drops the entire batch.
     let mut savepoint = tx.begin().await?;
-    if event_consumers::claim(&mut savepoint, consumer.name, &event.event_id, now_ms).await?
-        && let Err(err) = (consumer.handle)(&mut savepoint, event).await
-    {
-        savepoint.rollback().await?;
-        let retry_at = retry_at(now_ms, event.seq, attempt);
-        event_consumers::record_failure(
-            &mut *tx,
-            consumer.name,
-            event.seq,
-            attempt,
-            retry_at,
-            err.i18n_key(),
-        )
-        .await?;
-        if retry_at.is_none() {
-            tracing::warn!(
-                consumer = consumer.name,
-                seq = event.seq,
-                "outbox event moved to dead letter"
-            );
-        }
-    } else {
+    let Err(err) = (consumer.handle)(&mut savepoint, event).await else {
         savepoint.commit().await?;
-        event_consumers::clear_failure(tx, consumer.name, event.seq).await?;
+        return Ok(true);
+    };
+    savepoint.rollback().await?;
+    let retry_at = retry_at(now_ms, event.seq, attempt);
+    event_consumers::record_failure(
+        tx,
+        consumer.name,
+        event.seq,
+        attempt,
+        retry_at,
+        err.i18n_key(),
+    )
+    .await?;
+    if retry_at.is_none() {
+        tracing::warn!(
+            consumer = consumer.name,
+            seq = event.seq,
+            "outbox event moved to dead letter"
+        );
     }
-    Ok(())
+    Ok(false)
 }
 
 fn retry_at(now_ms: i64, seq: i64, attempt: i64) -> Option<i64> {
