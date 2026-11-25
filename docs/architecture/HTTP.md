@@ -109,3 +109,7 @@ Todas as rotas abaixo aplicam `Cache-Control: no-store` e limite de corpo de 16 
 | `POST` | `/admin/affiliates/settings`, `/enroll`, `/{id}/update`, `/{id}/payout`, `/{id}/referrals/{referral_id}/disqualify` | `AdminContext` + CSRF | Mutação das regras padrão, cadastro/edição de afiliado, liquidação atômica de repasse PIX (exige `confirm=yes`) e desqualificação de indicação com estorno das parcelas em aberto. |
 
 [Arquitetura do Programa de Afiliados](AFFILIATES.md)
+
+## Commerce Core
+
+Increment 1 exposes the catalog publication and order operations through internal Rust interfaces. [The QR Delivery API and storefront remain planned](../modules/DELIVERY.md#16-http-contracts).

@@ -24,7 +24,7 @@ A new operational phase never starts while the previous phase has an open failur
 | 0 | Audit and contracts | **Implemented and tested** (module specs under reconciliation) |
 | 1 | Commercial foundation | **Implemented and tested**; Asaas side **Implemented, not homologated** |
 | 2 | QR Menu consolidation | Technical part **Implemented and tested**; homologation **Blocked**; live checks pending |
-| 3 | Commerce Core | **Planned** |
+| 3 | Commerce Core | **In progress** (Increment 1) |
 | 4 | QR Delivery | **Planned** |
 | 5 | QR Tables | **Planned** |
 | 6 | QR Kitchen | **Planned** |
@@ -96,6 +96,8 @@ Phases 4 to 11 run one at a time. Each module reaches `available` and is consoli
 **Decision rule.** Phase 3 production code does not start until phase 2 is complete, unless the product owner explicitly accepts the open homologation item in writing. In every case, no module other than QR Menu may reach `beta` or `available` before Asaas homologation passes.
 
 ## Phase 3 — Commerce Core
+
+**Status.** In progress. Increment 1 delivers the internal foundation for catalog options and snapshots, pricing and orders with outbox append. The product owner accepted pending Asaas Sandbox homologation in writing on 2026-11-25. See [Project State](../agents/PROJECT_STATE.md#commerce-core--phase-3-2026-11-25).
 
 **Objective.** Build the shared, free order engine that every selling module uses ([COMMERCE_CORE.md](../architecture/COMMERCE_CORE.md)).
 

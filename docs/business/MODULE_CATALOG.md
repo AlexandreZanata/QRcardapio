@@ -18,7 +18,7 @@ Prices are monthly list prices in integer centavos. Cycle discounts (`billing-cy
 | `pos` | QR POS | 6990 | `planned` | 10 | No | [POS](../modules/POS.md) |
 | `connect` | QR Connect | 2490 | `planned` | 11 | No | [CONNECT](../modules/CONNECT.md) |
 
-Sum of individual modules: 32910 centavos (R$ 329,10) per month.
+Sum of individual modules: 32910 centavos (R$ 329,10) per month. [Commerce Core](../architecture/COMMERCE_CORE.md) is the free QR Core foundation. Its first increment leaves the lifecycle and sellability in this table unchanged.
 
 ## Bundles
 

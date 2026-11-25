@@ -35,6 +35,7 @@
 - Templates & serialization: `askama 0.16.1`, `serde 1.0.229`, `serde_json 1.0.154`
 - Security & rate limiting: `argon2 0.6.0`, `governor 0.10.4`, `subtle 2.6.1`, `getrandom 0.4.3`, `sha2 0.11.1`, `base64 0.23.1`, `hex 0.4.3`
 - Media & QR: `image 0.25.10` (`jpeg`, `png`, `webp` only), `qrcode 0.15.0` (`svg`, `image` only)
+- Commerce time zone: `jiff 1.0.3` with `std` and `static` embeds the IANA rules for `America/Sao_Paulo` at order placement.
 - Utilities: `clap 4.6.9`, `chrono 0.4.45`, `uuid 1.29.3`, `thiserror 2.0.21`, `tempfile 3.27.0`, `dotenvy 0.15.7`, `tracing 0.1.44`, `tracing-subscriber 0.3.23`
 
 - Integração Asaas: `reqwest 0.13.5` assíncrono com Rustls e features `json` e `query`. A serialização de valores de cobrança usa `serde_json` com precisão decimal preservada.
