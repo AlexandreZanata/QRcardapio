@@ -303,7 +303,13 @@ async fn landing_button_keeps_demo_qr_and_demo_has_translated_read_only_customiz
     ] {
         let landing = html(&h.app, path).await;
         assert!(landing.contains("landing-demo-qr.svg"));
-        assert!(landing.contains("demo-invitation-action"));
+        let (before_steps, _) = landing.split_once("id=\"how-it-works\"").unwrap();
+        let (_, full_width_demo) = before_steps
+            .split_once("class=\"landing-container demo-invitation-band\"")
+            .unwrap();
+        assert!(full_width_demo.contains("demo-invitation-action"));
+        assert!(full_width_demo.contains("landing-demo-banner-mobile.webp"));
+        assert!(full_width_demo.contains("landing-demo-banner-wide.webp"));
         assert!(landing.contains(label));
         assert!(landing.contains("href=\"/c/bistro-da-praca\""));
     }
