@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use axum::Router;
-use axum::extract::DefaultBodyLimit;
+use axum::extract::{DefaultBodyLimit, MatchedPath};
 use axum::middleware;
 use axum::routing::{get, post};
 use sqlx::SqlitePool;
@@ -280,7 +280,11 @@ pub fn build_router(state: AppState) -> Router {
         .layer(middleware::from_fn(security_headers_middleware))
         .layer(CompressionLayer::new())
         .layer(TraceLayer::new_for_http().make_span_with(|request: &axum::extract::Request| {
-            tracing::debug_span!("http.request", method = %request.method(), path = %request.uri().path())
+            let path = request
+                .extensions()
+                .get::<MatchedPath>()
+                .map_or("<unmatched>", MatchedPath::as_str);
+            tracing::debug_span!("http.request", method = %request.method(), path)
         }))
         .layer(PropagateRequestIdLayer::x_request_id())
         .layer(SetRequestIdLayer::x_request_id(MakeRequestUuid))

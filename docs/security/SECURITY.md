@@ -45,5 +45,6 @@ O fluxo usa PKCE S256, estado de uso único vinculado ao cookie e nonce assinado
 
 - Webhooks: Asaas por token dedicado; Stripe por assinatura HMAC-SHA256 do corpo bruto com tolerância de 300 s e verificação de `livemode`; Inter por segredo no caminho e nova consulta de cada cobrança via mTLS antes de alterar a cobertura (o Inter não assina callbacks). O certificado de cliente do Inter pode ser exigido no Caddy ([runbook](../operations/RUNBOOK.md#banco-inter)).
 - Credenciais: chaves e segredos apenas em variáveis de ambiente; certificado e chave do Inter em arquivos `0400` do usuário do serviço, validados na inicialização. Nada disso é registrado em log.
+- Traces HTTP registram o padrão de rota do Axum e usam `<unmatched>` para rotas desconhecidas. O caminho e a consulta da requisição ficam fora do trace, preservando o segredo do callback do Inter.
 - Valores: o navegador envia apenas oferta, ciclo e forma de pagamento; o total vem do contrato.
 - LGPD: CPF/CNPJ e endereço do pagador (Pix/boleto) ficam em `billing_payer_profiles`, somente o proprietário altera, a tela mostra o documento mascarado, nunca entram em eventos ou logs, e o boleto em PDF é buscado sob demanda sem armazenamento.
