@@ -1,6 +1,6 @@
 mod webhook;
 
-pub use webhook::{Change, Webhook};
+pub use webhook::Webhook;
 
 use std::time::Duration;
 
@@ -22,30 +22,7 @@ pub struct AsaasClient {
     config: AsaasConfig,
 }
 
-#[derive(Debug, thiserror::Error)]
-pub enum GatewayError {
-    #[error("Asaas returned HTTP {0}")]
-    Status(StatusCode),
-    #[error("Asaas request could not be completed")]
-    Transport,
-    #[error("Asaas returned an invalid response")]
-    Response,
-}
-
-impl GatewayError {
-    pub fn rejected_checkout(&self) -> bool {
-        matches!(
-            self,
-            Self::Status(
-                StatusCode::BAD_REQUEST
-                    | StatusCode::UNAUTHORIZED
-                    | StatusCode::FORBIDDEN
-                    | StatusCode::UNPROCESSABLE_ENTITY
-                    | StatusCode::TOO_MANY_REQUESTS
-            )
-        )
-    }
-}
+pub use super::gateway::GatewayError;
 
 impl AsaasClient {
     pub fn new(config: AsaasConfig) -> Self {

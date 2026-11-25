@@ -10,7 +10,6 @@ use crate::domain::entitlements::{
     Operation, OperationalStatus, resolve,
 };
 use crate::error::{AppError, AppResult};
-use crate::infrastructure::asaas::AsaasClient;
 use crate::infrastructure::database::queries::entitlements as queries;
 
 /// Whether this deployment charges for commercial capabilities (technical feature flag).
@@ -21,17 +20,6 @@ pub enum Enforcement {
     /// No payment gateway configured (local preview, self-hosted): available modules are not
     /// commercially gated, preserving the behavior that predates the Commercial Engine.
     NotEnforced,
-}
-
-impl Enforcement {
-    pub fn from_gateway(client: Option<&AsaasClient>) -> Self {
-        match client {
-            Some(client) => Self::Enforced {
-                environment: client.config().environment.as_str(),
-            },
-            None => Self::NotEnforced,
-        }
-    }
 }
 
 /// Why an operation was refused. Each dimension has its own user-facing message.
@@ -224,12 +212,12 @@ pub async fn authorize(
 /// Whether the establishment currently holds `menu.publish` (display and MCP read models).
 pub async fn can_publish_menu(
     pool: &SqlitePool,
-    gateway: Option<&AsaasClient>,
+    enforcement: Enforcement,
     establishment_id: &str,
 ) -> AppResult<bool> {
     let decision = resolve_capability(
         pool,
-        Enforcement::from_gateway(gateway),
+        enforcement,
         establishment_id,
         Capability::MenuPublish,
         crate::domain::billing::billing_now().date_naive(),

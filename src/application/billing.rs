@@ -1,199 +1,206 @@
-use chrono::Utc;
+//! SaaS subscription use cases routed to the provider of each payment method.
+
 use sqlx::SqlitePool;
 use uuid::Uuid;
 
+use crate::application::billing_inter;
+use crate::application::payments::BillingGateways;
 use crate::domain::billing::billing_now;
 use crate::domain::commercial::Quote;
+use crate::domain::payments::{PaymentMethod, PaymentProvider};
 use crate::error::{AppError, AppResult};
-use crate::infrastructure::asaas::{AsaasClient, Change, GatewayError, Webhook};
-use crate::infrastructure::database::queries::{
-    affiliate_ledger, billing as queries, commercial_contracts,
-};
+use crate::infrastructure::database::queries::billing as queries;
+use crate::infrastructure::gateway::GatewayError;
 
-/// Opens a hosted recurring checkout for a backend-computed quote. The commercial contract
-/// snapshot is stored in the same transaction as the checkout reservation.
+fn unavailable() -> AppError {
+    AppError::NotFound("error.not_found")
+}
+
+/// Starts a subscription with the provider routed for `method`. Card methods open a hosted
+/// recurring checkout (Asaas or Stripe); Pix/boleto issues the first Inter charge. The
+/// commercial contract snapshot is stored in the same transaction as the reservation.
 pub async fn start_checkout(
     pool: &SqlitePool,
-    client: &AsaasClient,
+    gateways: &BillingGateways,
+    public_base: &str,
+    establishment: &str,
+    method: PaymentMethod,
+    quote: &Quote,
+) -> AppResult<()> {
+    let provider = gateways
+        .provider_for(method)
+        .ok_or(AppError::Validation("error.payment_method_unavailable"))?;
+    match provider {
+        PaymentProvider::Inter => {
+            let client = gateways.inter.as_ref().ok_or_else(unavailable)?;
+            billing_inter::start(pool, client, establishment, quote).await
+        }
+        PaymentProvider::Asaas | PaymentProvider::Stripe => {
+            start_hosted_checkout(pool, gateways, provider, public_base, establishment, quote).await
+        }
+    }
+}
+
+async fn start_hosted_checkout(
+    pool: &SqlitePool,
+    gateways: &BillingGateways,
+    provider: PaymentProvider,
     public_base: &str,
     establishment: &str,
     quote: &Quote,
 ) -> AppResult<()> {
-    let env = client.config().environment.as_str();
+    let env = gateways.environment().ok_or_else(unavailable)?;
     let reference = Uuid::now_v7();
     let reference_text = reference.to_string();
-    if queries::reserve_contract_checkout(
+    let target = queries::CheckoutTarget {
+        provider,
+        method: PaymentMethod::Card,
+    };
+    let today = billing_now().date_naive();
+    if !queries::reserve_contract_checkout(
         pool,
         env,
         establishment,
         &reference_text,
-        billing_now().date_naive(),
+        today,
         quote,
+        target,
     )
     .await?
     {
-        match client.create_checkout(public_base, reference, quote).await {
-            Ok(id) => {
-                queries::finish_checkout(
-                    pool,
-                    env,
-                    establishment,
-                    &reference_text,
-                    Some(&id.to_string()),
-                )
-                .await?
+        return Ok(());
+    }
+    let created = match provider {
+        PaymentProvider::Asaas => {
+            let client = gateways.asaas.as_ref().ok_or_else(unavailable)?;
+            client
+                .create_checkout(public_base, reference, quote)
+                .await
+                .map(|id| (id.to_string(), None))
+        }
+        PaymentProvider::Stripe => {
+            let client = gateways.stripe.as_ref().ok_or_else(unavailable)?;
+            client
+                .create_checkout(public_base, reference, establishment, quote)
+                .await
+                .map(|session| (provider.qualify(&session.id), Some(session.url)))
+        }
+        PaymentProvider::Inter => return Err(unavailable()),
+    };
+    match created {
+        Ok((id, url)) => {
+            queries::finish_hosted_checkout(
+                pool,
+                env,
+                establishment,
+                &reference_text,
+                Some(&id),
+                url.as_deref(),
+            )
+            .await
+        }
+        Err(error) => {
+            if error.rejected_checkout() {
+                queries::finish_checkout(pool, env, establishment, &reference_text, None).await?;
             }
-            Err(error) => {
-                if error.rejected_checkout() {
-                    queries::finish_checkout(pool, env, establishment, &reference_text, None)
-                        .await?;
-                }
-                return Err(provider_error(error));
-            }
+            Err(provider_error(error))
         }
     }
-    Ok(())
 }
 
+/// Links a paid checkout whose subscription event was missed (or polls Inter charges).
 pub async fn reconcile_checkout(
     pool: &SqlitePool,
-    client: &AsaasClient,
+    gateways: &BillingGateways,
     establishment: &str,
 ) -> AppResult<bool> {
-    let env = client.config().environment.as_str();
-    let id = queries::current_checkout(pool, env, establishment)
-        .await?
-        .filter(|row| row.checkout_status == "paid" && row.subscription_id.is_none())
-        .and_then(|row| row.checkout_id)
-        .and_then(|id| Uuid::parse_str(&id).ok());
-    let Some(id) = id else { return Ok(false) };
-    let Some(subscription) = client
-        .checkout_subscription(id)
-        .await
-        .map_err(provider_error)?
-    else {
+    let env = gateways.environment().ok_or_else(unavailable)?;
+    let Some(row) = queries::current_checkout(pool, env, establishment).await? else {
         return Ok(false);
     };
-    queries::reconcile_subscription(pool, env, establishment, &id.to_string(), &subscription)
-        .await?;
+    let provider = PaymentProvider::parse(&row.provider).unwrap_or(PaymentProvider::Asaas);
+    if provider == PaymentProvider::Inter {
+        let client = gateways.inter.as_ref().ok_or_else(unavailable)?;
+        billing_inter::run_cycle(pool, client).await?;
+        return Ok(true);
+    }
+    if row.checkout_status != "paid" || row.subscription_id.is_some() {
+        return Ok(false);
+    }
+    let Some(checkout_id) = row.checkout_id else {
+        return Ok(false);
+    };
+    let subscription = match provider {
+        PaymentProvider::Asaas => {
+            let Ok(id) = Uuid::parse_str(&checkout_id) else {
+                return Ok(false);
+            };
+            let client = gateways.asaas.as_ref().ok_or_else(unavailable)?;
+            client.checkout_subscription(id).await
+        }
+        PaymentProvider::Stripe => {
+            let client = gateways.stripe.as_ref().ok_or_else(unavailable)?;
+            let Some(session) = provider.unqualify(&checkout_id) else {
+                return Ok(false);
+            };
+            client
+                .session_subscription(session)
+                .await
+                .map(|sub| sub.map(|id| provider.qualify(&id)))
+        }
+        PaymentProvider::Inter => return Ok(false),
+    }
+    .map_err(provider_error)?;
+    let Some(subscription) = subscription else {
+        return Ok(false);
+    };
+    queries::reconcile_subscription(pool, env, establishment, &checkout_id, &subscription).await?;
     Ok(true)
 }
 
+/// Cancels renewal with the subscription's own provider. Paid periods stay covered.
 pub async fn cancel_subscription(
     pool: &SqlitePool,
-    client: &AsaasClient,
+    gateways: &BillingGateways,
     establishment: &str,
     expected_id: &str,
 ) -> AppResult<()> {
-    let env = client.config().environment.as_str();
-    let subscription_id = queries::current_checkout(pool, env, establishment)
-        .await?
-        .and_then(|row| row.subscription_id);
-    if subscription_id.as_deref() != Some(expected_id) {
+    let env = gateways.environment().ok_or_else(unavailable)?;
+    let current = queries::current_checkout(pool, env, establishment).await?;
+    let Some(row) = current.filter(|row| row.subscription_id.as_deref() == Some(expected_id))
+    else {
         return Err(AppError::Conflict("error.billing_subscription_changed"));
+    };
+    match PaymentProvider::parse(&row.provider).unwrap_or(PaymentProvider::Asaas) {
+        PaymentProvider::Asaas => {
+            let client = gateways.asaas.as_ref().ok_or_else(unavailable)?;
+            client
+                .delete_subscription(expected_id)
+                .await
+                .map_err(provider_error)?;
+        }
+        PaymentProvider::Stripe => {
+            let client = gateways.stripe.as_ref().ok_or_else(unavailable)?;
+            let id = PaymentProvider::Stripe
+                .unqualify(expected_id)
+                .ok_or(AppError::Conflict("error.billing_subscription_changed"))?;
+            client
+                .cancel_at_period_end(id)
+                .await
+                .map_err(provider_error)?;
+        }
+        PaymentProvider::Inter => {
+            let client = gateways.inter.as_ref().ok_or_else(unavailable)?;
+            billing_inter::cancel(pool, client, &row.reference).await?;
+        }
     }
-    client
-        .delete_subscription(expected_id)
-        .await
-        .map_err(provider_error)?;
     queries::cancel_subscription(pool, env, establishment, expected_id).await?;
     Ok(())
 }
 
-pub async fn process_webhook(pool: &SqlitePool, env: &str, event: Webhook) -> AppResult<()> {
-    let event_id = event.id.clone();
-    let Some(change) = event.into_change().map_err(|reason| {
-        tracing::warn!(reason, "invalid Asaas event");
-        AppError::Validation("error.invalid_billing_event")
-    })?
-    else {
-        return Ok(());
-    };
-    let Some(mut tx) = queries::begin_event(pool, env, &event_id).await? else {
-        return Ok(());
-    };
-    match change {
-        Change::Checkout {
-            id,
-            reference,
-            status,
-        } => {
-            let reference = reference.map(|value| value.to_string());
-            queries::record_checkout(&mut tx, env, &id.to_string(), reference.as_deref(), status)
-                .await?;
-        }
-        Change::Subscription {
-            id,
-            checkout,
-            status,
-            at,
-        } => {
-            if let Some(checkout) = checkout {
-                queries::link_subscription(&mut tx, env, &checkout.to_string(), &id).await?;
-                let today = billing_now().date_naive();
-                let now = Utc::now().to_rfc3339();
-                affiliate_ledger::sync_subscription_commissions(&mut tx, env, &id, today, &now)
-                    .await?;
-            }
-            queries::record_subscription(&mut tx, env, &id, status, &at).await?;
-            commercial_contracts::activate_for_subscription(&mut tx, env, &id, Some(&event_id))
-                .await?;
-        }
-        Change::Payment {
-            id,
-            checkout,
-            subscription_id,
-            confirmed_centavos,
-            due_date,
-            priority,
-            at,
-        } => {
-            let linked_checkout = checkout.is_some();
-            if let Some(checkout) = checkout {
-                queries::link_subscription(&mut tx, env, &checkout.to_string(), &subscription_id)
-                    .await?;
-            }
-            queries::record_payment(
-                &mut tx,
-                env,
-                queries::Payment {
-                    id: &id,
-                    subscription: &subscription_id,
-                    due_date,
-                    confirmed_centavos,
-                    at: &at,
-                    priority,
-                },
-            )
-            .await?;
-            let today = billing_now().date_naive();
-            let now = Utc::now().to_rfc3339();
-            if linked_checkout {
-                affiliate_ledger::sync_subscription_commissions(
-                    &mut tx,
-                    env,
-                    &subscription_id,
-                    today,
-                    &now,
-                )
-                .await?;
-            } else {
-                affiliate_ledger::sync_payment_commissions(&mut tx, env, &id, today, &now).await?;
-            }
-            commercial_contracts::activate_for_subscription(
-                &mut tx,
-                env,
-                &subscription_id,
-                Some(&event_id),
-            )
-            .await?;
-        }
-    }
-    tx.commit().await?;
-    Ok(())
-}
-
-fn provider_error(error: GatewayError) -> AppError {
-    tracing::warn!(%error, "Asaas operation failed");
+pub(crate) fn provider_error(error: GatewayError) -> AppError {
+    tracing::warn!(%error, "payment provider operation failed");
     AppError::Unavailable("error.billing_unavailable")
 }
+
+pub use super::billing_events::{apply_events, process_stripe_event, process_webhook};

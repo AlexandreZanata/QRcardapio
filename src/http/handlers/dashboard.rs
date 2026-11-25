@@ -7,7 +7,7 @@ use axum_extra::extract::CookieJar;
 use serde::Deserialize;
 
 use crate::app::AppState;
-use crate::application::entitlements::{Denial, Enforcement, authorize, can_publish_menu};
+use crate::application::entitlements::{Denial, authorize, can_publish_menu};
 use crate::application::publishing::{publish_establishment, unpublish_establishment};
 use crate::domain::account::AccountRole;
 use crate::domain::billing::billing_now;
@@ -37,7 +37,7 @@ pub async fn overview_page(
     let est = &tenant.establishment;
     let categories = list_categories_for_est(&state.pool, &est.id).await?;
     let products = list_products_for_est(&state.pool, &est.id).await?;
-    let can_publish = can_publish_menu(&state.pool, state.asaas.as_ref(), &est.id).await?;
+    let can_publish = can_publish_menu(&state.pool, state.billing.enforcement(), &est.id).await?;
     let (jar, flash) = take_flash(jar);
 
     let tpl = OverviewTemplate {
@@ -56,7 +56,7 @@ pub async fn overview_page(
         last_published_at: est.last_published_at.clone(),
         category_count: categories.len(),
         product_count: products.len(),
-        billing_enabled: state.asaas.is_some(),
+        billing_enabled: state.billing.enabled(),
         can_publish,
     };
     Ok((jar, render_html(&tpl, StatusCode::OK)?).into_response())
@@ -205,7 +205,7 @@ async fn authorize_operation(
 ) -> AppResult<Result<(), Denial>> {
     Ok(authorize(
         &state.pool,
-        Enforcement::from_gateway(state.asaas.as_ref()),
+        state.billing.enforcement(),
         &tenant.establishment.id,
         tenant.role,
         operation,

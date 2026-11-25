@@ -40,3 +40,10 @@ A autorização delega acesso de proprietário a um estabelecimento por vez. Ide
 O fluxo usa PKCE S256, estado de uso único vinculado ao cookie e nonce assinado. O servidor exige assinatura do Google e valida emissor, destinatário e validade antes de abrir uma sessão. Contas existentes só recebem um vínculo depois de autenticação local, verificação de CSRF e conferência do mesmo e-mail na sessão que iniciou o vínculo. A identidade persistida usa o `sub` estável. A recuperação assistida continua exigindo que o suporte verifique o titular.
 
 [Controles do fluxo Google](../architecture/GOOGLE_AUTH.md)
+
+## Provedores de cobrança (Asaas, Stripe, Inter)
+
+- Webhooks: Asaas por token dedicado; Stripe por assinatura HMAC-SHA256 do corpo bruto com tolerância de 300 s e verificação de `livemode`; Inter por segredo no caminho e nova consulta de cada cobrança via mTLS antes de alterar a cobertura (o Inter não assina callbacks). O certificado de cliente do Inter pode ser exigido no Caddy ([runbook](../operations/RUNBOOK.md#banco-inter)).
+- Credenciais: chaves e segredos apenas em variáveis de ambiente; certificado e chave do Inter em arquivos `0400` do usuário do serviço, validados na inicialização. Nada disso é registrado em log.
+- Valores: o navegador envia apenas oferta, ciclo e forma de pagamento; o total vem do contrato.
+- LGPD: CPF/CNPJ e endereço do pagador (Pix/boleto) ficam em `billing_payer_profiles`, somente o proprietário altera, a tela mostra o documento mascarado, nunca entram em eventos ou logs, e o boleto em PDF é buscado sob demanda sem armazenamento.

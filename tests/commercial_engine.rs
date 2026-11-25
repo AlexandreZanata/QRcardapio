@@ -206,9 +206,17 @@ async fn checkout_reservation_stores_an_immutable_contract_snapshot() {
     let reference = Uuid::now_v7().to_string();
     let quote = quote_checkout(&[parse_offer("menu").unwrap()], BillingPlan::Semiannual).unwrap();
     assert!(
-        billing::reserve_contract_checkout(&h.pool, ENV, &est, &reference, today, &quote)
-            .await
-            .unwrap()
+        billing::reserve_contract_checkout(
+            &h.pool,
+            ENV,
+            &est,
+            &reference,
+            today,
+            &quote,
+            billing::CheckoutTarget::ASAAS_CARD
+        )
+        .await
+        .unwrap()
     );
     // A second reservation while the first is open never creates a second charge.
     assert!(
@@ -218,7 +226,8 @@ async fn checkout_reservation_stores_an_immutable_contract_snapshot() {
             &est,
             &Uuid::now_v7().to_string(),
             today,
-            &quote
+            &quote,
+            billing::CheckoutTarget::ASAAS_CARD
         )
         .await
         .unwrap()

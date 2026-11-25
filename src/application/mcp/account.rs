@@ -16,7 +16,6 @@ use crate::domain::mcp::is_url_token;
 use crate::domain::mcp_account::{AccountSettingsInput, ValidatedAccountPatch};
 use crate::error::{AppError, AppResult};
 use crate::i18n::Locale;
-use crate::infrastructure::asaas::AsaasClient;
 use crate::infrastructure::database::queries::{
     find_account_by_id, find_establishment_by_id, mcp_account as queries,
     mcp_menu::Operation,
@@ -26,7 +25,7 @@ use crate::infrastructure::security::sha256_hex;
 
 pub async fn read_settings(
     pool: &SqlitePool,
-    asaas: Option<&AsaasClient>,
+    enforcement: Enforcement,
     grant: &Grant,
     origin: &str,
 ) -> AppResult<Value> {
@@ -37,7 +36,7 @@ pub async fn read_settings(
         .await?
         .ok_or(AppError::NotFound("error.not_found"))?;
     let counts = queries::menu_summary_counts(pool, &est.id).await?;
-    let can_publish = can_publish_menu(pool, asaas, &est.id).await?;
+    let can_publish = can_publish_menu(pool, enforcement, &est.id).await?;
     let accent_contrast_ink = AccentColor::parse(&est.accent_color)
         .map(|c| c.contrast_ink())
         .unwrap_or("#FFFFFF");
@@ -74,7 +73,7 @@ pub async fn read_settings(
             "published_version": est.published_version,
             "has_unpublished_changes": est.has_unpublished_changes,
             "last_published_at": est.last_published_at,
-            "billing_enabled": asaas.is_some(),
+            "billing_enabled": enforcement != Enforcement::NotEnforced,
             "can_publish": can_publish,
             "public_url": format!("{origin}/c/{}", est.slug),
             "preview_url": format!("{origin}/dashboard/preview"),
@@ -89,7 +88,7 @@ pub async fn read_settings(
 pub async fn update_settings(
     pool: &SqlitePool,
     locks: &PublishLocks,
-    asaas: Option<&AsaasClient>,
+    enforcement: Enforcement,
     grant: &Grant,
     input: AccountSettingsInput,
     origin: &str,
@@ -179,7 +178,7 @@ pub async fn update_settings(
     )
     .await?;
 
-    let mut state_view = read_settings(pool, asaas, grant, origin).await?;
+    let mut state_view = read_settings(pool, enforcement, grant, origin).await?;
     state_view["applied"] = serde_json::to_value(outcome)
         .map_err(|_| AppError::Internal("could not serialize account outcome".into()))?;
     Ok(state_view)
@@ -189,7 +188,7 @@ pub async fn publish(
     pool: &SqlitePool,
     config: &Config,
     locks: &PublishLocks,
-    asaas: Option<&AsaasClient>,
+    enforcement: Enforcement,
     grant: &Grant,
 ) -> AppResult<Value> {
     let now = Utc::now().timestamp();
@@ -199,7 +198,7 @@ pub async fn publish(
     // The menu.write OAuth grant is owner-only, which narrows the operation's role set.
     authorize(
         pool,
-        Enforcement::from_gateway(asaas),
+        enforcement,
         &grant.establishment_id,
         MemberRole::Owner,
         GuardedOperation::PublishMenu,

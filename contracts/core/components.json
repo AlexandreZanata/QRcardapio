@@ -61,7 +61,7 @@
     {
       "id": "saas_billing",
       "status": "implemented",
-      "summary": "Asaas hosted recurring checkout, authenticated idempotent webhooks, coverage."
+      "summary": "Asaas and Stripe hosted recurring card checkout, Banco Inter Pix/boleto charge per cycle; authenticated idempotent webhooks normalized into GatewayEvent; coverage per confirmed payment (ADR-011)."
     },
     {
       "id": "events",

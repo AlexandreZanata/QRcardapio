@@ -10,16 +10,17 @@ use tower_http::request_id::{MakeRequestUuid, PropagateRequestIdLayer, SetReques
 use tower_http::services::ServeDir;
 use tower_http::trace::TraceLayer;
 
+use crate::application::payments::BillingGateways;
 use crate::application::publishing::PublishLocks;
 use crate::config::Config;
 use crate::http::handlers::{
-    admin, admin_affiliates, affiliates, auth, billing, categories, dashboard, google, health, mcp,
-    menu_editor, ocr, onboarding, products, public, qr, seo, settings,
+    admin, admin_affiliates, affiliates, auth, billing, billing_payer, billing_webhooks,
+    categories, dashboard, google, health, mcp, menu_editor, ocr, onboarding, products, public, qr,
+    seo, settings,
 };
 use crate::http::middleware::branded_errors::branded_errors;
 use crate::http::middleware::security_headers::{no_store, security_headers_middleware};
 use crate::i18n::Catalog;
-use crate::infrastructure::asaas::AsaasClient;
 use crate::infrastructure::assets::AssetProcessor;
 use crate::infrastructure::google::GoogleOidc;
 use crate::infrastructure::ocr::OcrService;
@@ -36,14 +37,15 @@ pub struct AppState {
     pub ocr: OcrService,
     pub rate_limiters: AppRateLimiters,
     pub publish_locks: PublishLocks,
-    pub asaas: Option<AsaasClient>,
+    pub billing: BillingGateways,
     pub google: Option<GoogleOidc>,
 }
 
 impl AppState {
     pub fn new(config: Config, pool: SqlitePool) -> Self {
         let assets = AssetProcessor::new(config.media_dir());
-        let asaas = config.asaas.clone().map(AsaasClient::new);
+        let billing = BillingGateways::from_config(&config)
+            .expect("payment configuration was validated when it was loaded");
         let google = config.google.clone().map(GoogleOidc::new);
         Self {
             config: Arc::new(config),
@@ -54,9 +56,18 @@ impl AppState {
             ocr: OcrService::new(),
             rate_limiters: AppRateLimiters::new(),
             publish_locks: PublishLocks::default(),
-            asaas,
+            billing,
             google,
         }
+    }
+}
+
+impl AppState {
+    /// Replaces the payment gateways (tests use loopback provider mocks).
+    #[doc(hidden)]
+    pub fn with_billing(mut self, billing: BillingGateways) -> Self {
+        self.billing = billing;
+        self
     }
 }
 
@@ -82,7 +93,9 @@ pub fn build_router(state: AppState) -> Router {
         .layer(DefaultBodyLimit::max(16 * 1024 * 1024));
 
     let billing_webhook = Router::new()
-        .route("/webhooks/asaas", post(billing::webhook))
+        .route("/webhooks/asaas", post(billing_webhooks::asaas))
+        .route("/webhooks/stripe", post(billing_webhooks::stripe))
+        .route("/webhooks/inter/{token}", post(billing_webhooks::inter))
         .layer(DefaultBodyLimit::max(64 * 1024));
 
     let affiliate_routes = Router::new()
@@ -178,6 +191,9 @@ pub fn build_router(state: AppState) -> Router {
         .route("/dashboard/billing/checkout", post(billing::checkout))
         .route("/dashboard/billing/cancel", post(billing::cancel))
         .route("/dashboard/billing/reconcile", post(billing::reconcile))
+        .route("/dashboard/billing/payer", post(billing_payer::save))
+        .route("/dashboard/billing/pix.svg", get(billing_payer::pix_svg))
+        .route("/dashboard/billing/boleto.pdf", get(billing_payer::boleto_pdf))
         .route("/dashboard/theme.css", get(dashboard::dashboard_theme_css))
         .route("/dashboard/preview", get(dashboard::preview_menu_page))
         .route(

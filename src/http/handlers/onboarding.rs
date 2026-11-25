@@ -32,7 +32,7 @@ impl PlanIntent {
     }
 
     pub(crate) fn suffix(&self, state: &AppState) -> String {
-        if state.asaas.is_some()
+        if state.billing.enabled()
             && let Some(plan) = self.selected()
         {
             return format!("?plan={}", plan.key());

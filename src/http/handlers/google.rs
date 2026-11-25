@@ -72,7 +72,7 @@ async fn start(
     }
     let intent = plan
         .selected()
-        .filter(|_| state.asaas.is_some())
+        .filter(|_| state.billing.enabled())
         .map_or(Intent::SignIn, Intent::Plan);
     start_redirect(&state, ip, jar, intent).await
 }

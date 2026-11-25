@@ -5,6 +5,7 @@ use super::PageMeta;
 use crate::application::commercial::{ModuleOverview, ModuleStanding};
 use crate::domain::billing::BillingPlan;
 use crate::domain::commercial::{ENTRY_OFFER, catalog};
+use crate::domain::payments::PaymentMethod;
 use crate::i18n::{Locale, format_price};
 
 #[derive(Template)]
@@ -27,6 +28,51 @@ pub struct BillingTemplate {
     pub can_reconcile: bool,
     pub cancellable_id: Option<String>,
     pub modules: Vec<ModuleCard>,
+    pub methods: Vec<MethodOffer>,
+    pub inter_charge: Option<ChargeView>,
+    pub show_payer_form: bool,
+    pub payer_summary: Option<String>,
+}
+
+/// A payment method the owner can choose. `blocked_key` explains why it cannot start yet.
+pub struct MethodOffer {
+    pub key: &'static str,
+    pub name_key: &'static str,
+    pub hint_key: &'static str,
+    pub submit_key: &'static str,
+    pub blocked_key: &'static str,
+}
+
+impl MethodOffer {
+    pub fn new(method: PaymentMethod, payer_on_file: bool) -> Self {
+        let (hint_key, submit_key) = match method {
+            PaymentMethod::Card => ("billing.method_card_hint", "billing.subscribe_card"),
+            PaymentMethod::PixBoleto => (
+                "billing.method_pix_boleto_hint",
+                "billing.subscribe_pix_boleto",
+            ),
+        };
+        Self {
+            key: method.as_str(),
+            name_key: method.i18n_key(),
+            hint_key,
+            submit_key,
+            blocked_key: if method == PaymentMethod::PixBoleto && !payer_on_file {
+                "error.payer_required"
+            } else {
+                ""
+            },
+        }
+    }
+}
+
+/// Current Inter charge shown to the owner.
+pub struct ChargeView {
+    pub amount: String,
+    pub due_date: NaiveDate,
+    pub pix_copy_paste: Option<String>,
+    pub digitable_line: Option<String>,
+    pub status_key: &'static str,
 }
 
 /// One catalog module on the subscription page. Planned modules have no price or action.

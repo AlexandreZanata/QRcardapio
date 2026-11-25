@@ -1,3 +1,4 @@
+mod billing_cli;
 mod operator_cli;
 
 use std::path::PathBuf;
@@ -50,6 +51,11 @@ enum Commands {
     SeedPublicDemo,
     /// Republish all currently published menus (useful after template upgrades)
     RepublishAll,
+    /// SaaS billing provider operations (Inter webhook registration and renewal pass)
+    Billing {
+        #[command(subcommand)]
+        action: billing_cli::BillingCommands,
+    },
     /// Audited platform-operator commands: entitlement grants and suspension
     Operator {
         #[command(subcommand)]
@@ -162,6 +168,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             println!("Republished {count} menu snapshots.");
         }
         Commands::Operator { action } => operator_cli::run(&config, action).await?,
+        Commands::Billing { action } => billing_cli::run(&config, action).await?,
         Commands::BenchGen {
             establishments,
             items_per_establishment,
@@ -205,6 +212,7 @@ async fn run_server(config: Config) -> Result<(), Box<dyn std::error::Error>> {
     let mcp_enabled = state.config.mcp_enabled;
     let google_enabled = state.google.is_some();
     let maint_limiters = state.rate_limiters.clone();
+    let maint_inter = state.billing.inter.clone();
     let maintenance = tokio::spawn(async move {
         let mut interval = tokio::time::interval(std::time::Duration::from_secs(3600));
         loop {
@@ -229,6 +237,14 @@ async fn run_server(config: Config) -> Result<(), Box<dyn std::error::Error>> {
                     .await
             {
                 tracing::warn!(%error, "Google OIDC cleanup failed");
+            }
+            if let Some(inter) = &maint_inter {
+                match qrcardapio::application::billing_inter::run_cycle(&maint_pool, inter).await {
+                    Ok((issued, reconciled)) => {
+                        tracing::info!(issued, reconciled, "Inter billing cycle completed");
+                    }
+                    Err(error) => tracing::warn!(%error, "Inter billing cycle failed"),
+                }
             }
             maint_limiters.prune_stale();
         }

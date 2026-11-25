@@ -168,3 +168,13 @@ Status: **Implemented and tested** (`tests/commercial_migration.rs::legacy_subsc
 - Code: `src/application/{billing,commercial,entitlements,operator}.rs`, `src/domain/entitlements/{access,authorization}.rs`, `src/infrastructure/database/queries/{billing,commercial_contracts,entitlements,affiliate_ledger}.rs`, `src/infrastructure/asaas.rs`
 - Tests: `tests/billing.rs`, `tests/entitlements.rs`, `tests/commercial_engine.rs`, `tests/commercial_migration.rs`, `tests/affiliates.rs`
 - [ADR-008](../decisions/ADR-008-entitlement-engine.md), [ADR-009](../decisions/ADR-009-sqlite-transactional-outbox.md), [PRICING_POLICY.md](PRICING_POLICY.md), [RELEASE_GATES.md](../roadmap/RELEASE_GATES.md)
+
+## Payment methods and providers
+
+| Method | Provider | Renewal | Notes |
+|---|---|---|---|
+| Credit card | Asaas or Stripe (one configured as the card provider) | Automatic by the provider | Hosted checkout; the platform never sees card data |
+| Pix or boleto | Banco Inter | One BolePix charge issued 10 days before each due date | Requires payer CPF/CNPJ and address; an unpaid charge that expires ends the subscription |
+
+The contract, its price and its coverage rules are identical for every provider. A subscription never moves between providers; changing the method means cancelling renewal (the paid period is kept) and subscribing again. See [ADR-011](../decisions/ADR-011-multi-provider-saas-billing.md).
+

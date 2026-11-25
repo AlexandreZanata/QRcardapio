@@ -192,6 +192,7 @@ pub async fn setup(enabled: bool, billing: bool) -> (TempDir, SqlitePool, Router
         trust_proxy: false,
         log_format: LogFormat::Pretty,
         log_level: "warn".into(),
+        payments: Default::default(),
         asaas: billing.then(|| {
             crate::config::AsaasConfig::new(
                 crate::config::AsaasEnvironment::Sandbox,

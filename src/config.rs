@@ -4,7 +4,12 @@ use std::path::PathBuf;
 mod billing;
 mod google;
 mod mcp;
+mod payments;
 pub use billing::{AsaasConfig, AsaasEnvironment};
+pub use payments::{InterConfig, PaymentsConfig, StripeConfig};
+
+/// Billing environment shared by every payment provider (`sandbox` or `production`).
+pub type BillingEnvironment = AsaasEnvironment;
 pub use google::{CALLBACK_PATH as GOOGLE_CALLBACK_PATH, GoogleConfig};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -53,6 +58,8 @@ pub struct Config {
     pub log_format: LogFormat,
     pub log_level: String,
     pub asaas: Option<AsaasConfig>,
+    /// Stripe, Inter and payment-method routing (`Default` = not configured).
+    pub payments: PaymentsConfig,
     pub mcp_enabled: bool,
     pub google: Option<GoogleConfig>,
 }
@@ -94,6 +101,7 @@ impl Config {
         let log_level =
             std::env::var("LOG_LEVEL").unwrap_or_else(|_| "info,qrcardapio=debug".to_string());
         let asaas = AsaasConfig::from_env(&public_base_url, cookie_secure)?;
+        let payments = PaymentsConfig::from_env(asaas.as_ref(), cookie_secure)?;
         let google = GoogleConfig::from_env(&public_base_url, cookie_secure)?;
         let mcp_enabled = parse_bool_env("MCP_ENABLED", false);
         if mcp_enabled {
@@ -112,6 +120,7 @@ impl Config {
             log_format,
             log_level,
             asaas,
+            payments,
             mcp_enabled,
             google,
         })

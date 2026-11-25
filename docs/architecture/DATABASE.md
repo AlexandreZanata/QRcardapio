@@ -86,3 +86,7 @@ A migração `20261124000009_commercial_foundation.sql` é uma migração *expan
 - Backfill: cada linha existente de `billing_checkouts` vira um contrato `legacy_plan` do QR Menu v1 preservando preço, ciclo e identificadores do Asaas.
 
 `init_pool` executa as migrações com `ignore_missing = true` (binário antigo aceita banco migrado por versão mais nova; ver [ADR-010](../decisions/ADR-010-expand-contract-migrations.md)) e em seguida sincroniza o registro do catálogo, recusando a inicialização se uma versão vendida tiver mudado.
+
+## Cobrança com vários provedores
+
+A migração `20261124000010_multi_provider_billing.sql` (expand) adiciona `provider`, `payment_method` e `checkout_url` a `billing_checkouts`, `settled_centavos` a `billing_payments`, e cria `billing_payer_profiles` (CPF/CNPJ e endereço do pagador, dado pessoal) e `billing_inter_charges` (uma cobrança Inter por ciclo, reservada antes da chamada à API, com `UNIQUE (billing_reference, cycle_index)`). Identificadores da Stripe e do Inter são gravados como `stripe:<id>`/`inter:<id>` para manter as chaves únicas existentes globais.
