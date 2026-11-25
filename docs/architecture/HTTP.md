@@ -69,7 +69,9 @@ All `POST` routes verify `_csrf` against the server session's `csrf_token` in co
 | Method | Path | Protection | Purpose |
 |---|---|---|---|
 | `GET` | `/admin` | `AdminContext` (`role = 'admin'`) | Operational counts, SQLite version, recent establishments, recent publication metrics. |
-| `GET` | `/admin/outbox` | `AdminContext` (`role = 'admin'`) | `no-store` JSON with pending age, per-consumer lag and dead letters. Event payloads are omitted. |
+| `GET` | `/admin/outbox` | `AdminContext` (`role = 'admin'`) | `no-store` JSON with pending age, per-consumer lag and dead letters, including `replay_generation`. Event payloads are omitted. |
+| `GET` | `/admin/outbox/recovery` | `AdminContext` | `no-store` dead-letter recovery page with event and consumer identifiers. |
+| `POST` | `/admin/outbox/replay` | `AdminContext` and CSRF | Form fields `consumer`, `event_id`, `generation` and `_csrf`. `303` after scheduling, `409` if the observed dead letter can no longer be scheduled. |
 
 ## Assinatura Asaas
 
@@ -113,7 +115,7 @@ Todas as rotas abaixo aplicam `Cache-Control: no-store` e limite de corpo de 16 
 
 ## Commerce Core
 
-The catalog publication, order transitions, checkout, offline payment ledger and Web Push subscription management have internal Rust interfaces. The current HTTP surface for the dispatcher is `GET /admin/outbox`. A future authorized channel adapter will map `CheckoutOutcome::Repriced` to `409 commerce.checkout_repriced` with the current quote and `commerce.idempotency_mismatch` to `422`. See the [QR Delivery API specification](../modules/DELIVERY.md#16-http-contracts).
+The catalog publication, order transitions, checkout, offline payment ledger and Web Push subscription management have internal Rust interfaces. Dispatcher diagnostics and replay scheduling are exposed only on the platform admin routes. A future authorized channel adapter will map `CheckoutOutcome::Repriced` to `409 commerce.checkout_repriced` with the current quote and `commerce.idempotency_mismatch` to `422`. See the [QR Delivery API specification](../modules/DELIVERY.md#16-http-contracts).
 
 ### Commerce Core dashboard (Increment 2)
 

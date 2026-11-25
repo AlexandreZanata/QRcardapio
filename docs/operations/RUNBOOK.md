@@ -67,6 +67,13 @@ docker compose start app
 - If a snapshot file becomes corrupted or missing on disk without touching SQLite, run `qrcardapio republish-all` to rebuild all published static menus cleanly.
 - Never copy an active `qrcardapio.sqlite` without `VACUUM INTO` or stopping the process; never mount `DATA_DIR/db` over NFS.
 
+### Reprocessamento de eventos do outbox
+
+1. Quando `/readyz` indicar `outbox_lag`, abra **Operação → Reprocessamento de eventos** com uma conta administradora. `/admin/outbox` fornece os contadores por consumidor e a idade do evento pendente mais antigo.
+2. Localize a falha pelo consumidor, identificador do evento e chave do erro. Corrija a causa na aplicação ou no ambiente antes de solicitar o reprocessamento.
+3. Use **Reprocessar** na linha do evento. O worker recebe um novo ciclo de tentativas para aquele consumidor e mantém os eventos posteriores do mesmo agregado em espera até o sucesso.
+4. Consulte o diagnóstico novamente para confirmar a queda dos contadores de falhas e eventos em espera. Um `409` pede atualizar o diagnóstico antes de tentar novamente. Se o mesmo evento voltar a falhar, use os novos detalhes para investigar a causa. A tabela `event_consumer_replays` registra a operação aceita.
+
 ## Habilitação do Asaas
 
 1. Separe a implantação de homologação da produção, inclusive banco, domínio HTTPS e chave de API. Configure `PUBLIC_BASE_URL` com a origem pública HTTPS e `COOKIE_SECURE=true`.

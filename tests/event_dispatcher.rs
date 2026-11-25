@@ -1,3 +1,5 @@
+#[path = "event_dispatcher/replay.rs"]
+mod replay;
 #[path = "commercial/support.rs"]
 mod support;
 

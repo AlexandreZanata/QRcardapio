@@ -16,6 +16,7 @@ pub mod mcp;
 pub mod menus;
 pub mod ocr;
 pub mod operator;
+pub mod outbox;
 pub mod payments;
 pub mod publishing;
 pub mod seed;

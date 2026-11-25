@@ -1,6 +1,7 @@
 use askama::Template;
 
 use super::PageMeta;
+use crate::infrastructure::database::queries::event_dispatch_status::DeadLetter;
 
 pub struct AdminEstablishmentRow {
     pub name: String,
@@ -36,4 +37,17 @@ pub struct AdminTemplate {
     pub publication_count: i64,
     pub establishments: Vec<AdminEstablishmentRow>,
     pub publications: Vec<AdminPublicationRow>,
+}
+
+#[derive(Template)]
+#[template(path = "dashboard/admin_outbox.html")]
+pub struct AdminOutboxTemplate {
+    pub page: PageMeta,
+    pub brand_name: &'static str,
+    pub has_establishment: bool,
+    pub has_theme: bool,
+    pub is_admin: bool,
+    pub active_nav: &'static str,
+    pub csrf_token: String,
+    pub dead_letters: Vec<DeadLetter>,
 }

@@ -26,6 +26,7 @@ pub mod establishments;
 pub mod event_consumers;
 pub mod event_dispatch_status;
 pub mod event_publications;
+pub(crate) mod event_replays;
 pub mod google;
 pub(crate) mod mappers;
 pub mod mcp_account;

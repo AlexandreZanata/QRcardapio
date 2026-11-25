@@ -116,3 +116,7 @@ A migração `20261124000010_multi_provider_billing.sql` (expand) adiciona `prov
 - `20261125000016_commerce_order_payments.sql` acrescenta `order_payments`, `payment_refunds` e `order_payment_transitions`. Há no máximo uma cobrança vigente por pedido, no valor do total. Estornos parciais são entradas imutáveis e o saldo a devolver é atualizado na mesma transação. Uma intenção cancelada sem recebimento pode ser substituída.
 - `20261125000017_event_dispatch.sql` acrescenta checkpoints, recibos e a fila de falhas do outbox. `event_dispatch_publications` guarda o instante de publicação por `seq`. Uma trigger registra eventos novos na fila, inclusive durante rollback para o binário anterior.
 - `20261125000018_commerce_notifications.sql` acrescenta o índice parcial de pedidos aguardando aceitação e as tabelas `commerce_push_subscriptions` e `commerce_push_deliveries`. As assinaturas referenciam o vínculo do membro. Cada entrega referencia o evento, pedido e assinatura do mesmo estabelecimento.
+
+### Recuperação operacional do outbox
+
+- `20261125000019_event_consumer_replays.sql` acrescenta a auditoria de reprocessamentos aceitos, com consumidor, sequência do evento, conta administradora, instante UTC em milissegundos e chave do erro anterior. O ID da solicitação de reprocessamento funciona como geração. Reenfileirar e auditar fazem parte da mesma transação. O binário anterior continua a consumir as falhas reenfileiradas como `parked`.

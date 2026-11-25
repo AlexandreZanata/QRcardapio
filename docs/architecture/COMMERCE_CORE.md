@@ -282,7 +282,7 @@ Commerce Core appends machine events in the transaction of the transition, with 
 - **Authorization**: the platform `system` actor is limited to internal workers. Commerce payment compensation and staff notifications operate on the tenant and order that emitted the event. Future module consumers must re-check their capability before creating new commercial work. Existing-work compensation can continue through suspension or expiry.
 - **Registered consumers**: `commerce.payments` handles `OrderRejected` and `OrderCancelled`. `commerce.notifications` durably queues opted-in staff alerts for `OrderCreated` while it is awaiting acceptance. The timer uses persisted deadlines and records an ordinary `OrderRejected` event with `acceptance_timeout`.
 - **Retries**: exponential backoff with jitter (1 s, 5 s, 30 s, 2 min, 10 min, 1 h), up to 10 attempts, recorded in `event_consumer_failures`.
-- **Dead letter**: after the last attempt the event is marked `dead` for that consumer, later events of the **same aggregate** are parked for that consumer to preserve per-aggregate order, and other aggregates continue. Platform admins can replay or discard from `/admin` (planned).
+- **Dead letter**: after the last attempt the event is marked `dead` for that consumer. Later events of the same aggregate are parked for that consumer, and other aggregates continue. Platform admins can schedule a replay in `/admin/outbox/recovery` after correcting the cause. The transaction checks the observed recovery generation, records the actor and prior error key, and makes the failure eligible for dispatch with a fresh retry budget. The dispatcher releases successors after it commits the handler and receipt. Discard is planned.
 - **Publication**: `event_dispatch_publications.published_at` records acknowledgement when all subscribed consumers have receipts, or when no consumer subscribed. A checkpoint can advance past a failed event to deliver other aggregates. The failure row keeps the affected aggregate parked and the event unpublished.
 - **Observability**: `/admin/outbox` returns per-consumer lag, retry/parking counts, dead-letter metadata and oldest pending age. `/readyz` remains ready with an `outbox_lag` warning for dead letters or pending age over 30 seconds.
 
@@ -322,6 +322,8 @@ The catalog and order tables scope tenant rows and parent references by `establi
 | `event_consumer_failures` | consumer, event_id, seq, aggregate, attempts, next_attempt_at, status | Index `(consumer, status, next_attempt_at)` |
 
 `event_dispatch_publications` holds the `published_at` value and the partial pending index separately from `domain_events`, so the additive migration can be reapplied. Staff subscriptions and delivery leases are stored in `commerce_push_subscriptions` and `commerce_push_deliveries`.
+
+`event_consumer_replays` records accepted replay requests. Its ID also identifies the recovery generation per consumer and event. The failure row remains the ordering barrier while a replay is scheduled or retried.
 
 ## 13. Benchmarks required before launch
 
@@ -387,8 +389,13 @@ Items 1–4, 6 and 9 are implemented in Increment 1. Item 17 is implemented for 
 1. Checkout covers idempotency, snapshot and settings revalidation, repricing and atomic order creation. Channel adapters can extend placement with a transactional coupon hook.
 2. The offline consumer payment ledger records independent confirmation, cancellation and refunds, with exact balances and immutable history.
 3. The dispatcher adds receipts, checkpoints, retries and per-aggregate dead-letter parking. The system handles acceptance expiry, payment compensation and staff Web Push.
-4. `/admin/outbox` uses platform-admin authorization. Internal callers must retain tenant scoping and verify the channel operation when a channel is introduced. [Performance and rollback evidence](../performance/PERFORMANCE.md#commerce-core-increment-3) records validation and remaining release gates.
+4. `/admin/outbox` uses platform-admin authorization. Internal callers must retain tenant scoping and verify the channel operation when a channel is introduced. [Performance and rollback evidence](../performance/PERFORMANCE.md#commerce-core-increment-3) records validation.
 5. QR Delivery will wire the core into the storefront, cart, delivery and pickup settings, coupons, tracking and order center after the Phase 3 gates. Asaas homologation remains required before `beta` or `available`.
+
+**Operational recovery**
+
+1. Expose the dead-letter recovery page in the platform admin panel and protect replay requests with the authenticated admin session and CSRF.
+2. Audit scheduling atomically and reuse the dispatcher's retries, receipts and aggregate ordering. See the [operator procedure](../operations/RUNBOOK.md#reprocessamento-de-eventos-do-outbox).
 
 ## 16. Decisions still open
 

@@ -22,9 +22,12 @@
     <h1 data-i18n="admin.heading">{{ page.t("admin.heading") }}</h1>
     <p data-i18n="admin.subtitle">{{ page.t("admin.subtitle") }}</p>
   </div>
-  <span class="badge badge-neutral">
-    <span data-i18n="admin.sqlite_version">{{ page.t("admin.sqlite_version") }}</span> · {{ sqlite_version }}
-  </span>
+  <div class="panel-action-row">
+    <span class="badge badge-neutral">
+      <span data-i18n="admin.sqlite_version">{{ page.t("admin.sqlite_version") }}</span> · {{ sqlite_version }}
+    </span>
+    {{ controls::link("/admin/outbox/recovery", "admin_outbox.title", "history") }}
+  </div>
 </div>
 
 <div class="stats-grid" {{ guide::hint("guide.admin_stats") }}>

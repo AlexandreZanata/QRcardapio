@@ -138,3 +138,9 @@ Both runs passed the order throughput and latency gates and completed with zero 
 The outbox published all 100,000 queued events for two no-op subscribers in 9.610 seconds (10,406.15 events/s). The steady run published 2,000 events at 200/s, with p95 lag of 216 ms and maximum lag of 255 ms.
 
 Web Push delivered 1,000 synthetic notifications in 13.693 seconds (4,381.71/min), with at most eight sends in flight. Observed checkout p95 rose from 6.295 ms in the reference run to 9.063 ms with active sends, within the benchmark's 300 ms latency budget.
+
+### VPS replay validation
+
+The admin replay candidate passed formatting, strict Clippy, 187 functional tests and a locked release build on the VPS on 2026-11-25. In the isolated HTTP check, an admin scheduled an original dead-letter event (`303`), and the duplicate submission received `409`. The dispatcher recorded two receipts for that event and its parked successor. The previous release `b7c0793` started against the database with migration `20261125000019`, served the demo and `/readyz` with HTTP 200, and retained the single audit record. SQLite integrity and foreign key checks passed.
+
+The outbox release benchmark used the same pinned CPU, 1 GiB memory cap without swap and persistent SQLite WAL with `synchronous=FULL`. It drained 100,000 events with two consumers in 9.236 seconds (10,827.35 events/s). At 200 events/s in steady state, the p95 publication delay was 211 ms and the maximum was 220 ms.

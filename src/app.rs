@@ -98,6 +98,16 @@ pub fn build_router(state: AppState) -> Router {
         .route("/webhooks/inter/{token}", post(billing_webhooks::inter))
         .layer(DefaultBodyLimit::max(64 * 1024));
 
+    let admin_outbox_routes = Router::new()
+        .route("/admin/outbox", get(admin_outbox::outbox))
+        .route(
+            admin_outbox::RECOVERY_PATH,
+            get(admin_outbox::recovery_page),
+        )
+        .route("/admin/outbox/replay", post(admin_outbox::replay_submit))
+        .layer(DefaultBodyLimit::max(16 * 1024))
+        .layer(middleware::from_fn(admin_outbox::private_headers));
+
     let affiliate_routes = Router::new()
         .route("/r/{code}", get(affiliates::referral_redirect))
         .route("/dashboard/affiliate", get(affiliates::portal_page))
@@ -266,7 +276,6 @@ pub fn build_router(state: AppState) -> Router {
         .route("/dashboard/ocr/{id}/apply", post(ocr::ocr_apply_submit))
         .route("/dashboard/ocr/{id}/discard", post(ocr::ocr_discard_submit))
         .route("/admin", get(admin::admin_page))
-        .route("/admin/outbox", get(admin_outbox::outbox))
         .route("/c/{slug}", get(public::serve_published_menu))
         .route("/c/{slug}/", get(public::serve_published_menu))
         .route("/c/{slug}/{*file}", get(public::serve_published_asset))
@@ -276,6 +285,7 @@ pub fn build_router(state: AppState) -> Router {
         .merge(upload_routes)
         .merge(ocr_upload_routes)
         .merge(billing_webhook)
+        .merge(admin_outbox_routes)
         .merge(affiliate_routes)
         .merge(mcp_routes)
         .merge(google_routes)
