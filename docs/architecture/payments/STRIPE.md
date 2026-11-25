@@ -20,6 +20,8 @@ Requests send `Stripe-Version: 2026-11-18.endive` (`stripe::API_VERSION`). The w
 3. `invoice.paid` (status `paid`, currency `brl`, `amount_remaining = 0`) → payment `stripe:in_…` with due date = line period start in UTC−03:00.
 4. `customer.subscription.updated/deleted`: `active`/`trialing` → active; `past_due`/`unpaid`/`paused` → inactive; `canceled`, `incomplete_expired` or `cancel_at_period_end=true` → renewal cancelled.
 5. Full `charge.refunded` and `charge.dispute.created` revoke the invoice's coverage; `charge.dispute.closed` with `won`/`warning_closed` restores it; partial refunds keep coverage (same policy as Asaas).
+
+If a refund or dispute arrives before `invoice.paid`, the webhook transaction saves the newest fact with its deduplication record. Settlement applies that fact before granting coverage, calculating affiliate commissions, or emitting `SubscriptionActivated`. Reversals take precedence when timestamps tie.
 6. Cancel renewal: `POST /v1/subscriptions/{id}` with `cancel_at_period_end=true` (paid period kept).
 7. Reconcile: `GET /v1/checkout/sessions/{id}` returns the subscription when its event was missed.
 

@@ -1,25 +1,25 @@
 //! Banco Inter subscriptions: the platform owns the recurrence and issues one BolePix charge
 //! per cycle. Bank state is always re-fetched from Inter before it changes coverage.
 
-use chrono::{Duration, NaiveDate, Timelike, Utc};
+use chrono::{Duration, Utc};
 use sqlx::SqlitePool;
-use uuid::Uuid;
 
-use crate::application::billing::{apply_events, provider_error};
+mod issuance;
+
+use issuance::submit;
+pub use issuance::{issue_cycle, start};
+
+use crate::application::billing::provider_error;
+use crate::application::billing_events::apply_in_transaction;
 use crate::domain::billing::billing_now;
-use crate::domain::billing_cycle::{
-    PAYABLE_DAYS_AFTER_DUE, RenewalAction, cycle_due_date, is_dead, is_paid, next_action,
-    our_number,
-};
-use crate::domain::commercial::Quote;
+use crate::domain::billing_cycle::{RenewalAction, cycle_due_date, is_dead, is_paid, next_action};
 use crate::domain::payments::{
-    CheckoutState, GatewayEvent, PRIORITY_SETTLED, PaymentMethod, PaymentProvider,
-    SubscriptionState,
+    CheckoutState, GatewayEvent, PRIORITY_SETTLED, PaymentProvider, SubscriptionState,
 };
-use crate::error::{AppError, AppResult};
+use crate::error::AppResult;
 use crate::infrastructure::database::begin_immediate;
-use crate::infrastructure::database::queries::{billing as queries, billing_inter, billing_payers};
-use crate::infrastructure::inter::{ChargeSnapshot, InterClient, NewCharge};
+use crate::infrastructure::database::queries::billing_inter;
+use crate::infrastructure::inter::{ChargeSnapshot, InterClient};
 
 const INTER: PaymentProvider = PaymentProvider::Inter;
 /// A reserved charge without a request code is retried after this long.
@@ -29,150 +29,15 @@ fn environment(client: &InterClient) -> &'static str {
     client.config().environment.as_str()
 }
 
-/// First due date: today while Inter still accepts same-day charges (until 19:59), else tomorrow.
-fn first_due_date() -> NaiveDate {
-    let now = billing_now();
-    let today = now.date_naive();
-    if now.hour() < 19 {
-        today
-    } else {
-        today + Duration::days(1)
-    }
-}
-
-/// Opens a Pix/boleto subscription and issues its first charge.
-pub async fn start(
-    pool: &SqlitePool,
-    client: &InterClient,
-    establishment: &str,
-    quote: &Quote,
-) -> AppResult<()> {
-    let env = environment(client);
-    if billing_payers::find(pool, establishment).await?.is_none() {
-        return Err(AppError::Validation("error.payer_required"));
-    }
-    let reference = Uuid::now_v7().to_string();
-    let target = queries::CheckoutTarget {
-        provider: INTER,
-        method: PaymentMethod::PixBoleto,
-    };
-    let today = billing_now().date_naive();
-    if !queries::reserve_contract_checkout(
-        pool,
-        env,
-        establishment,
-        &reference,
-        today,
-        quote,
-        target,
-    )
-    .await?
-    {
-        return Ok(());
-    }
-    issue_cycle(
-        pool,
-        client,
-        &reference,
-        establishment,
-        0,
-        first_due_date(),
-        quote.total_centavos,
-    )
-    .await
-}
-
-/// Reserves and issues the charge of one cycle. Safe to call again for the same cycle.
-pub async fn issue_cycle(
-    pool: &SqlitePool,
-    client: &InterClient,
-    reference: &str,
-    establishment: &str,
-    cycle_index: i64,
-    due_date: NaiveDate,
-    amount_centavos: i64,
-) -> AppResult<()> {
-    let env = environment(client);
-    let number = our_number(reference, cycle_index);
-    let now = Utc::now().to_rfc3339();
-    let mut tx = begin_immediate(pool).await?;
-    billing_inter::reserve(
-        &mut tx,
-        env,
-        &billing_inter::NewCharge {
-            our_number: &number,
-            billing_reference: reference,
-            establishment_id: establishment,
-            cycle_index,
-            due_date,
-            amount_centavos,
-            now: &now,
-        },
-    )
-    .await?;
-    tx.commit().await?;
-    let charge = billing_inter::find_by_cycle(pool, reference, cycle_index)
-        .await?
-        .ok_or(AppError::Internal(
-            "reserved Inter charge disappeared".into(),
-        ))?;
-    if charge.request_code.is_some() {
-        return Ok(());
-    }
-    submit(pool, client, &charge).await
-}
-
-async fn submit(
-    pool: &SqlitePool,
-    client: &InterClient,
-    charge: &billing_inter::InterCharge,
-) -> AppResult<()> {
-    let env = environment(client);
-    let payer = billing_payers::find(pool, &charge.establishment_id)
-        .await?
-        .ok_or(AppError::Validation("error.payer_required"))?;
-    let message = format!(
-        "QR Cardapio - assinatura - ciclo {}",
-        charge.cycle_index + 1
-    );
-    let created = client
-        .create_charge(&NewCharge {
-            our_number: &charge.our_number,
-            amount_centavos: charge.amount_centavos,
-            due_date: charge.due_date,
-            payable_days_after_due: PAYABLE_DAYS_AFTER_DUE,
-            payer: &payer,
-            message: &message,
-        })
-        .await;
-    let code = match created {
-        Ok(code) => code,
-        // Every failure is treated as ambiguous: Inter may have created the charge. Recover by
-        // `seuNumero` (its 30-minute duplicate guard prevents a second charge meanwhile).
-        Err(error) => {
-            tracing::warn!(%error, "Inter charge creation failed; looking it up by seuNumero");
-            let today = billing_now().date_naive();
-            match client
-                .find_by_our_number(&charge.our_number, today - Duration::days(1), today)
-                .await
-            {
-                Ok(Some(code)) => code,
-                _ => return Err(AppError::Unavailable("error.billing_unavailable")),
-            }
-        }
-    };
-    let now = Utc::now().to_rfc3339();
-    billing_inter::attach_request(pool, env, &charge.our_number, &code, &now).await?;
-    Ok(())
-}
-
 /// Applies Inter's authoritative state of one charge to coverage.
 pub async fn apply_snapshot(
     pool: &SqlitePool,
     env: &str,
     snapshot: &ChargeSnapshot,
 ) -> AppResult<()> {
-    let Some(charge) = billing_inter::find_by_request(pool, env, &snapshot.request_code).await?
+    let mut tx = begin_immediate(pool).await?;
+    let Some(charge) =
+        billing_inter::find_by_request(&mut *tx, env, &snapshot.request_code).await?
     else {
         // Another system on the same Inter account; never ours.
         return Ok(());
@@ -185,9 +50,10 @@ pub async fn apply_snapshot(
         tracing::warn!("Inter charge returned a different seuNumero; ignored");
         return Ok(());
     }
-    let now = Utc::now().to_rfc3339();
+    let observed = Utc::now();
+    let now = observed.to_rfc3339();
     billing_inter::update_state(
-        pool,
+        &mut *tx,
         env,
         &billing_inter::ChargeState {
             request_code: &snapshot.request_code,
@@ -201,7 +67,7 @@ pub async fn apply_snapshot(
     let local = INTER.qualify(&charge.billing_reference);
     // Snapshots are authoritative and ordered by observation time; sub-second precision keeps a
     // later snapshot of the same charge from being discarded as "not newer".
-    let at = Utc::now().format("%Y-%m-%d %H:%M:%S%.9f").to_string();
+    let at = observed.format("%Y-%m-%d %H:%M:%S%.9f").to_string();
     let mut events = Vec::new();
     if is_paid(&snapshot.status) {
         if charge.cycle_index == 0 {
@@ -239,10 +105,9 @@ pub async fn apply_snapshot(
             at,
         });
     }
-    if events.is_empty() {
-        return Ok(());
-    }
-    apply_events(pool, env, None, events).await
+    apply_in_transaction(&mut tx, env, None, events).await?;
+    tx.commit().await?;
+    Ok(())
 }
 
 /// Webhook: Inter announced changes to these charges; re-fetch each one before applying.

@@ -91,15 +91,26 @@ pub async fn apply_events(
         },
         None => begin_immediate(pool).await?,
     };
-    for event in events {
-        apply_one(&mut tx, env, dedupe_key, event).await?;
-    }
+    apply_in_transaction(&mut tx, env, dedupe_key, events).await?;
     tx.commit().await?;
     Ok(())
 }
 
+/// Applies gateway facts inside a caller's write transaction, such as an Inter charge snapshot.
+pub(super) async fn apply_in_transaction(
+    tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+    env: &str,
+    correlation: Option<&str>,
+    events: Vec<GatewayEvent>,
+) -> AppResult<()> {
+    for event in events {
+        apply_one(tx, env, correlation, event).await?;
+    }
+    Ok(())
+}
+
 async fn apply_one(
-    tx: &mut sqlx::Transaction<'static, sqlx::Sqlite>,
+    tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
     env: &str,
     correlation: Option<&str>,
     event: GatewayEvent,
@@ -149,6 +160,11 @@ async fn apply_one(
                 priority,
             };
             queries::record_payment(tx, env, payment).await?;
+            if confirmed_centavos.is_some()
+                && let Some(change) = queries::take_payment_change(tx, env, &id).await?
+            {
+                record_payment_change(tx, env, &id, &change.event_at, change.restore).await?;
+            }
             if linked_checkout {
                 affiliate_ledger::sync_subscription_commissions(
                     tx,
@@ -186,7 +202,7 @@ async fn apply_one(
 
 /// Reverses or restores a recorded payment. Returns its subscription when something changed.
 async fn apply_payment_change(
-    tx: &mut sqlx::Transaction<'static, sqlx::Sqlite>,
+    tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
     env: &str,
     payment_id: &str,
     at: &str,
@@ -194,14 +210,32 @@ async fn apply_payment_change(
     today: chrono::NaiveDate,
     now: &str,
 ) -> AppResult<Option<String>> {
+    let subscription = record_payment_change(tx, env, payment_id, at, restore).await?;
+    if subscription.is_some() {
+        affiliate_ledger::sync_payment_commissions(tx, env, payment_id, today, now).await?;
+    }
+    Ok(subscription)
+}
+
+/// If settlement has not arrived, retain the fact rather than committing an ignored event.
+/// Settlement drains this record before granting coverage or evaluating commissions.
+async fn record_payment_change(
+    tx: &mut sqlx::Transaction<'_, sqlx::Sqlite>,
+    env: &str,
+    payment_id: &str,
+    at: &str,
+    restore: bool,
+) -> AppResult<Option<String>> {
     let Some(found) = queries::payment_by_id(tx, env, payment_id).await? else {
-        // Settlement not seen yet; reconciliation recomputes from the provider later.
-        tracing::info!("reversal for an unknown payment ignored");
+        queries::remember_payment_change(tx, env, payment_id, at, restore).await?;
         return Ok(None);
     };
     let (confirmed, priority) = match (restore, found.settled_centavos) {
         (true, Some(settled)) => (Some(settled), PRIORITY_SETTLED),
-        (true, None) => return Ok(None),
+        (true, None) => {
+            queries::remember_payment_change(tx, env, payment_id, at, restore).await?;
+            return Ok(None);
+        }
         (false, _) => (None, PRIORITY_REVERSED),
     };
     let payment = queries::Payment {
@@ -213,6 +247,5 @@ async fn apply_payment_change(
         priority,
     };
     queries::record_payment(tx, env, payment).await?;
-    affiliate_ledger::sync_payment_commissions(tx, env, &found.payment_id, today, now).await?;
     Ok(Some(found.subscription_id))
 }

@@ -2,7 +2,7 @@
 
 Status: implemented; unit tests for payload and callback parsing; integration tests with a loopback mock of the Inter API (`tests/payment_providers.rs`). **Not homologated** (needs an Inter sandbox integration).
 
-Code: `src/infrastructure/inter.rs` (+ `inter/parse.rs`), `src/application/billing_inter.rs`, `src/domain/{billing_cycle,payer}.rs`, `src/http/handlers/{billing_webhooks,billing_payer}.rs`.
+Code: `src/infrastructure/inter.rs` (+ `inter/parse.rs`), `src/application/billing_inter.rs` and `billing_inter/issuance.rs`, `src/domain/{billing_cycle,payer}.rs`, `src/http/handlers/{billing_webhooks,billing_payer}.rs`.
 
 ## Product used
 
@@ -19,10 +19,12 @@ Every call uses **mTLS** with the integration certificate (`.crt` + `.key`, load
 ## Flow
 
 1. The owner saves payer data (`/dashboard/billing/payer`): CPF or CNPJ (check digits validated), name, e-mail, CEP, street, number, complement, district, city, UF. Owner-only.
-2. Subscribing with `method=pix_boleto` reserves the checkout (`provider=inter`, `inter:<reference>` as both checkout and subscription id) and cycle 0 in `billing_inter_charges` (`seuNumero` = deterministic 15 characters), then calls `POST /cobranca/v3/cobrancas` (`valorNominal` from integer centavos, `dataVencimento` today — tomorrow after 19:00 —, `numDiasAgenda=5`, `formasRecebimento=["BOLETO","PIX"]`). Emission is asynchronous; only `codigoSolicitacao` is returned.
+2. Subscribing with `method=pix_boleto` reserves the checkout, commercial contract and first charge in one transaction. The checkout and subscription use `inter:<reference>` and the first charge uses a deterministic 15-character `seuNumero`. After commit, the adapter calls `POST /cobranca/v3/cobrancas` with `valorNominal` from integer centavos, `dataVencimento` today (tomorrow from 19:00), `numDiasAgenda=5` and `formasRecebimento=["BOLETO","PIX"]`. The bank issues the charge asynchronously and returns `codigoSolicitacao`.
 3. If the call fails or times out, the charge is looked up by `seuNumero` (Inter refuses identical requests for 30 minutes); otherwise the hourly pass retries.
 4. Callbacks and the hourly pass fetch `GET /cobranca/v3/cobrancas/{codigo}`: status, Pix copy-and-paste, digitable line. The billing page shows them, renders the Pix QR locally (`/dashboard/billing/pix.svg`) and proxies the PDF (`/dashboard/billing/boleto.pdf`, fetched on demand, never stored).
 5. `RECEBIDO`/`MARCADO_RECEBIDO` with `valorTotalRecebido` equal to the contract price → payment `inter:<codigo>` covering `[due date, due date + months)`. A different amount grants nothing.
+
+The charge status and corresponding billing facts commit in the same SQLite transaction. If settlement processing fails, the status rolls back and the next reconciliation pass can retry the charge.
 6. Renewal: 10 days before the next due date (always computed from the first due date) the hourly pass issues the next cycle once.
 7. `EXPIRADO`/`CANCELADO`/`FALHA_EMISSAO` without payment → subscription ends (and the checkout closes on cycle 0) so the owner can subscribe again.
 8. Cancel renewal: pending charges are cancelled at Inter (`POST …/cancelar`, asynchronous); paid periods stay covered.
