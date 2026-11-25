@@ -1,8 +1,7 @@
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
-use std::path::Path;
 use std::sync::{Arc, Mutex};
-use std::time::Instant;
+use std::time::{Instant, SystemTime};
 
 use chrono::Utc;
 use sqlx::SqlitePool;
@@ -19,6 +18,9 @@ use crate::infrastructure::database::queries::{
 };
 use crate::infrastructure::storage::{atomic_write_file, resolve_safe_subpath};
 use crate::rendering::public_menu::{generate_brand_theme_css, render_public_menu_html};
+
+mod retired_assets;
+use retired_assets::RetiredAssets;
 
 #[derive(Clone, Default)]
 pub struct PublishLocks {
@@ -149,6 +151,7 @@ pub(crate) fn write_static_snapshot_with_media<'a>(
     let pub_dir = resolve_safe_subpath(&config.published_dir(), slug_str)?;
     let pub_media_dir = pub_dir.join("media");
     let tmp_dir = config.published_tmp_dir();
+    let retired = RetiredAssets::new(&tmp_dir, slug_str);
 
     std::fs::create_dir_all(&tmp_dir)?;
     std::fs::create_dir_all(&pub_media_dir)?;
@@ -186,6 +189,7 @@ pub(crate) fn write_static_snapshot_with_media<'a>(
     // Stage all media assets first so the HTML never points to missing files.
     for filename in &keep_media {
         let dest = resolve_safe_subpath(&pub_media_dir, filename)?;
+        retired.keep_live("media", filename)?;
         if !dest.exists() {
             let bytes = load_media(filename)?;
             atomic_write_file(&tmp_dir, &dest, &bytes)?;
@@ -194,6 +198,7 @@ pub(crate) fn write_static_snapshot_with_media<'a>(
 
     // Stage fingerprinted theme stylesheet.
     let theme_dest = resolve_safe_subpath(&pub_dir, &theme_filename)?;
+    retired.keep_live("themes", &theme_filename)?;
     if !theme_dest.exists() {
         atomic_write_file(&tmp_dir, &theme_dest, &theme_css_bytes)?;
     }
@@ -203,8 +208,14 @@ pub(crate) fn write_static_snapshot_with_media<'a>(
     let index_dest = pub_dir.join("index.html");
     atomic_write_file(&tmp_dir, &index_dest, html_bytes)?;
 
-    // Clean up obsolete theme files and unreferenced media only after index.html is live.
-    cleanup_stale_files(&pub_dir, &theme_filename, &pub_media_dir, &keep_media);
+    // Cached HTML still references assets from the preceding publication.
+    let now = SystemTime::now();
+    retired.prune(&pub_dir, "themes", now, |name| {
+        name.starts_with("theme-") && name.ends_with(".css") && name != theme_filename
+    });
+    retired.prune(&pub_media_dir, "media", now, |name| {
+        !keep_media.contains(name)
+    });
 
     Ok((html_bytes.len(), keep_media.len()))
 }
@@ -223,6 +234,7 @@ pub async fn unpublish_establishment(
     if pub_dir.exists() {
         std::fs::remove_dir_all(&pub_dir)?;
     }
+    RetiredAssets::new(&config.published_tmp_dir(), slug.as_str()).clear();
 
     let now = Utc::now().to_rfc3339();
     record_unpublish(pool, &est.id, est.published_version, &now).await?;
@@ -247,28 +259,4 @@ pub async fn republish_all(
         }
     }
     Ok(count)
-}
-
-fn cleanup_stale_files(
-    pub_dir: &Path,
-    active_theme: &str,
-    pub_media_dir: &Path,
-    keep_media: &HashSet<String>,
-) {
-    if let Ok(entries) = std::fs::read_dir(pub_dir) {
-        for entry in entries.flatten() {
-            let name = entry.file_name().to_string_lossy().into_owned();
-            if name.starts_with("theme-") && name.ends_with(".css") && name != active_theme {
-                let _ = std::fs::remove_file(entry.path());
-            }
-        }
-    }
-    if let Ok(entries) = std::fs::read_dir(pub_media_dir) {
-        for entry in entries.flatten() {
-            let name = entry.file_name().to_string_lossy().into_owned();
-            if !keep_media.contains(&name) {
-                let _ = std::fs::remove_file(entry.path());
-            }
-        }
-    }
 }

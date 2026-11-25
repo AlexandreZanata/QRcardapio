@@ -32,8 +32,8 @@ data/published/
 6. Stage all referenced media files into `published/{slug}/media/` via `atomic_write_file` (`NamedTempFile::new_in(tmp_dir)` -> `write_all` -> `sync_all` -> `persist`). Stage the large variant of the selected cover alongside the product thumbnails.
 7. Stage `theme-{hash8}.css` via `atomic_write_file`.
 8. Atomically replace `published/{slug}/index.html` via `atomic_write_file`.
-9. Set `is_published`, update `published_version` and `last_published_at`, and append a `'published'` row in `publications`. Clear the dirty flag only if the captured draft revision still matches. Each mutation that marks a draft dirty advances `menu_draft_revisions` even when the flag was already set. Edits committed during rendering stay pending for the next owner publication. Because `/sitemap.xml` queries `is_published = 1`, newly published menus enter the sitemap immediately and leave it upon unpublishing.
-10. Clean up obsolete `theme-*.css` and unreferenced `media/*` files **only after** `index.html` is live.
+9. Record retirement of obsolete assets and prune any whose HTML cache window has elapsed.
+10. Set `is_published`, update `published_version` and `last_published_at`, and append a `'published'` row in `publications`. Clear the dirty flag only if the captured draft revision still matches. Each mutation that marks a draft dirty advances `menu_draft_revisions` even when the flag was already set. Edits committed during rendering stay pending for the next owner publication. Because `/sitemap.xml` queries `is_published = 1`, newly published menus enter the sitemap immediately and leave it upon unpublishing.
 
 Already-published menus pick up the visual refresh through the shared stylesheet. They receive a photo cover during their next normal publication.
 
@@ -52,8 +52,9 @@ Owner profile updates use the same per-establishment lock as publishing. The upd
 
 ## Caching & CDN Propagation Bounds
 
-- `index.html`: `Cache-Control: public, max-age=60, stale-while-revalidate=300` + strong `ETag`. When placed behind an optional CDN, maximum staleness after an owner republishes is **60 seconds** (or immediate if purged on publish in a future extension).
+- `index.html`: `Cache-Control: public, max-age=60, stale-while-revalidate=300` + strong `ETag`. Caches can reuse the preceding HTML for up to 360 seconds under this policy.
 - `theme-{hash8}.css` & `media/{hash16}_*`: `Cache-Control: public, max-age=31536000, immutable` (new edits emit new content hashes).
+- When assets leave the live menu, a private marker records the retirement time under `published/.tmp/`. Subsequent publications prune retired theme and media files after the HTML cache window. Reusing a file clears its marker before publishing the HTML. An explicit unpublish removes the menu and its retained files immediately.
 
 ## Unpublishing
 
