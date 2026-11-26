@@ -1,5 +1,6 @@
 use askama::Template;
 
+use super::catalog_options::CatalogOptionsView;
 use crate::domain::category::Category;
 use crate::domain::product::Product;
 use crate::domain::publication::{MenuItemChoice, MenuSnapshot, SnapshotCategory, SnapshotProduct};
@@ -27,6 +28,7 @@ struct ProductPageTemplate<'a> {
     category: &'a Category,
     product: &'a Product,
     photo: Option<ProductPhoto>,
+    catalog_options: CatalogOptionsView<'a>,
     removals: Vec<ChoiceView>,
     extras: Vec<ChoiceView>,
     price: String,
@@ -89,6 +91,7 @@ pub fn render_product_detail_html(
             width: image.width,
             height: image.height,
         }),
+        catalog_options: CatalogOptionsView::new(&item.catalog_options, locale),
         removals,
         extras,
         price: format_price(item.product.price_centavos, locale),

@@ -51,6 +51,18 @@ pub struct StoredEvent {
     pub payload: String,
 }
 
+pub(crate) async fn event_type<'e>(
+    executor: impl SqliteExecutor<'e>,
+    event_id: &str,
+) -> AppResult<Option<String>> {
+    Ok(
+        sqlx::query_scalar("SELECT event_type FROM domain_events WHERE event_id = ?")
+            .bind(event_id)
+            .fetch_optional(executor)
+            .await?,
+    )
+}
+
 /// Events of one establishment in outbox order (audit and future consumers).
 pub async fn list_for_establishment<'e>(
     executor: impl SqliteExecutor<'e>,

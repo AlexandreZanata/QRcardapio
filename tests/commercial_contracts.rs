@@ -7,7 +7,7 @@ use std::path::{Path, PathBuf};
 use serde_json::Value;
 
 use qrcardapio::domain::commercial::{BillingCycle, CommercialCatalog, Lifecycle, catalog};
-use qrcardapio::domain::entitlements::{Capability, MemberRole, Operation};
+use qrcardapio::domain::entitlements::{ActorRole, Capability, MemberRole, Operation};
 use qrcardapio::domain::events::EventType;
 
 const MODULES: &str = include_str!("../contracts/commercial/modules.json");
@@ -38,7 +38,7 @@ fn catalog_prices_match_the_commercial_proposal() {
     let catalog = catalog();
     let expected = [
         ("menu", 2990, Lifecycle::Available),
-        ("delivery", 6990, Lifecycle::Planned),
+        ("delivery", 6990, Lifecycle::Development),
         ("tables", 3990, Lifecycle::Planned),
         ("kitchen", 2490, Lifecycle::Planned),
         ("fleet", 2990, Lifecycle::Planned),
@@ -142,7 +142,7 @@ fn invalid_catalogs_are_rejected() {
     );
     rejects(
         &load_with(|_, b, _, _| b["bundles"][0]["lifecycle"] = "available".into()),
-        "contains planned module",
+        "contains development module",
     );
     rejects(
         &load_with(|_, b, _, _| {
@@ -201,10 +201,10 @@ fn capability_registry_matches_the_rust_enum() {
         let capability = Capability::parse(id).unwrap_or_else(|| panic!("{id} missing in Rust"));
         assert_eq!(entry["offer"], capability.offer(), "{id}");
         let lifecycle = catalog().capability_lifecycle(capability);
-        let expected = if lifecycle == Lifecycle::Available {
-            "implemented"
-        } else {
-            "planned"
+        let expected = match lifecycle {
+            Lifecycle::Available => "implemented",
+            Lifecycle::Development => "development",
+            _ => "planned",
         };
         assert_eq!(entry["status"], expected, "{id}");
     }
@@ -327,7 +327,7 @@ fn authorization_rules_match_implemented_operations() {
         );
         assert_eq!(row["after_expiry"], operation.after_expiry().as_str());
     }
-    for role in MemberRole::ALL {
+    for role in ActorRole::ALL {
         let row = rules["roles"]
             .as_array()
             .unwrap()
@@ -336,6 +336,7 @@ fn authorization_rules_match_implemented_operations() {
             .unwrap();
         assert_eq!(row["status"], "implemented");
     }
+    let _ = MemberRole::ALL;
 }
 
 #[test]
@@ -429,10 +430,10 @@ fn module_contracts_reference_existing_contracts() {
     for module in &catalog().modules {
         let contract = json(&format!("contracts/modules/{}.json", module.code));
         assert_eq!(contract["module"], module.code.as_str());
-        let expected_status = if module.lifecycle == Lifecycle::Available {
-            "implemented"
-        } else {
-            "planned"
+        let expected_status = match module.lifecycle {
+            Lifecycle::Available => "implemented",
+            Lifecycle::Development => "development",
+            _ => "planned",
         };
         assert_eq!(contract["status"], expected_status, "{}", module.code);
         assert_eq!(
@@ -493,9 +494,19 @@ fn module_contracts_reference_existing_contracts() {
         for endpoint in contract["http"].as_array().unwrap() {
             let status = endpoint["status"].as_str().unwrap();
             if module.lifecycle != Lifecycle::Available {
-                assert_eq!(
-                    status, "planned",
+                assert_ne!(
+                    status, "available",
                     "{} advertises {} as available",
+                    module.code, endpoint["path"]
+                );
+                let expected = if module.lifecycle == Lifecycle::Development {
+                    "development"
+                } else {
+                    "planned"
+                };
+                assert_eq!(
+                    status, expected,
+                    "{} endpoint {} status mismatch",
                     module.code, endpoint["path"]
                 );
             }
@@ -607,7 +618,13 @@ fn module_documentation_matches_module_contracts() {
                 module.code
             );
         }
-        if module.lifecycle != Lifecycle::Available {
+        if module.lifecycle == Lifecycle::Development {
+            assert!(
+                doc.contains("In development"),
+                "{} doc must say it is in development",
+                module.code
+            );
+        } else if module.lifecycle != Lifecycle::Available {
             assert!(
                 doc.contains("Planned"),
                 "{} doc must say it is planned",

@@ -1,5 +1,7 @@
 #[path = "commerce/order_fixtures.rs"]
 mod fixture;
+#[path = "commerce/public_catalog_options.rs"]
+mod public_catalog_options;
 #[path = "commercial/support.rs"]
 mod support;
 

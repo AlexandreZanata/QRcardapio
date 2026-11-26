@@ -1,0 +1,279 @@
+{% import "components/lang_switcher.html" as lang_switcher %}
+<!doctype html>
+<html lang="{{ locale_code }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ establishment_name }}</title>
+  <meta name="description" content="{{ establishment_display_description }}">
+  <meta name="theme-color" content="{{ theme_color }}">
+  <meta name="robots" content="noindex">
+  <link rel="canonical" href="{{ canonical_url }}">
+  <link rel="manifest" href="{{ manifest_href }}">
+  <link rel="icon" type="image/png" href="{{ icon_href }}">
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/language-picker.css">
+  <link rel="stylesheet" href="/static/css/menu.css">
+  <link rel="stylesheet" href="/static/css/storefront.css">
+  <link rel="stylesheet" href="{{ theme_css_href }}">
+  <script type="application/json" id="qr-storefront-data">{{ storefront_data_json|safe }}</script>
+  <script type="application/json" id="qr-storefront-i18n">{{ storefront_i18n_json|safe }}</script>
+  <script src="/static/js/language-picker.js" type="module"></script>
+  <script src="/static/js/storefront.js" type="module"></script>
+</head>
+<body data-sf-slug="{{ slug }}">
+  <a class="skip-link" href="#storefront-main" data-i18n="common.skip_to_content">{{ skip_label }}</a>
+
+  <div class="menu-shell sf-shell">
+    <div class="sf-topbar">
+      <div class="sf-mode-bar" id="sf-mode-bar">
+        {% if delivery_enabled %}
+        <button type="button" class="sf-mode-btn is-active" data-sf-mode="delivery" aria-pressed="true" data-i18n="commerce.hours.delivery">{{ self.t("commerce.hours.delivery") }}</button>
+        {% endif %}
+        {% if pickup_enabled %}
+        <button type="button" class="sf-mode-btn{% if !delivery_enabled %} is-active{% endif %}" data-sf-mode="pickup" aria-pressed="{% if delivery_enabled %}false{% else %}true{% endif %}" data-i18n="commerce.hours.pickup">{{ self.t("commerce.hours.pickup") }}</button>
+        {% endif %}
+      </div>
+      <button id="sf-order-history" type="button" class="sf-btn-secondary" data-i18n="storefront.last_order" hidden>{{ self.t("storefront.last_order") }}</button>
+      <button id="sf-install-app" type="button" class="sf-btn-secondary" data-i18n="storefront.install_app" hidden>{{ self.t("storefront.install_app") }}</button>
+      {{ lang_switcher::picker(locale_code, switcher_label) }}
+    </div>
+
+    <header class="menu-hero">
+      {% if let Some(cover) = cover_url %}
+      <img class="menu-cover" src="{{ cover }}" alt="">
+      {% endif %}
+      <div class="menu-hero-top">
+        <div class="menu-brand">
+        {% if let Some(logo) = logo_url %}
+        <img class="menu-logo" src="{{ logo }}" alt="">
+        {% endif %}
+        <h1 class="menu-title">{{ establishment_name }}</h1>
+        <p class="menu-desc"
+           data-i18n-text-pt="{{ establishment_description }}"
+           data-i18n-text-en="{{ establishment_description_en }}"
+           data-i18n-text-es="{{ establishment_description_es }}">{{ establishment_display_description }}</p>
+        </div>
+        <p id="sf-status-banner" class="sf-status-banner" data-i18n="storefront.offline" role="status" hidden>{{ self.t("storefront.offline") }}</p>
+      </div>
+    </header>
+
+    <main id="storefront-main" class="sf-main">
+      <div class="menu-controls sf-controls" data-sf-catalog-control>
+      <input id="sf-search" class="menu-search" type="search" placeholder="{{ search_placeholder }}"
+             data-i18n-placeholder="public_menu.search_placeholder" data-i18n-aria="public_menu.search_placeholder" aria-label="{{ search_placeholder }}">
+
+      {% if !categories.is_empty() %}
+      <nav class="cat-pills" aria-label="{{ categories_label }}" data-i18n-aria="public_menu.categories_label">
+        <button type="button" class="cat-pill is-active" aria-pressed="true" data-sf-cat="all" data-i18n="public_menu.all_categories">{{ all_categories_text }}</button>
+        {% for cat in categories %}
+        <button type="button" class="cat-pill" aria-pressed="false" data-sf-cat="{{ cat.id }}"
+                data-i18n-text-pt="{{ cat.name }}"
+                data-i18n-text-en="{{ cat.name_en }}"
+                data-i18n-text-es="{{ cat.name_es }}">{{ cat.display_name }}</button>
+        {% endfor %}
+      </nav>
+      {% endif %}
+
+      </div>
+
+      <section id="sf-catalog-view" tabindex="-1">
+        <p id="sf-catalog-error" class="sf-error" hidden role="alert"></p>
+        {% if categories.is_empty() %}
+        <p class="empty-state" data-i18n="public_menu.empty_menu">{{ empty_menu_text }}</p>
+        {% else %}
+        {% for cat in categories %}
+        <section class="menu-section" data-sf-category="{{ cat.id }}">
+          <h2 class="sf-category-title"
+              data-i18n-text-pt="{{ cat.name }}"
+              data-i18n-text-en="{{ cat.name_en }}"
+              data-i18n-text-es="{{ cat.name_es }}">{{ cat.display_name }}</h2>
+          <div class="item-list">
+            {% for p in cat.products %}
+            <article class="item-card sf-product-card{% if !p.is_available %} is-unavailable{% endif %}" data-sf-product-id="{{ p.id }}" data-sf-cat-id="{{ cat.id }}">
+              {% if let Some(img) = p.image_url %}
+              <img class="item-photo" src="{{ img }}" alt="" loading="lazy" width="112" height="112">
+              {% endif %}
+              <div class="item-body">
+                <h3 class="item-name" data-i18n-text-pt="{{ p.name }}"
+                    data-i18n-text-en="{{ p.name_en }}"
+                    data-i18n-text-es="{{ p.name_es }}">{{ p.display_name }}</h3>
+                <p class="item-desc" data-i18n-text-pt="{{ p.description }}"
+                   data-i18n-text-en="{{ p.description_en }}"
+                   data-i18n-text-es="{{ p.description_es }}">{{ p.display_description }}</p>
+                <div class="sf-card-foot">
+                  <span class="sf-price">
+                    {% if p.has_variations %}<span data-i18n="storefront.from_price">{{ from_label }}</span> {% endif %}
+                    <strong data-price-centavos="{{ p.price_centavos }}">{{ p.price_display }}</strong>
+                  </span>
+                  {% if p.is_available %}
+                  <button type="button" class="sf-add-btn" disabled data-sf-open-product="{{ p.id }}" data-i18n="storefront.add_to_cart">{{ self.t("storefront.add_to_cart") }}</button>
+                  {% else %}
+                  <span class="item-unavailable-badge" data-i18n="public_menu.unavailable_badge">{{ unavailable_text }}</span>
+                  {% endif %}
+                </div>
+              </div>
+            </article>
+            {% endfor %}
+          </div>
+        </section>
+        {% endfor %}
+        {% endif %}
+        <p id="sf-no-results" class="empty-state" role="status" hidden data-i18n="public_menu.no_results">{{ no_results_text }}</p>
+      </section>
+
+      <section id="sf-checkout-section" class="sf-panel" tabindex="-1" hidden>
+        <div class="sf-panel-head">
+          <h2 data-i18n="storefront.checkout_heading">{{ self.t("storefront.checkout_heading") }}</h2>
+          <button type="button" class="sf-close-btn" id="sf-back-to-menu" data-i18n="storefront.back_to_menu">{{ self.t("storefront.back_to_menu") }}</button>
+        </div>
+        <div id="sf-cart-items" class="sf-cart-items"></div>
+
+        <form id="sf-checkout-form" class="sf-form">
+          <input type="text" name="website" class="sf-hp" tabindex="-1" autocomplete="off" aria-hidden="true">
+
+          <div class="sf-field-row">
+            <label class="sf-field">
+              <span data-i18n="commerce.field.name">{{ self.t("commerce.field.name") }}</span>
+              <input type="text" name="customer_name" autocomplete="name" maxlength="80" required>
+            </label>
+            <label class="sf-field">
+              <span data-i18n="commerce.customer.phone">{{ self.t("commerce.customer.phone") }}</span>
+              <input type="tel" name="customer_phone" autocomplete="tel" maxlength="25" required>
+            </label>
+          </div>
+
+          <div id="sf-delivery-fields" class="sf-stack">
+            <label class="sf-field">
+              <span data-i18n="storefront.select_zone">{{ self.t("storefront.select_zone") }}</span>
+              <select name="zone_id" id="sf-zone-select"></select>
+            </label>
+            <div class="sf-field-row">
+              <label class="sf-field">
+                <span data-i18n="storefront.optional_postal_code">{{ self.t("storefront.optional_postal_code") }}</span>
+                <input type="text" name="cep" autocomplete="postal-code" inputmode="numeric" maxlength="9" pattern="[0-9]{5}-?[0-9]{3}">
+              </label>
+              <label class="sf-field">
+                <span data-i18n="commerce.address.street">{{ self.t("commerce.address.street") }}</span>
+                <input type="text" name="street" autocomplete="address-line1" maxlength="120">
+              </label>
+              <label class="sf-field">
+                <span data-i18n="commerce.address.number">{{ self.t("commerce.address.number") }}</span>
+                <input type="text" name="number" maxlength="20">
+              </label>
+            </div>
+            <div class="sf-field-row">
+              <label class="sf-field">
+                <span data-i18n="commerce.address.complement">{{ self.t("commerce.address.complement") }}</span>
+                <input type="text" name="complement" maxlength="60">
+              </label>
+              <label class="sf-field">
+                <span data-i18n="commerce.address.city">{{ self.t("commerce.address.city") }}</span>
+                <input type="text" name="city" maxlength="80">
+              </label>
+              <label class="sf-field">
+                <span data-i18n="commerce.address.state">{{ self.t("commerce.address.state") }}</span>
+                <input type="text" name="uf" maxlength="2">
+              </label>
+            </div>
+            <label class="sf-field">
+              <span data-i18n="commerce.address.reference">{{ self.t("commerce.address.reference") }}</span>
+              <input type="text" name="reference" maxlength="120">
+            </label>
+            <div class="sf-address-memory">
+              <label class="sf-option">
+                <input type="checkbox" id="sf-remember-address">
+                <span data-i18n="storefront.remember_address">{{ self.t("storefront.remember_address") }}</span>
+              </label>
+              <button type="button" id="sf-forget-address" class="sf-btn-secondary" data-i18n="storefront.forget_address" hidden>{{ self.t("storefront.forget_address") }}</button>
+            </div>
+          </div>
+
+          <div class="sf-field-row">
+            <label class="sf-field">
+              <span data-i18n="delivery.coupons.code">{{ self.t("delivery.coupons.code") }}</span>
+              <input type="text" name="coupon_code" id="sf-coupon-input" maxlength="20">
+            </label>
+            <div class="sf-field-action">
+              <button type="button" id="sf-apply-coupon" class="sf-btn-secondary" data-i18n="commerce.action.apply">{{ self.t("commerce.action.apply") }}</button>
+            </div>
+          </div>
+
+          <div class="sf-field-row">
+            <label class="sf-field">
+              <span data-i18n="billing.method_heading">{{ self.t("billing.method_heading") }}</span>
+              <select name="payment_method" id="sf-payment-method"></select>
+            </label>
+            <label class="sf-field" id="sf-change-field" hidden>
+              <span data-i18n="storefront.change_for">{{ self.t("storefront.change_for") }}</span>
+              <input type="text" name="change_for" inputmode="decimal" placeholder="50,00">
+            </label>
+          </div>
+
+          <p id="sf-pix-hint" class="sf-payment-hint" data-i18n="storefront.pix_at_handoff" hidden>{{ self.t("storefront.pix_at_handoff") }}</p>
+
+          <label class="sf-field">
+            <span data-i18n="storefront.order_note">{{ self.t("storefront.order_note") }}</span>
+            <textarea name="note" rows="2" maxlength="280"></textarea>
+          </label>
+
+          <div id="sf-quote-box" class="sf-quote-box" role="status" hidden></div>
+          <p id="sf-checkout-error" class="sf-error" role="alert" hidden></p>
+          <div id="sf-idempotency-warning" class="sf-error sf-stack" hidden>
+            <p data-i18n="storefront.retry_mismatch" role="alert">{{ self.t("storefront.retry_mismatch") }}</p>
+            <button type="button" id="sf-prepare-new-attempt" class="sf-btn-secondary" data-i18n="storefront.prepare_new_attempt">{{ self.t("storefront.prepare_new_attempt") }}</button>
+          </div>
+          <p id="sf-privacy-notice" class="sf-privacy">{{ privacy_notice_text }}</p>
+          <button type="submit" id="sf-place-order-btn" class="sf-btn-primary" disabled data-i18n="storefront.place_order">{{ self.t("storefront.place_order") }}</button>
+        </form>
+      </section>
+
+      <section id="sf-tracking-section" class="sf-panel" tabindex="-1" hidden>
+        <div class="sf-panel-head">
+          <h2 id="sf-track-title"></h2>
+          <button type="button" class="sf-close-btn" id="sf-track-back" data-i18n="storefront.back_to_menu">{{ self.t("storefront.back_to_menu") }}</button>
+        </div>
+        <div id="sf-track-body" class="sf-stack"></div>
+        <section id="sf-track-pix" class="sf-quote-box" aria-labelledby="sf-track-pix-heading" hidden>
+          <h3 id="sf-track-pix-heading" data-i18n="storefront.merchant_pix_key">{{ self.t("storefront.merchant_pix_key") }}</h3>
+          <p class="sf-payment-hint" data-i18n="storefront.pix_at_handoff">{{ self.t("storefront.pix_at_handoff") }}</p>
+          <div class="sf-pix-row">
+            <code id="sf-track-pix-key"></code>
+            <button type="button" id="sf-copy-pix" class="sf-btn-secondary" data-i18n="storefront.copy_pix_key" hidden>{{ self.t("storefront.copy_pix_key") }}</button>
+          </div>
+          <p id="sf-pix-copy-status" role="status" hidden></p>
+        </section>
+        <p id="sf-track-error" class="sf-error" role="status" hidden></p>
+      </section>
+    </main>
+
+    <dialog id="sf-product-modal" class="sf-modal" aria-labelledby="sf-modal-title">
+      <form class="sf-modal-card">
+        <div class="sf-panel-head">
+          <h3 id="sf-modal-title"></h3>
+          <button type="button" class="sf-close-btn" id="sf-modal-close" data-i18n="common.close">{{ self.t("common.close") }}</button>
+        </div>
+        <div id="sf-modal-options" class="sf-stack"></div>
+        <p id="sf-modal-error" class="sf-error" role="alert" hidden></p>
+        <button type="submit" id="sf-modal-confirm" class="sf-btn-primary" data-i18n="storefront.add_to_cart">{{ self.t("storefront.add_to_cart") }}</button>
+      </form>
+    </dialog>
+
+    <dialog id="sf-cancel-order-dialog" class="sf-modal" aria-labelledby="sf-cancel-heading">
+      <div class="sf-modal-card">
+        <h3 id="sf-cancel-heading" data-i18n="delivery.orders.cancel">{{ self.t("delivery.orders.cancel") }}</h3>
+        <p data-i18n="storefront.confirm_cancel">{{ self.t("storefront.confirm_cancel") }}</p>
+        <div class="sf-panel-head">
+          <button type="button" id="sf-cancel-dismiss" class="sf-btn-secondary" data-i18n="common.back" autofocus>{{ self.t("common.back") }}</button>
+          <button type="button" id="sf-cancel-confirm" class="sf-btn-primary" data-i18n="delivery.orders.cancel">{{ self.t("delivery.orders.cancel") }}</button>
+        </div>
+      </div>
+    </dialog>
+
+    <div id="sf-cart-bar" class="sf-cart-bar" hidden>
+      <span id="sf-cart-summary" aria-live="polite"></span>
+      <button type="button" id="sf-open-checkout" class="sf-btn-primary" data-i18n="storefront.view_cart">{{ cart_open_text }}</button>
+    </div>
+  </div>
+</body>
+</html>

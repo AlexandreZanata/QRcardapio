@@ -15,7 +15,7 @@ All 5 implementation phases of the **QR Cardápio MVP** (including full native z
 
 ## Modular Platform Foundation — Phases 0, 1 and technical part of 2 (2026-11-24)
 
-QR Cardápio is now a free **QR Core** plus independently sold modules. Only **QR Menu** is implemented and sellable; Delivery, Tables, Kitchen, Fleet, Loyalty, Analytics, POS and Connect are `planned` with full contracts and specifications. Delivery is the next module (after Commerce Core).
+QR Cardápio is now a free **QR Core** plus independently sold modules. Only **QR Menu** is sellable. Delivery is in `development`; Tables, Kitchen, Fleet, Loyalty, Analytics, POS and Connect remain `planned`.
 
 | Area | Status | Where |
 |---|---|---|
@@ -32,7 +32,7 @@ QR Cardápio is now a free **QR Core** plus independently sold modules. Only **Q
 | Rollback-tolerant migrator, idempotent expand migration | Implemented and tested | ADR-010, [RUNBOOK](../operations/RUNBOOK.md#rollback-of-the-commercial-foundation-release) |
 | `republish-all` no longer publishes pending drafts after deploys | Fixed | `application/publishing.rs` |
 | Subscription changes (add/remove modules, cycle change, proration, credits) | Planned — blocked until a second module is sellable and Asaas updates are homologated | [SUBSCRIPTION_RULES](../business/SUBSCRIPTION_RULES.md) |
-| Commerce Core, Delivery and later modules | Commerce Core in progress. Delivery and later modules planned | [Commerce Core](../architecture/COMMERCE_CORE.md), [MASTER_ROADMAP](../roadmap/MASTER_ROADMAP.md) |
+| Commerce Core, Delivery and later modules | Commerce Core consolidation candidate. Delivery in development. Later modules planned | [Commerce Core](../architecture/COMMERCE_CORE.md), [MASTER_ROADMAP](../roadmap/MASTER_ROADMAP.md) |
 
 Contract drift is enforced by `tests/commercial_contracts.rs` (catalog, capabilities, lifecycle, authorization rules, events and schemas, module contracts, state machines, module docs, catalog doc).
 
@@ -69,14 +69,25 @@ Verification on this branch: `cargo fmt --check`, `cargo clippy -D warnings`, `c
 
 ## Commerce Core — Phase 3 (2026-11-25)
 
-The product owner authorized Phase 3 production work in writing on 2026-11-25 while Phase 2 Asaas Sandbox homologation remains pending, under the [Master Roadmap decision rule](../roadmap/MASTER_ROADMAP.md#phase-2--qr-menu-consolidation). The authorization preserves the homologation gate for `beta` and `available` for all modules other than QR Menu. QR Delivery remains `planned`.
+The product owner authorized Phase 3 production work in writing on 2026-11-25 while Phase 2 Asaas Sandbox homologation remains pending, under the [Master Roadmap decision rule](../roadmap/MASTER_ROADMAP.md#phase-2--qr-menu-consolidation). The authorization preserves the homologation gate for `beta` and `available` for all modules other than QR Menu. QR Delivery development builds on the Phase 3 consolidation.
 
 - Baseline stop-the-line fixes cover Inter callback token redaction, an early Stripe reversal recorded before settlement, atomic Inter settlement and first-charge reservation, concurrent edits during QR Menu publication, cross-process serialization of publish and unpublish, and asset retention for cached HTML.
 - Increment 1 delivers all six typed machine definitions, checked integer pricing, catalog option persistence, canonical published channel snapshots, and orders with immutable items, per-day numbering and atomic transitions and events.
 - [ADR-012](../decisions/ADR-012-commerce-core-increment-1.md) records the price cap and commercial date, the internal publication boundary, and the interpretation of option quantities.
 - Increment 2 adds dashboard editing for variations and add-ons, hours and service settings, and tenant-scoped customers, addresses and privacy operations. The landing highlights the demo in a wide card directly above the three-step section. The public demo displays removable ingredients and optional extras.
+- Item 5 in Commerce Core §15 supports an opt-in display of available variations and linked add-ons on QR Menu product pages. Owners and managers save the preference in their draft. Publication captures the options and the draft revision together. The integration test follows the menu link to a product page after closing the SQLite pool. [Static publication](../architecture/PUBLISHING.md)
 - Increment 3 implements idempotent checkout against the published snapshot, exact offline payment and refund records, dispatcher, timeout rejection and compensation, and optional staff Web Push. Public checkout and notification subscription surfaces belong to QR Delivery. See [Commerce Core §15](../architecture/COMMERCE_CORE.md#15-ordered-task-list-to-start-commerce-core) and the [validation evidence](../performance/PERFORMANCE.md#commerce-core-increment-3).
-- The functional suite passed 184 tests. Both Increment 2 and Increment 3 release binaries started on the migrated SQLite database. The local durable checkout and full-size outbox benchmarks missed the throughput gates, so Phase 3 remains in progress.
+- Both Increment 2 and Increment 3 release binaries started on the migrated SQLite database. The local durable checkout and full-size outbox benchmarks missed the throughput gates in Increment 3.
+- The capacity pass uses a tenant-scoped read for committed checkout replays and rechecks misses inside the write transaction. The dispatcher commits bounded scans and grouped receipts in one transaction per pass. In the isolated VPS environment, 185 tests passed, and the candidate met the measured checkout, mixed traffic, outbox and Web Push thresholds. [VPS evidence](../performance/PERFORMANCE.md#vps-capacity-validation)
+- The platform admin panel exposes dead-letter replay with CSRF, generation checks and an audit record. The worker preserves receipts and aggregate order when it processes the original event. The replay candidate passed 187 functional tests and an HTTP recovery and binary rollback check on the VPS. [Recovery runbook](../operations/RUNBOOK.md#reprocessamento-de-eventos-do-outbox) · [VPS replay validation](../performance/PERFORMANCE.md#vps-replay-validation)
+- The versioned Commerce Core OpenAPI contract covers diagnostics and replay through the existing platform admin routes. It passed validation against the official OpenAPI 3.1 schema on the VPS, along with 189 functional tests. Two router tests check the documented JSON, form and response behavior. [OpenAPI v1](../../contracts/openapi/commerce.v1.json)
+- The combined readiness increment extends published availability revisions to variations and add-ons, compares a full quoted breakdown during checkout, and isolates acceptance expiration failures with durable per-order retries. On the VPS, 193 tests passed, both previous binaries started on the migrated database, and the mixed benchmark sustained 83.51 orders/s with full quote confirmation. [Commerce Core](../architecture/COMMERCE_CORE.md#implementation-sequence) · [VPS validation](../performance/PERFORMANCE.md#vps-catalog-checkout-and-expiry-validation)
+
+## QR Delivery — Phase 4
+
+The development candidate provides a white-label storefront, tenant-scoped cart, delivery and pickup, neighborhood fees, coupon redemption, checkout revalidation, private tracking and cancellation, and a staff order center with offline payment confirmation, refunds and CSV export. The lifecycle denies sales and grants in the compiled catalog. The request and response contract lives in [Delivery OpenAPI v1](../../contracts/openapi/delivery.v1.json).
+
+The HTTP suite injects `internal_preview` with explicit grants and checks tenant isolation, disk-only public delivery, quotes, idempotency, concurrent coupon use, expiry, tracking and staff permissions. Real-device PWA installation and staff Web Push, capacity measurements on the VPS, and the pilot remain release gates.
 
 ## Landing and Panel Refresh
 

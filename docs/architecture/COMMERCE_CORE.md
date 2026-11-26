@@ -2,7 +2,7 @@
 
 ## Status
 
-**In progress, Increment 3.** Commerce Core belongs to QR Core, the free shared foundation listed in [`contracts/core/components.json`](../../contracts/core/components.json). The third increment adds internal checkout, offline collection and refunds, event dispatch with compensation and acceptance expiry, and optional staff Web Push. Channel-facing authorization and public ordering routes arrive with the channel modules.
+**In progress.** Commerce Core belongs to QR Core, the free shared foundation listed in [`contracts/core/components.json`](../../contracts/core/components.json). The third increment adds internal checkout, offline collection and refunds, event dispatch with compensation and acceptance expiry, and optional staff Web Push. The performance and operational increments add capacity evidence, audited replay and a versioned HTTP contract for the outbox. Channel-facing authorization and public ordering routes arrive with the channel modules.
 
 Implemented foundation it builds on: `src/domain/commercial/`, `src/domain/entitlements/` (`Capability`, `MemberRole`, `Operation`, `OperationalStatus`, `GrantKind`, `resolve`), `src/application/{commercial,entitlements,operator}.rs`, migration `20261124000009_commercial_foundation.sql` and the `domain_events` outbox.
 
@@ -211,6 +211,7 @@ Increment 1 adds options to the shared draft catalog as new tables (expand-only,
 | Add-on option (`addon_options`) | Belongs to one group; `price_centavos >= 0` (removals such as "sem cebola" are free options); `max_quantity >= 1`; `is_available`. |
 | Tenancy | Every row has `establishment_id`; linking verifies product, group and option belong to the same establishment. |
 | Draft vs published | Edits mark `has_unpublished_changes = 1`. Ordering channels never read draft tables (section 8). |
+| Availability revisions | A channel can change product, variation or add-on availability from its current snapshot. Shared add-on changes update each published copy of the option. A repeated value keeps the current version. |
 | Dashboard | Owners and managers manage draft variations, reusable groups, options and product links. The fictitious public menu renders its own read-only optional ingredients and extras. |
 
 ## 6. Customers and addresses
@@ -228,7 +229,7 @@ The tenant dashboard persists pickup and delivery independently, an integer mini
 
 ## 7. Order financial invariants
 
-1. **Backend pricing only.** Unit prices come from the published catalog snapshot. Client-sent prices are never trusted; the client sends only ids, quantities and `expected_total_centavos`, used solely to detect changes.
+1. **Backend pricing.** The server resolves unit prices from the current published catalog and computes the totals in centavos. A checkout echoes the quoted total and may echo the full breakdown to detect changes.
 2. **Integer money.** All amounts are `i64` centavos with checked arithmetic (`checked_mul`, `checked_add`); overflow or a total above the order cap of 1,000,000 centavos is a validation error. See [ADR-012](../decisions/ADR-012-commerce-core-increment-1.md). JSON amounts are integers; no floats anywhere, including discount math.
 3. **Line math.** `unit = (variation or product price) + Σ(option price × option quantity)`; `line_total = unit × quantity`; `items_subtotal = Σ line_total`.
 4. **Deterministic discounts.** At most one coupon per order. Percentage: `round_half_up(items_subtotal × bps / 10000)`; fixed: `min(amount, items_subtotal)`. Discounts never apply to the delivery fee and never make a total negative.
@@ -246,8 +247,8 @@ The tenant dashboard persists pickup and delivery independently, an integer mini
 Published catalog snapshots are immutable canonical JSON with SHA-256 and an incremental version per establishment and channel. Checkout reads the **current published snapshot** while holding the write lock used to place the order. Availability-only updates derive a version from the previous published snapshot. Future channel adapters resolve the channel server-side and publish matching storefront files.
 
 1. A channel adapter is responsible for resolving the tenant and authorizing its operation before using `checkout::quote` and `checkout::place_order`. Fee and discount inputs come from the server. QR Delivery will supply zone and coupon rules.
-2. `BEGIN IMMEDIATE` serializes checkout with catalog and settings writes. A live attempt returns the original receipt when its request hash matches, or `commerce.idempotency_mismatch` (`422`) when it differs. The attempt expires after seven days.
-3. Validate hours, mode, pause, minimum and selections against the current published snapshot. A changed version, unavailable line or changed total returns `CheckoutOutcome::Repriced` with the current version and quote. The future HTTP adapter returns `409 commerce.checkout_repriced` so the customer can reconfirm.
+2. A tenant-scoped read can return a committed live attempt without entering the writer queue. A matching hash returns the original receipt and a different hash returns `commerce.idempotency_mismatch` (`422`). On a miss, `BEGIN IMMEDIATE` serializes checkout with catalog and settings writes and the service rechecks the attempt before writing. The attempt expires after seven days.
+3. Validate hours, mode, pause, minimum and selections against the current published snapshot. A changed version, unavailable line or changed quoted amount returns `CheckoutOutcome::Repriced` with the latest quote. Full confirmation compares subtotal, discount, fee and total, so offsetting changes still require reconfirmation. The keyed checkout fingerprint binds the breakdown when present. Existing total-only attempts keep their original fingerprints. The future HTTP adapter returns `409 commerce.checkout_repriced`.
 4. Atomically upsert the customer, write immutable order items and details, create a pending offline payment, append `OrderCreated` and record the attempt. `place_order_in` gives a trusted channel adapter a savepoint and the new order ID to consume a coupon in the same outer transaction. Replays return the original public ID and skip this hook.
 5. A future storefront returns `201` with the public ID and tracking path.
 
@@ -278,11 +279,12 @@ Commerce Core appends machine events in the transaction of the transition, with 
 
 - **Single in-process task** (Tokio) scans `domain_events` by `seq` every 250 ms when idle. Commerce commits can wake it early, with a 20 ms window to group nearby commits into one write batch. The scan budget is 200 events per consumer per batch.
 - **Per-consumer checkpoints**: `event_consumer_checkpoints(consumer, last_seq)`. Each consumer reads events of its subscribed types with `seq > last_seq` in `seq` order.
-- **Idempotent consumers**: the handler's writes, an `event_consumer_receipts(consumer, event_id)` row and the checkpoint advance commit in one `BEGIN IMMEDIATE` transaction, so a crash replays without duplicate effects. Handlers with external effects (push, email, provider calls) store an outbound record keyed by `event_id` before calling out.
+- **Idempotent consumers**: each dispatcher pass commits its bounded scans, grouped `event_consumer_receipts(consumer, event_id)` rows, checkpoints and ready publications in one `BEGIN IMMEDIATE` transaction. Handler savepoints roll back individual failures. A crash before commit replays the whole pass without duplicate effects. The pass releases its FIFO writer turn before the next batch. Handlers with external effects store outbound records before calling out.
 - **Authorization**: the platform `system` actor is limited to internal workers. Commerce payment compensation and staff notifications operate on the tenant and order that emitted the event. Future module consumers must re-check their capability before creating new commercial work. Existing-work compensation can continue through suspension or expiry.
 - **Registered consumers**: `commerce.payments` handles `OrderRejected` and `OrderCancelled`. `commerce.notifications` durably queues opted-in staff alerts for `OrderCreated` while it is awaiting acceptance. The timer uses persisted deadlines and records an ordinary `OrderRejected` event with `acceptance_timeout`.
+- The acceptance timer uses an order savepoint for each rejection. A failed rejection rolls back the state, history and event together, and schedules another attempt 30 seconds later. Each batch merges new deadlines and retries in eligibility order using bounded index scans. The persisted wait is cleared when the order leaves `placed`.
 - **Retries**: exponential backoff with jitter (1 s, 5 s, 30 s, 2 min, 10 min, 1 h), up to 10 attempts, recorded in `event_consumer_failures`.
-- **Dead letter**: after the last attempt the event is marked `dead` for that consumer, later events of the **same aggregate** are parked for that consumer to preserve per-aggregate order, and other aggregates continue. Platform admins can replay or discard from `/admin` (planned).
+- **Dead letter**: after the last attempt the event is marked `dead` for that consumer. Later events of the same aggregate are parked for that consumer, and other aggregates continue. Platform admins can schedule a replay in `/admin/outbox/recovery` after correcting the cause. The transaction checks the observed recovery generation, records the actor and prior error key, and makes the failure eligible for dispatch with a fresh retry budget. The dispatcher releases successors after it commits the handler and receipt. Discard is planned.
 - **Publication**: `event_dispatch_publications.published_at` records acknowledgement when all subscribed consumers have receipts, or when no consumer subscribed. A checkpoint can advance past a failed event to deliver other aggregates. The failure row keeps the affected aggregate parked and the event unpublished.
 - **Observability**: `/admin/outbox` returns per-consumer lag, retry/parking counts, dead-letter metadata and oldest pending age. `/readyz` remains ready with an `outbox_lag` warning for dead letters or pending age over 30 seconds.
 
@@ -323,6 +325,8 @@ The catalog and order tables scope tenant rows and parent references by `establi
 
 `event_dispatch_publications` holds the `published_at` value and the partial pending index separately from `domain_events`, so the additive migration can be reapplied. Staff subscriptions and delivery leases are stored in `commerce_push_subscriptions` and `commerce_push_deliveries`.
 
+`event_consumer_replays` records accepted replay requests. Its ID also identifies the recovery generation per consumer and event. The failure row remains the ordering barrier while a replay is scheduled or retried.
+
 ## 13. Benchmarks required before launch
 
 The static-menu results in [PERFORMANCE.md](../performance/PERFORMANCE.md) (about 28k req/s for `/c/{slug}` with zero queries) **do not prove order capacity**: orders are durable writes with `synchronous=FULL`. The closest existing measurement is 1,000 unique Asaas webhooks at 201 req/s, p95 165 ms, on one CPU. Each order costs roughly seven write transactions over its life (checkout, four or five transitions, payment confirmation).
@@ -335,7 +339,7 @@ The static-menu results in [PERFORMANCE.md](../performance/PERFORMANCE.md) (abou
 | Notifications | 1,000 web push sends per minute with a fake endpoint | Bounded concurrency; checkout latency unaffected |
 | Payments | 1,000 unique gateway events, then full redelivery | ≥ 150 events/s, p95 ≤ 250 ms; redelivery is a no-op |
 
-Results and reproduction instructions live in [PERFORMANCE.md](../performance/PERFORMANCE.md#commerce-core-increment-3). The gateway benchmark applies when online consumer gateways are implemented.
+Results and reproduction instructions live in [PERFORMANCE.md](../performance/PERFORMANCE.md#vps-capacity-validation). The Phase 3 mixed workload serves the existing static menu. The storefront and its HTTP checkout enter the load test in Phase 4. The gateway benchmark applies when online consumer gateways are implemented.
 
 ## 14. Phase 3 completion criteria
 
@@ -359,7 +363,7 @@ Items 1–4, 6 and 9 are implemented in Increment 1. Item 17 is implemented for 
 2. `domain::commerce::state_machine`: load `state-machines.json` with `include_str!`, typed states and actors, `can_transition(from, to, actor)`; parity test `tests/commerce_contracts.rs`.
 3. `domain::commerce::pricing` and `discount`: line math, half-up basis-point rounding, checked arithmetic, order cap; unit and property tests.
 4. Expand migration for options; query files `product_variations.rs`, `addon_groups.rs`, `addon_options.rs` with tenant cross-checks.
-5. Dashboard UI for variations and add-on groups (Askama, `data-i18n`, three catalogs, CSRF, no inline script or style); optional read-only rendering in the static menu.
+5. Dashboard UI for variations and add-on groups with Askama, three locales and CSRF. Owners and managers can opt in to displaying available options in the read-only static menu. [Static publication](PUBLISHING.md)
 6. `catalog_snapshots` builder producing canonical JSON with content hash and version; availability-only derived versions.
 7. `business_hours` and `commercial_settings` core components with timezone-aware "open now" evaluation.
 8. `customers` and `customer_addresses` with phone normalization, export and erasure services.
@@ -387,8 +391,20 @@ Items 1–4, 6 and 9 are implemented in Increment 1. Item 17 is implemented for 
 1. Checkout covers idempotency, snapshot and settings revalidation, repricing and atomic order creation. Channel adapters can extend placement with a transactional coupon hook.
 2. The offline consumer payment ledger records independent confirmation, cancellation and refunds, with exact balances and immutable history.
 3. The dispatcher adds receipts, checkpoints, retries and per-aggregate dead-letter parking. The system handles acceptance expiry, payment compensation and staff Web Push.
-4. `/admin/outbox` uses platform-admin authorization. Internal callers must retain tenant scoping and verify the channel operation when a channel is introduced. [Performance and rollback evidence](../performance/PERFORMANCE.md#commerce-core-increment-3) records validation and remaining release gates.
+4. `/admin/outbox` uses platform-admin authorization. Internal callers must retain tenant scoping and verify the channel operation when a channel is introduced. [Performance and rollback evidence](../performance/PERFORMANCE.md#commerce-core-increment-3) records validation.
 5. QR Delivery will wire the core into the storefront, cart, delivery and pickup settings, coupons, tracking and order center after the Phase 3 gates. Asaas homologation remains required before `beta` or `available`.
+
+**Operational recovery**
+
+1. Expose the dead-letter recovery page in the platform admin panel and protect replay requests with the authenticated admin session and CSRF.
+2. Audit scheduling atomically and reuse the dispatcher's retries, receipts and aggregate ordering. See the [operator procedure](../operations/RUNBOOK.md#reprocessamento-de-eventos-do-outbox).
+3. Version the three implemented outbox routes in the [Commerce Core OpenAPI contract](../../contracts/openapi/commerce.v1.json). Check diagnostics and replay behavior against the application router, including admin authorization, CSRF, private response headers and stale generations.
+
+**Catalog, checkout and acceptance readiness**
+
+1. Extend availability-only revisions to published variations and add-ons.
+2. Compare the full submitted quote with the latest price breakdown inside checkout and preserve total-only idempotency records.
+3. Isolate timer failures per order and persist the next attempt so the deadline queue can continue across establishments.
 
 ## 16. Decisions still open
 

@@ -19,6 +19,7 @@ use qrcardapio::domain::commerce::checkout::{
 use qrcardapio::domain::commerce::customer::CustomerProfile;
 use qrcardapio::domain::commerce::order::{OrderAction, OrderItemSelection, TransitionOrder};
 use qrcardapio::domain::commerce::order_payment::{OfflineMethod, OfflinePaymentChoice};
+use qrcardapio::domain::commerce::pricing::OrderTotal;
 use qrcardapio::domain::commerce::state_machine::Actor;
 use qrcardapio::infrastructure::database::queries::{catalog_snapshots, orders};
 
@@ -127,6 +128,12 @@ async fn place(pool: &SqlitePool, tenant: &Tenant, customer: usize, key: Uuid) -
         idempotency_key: key,
         cart: tenant.cart.clone(),
         expected_total_centavos: EXPECTED_CENTAVOS,
+        expected_totals: Some(OrderTotal {
+            items_subtotal_centavos: EXPECTED_CENTAVOS,
+            discount_centavos: 0,
+            delivery_fee_centavos: 0,
+            total_centavos: EXPECTED_CENTAVOS,
+        }),
         customer: CustomerProfile {
             name: "Benchmark".into(),
             phone_e164: format!("+556599999{customer:04}"),
@@ -227,8 +234,19 @@ async fn sustained_checkout() {
         .map_or(600, |value| value.parse::<u64>().unwrap());
     let mixed = std::env::var_os("COMMERCE_BENCH_MIXED").is_some();
     let duration = Duration::from_secs(seconds);
+    assert!(seconds > 0);
     let harness = support::harness(false).await;
     let pool = harness.pool;
+    let synchronous: i64 = sqlx::query_scalar("PRAGMA synchronous")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    let journal_mode: String = sqlx::query_scalar("PRAGMA journal_mode")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    assert_eq!(synchronous, 2, "benchmark requires SQLite synchronous=FULL");
+    assert_eq!(journal_mode, "wal");
     let tenants = std::sync::Arc::new(setup(&pool).await);
     let mut static_baseline = Vec::new();
     if mixed {
@@ -237,7 +255,7 @@ async fn sustained_checkout() {
             .unwrap();
         static_baseline = sample_menu(
             &harness.app,
-            Duration::from_secs(5),
+            Duration::from_secs(30),
             Some(Duration::from_millis(10)),
         )
         .await;
@@ -269,8 +287,8 @@ async fn sustained_checkout() {
         let staff_send = staff_send.clone();
         workers.spawn(async move {
             let mut placements = 0;
-            let mut retries = 0;
             let mut latencies = Vec::new();
+            let mut replay_latencies = Vec::new();
             while Instant::now() < finish {
                 let index = (client + placements) % tenants.len();
                 let tenant = &tenants[index];
@@ -281,24 +299,23 @@ async fn sustained_checkout() {
                 if placements % 9 == 0 {
                     let retry_start = Instant::now();
                     assert_eq!(id, place(&pool, tenant, client, key).await);
-                    latencies.push(retry_start.elapsed());
-                    retries += 1;
+                    replay_latencies.push(retry_start.elapsed());
                 }
                 placements += 1;
                 staff_send.send((index, id)).await.unwrap();
             }
-            (placements, retries, latencies)
+            (placements, latencies, replay_latencies)
         });
     }
     drop(staff_send);
     let mut placements = 0;
-    let mut retries = 0;
     let mut latencies = Vec::new();
+    let mut replay_latencies = Vec::new();
     while let Some(result) = workers.join_next().await {
-        let (placed, replayed, measurements) = result.unwrap();
+        let (placed, measurements, replays) = result.unwrap();
         placements += placed;
-        retries += replayed;
         latencies.extend(measurements);
+        replay_latencies.extend(replays);
     }
     assert_eq!(staff.await.unwrap(), placements);
     dispatcher.abort();
@@ -321,10 +338,13 @@ async fn sustained_checkout() {
     );
     let reconciliation: i64 = sqlx::query_scalar(
         "SELECT count(*) FROM orders o
-        WHERE total_centavos != (SELECT sum(i.line_total_centavos) FROM order_items i
+        WHERE total_centavos IS NOT (SELECT sum(i.line_total_centavos) FROM order_items i
         WHERE i.establishment_id = o.establishment_id AND i.order_id = o.id)
-        OR total_centavos != (SELECT p.amount_centavos FROM order_payments p
-        WHERE p.establishment_id = o.establishment_id AND p.order_id = o.id)",
+        OR 1 != (SELECT count(*) FROM order_payments p
+        WHERE p.establishment_id = o.establishment_id AND p.order_id = o.id)
+        OR NOT EXISTS (SELECT 1 FROM order_payments p
+        WHERE p.establishment_id = o.establishment_id AND p.order_id = o.id
+          AND p.state = 'pending' AND p.amount_centavos = o.total_centavos)",
     )
     .fetch_one(&pool)
     .await
@@ -338,8 +358,11 @@ async fn sustained_checkout() {
     let throughput = placements as f64 / elapsed;
     let p95 = percentile(&mut latencies, 95);
     let p99 = percentile(&mut latencies, 99);
+    let retries = replay_latencies.len();
+    let replay_p95 = percentile(&mut replay_latencies, 95);
+    let replay_p99 = percentile(&mut replay_latencies, 99);
     println!(
-        "mixed={mixed} seconds={elapsed:.2} orders={placements} retries={retries} orders/s={throughput:.2} checkout_p95_ms={p95:.3} checkout_p99_ms={p99:.3} errors=0 duplicates=0 unreconciled=0"
+        "mixed={mixed} seconds={elapsed:.2} orders={placements} retries={retries} orders/s={throughput:.2} checkout_p95_ms={p95:.3} checkout_p99_ms={p99:.3} replay_p95_ms={replay_p95:.3} replay_p99_ms={replay_p99:.3} errors=0 duplicates=0 unreconciled=0"
     );
     if let Some(task) = static_work {
         let baseline = percentile(&mut static_baseline, 95);
@@ -355,5 +378,13 @@ async fn sustained_checkout() {
             "static menu p95 exceeded 2× its pinned baseline"
         );
     }
-    assert!(throughput >= 30.0 && p95 <= 300.0 && p99 <= 1000.0);
+    assert!(throughput >= 30.0, "order throughput was {throughput:.2}/s");
+    assert!(
+        p95 <= 300.0 && p99 <= 1000.0,
+        "checkout exceeded latency gate"
+    );
+    assert!(
+        replay_p95 <= 300.0 && replay_p99 <= 1000.0,
+        "replay exceeded latency gate"
+    );
 }

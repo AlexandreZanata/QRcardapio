@@ -4,6 +4,7 @@ use sqlx::{SqliteConnection, SqlitePool};
 use uuid::Uuid;
 
 use super::mappers::{row_to_category, row_to_establishment, row_to_media, row_to_product};
+use super::menu_options;
 use crate::domain::events::{EventType, NewEvent};
 use crate::domain::publication::{MediaAsset, MenuSnapshot, SnapshotCategory, SnapshotProduct};
 use crate::error::AppResult;
@@ -17,6 +18,27 @@ pub async fn load_menu_snapshot(
     let mut tx = pool.begin().await?;
     let snapshot = load_menu_snapshot_in(&mut tx, est_id, include_hidden).await?;
     tx.commit().await?;
+    Ok(snapshot)
+}
+
+pub async fn load_menu_preview(pool: &SqlitePool, est_id: &str) -> AppResult<Option<MenuSnapshot>> {
+    let mut tx = pool.begin().await?;
+    let snapshot = load_menu_display_snapshot_in(&mut tx, est_id, true).await?;
+    tx.commit().await?;
+    Ok(snapshot)
+}
+
+async fn load_menu_display_snapshot_in(
+    conn: &mut SqliteConnection,
+    est_id: &str,
+    include_hidden: bool,
+) -> AppResult<Option<MenuSnapshot>> {
+    let mut snapshot = load_menu_snapshot_in(conn, est_id, include_hidden).await?;
+    if let Some(snapshot) = &mut snapshot
+        && menu_options::enabled_in(&mut *conn, est_id).await?
+    {
+        menu_options::attach_catalog_options(conn, snapshot).await?;
+    }
     Ok(snapshot)
 }
 
@@ -97,6 +119,7 @@ pub(super) async fn load_menu_snapshot_in(
                 product,
                 image,
                 choices: Vec::new(),
+                catalog_options: Default::default(),
             });
     }
     media_map.clear();
@@ -127,7 +150,7 @@ pub async fn capture_menu_publication(
     est_id: &str,
 ) -> AppResult<Option<MenuPublicationSource>> {
     let mut tx = pool.begin().await?;
-    let snapshot = load_menu_snapshot_in(&mut tx, est_id, false).await?;
+    let snapshot = load_menu_display_snapshot_in(&mut tx, est_id, false).await?;
     let draft_revision =
         sqlx::query_scalar("SELECT revision FROM menu_draft_revisions WHERE establishment_id = ?")
             .bind(est_id)

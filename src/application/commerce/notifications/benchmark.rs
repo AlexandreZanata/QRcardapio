@@ -58,6 +58,7 @@ pub(super) async fn checkout_p95(pool: &SqlitePool, cart: &CheckoutCart) -> f64 
             idempotency_key: Uuid::new_v4(),
             cart: cart.clone(),
             expected_total_centavos: 1000,
+            expected_totals: None,
             customer: CustomerProfile {
                 name: "Benchmark".into(),
                 phone_e164: "+5565999990001".into(),

@@ -9,7 +9,7 @@ Prices are monthly list prices in integer centavos. Cycle discounts (`billing-cy
 | Code | Module | Monthly (centavos) | Lifecycle | Phase | Sellable now | Spec |
 |---|---|---|---|---|---|---|
 | `menu` | QR Menu | 2990 | `available` | 1 | Yes | [MENU](../modules/MENU.md) |
-| `delivery` | QR Delivery | 6990 | `planned` | 4 | No | [DELIVERY](../modules/DELIVERY.md) |
+| `delivery` | QR Delivery | 6990 | `development` | 4 | No | [DELIVERY](../modules/DELIVERY.md) |
 | `tables` | QR Tables | 3990 | `planned` | 5 | No | [TABLES](../modules/TABLES.md) |
 | `kitchen` | QR Kitchen | 2490 | `planned` | 6 | No | [KITCHEN](../modules/KITCHEN.md) |
 | `fleet` | QR Fleet | 2990 | `planned` | 7 | No | [FLEET](../modules/FLEET.md) |
@@ -18,7 +18,9 @@ Prices are monthly list prices in integer centavos. Cycle discounts (`billing-cy
 | `pos` | QR POS | 6990 | `planned` | 10 | No | [POS](../modules/POS.md) |
 | `connect` | QR Connect | 2490 | `planned` | 11 | No | [CONNECT](../modules/CONNECT.md) |
 
-Sum of individual modules: 32910 centavos (R$ 329,10) per month. [Commerce Core](../architecture/COMMERCE_CORE.md) is the free QR Core foundation. Shared checkout, offline payments and event processing are internal services. QR Delivery remains planned.
+Sum of individual modules: 32910 centavos (R$ 329,10) per month. [Commerce Core](../architecture/COMMERCE_CORE.md) is the free QR Core foundation. Shared checkout, offline payments and event processing are internal services. QR Delivery is in development and its sales and grants are disabled.
+
+QR Menu offers an opt-in read-only display of catalog variations and add-ons in the published menu. [QR Menu scope](../modules/MENU.md#4-mvp-scope)
 
 ## Bundles
 

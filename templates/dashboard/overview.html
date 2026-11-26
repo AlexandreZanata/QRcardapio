@@ -43,6 +43,16 @@
   {{ metrics::metric("overview-version", "yellow", "dashboard.stat_version", published_version, "v") }}
 </div>
 
+{% if delivery.orders || delivery.storefront_management %}
+<section class="card" aria-labelledby="panel-delivery-title">
+  {{ controls::section_heading("panel-delivery-title", "delivery.panel_title", "store", "yellow") }}
+  <div class="inline-actions">
+    {% if delivery.orders %}{{ controls::link("/dashboard/delivery/orders", "delivery.orders.open_center", "activity") }}{% endif %}
+    {% if delivery.storefront_management %}{{ controls::link("/dashboard/delivery/settings", "delivery.settings.heading", "settings") }}{% endif %}
+  </div>
+</section>
+{% endif %}
+
 <div class="grid-2 dashboard-overview-grid">
   <section class="card panel-publication-card" aria-labelledby="panel-publication-title">
     {{ controls::section_heading("panel-publication-title", "dashboard.publication_title", "publish", "blue") }}

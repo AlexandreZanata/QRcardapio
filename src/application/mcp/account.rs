@@ -17,7 +17,7 @@ use crate::domain::mcp_account::{AccountSettingsInput, ValidatedAccountPatch};
 use crate::error::{AppError, AppResult};
 use crate::i18n::Locale;
 use crate::infrastructure::database::queries::{
-    find_account_by_id, find_establishment_by_id, mcp_account as queries,
+    find_account_by_id, find_establishment_by_id, is_slug_locked, mcp_account as queries,
     mcp_menu::Operation,
     mcp_oauth::{Grant, has_active_owner_write_grant},
 };
@@ -37,6 +37,7 @@ pub async fn read_settings(
         .ok_or(AppError::NotFound("error.not_found"))?;
     let counts = queries::menu_summary_counts(pool, &est.id).await?;
     let can_publish = can_publish_menu(pool, enforcement, &est.id).await?;
+    let slug_locked = is_slug_locked(pool, &est.id).await?;
     let accent_contrast_ink = AccentColor::parse(&est.accent_color)
         .map(|c| c.contrast_ink())
         .unwrap_or("#FFFFFF");
@@ -51,7 +52,7 @@ pub async fn read_settings(
             "id": est.id,
             "name": est.name,
             "slug": est.slug,
-            "slug_locked": est.published_version > 0,
+            "slug_locked": slug_locked,
             "description": est.description,
             "description_en": est.description_en,
             "description_es": est.description_es,

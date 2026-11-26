@@ -1,0 +1,255 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Commerce Core Outbox Administration",
+    "version": "1.0.0",
+    "description": "Internal outbox diagnostics and replay for platform administrators."
+  },
+  "security": [{ "AdminSession": [] }],
+  "paths": {
+    "/admin/outbox": {
+      "get": {
+        "operationId": "getOutboxStatus",
+        "summary": "Read the outbox diagnostic snapshot",
+        "responses": {
+          "200": {
+            "description": "Pending event metrics, consumer progress and dead-letter identifiers. Event payloads are excluded.",
+            "headers": {
+              "Cache-Control": { "$ref": "#/components/headers/CacheControlNoStore" },
+              "X-Robots-Tag": { "$ref": "#/components/headers/RobotsNoIndex" }
+            },
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/DispatcherStatus" }
+              }
+            }
+          },
+          "303": { "$ref": "#/components/responses/LoginRequired" },
+          "403": { "$ref": "#/components/responses/AdminRequired" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/admin/outbox/recovery": {
+      "get": {
+        "operationId": "getOutboxRecovery",
+        "summary": "Open the outbox recovery page",
+        "responses": {
+          "200": {
+            "description": "Server-rendered recovery page with a session-bound replay form for each dead letter.",
+            "headers": {
+              "Cache-Control": { "$ref": "#/components/headers/CacheControlNoStore" },
+              "X-Robots-Tag": { "$ref": "#/components/headers/RobotsNoIndex" }
+            },
+            "content": {
+              "text/html": { "schema": { "type": "string" } }
+            }
+          },
+          "303": { "$ref": "#/components/responses/LoginRequired" },
+          "403": { "$ref": "#/components/responses/AdminRequired" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    },
+    "/admin/outbox/replay": {
+      "post": {
+        "operationId": "scheduleOutboxReplay",
+        "summary": "Schedule a dead letter for replay",
+        "description": "Schedules the original event for the specified consumer and records the request in the audit log. The dispatcher runs the handler asynchronously.",
+        "requestBody": {
+          "required": true,
+          "description": "Replay form from the recovery page. The encoded body is limited to 16 KiB.",
+          "x-max-body-bytes": 16384,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": { "$ref": "#/components/schemas/OutboxReplayForm" }
+            }
+          }
+        },
+        "responses": {
+          "303": {
+            "description": "Redirect to recovery after scheduling, or to login when the session is missing or invalid.",
+            "headers": {
+              "Cache-Control": { "$ref": "#/components/headers/CacheControlNoStore" },
+              "X-Robots-Tag": { "$ref": "#/components/headers/RobotsNoIndex" },
+              "Location": {
+                "required": true,
+                "schema": {
+                  "type": "string",
+                  "enum": ["/login", "/admin/outbox/recovery"]
+                }
+              }
+            }
+          },
+          "403": { "$ref": "#/components/responses/ReplayForbidden" },
+          "409": { "$ref": "#/components/responses/ReplayConflict" },
+          "413": { "$ref": "#/components/responses/ReplayBodyTooLarge" },
+          "415": { "$ref": "#/components/responses/ReplayUnsupportedMediaType" },
+          "422": { "$ref": "#/components/responses/ReplayInvalidForm" },
+          "500": { "$ref": "#/components/responses/InternalError" }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "AdminSession": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "qr_session",
+        "description": "Authenticated session with the platform administrator role. Replay also verifies the session-bound CSRF form field."
+      }
+    },
+    "headers": {
+      "CacheControlNoStore": {
+        "required": true,
+        "schema": { "type": "string", "const": "no-store" }
+      },
+      "RobotsNoIndex": {
+        "required": true,
+        "schema": { "type": "string", "const": "noindex, nofollow" }
+      }
+    },
+    "responses": {
+      "LoginRequired": {
+        "description": "The session is missing or invalid. Redirect to login.",
+        "headers": {
+          "Cache-Control": { "$ref": "#/components/headers/CacheControlNoStore" },
+          "X-Robots-Tag": { "$ref": "#/components/headers/RobotsNoIndex" },
+          "Location": {
+            "required": true,
+            "schema": { "type": "string", "const": "/login" }
+          }
+        }
+      },
+      "AdminRequired": {
+        "description": "The session belongs to an account without the platform administrator role.",
+        "headers": {
+          "Cache-Control": { "$ref": "#/components/headers/CacheControlNoStore" },
+          "X-Robots-Tag": { "$ref": "#/components/headers/RobotsNoIndex" }
+        },
+        "content": { "text/html": { "schema": { "type": "string" } } }
+      },
+      "ReplayForbidden": {
+        "description": "The session lacks the platform administrator role or the CSRF token is invalid.",
+        "headers": {
+          "Cache-Control": { "$ref": "#/components/headers/CacheControlNoStore" },
+          "X-Robots-Tag": { "$ref": "#/components/headers/RobotsNoIndex" }
+        },
+        "content": { "text/html": { "schema": { "type": "string" } } }
+      },
+      "ReplayConflict": {
+        "description": "The consumer, event or generation no longer identifies a dead letter eligible for replay. Refresh the recovery page.",
+        "headers": {
+          "Cache-Control": { "$ref": "#/components/headers/CacheControlNoStore" },
+          "X-Robots-Tag": { "$ref": "#/components/headers/RobotsNoIndex" }
+        },
+        "content": { "text/html": { "schema": { "type": "string" } } }
+      },
+      "ReplayBodyTooLarge": {
+        "description": "The encoded replay body exceeds 16 KiB.",
+        "headers": {
+          "Cache-Control": { "$ref": "#/components/headers/CacheControlNoStore" },
+          "X-Robots-Tag": { "$ref": "#/components/headers/RobotsNoIndex" }
+        },
+        "content": { "text/html": { "schema": { "type": "string" } } }
+      },
+      "ReplayUnsupportedMediaType": {
+        "description": "The request content type must be application/x-www-form-urlencoded.",
+        "headers": {
+          "Cache-Control": { "$ref": "#/components/headers/CacheControlNoStore" },
+          "X-Robots-Tag": { "$ref": "#/components/headers/RobotsNoIndex" }
+        },
+        "content": { "text/html": { "schema": { "type": "string" } } }
+      },
+      "ReplayInvalidForm": {
+        "description": "Required form fields are missing or cannot be parsed.",
+        "headers": {
+          "Cache-Control": { "$ref": "#/components/headers/CacheControlNoStore" },
+          "X-Robots-Tag": { "$ref": "#/components/headers/RobotsNoIndex" }
+        },
+        "content": { "text/html": { "schema": { "type": "string" } } }
+      },
+      "InternalError": {
+        "description": "The server could not complete the request.",
+        "headers": {
+          "Cache-Control": { "$ref": "#/components/headers/CacheControlNoStore" },
+          "X-Robots-Tag": { "$ref": "#/components/headers/RobotsNoIndex" }
+        },
+        "content": { "text/html": { "schema": { "type": "string" } } }
+      }
+    },
+    "schemas": {
+      "DispatcherStatus": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["pending_events", "oldest_pending_age_seconds", "consumers", "dead_letters"],
+        "properties": {
+          "pending_events": { "type": "integer", "format": "int64", "minimum": 0 },
+          "oldest_pending_age_seconds": {
+            "type": ["integer", "null"],
+            "format": "int64",
+            "minimum": 0,
+            "description": "Age in seconds of the oldest pending event, or null when there are no pending events."
+          },
+          "consumers": {
+            "type": "array",
+            "items": { "$ref": "#/components/schemas/OutboxConsumerStatus" }
+          },
+          "dead_letters": {
+            "type": "array",
+            "maxItems": 50,
+            "items": { "$ref": "#/components/schemas/OutboxDeadLetter" }
+          }
+        }
+      },
+      "OutboxConsumerStatus": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["consumer", "last_seq", "lag", "retry_count", "parked_count", "dead_letter_count"],
+        "properties": {
+          "consumer": { "type": "string" },
+          "last_seq": { "type": "integer", "format": "int64", "minimum": 0 },
+          "lag": { "type": "integer", "format": "int64", "minimum": 0 },
+          "retry_count": { "type": "integer", "format": "int64", "minimum": 0 },
+          "parked_count": { "type": "integer", "format": "int64", "minimum": 0 },
+          "dead_letter_count": { "type": "integer", "format": "int64", "minimum": 0 }
+        }
+      },
+      "OutboxDeadLetter": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["consumer", "event_id", "event_type", "seq", "attempts", "error_key", "replay_generation"],
+        "properties": {
+          "consumer": { "type": "string" },
+          "event_id": { "type": "string", "format": "uuid" },
+          "event_type": { "type": "string" },
+          "seq": { "type": "integer", "format": "int64", "minimum": 1 },
+          "attempts": { "type": "integer", "format": "int64", "minimum": 1 },
+          "error_key": { "type": "string" },
+          "replay_generation": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "description": "The latest audited replay ID for this consumer and event, or zero before the first replay."
+          }
+        }
+      },
+      "OutboxReplayForm": {
+        "type": "object",
+        "required": ["_csrf", "consumer", "event_id", "generation"],
+        "properties": {
+          "_csrf": { "type": "string", "minLength": 1 },
+          "consumer": { "type": "string", "minLength": 1 },
+          "event_id": { "type": "string", "format": "uuid" },
+          "generation": {
+            "type": "integer",
+            "format": "int64",
+            "minimum": 0,
+            "description": "The replay_generation in the observed diagnostic snapshot."
+          }
+        }
+      }
+    }
+  }
+}

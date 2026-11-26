@@ -151,3 +151,7 @@ A ação **Continuar com o Google** reaproveita um componente Askama nas telas d
 ## Landing demonstration and Commerce Core dashboard
 
 The landing's demo card spans the content width immediately before the three-step section. A full-bleed food photo sits behind the yellow action and the landing’s outlined card. The page loads a panoramic WebP on desktop and a separately framed WebP on narrow screens. The QR and the highlighted action both open the same demonstration. The public demo uses native `details` disclosures to list removable ingredients and priced extras, localized through the embedded public-menu bundle. Shared dashboard commerce fields and cards use the existing panel tokens and work in one column on narrow screens.
+
+## QR Delivery
+
+The storefront uses a dedicated responsive layout for product browsing, variation and add-on selection, checkout and tracking. Brand color comes from a generated theme stylesheet. The staff center and Delivery settings reuse the dashboard shell and Commerce form components. Translatable labels come from the three shared catalogs, and storefront and order-center scripts are external to respect the site CSP.

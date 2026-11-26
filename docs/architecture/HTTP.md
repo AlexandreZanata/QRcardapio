@@ -71,7 +71,11 @@ All `POST` routes verify `_csrf` against the server session's `csrf_token` in co
 | Method | Path | Protection | Purpose |
 |---|---|---|---|
 | `GET` | `/admin` | `AdminContext` (`role = 'admin'`) | Operational counts, SQLite version, recent establishments, recent publication metrics. |
-| `GET` | `/admin/outbox` | `AdminContext` (`role = 'admin'`) | `no-store` JSON with pending age, per-consumer lag and dead letters. Event payloads are omitted. |
+| `GET` | `/admin/outbox` | `AdminContext` (`role = 'admin'`) | `no-store` JSON with pending age, per-consumer lag and dead letters, including `replay_generation`. Event payloads are omitted. |
+| `GET` | `/admin/outbox/recovery` | `AdminContext` | `no-store` dead-letter recovery page with event and consumer identifiers. |
+| `POST` | `/admin/outbox/replay` | `AdminContext` and CSRF | Form fields `consumer`, `event_id`, `generation` and `_csrf`. `303` after scheduling, `409` if the observed dead letter can no longer be scheduled. |
+
+The [Commerce Core OpenAPI contract v1](../../contracts/openapi/commerce.v1.json) specifies the session cookie, replay form, diagnostics fields and response headers for these three outbox routes.
 
 ## Assinatura Asaas
 
@@ -115,8 +119,16 @@ Todas as rotas abaixo aplicam `Cache-Control: no-store` e limite de corpo de 16 
 
 ## Commerce Core
 
-The catalog publication, order transitions, checkout, offline payment ledger and Web Push subscription management have internal Rust interfaces. The current HTTP surface for the dispatcher is `GET /admin/outbox`. A future authorized channel adapter will map `CheckoutOutcome::Repriced` to `409 commerce.checkout_repriced` with the current quote and `commerce.idempotency_mismatch` to `422`. See the [QR Delivery API specification](../modules/DELIVERY.md#16-http-contracts).
+The catalog publication, order transitions, checkout, offline payment ledger and Web Push subscription management have internal Rust interfaces. Dispatcher diagnostics and replay scheduling are exposed only on the platform admin routes. A future authorized channel adapter can submit the full quoted breakdown for comparison. It will map `CheckoutOutcome::Repriced` to `409 commerce.checkout_repriced` with the current quote and `commerce.idempotency_mismatch` to `422`. See the [QR Delivery API specification](../modules/DELIVERY.md#16-http-contracts).
 
 ### Commerce Core dashboard (Increment 2)
 
 `GET /dashboard/products/{id}/options` and `GET /dashboard/menu/addons` let owners and managers manage variations and reusable add-on groups. Tenant-scoped forms save, remove and link entities through POST actions. `GET /dashboard/hours` configures modalities, minimum, acceptance, pauses, weekly windows and date exceptions. `GET /dashboard/customers` and customer detail pages support customer and address management. Owner-only POST actions at `/dashboard/customers/{id}/export` and `/dashboard/customers/{id}/erase` require CSRF. The export is a JSON attachment with `Cache-Control: no-store`. Erasure requires explicit form confirmation.
+
+`POST /dashboard/menu/addons/public-options` requires `TenantContext`, CSRF and `menu.draft.edit`. Submit `enabled=1` to show the available options in the next publication, or omit the field to hide them. `/dashboard/preview/produto/{id}` uses the current draft preference. Public product pages under `/c/{slug}/p/` use the published preference.
+
+## QR Delivery development contract
+
+The [Delivery route table](../modules/DELIVERY.md#16-http-contracts) describes the staff dashboard and static PWA. The [OpenAPI 3.1 contract](../../contracts/openapi/delivery.v1.json) describes the four consumer JSON operations under `/api/storefront/v1/{slug}`. Mutations require a same-origin JSON request and checkout requires an `Idempotency-Key` UUID. A `409` checkout price change returns a fresh quote for explicit reconfirmation. Tracking supports explicit conditional GET without storing the response.
+
+The staff dashboard uses `TenantContext`, CSRF and the existing entitlement engine. The center polls `?fragment=1` with the previous ETag and uses the tenant’s order and payment revisions and customer link changes to detect updates. Pages and fragments use `Cache-Control: no-store`. The compiled development lifecycle prevents public activation.

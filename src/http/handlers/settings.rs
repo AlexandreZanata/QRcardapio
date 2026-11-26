@@ -15,7 +15,7 @@ use crate::http::middleware::auth::{TenantContext, verify_csrf};
 use crate::http::middleware::locale::RequestLocale;
 use crate::http::responses::{take_flash, with_flash_redirect};
 use crate::infrastructure::assets::MAX_LOGO_UPLOAD_BYTES;
-use crate::infrastructure::database::queries::find_media_asset_for_est;
+use crate::infrastructure::database::queries::{find_media_asset_for_est, is_slug_locked};
 use crate::rendering::dashboard::SettingsTemplate;
 use crate::rendering::{PageMeta, render_html};
 
@@ -59,6 +59,7 @@ pub async fn settings_page(
 ) -> AppResult<Response> {
     let est = &tenant.establishment;
     let logo_url = resolve_logo_url(&state, &tenant).await?;
+    let slug_locked = is_slug_locked(&state.pool, &est.id).await?;
     let (jar, flash) = take_flash(jar);
 
     let tpl = SettingsTemplate {
@@ -74,7 +75,7 @@ pub async fn settings_page(
         base_host: state.config.public_base_url.clone(),
         name_value: est.name.clone(),
         slug_value: est.slug.clone(),
-        slug_locked: est.published_version > 0,
+        slug_locked,
         description_value: est.description.clone(),
         description_en: est.description_en.clone(),
         description_es: est.description_es.clone(),
@@ -129,6 +130,7 @@ pub async fn settings_submit(
         )),
         Err(err) => {
             let logo_url = resolve_logo_url(&state, &tenant).await?;
+            let slug_locked = is_slug_locked(&state.pool, &tenant.establishment.id).await?;
             let tpl = SettingsTemplate {
                 google_enabled: state.google.is_some(),
                 mcp_enabled: state.config.mcp_enabled,
@@ -142,7 +144,7 @@ pub async fn settings_submit(
                 base_host: state.config.public_base_url.clone(),
                 name_value: form.name,
                 slug_value: form.slug,
-                slug_locked: tenant.establishment.published_version > 0,
+                slug_locked,
                 description_value: form.description,
                 description_en: form.description_en,
                 description_es: form.description_es,

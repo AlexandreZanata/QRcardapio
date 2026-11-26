@@ -1,7 +1,7 @@
 use aws_lc_rs::hmac;
 use chrono::{DateTime, Duration, Utc};
 use sha2::{Digest, Sha256};
-use sqlx::{Acquire, Sqlite, SqliteConnection, SqlitePool, Transaction};
+use sqlx::{Acquire, Sqlite, SqliteConnection, SqliteExecutor, SqlitePool, Transaction};
 use subtle::ConstantTimeEq;
 use uuid::Uuid;
 
@@ -38,12 +38,23 @@ pub async fn quote(
     cart: &CheckoutCart,
     now: DateTime<Utc>,
 ) -> AppResult<CheckoutQuote> {
-    validate_cart(cart)?;
     let mut tx = pool.begin().await?;
-    let schedule = business_hours::load_in(&mut tx, target.establishment_id).await?;
-    let (version, content) = current_catalog(&mut tx, target).await?;
+    let quote = quote_in(&mut tx, target, cart, now).await?;
     tx.commit().await?;
-    let (quote, _) = evaluate_cart(&content, version, target, cart, &schedule, now)?;
+    Ok(quote)
+}
+
+pub(crate) async fn quote_in(
+    connection: &mut SqliteConnection,
+    target: CheckoutTarget<'_>,
+    cart: &CheckoutCart,
+    now: DateTime<Utc>,
+) -> AppResult<CheckoutQuote> {
+    validate_cart(cart)?;
+    let schedule = business_hours::load_in(connection, target.establishment_id).await?;
+    let (version, content) = current_catalog(connection, target).await?;
+    let open_now = schedule.service_at(now, target.mode).is_some();
+    let (quote, _) = evaluate_cart(&content, version, target, cart, &schedule, open_now)?;
     Ok(quote)
 }
 
@@ -53,8 +64,23 @@ pub async fn place_order(
     request: CheckoutRequest,
     now: DateTime<Utc>,
 ) -> AppResult<CheckoutOutcome> {
+    let fingerprint = AttemptFingerprint::new(target, &request)?;
+    if let Some(receipt) = fingerprint
+        .replay(pool, target.establishment_id, now)
+        .await?
+    {
+        return Ok(CheckoutOutcome::Placed(receipt));
+    }
     let (_turn, mut tx) = commerce_writes::begin(pool).await?;
-    let placement = place_locked(&mut tx, target, request, now).await?;
+    let placement = place_locked(
+        &mut tx,
+        target,
+        request,
+        now,
+        &fingerprint,
+        CheckoutRules::default(),
+    )
+    .await?;
     tx.commit().await?;
     if placement.new_order_id.is_some() {
         dispatcher::notify_committed();
@@ -68,6 +94,12 @@ pub struct CheckoutPlacement {
     pub new_order_id: Option<String>,
 }
 
+#[derive(Default)]
+pub(crate) struct CheckoutRules {
+    pub minimum_override: Option<i64>,
+    pub allow_missing_cep: bool,
+}
+
 /// Extend checkout inside a caller's `BEGIN IMMEDIATE`. The caller may consume a
 /// coupon for `new_order_id` before committing, then signal the outbox dispatcher.
 /// An error rolls back only the checkout savepoint.
@@ -77,8 +109,28 @@ pub async fn place_order_in(
     request: CheckoutRequest,
     now: DateTime<Utc>,
 ) -> AppResult<CheckoutPlacement> {
+    let fingerprint = AttemptFingerprint::new(target, &request)?;
+    place_order_with_attempt_in(
+        tx,
+        target,
+        request,
+        now,
+        &fingerprint,
+        CheckoutRules::default(),
+    )
+    .await
+}
+
+pub(crate) async fn place_order_with_attempt_in(
+    tx: &mut Transaction<'_, Sqlite>,
+    target: CheckoutTarget<'_>,
+    request: CheckoutRequest,
+    now: DateTime<Utc>,
+    fingerprint: &AttemptFingerprint,
+    rules: CheckoutRules,
+) -> AppResult<CheckoutPlacement> {
     let mut checkout = tx.begin().await?;
-    match place_locked(&mut checkout, target, request, now).await {
+    match place_locked(&mut checkout, target, request, now, fingerprint, rules).await {
         Ok(placement) => {
             checkout.commit().await?;
             Ok(placement)
@@ -95,20 +147,16 @@ async fn place_locked(
     target: CheckoutTarget<'_>,
     request: CheckoutRequest,
     now: DateTime<Utc>,
+    fingerprint: &AttemptFingerprint,
+    rules: CheckoutRules,
 ) -> AppResult<CheckoutPlacement> {
-    if request.idempotency_key.get_version_num() != 4 {
-        return Err(INVALID_CART);
-    }
-    let key_hash = Sha256::digest(request.idempotency_key.as_bytes());
-    let request_hash = request_fingerprint(target, &request)?;
-    if let Some((stored_hash, public_id)) =
-        checkout_attempts::find_live(tx, target.establishment_id, &key_hash, now).await?
+    // A concurrent checkout may have committed while this request waited for the writer.
+    if let Some(receipt) = fingerprint
+        .replay(&mut **tx, target.establishment_id, now)
+        .await?
     {
-        if !bool::from(stored_hash.as_slice().ct_eq(request_hash.as_ref())) {
-            return Err(AppError::Validation("commerce.idempotency_mismatch"));
-        }
         return Ok(CheckoutPlacement {
-            outcome: CheckoutOutcome::Placed(CheckoutReceipt { public_id }),
+            outcome: CheckoutOutcome::Placed(receipt),
             new_order_id: None,
         });
     }
@@ -118,7 +166,7 @@ async fn place_locked(
         return Err(INVALID_CART);
     }
     let customer = request.customer.normalized()?;
-    let address = delivery_address(target.mode, request.address)?;
+    let address = delivery_address(target.mode, request.address, rules.allow_missing_cep)?;
     let schedule = business_hours::load_in(tx, target.establishment_id).await?;
     if !schedule.settings.serves(target.mode) {
         return Err(AppError::Validation("delivery.mode_unavailable"));
@@ -129,10 +177,17 @@ async fn place_locked(
 
     // The write lock protects this snapshot through order creation and attempt recording.
     let (version, content) = current_catalog(tx, target).await?;
-    let (fresh, items) = evaluate_cart(&content, version, target, &request.cart, &schedule, now)?;
+    let (mut fresh, items) =
+        evaluate_cart(&content, version, target, &request.cart, &schedule, true)?;
+    if let Some(minimum) = rules.minimum_override {
+        fresh.minimum_order_centavos = minimum;
+    }
     let Some(totals) = fresh.totals.filter(|totals| {
         version == request.cart.catalog_version
             && totals.total_centavos == request.expected_total_centavos
+            && request
+                .expected_totals
+                .is_none_or(|expected| expected == *totals)
     }) else {
         return Ok(CheckoutPlacement {
             outcome: CheckoutOutcome::Repriced(fresh),
@@ -181,8 +236,14 @@ async fn place_locked(
     if let Some(address) = address {
         order_delivery_details::insert(tx, &order, &customer, &address).await?;
     }
-    payments::create_pending_in(tx, &order, request.payment, now).await?;
-    checkout_attempts::remember(tx, &order, &key_hash, request_hash.as_ref()).await?;
+    payments::create_initial_pending(tx, &order, request.payment, now).await?;
+    checkout_attempts::remember(
+        tx,
+        &order,
+        &fingerprint.key_hash,
+        fingerprint.request_hash.as_ref(),
+    )
+    .await?;
     Ok(CheckoutPlacement {
         outcome: CheckoutOutcome::Placed(CheckoutReceipt {
             public_id: order.public_id,
@@ -207,8 +268,12 @@ fn validate_cart(cart: &CheckoutCart) -> AppResult<()> {
 fn delivery_address(
     mode: ServiceMode,
     address: Option<PostalAddress>,
+    allow_missing_cep: bool,
 ) -> AppResult<Option<PostalAddress>> {
     match (mode, address) {
+        (ServiceMode::Delivery, Some(address)) if allow_missing_cep => {
+            address.normalized_with_optional_cep().map(Some)
+        }
         (ServiceMode::Delivery, Some(address)) => Ok(Some(address.normalized()?)),
         (ServiceMode::Pickup, None) => Ok(None),
         _ => Err(AppError::Validation("commerce.customer.invalid_address")),
@@ -232,7 +297,7 @@ fn evaluate_cart<'a>(
     target: CheckoutTarget<'_>,
     cart: &CheckoutCart,
     schedule: &Schedule,
-    now: DateTime<Utc>,
+    open_now: bool,
 ) -> AppResult<(CheckoutQuote, Vec<OrderItemSnapshot<'a>>)> {
     let mut lines = Vec::with_capacity(cart.items.len());
     let mut items = Vec::with_capacity(cart.items.len());
@@ -267,10 +332,65 @@ fn evaluate_cart<'a>(
             totals,
             issue,
             minimum_order_centavos: schedule.settings.minimum_centavos,
-            open_now: schedule.service_at(now, target.mode).is_some(),
+            open_now,
         },
         items,
     ))
+}
+
+pub(crate) struct AttemptFingerprint {
+    key_hash: [u8; 32],
+    request_hash: hmac::Tag,
+}
+
+impl AttemptFingerprint {
+    fn new(target: CheckoutTarget<'_>, request: &CheckoutRequest) -> AppResult<Self> {
+        if request.idempotency_key.get_version_num() != 4 {
+            return Err(INVALID_CART);
+        }
+        Ok(Self {
+            key_hash: Sha256::digest(request.idempotency_key.as_bytes()).into(),
+            request_hash: request_fingerprint(target, request)?,
+        })
+    }
+
+    /// A channel may fingerprint its original request before resolving rules that can change
+    /// between the initial checkout and an idempotent retry.
+    pub(crate) fn for_channel(
+        idempotency_key: Uuid,
+        channel: &str,
+        request: &impl serde::Serialize,
+    ) -> AppResult<Self> {
+        if idempotency_key.get_version_num() != 4 {
+            return Err(INVALID_CART);
+        }
+        let bytes = serde_json::to_vec(&("commerce.checkout.channel.v1", channel, request))
+            .map_err(|error| {
+                AppError::Internal(format!("checkout serialization failed: {error}"))
+            })?;
+        let key = hmac::Key::new(hmac::HMAC_SHA256, idempotency_key.as_bytes());
+        Ok(Self {
+            key_hash: Sha256::digest(idempotency_key.as_bytes()).into(),
+            request_hash: hmac::sign(&key, &bytes),
+        })
+    }
+
+    pub(crate) async fn replay<'e>(
+        &self,
+        executor: impl SqliteExecutor<'e>,
+        establishment_id: &str,
+        now: DateTime<Utc>,
+    ) -> AppResult<Option<CheckoutReceipt>> {
+        let attempt =
+            checkout_attempts::find_live(executor, establishment_id, &self.key_hash, now).await?;
+        let Some((stored_hash, public_id)) = attempt else {
+            return Ok(None);
+        };
+        if !bool::from(stored_hash.as_slice().ct_eq(self.request_hash.as_ref())) {
+            return Err(AppError::Validation("commerce.idempotency_mismatch"));
+        }
+        Ok(Some(CheckoutReceipt { public_id }))
+    }
 }
 
 fn request_fingerprint(
@@ -281,7 +401,7 @@ fn request_fingerprint(
         ServiceMode::Delivery => "delivery",
         ServiceMode::Pickup => "pickup",
     };
-    let bytes = serde_json::to_vec(&(
+    let legacy = (
         "commerce.checkout.v1",
         target.catalog_channel,
         fulfillment,
@@ -290,7 +410,12 @@ fn request_fingerprint(
         &request.customer,
         &request.address,
         request.payment,
-    ))
+    );
+    // Keep the exact original bytes for attempts already stored by total-only callers.
+    let bytes = match request.expected_totals {
+        Some(totals) => serde_json::to_vec(&("commerce.checkout.quote.v1", legacy, totals)),
+        None => serde_json::to_vec(&legacy),
+    }
     .map_err(|error| AppError::Internal(format!("checkout serialization failed: {error}")))?;
     // The client key is secret; only its digest is retained alongside the request HMAC.
     let key = hmac::Key::new(hmac::HMAC_SHA256, request.idempotency_key.as_bytes());

@@ -49,7 +49,7 @@ enum Commands {
     },
     /// Rebuild the read-only public hamburger menu at its fixed demonstration address
     SeedPublicDemo,
-    /// Republish all currently published menus (useful after template upgrades)
+    /// Rebuild published menus and eligible Delivery storefronts
     RepublishAll,
     /// SaaS billing provider operations (Inter webhook registration and renewal pass)
     Billing {
@@ -164,8 +164,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             let pool = init_pool(&config).await?;
             let locks = PublishLocks::default();
             let count = republish_all(&pool, &config, &locks).await?;
+            let storefront_count = qrcardapio::application::delivery::publishing::republish_all(
+                &pool,
+                &config,
+                qrcardapio::domain::commercial::catalog(),
+                &locks,
+            )
+            .await?;
             pool.close().await;
-            println!("Republished {count} menu snapshots.");
+            println!("Republished {count} menu snapshots and {storefront_count} storefronts.");
         }
         Commands::Operator { action } => operator_cli::run(&config, action).await?,
         Commands::Billing { action } => billing_cli::run(&config, action).await?,
@@ -207,7 +214,8 @@ async fn run_server(config: Config) -> Result<(), Box<dyn std::error::Error>> {
     let pool = init_pool(&config).await?;
     seed_public_demo(&pool, &config).await?;
     let bind_addr = config.bind_addr;
-    let state = AppState::new(config, pool.clone());
+    let mut state = AppState::new(config, pool.clone());
+    state.staff_push_public_key = push_sender.as_ref().map(|sender| sender.public_key());
 
     let maint_pool = pool.clone();
     let mcp_enabled = state.config.mcp_enabled;

@@ -42,6 +42,17 @@ pub async fn create_pending_in(
     create_for(tx, &order.establishment_id, &order.id, choice, at).await
 }
 
+/// Checkout just inserted this order in `tx`, before creating its first payment.
+pub(super) async fn create_initial_pending(
+    tx: &mut Transaction<'_, Sqlite>,
+    order: &Order,
+    choice: OfflinePaymentChoice,
+    at: DateTime<Utc>,
+) -> AppResult<OrderPayment> {
+    validate_collection(order, choice, at)?;
+    insert_pending(tx, order, choice, at).await
+}
+
 async fn create_for(
     tx: &mut Transaction<'_, Sqlite>,
     establishment_id: &str,
@@ -52,18 +63,22 @@ async fn create_for(
     let order = orders::get(&mut **tx, establishment_id, order_id)
         .await?
         .ok_or(AppError::NotFound("error.not_found"))?;
-    if !may_collect(order.state) || at < order.placed_at {
-        return Err(CONFLICT);
-    }
-    if !choice.accepts_change(order.total_centavos) {
-        return Err(AppError::Validation("commerce.invalid_cash_change"));
-    }
+    validate_collection(&order, choice, at)?;
     if order_payments::current(&mut **tx, establishment_id, order_id)
         .await?
         .is_some()
     {
         return Err(CONFLICT);
     }
+    insert_pending(tx, &order, choice, at).await
+}
+
+async fn insert_pending(
+    tx: &mut Transaction<'_, Sqlite>,
+    order: &Order,
+    choice: OfflinePaymentChoice,
+    at: DateTime<Utc>,
+) -> AppResult<OrderPayment> {
     let State::OrderPayment(initial) = definition(Machine::OrderPayment).initial else {
         return Err(AppError::Internal(
             "invalid payment machine initial state".into(),
@@ -72,8 +87,8 @@ async fn create_for(
     let payment = OrderPayment {
         id: Uuid::now_v7().to_string(),
         public_id: Uuid::new_v4().to_string(),
-        establishment_id: order.establishment_id,
-        order_id: order.id,
+        establishment_id: order.establishment_id.clone(),
+        order_id: order.id.clone(),
         requested_method: choice.method,
         method: choice.method,
         state: initial,
@@ -89,6 +104,20 @@ async fn create_for(
     };
     order_payments::insert(tx, &payment).await?;
     Ok(payment)
+}
+
+fn validate_collection(
+    order: &Order,
+    choice: OfflinePaymentChoice,
+    at: DateTime<Utc>,
+) -> AppResult<()> {
+    if !may_collect(order.state) || at < order.placed_at {
+        return Err(CONFLICT);
+    }
+    if !choice.accepts_change(order.total_centavos) {
+        return Err(AppError::Validation("commerce.invalid_cash_change"));
+    }
+    Ok(())
 }
 
 fn may_collect(state: OrderState) -> bool {

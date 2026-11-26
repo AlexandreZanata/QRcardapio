@@ -336,7 +336,7 @@ async fn sold_catalog_versions_and_lifecycles_cannot_change_silently() {
         error.to_string().contains("changed after it was sold"),
         "{error}"
     );
-    let launched_early = catalog_with(|m| m["modules"][1]["lifecycle"] = "available".into());
+    let launched_early = catalog_with(|m| m["modules"][2]["lifecycle"] = "available".into());
     let error = commercial_catalog::sync_registry(&h.pool, &launched_early)
         .await
         .unwrap_err();
@@ -346,24 +346,34 @@ async fn sold_catalog_versions_and_lifecycles_cannot_change_silently() {
             .contains("cannot move from planned to available"),
         "{error}"
     );
-    // A planned price may still change before launch, and legal transitions are accepted.
+    let delivery_early = catalog_with(|m| m["modules"][1]["lifecycle"] = "available".into());
+    let error = commercial_catalog::sync_registry(&h.pool, &delivery_early)
+        .await
+        .unwrap_err();
+    assert!(
+        error
+            .to_string()
+            .contains("cannot move from development to available"),
+        "{error}"
+    );
+    // A non-sellable price may still change before launch, and legal transitions are accepted.
     let refined = catalog_with(|m| {
         m["modules"][1]["versions"][0]["monthly_price_centavos"] = 7490.into();
-        m["modules"][1]["lifecycle"] = "development".into();
+        m["modules"][1]["lifecycle"] = "internal_preview".into();
     });
     commercial_catalog::sync_registry(&h.pool, &refined)
         .await
         .unwrap();
     let back = commercial_catalog::sync_registry(&h.pool, catalog()).await;
-    assert!(back.is_ok(), "development -> planned is allowed");
+    assert!(back.is_ok(), "internal_preview -> development is allowed");
 }
 
 #[tokio::test]
 async fn registry_tolerates_rollbacks_but_not_new_sellable_offers() {
     let h = harness(false).await;
-    // Walk QR Delivery through its legal launch path, one release at a time.
-    let mut previous = "planned";
-    for step in ["development", "internal_preview", "beta", "available"] {
+    // Walk QR Delivery from development through its legal launch path, one release at a time.
+    let mut previous = "development";
+    for step in ["internal_preview", "beta", "available"] {
         let release = catalog_with(|m| m["modules"][1]["lifecycle"] = step.into());
         commercial_catalog::sync_registry(&h.pool, &release)
             .await

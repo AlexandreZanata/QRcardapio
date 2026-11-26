@@ -53,8 +53,20 @@ O fluxo usa PKCE S256, estado de uso único vinculado ao cookie e nonce assinado
 
 Catalog options, published snapshots and order records are scoped by establishment. Composite foreign keys prevent cross-tenant links. The order engine uses IDs and quantities to resolve product names and prices from the current published snapshot. Order outbox payloads use strict schemas with enumerated reason codes and exclude personal data. Future channel entry points must resolve the tenant server-side and enforce the relevant commercial operation before using these internal services.
 
+The public option preference uses `TenantContext`, CSRF and the existing `menu.draft.edit` authorization rule. Menu publication reads the preference and catalog under the same tenant scope. Askama escapes the names and translations before writing the static snapshot.
+
 Increment 2 dashboard writes verify CSRF and apply the existing entitlement engine with tenant context. Customer and address data are scoped by composite keys and private dashboard paths. Customer export and erasure are owner-only operations, with responses served using `no-store`. Erasure removes address and personal delivery data in one write transaction while preserving amounts, items, states and the retained neighborhood label.
 
 Checkout expects a UUID v4 idempotency key. The attempt table stores its SHA-256 and a keyed digest of the request instead of a second copy of customer input. Offline payment recording checks tenant membership and the payment machine, with immutable audit history and no payment provider credentials or online payment methods.
 
+Checkout compares a submitted quote breakdown to amounts recomputed from the published snapshot and trusted channel inputs. The fingerprint binds the submitted confirmation fields. The expiry worker isolates each order's rejection and reports the order identifier and error key when another attempt is needed.
+
 Web Push endpoints and key material are scoped to the opted-in staff member and excluded from event payloads and diagnostics. The sender restricts destinations to supported HTTPS push service domains, disables redirects and proxies, encrypts payloads, and signs VAPID requests with a separately configured private key file. Removing the membership also removes its subscriptions and pending deliveries. The platform outbox diagnostic route uses `AdminContext` and `Cache-Control: no-store`.
+
+Outbox replay also requires `AdminContext` and a session-bound CSRF token. The request identifies the exact consumer, event and observed generation. The application verifies that the registered consumer still subscribes to that event type. The audit stores the admin account ID, event sequence, consumer, time and prior error key.
+
+## QR Delivery
+
+Storefront writes use same-origin JSON, bounded request bodies, IP rate limits, and a per-store phone limit for new checkout attempts. An idempotent replay returns the original result. Tracking requires the opaque order ID and returns no customer identity, contact or delivery address. Cancelling additionally requires the secret token issued in the receipt. Tracking and receipts send `Cache-Control: no-store`; the worker never caches API responses.
+
+Staff routes scope reads and writes to authenticated establishment members and verify CSRF on every mutation. Payment and order permissions use Commerce Core’s state machines and Delivery operations. Push endpoints reuse Commerce Core’s restricted provider validation and send only order references. LGPD export and erasure are handled by the existing tenant customer service, including optional notes added at checkout.

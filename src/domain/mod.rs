@@ -6,6 +6,7 @@ pub mod billing_cycle;
 pub mod category;
 pub mod commerce;
 pub mod commercial;
+pub mod delivery;
 pub mod entitlements;
 pub mod establishment;
 pub mod establishment_slug;

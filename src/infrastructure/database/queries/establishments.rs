@@ -47,15 +47,35 @@ pub async fn find_membership_for_account(
     let row = sqlx::query(
         "SELECT e.*, m.member_role AS membership_role
          FROM establishments e
-         INNER JOIN establishment_members m ON m.establishment_id = e.id
-         WHERE m.account_id = ?
-         ORDER BY m.created_at ASC
+         INNER JOIN (
+             SELECT establishment_id, account_id, member_role, created_at, 0 AS priority
+             FROM establishment_members
+             WHERE account_id = ?1
+             UNION ALL
+             SELECT establishment_id, account_id, member_role, created_at, 1 AS priority
+             FROM establishment_member_roles
+             WHERE account_id = ?1
+         ) m ON m.establishment_id = e.id
+         ORDER BY m.priority ASC, m.created_at ASC
          LIMIT 1",
     )
     .bind(account_id)
     .fetch_optional(pool)
     .await?;
     Ok(row.map(|r| (row_to_establishment(&r), r.get("membership_role"))))
+}
+
+pub async fn is_slug_locked(pool: &SqlitePool, est_id: &str) -> AppResult<bool> {
+    Ok(sqlx::query_scalar(
+        "SELECT EXISTS(
+             SELECT 1 FROM establishments WHERE id = ?1 AND published_version > 0
+             UNION ALL
+             SELECT 1 FROM storefronts WHERE establishment_id = ?1 AND published_version > 0
+         )",
+    )
+    .bind(est_id)
+    .fetch_one(pool)
+    .await?)
 }
 
 pub async fn find_establishment_by_id(
@@ -167,7 +187,12 @@ pub async fn update_establishment_profile(
              google_maps_url = CASE WHEN ? THEN ? ELSE google_maps_url END,
              google_review_url = CASE WHEN ? THEN ? ELSE google_review_url END,
              has_unpublished_changes = 1, updated_at = ?
-         WHERE id = ? AND (published_version = 0 OR slug = ?)
+         WHERE id = ? AND (
+             (published_version = 0 AND NOT EXISTS (
+                 SELECT 1 FROM storefronts s WHERE s.establishment_id = establishments.id AND s.published_version > 0
+             ))
+             OR slug = ?
+         )
          RETURNING *",
     )
     .bind(slug)

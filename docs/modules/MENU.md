@@ -50,6 +50,7 @@ The JSON contracts are authoritative. If this document disagrees with them, the 
 |---|---|---|
 | Establishment profile: name, slug, PT/EN/ES descriptions, accent color, logo, Google Maps and review links | [Tested] | `/dashboard/settings`, onboarding, MCP `update_account_settings` |
 | Categories and products: CRUD, ordering, visibility, sold-out flag, photo, EN/ES translations, integer prices | [Tested] | Free QR Core `catalog` operations (`menu.draft.edit`) |
+| Opt-in display of available variations and add-ons on static product pages | [Tested] | Draft setting in `/dashboard/menu/addons`. Publishing applies the preference and available options together. |
 | Editor pagination (12 product or empty-category rows per page) | [Tested] | `/dashboard/menu?page=N` |
 | Draft preview with a `noindex, nofollow` banner | [Tested] | `/dashboard/preview`, `/dashboard/theme.css` |
 | Atomic static publication, republication and unpublishing | [Tested] | `src/application/publishing.rs` |
@@ -231,6 +232,7 @@ These are the routes declared in `menu.json`. All of them are implemented.
 |---|---|---|---|
 | `GET` | `/c/{slug}` | public | Static `index.html` from disk with an `ETag`, `304` and `Cache-Control: public, max-age=60, stale-while-revalidate=300`. Returns the branded `404` when unpublished. Zero database queries. |
 | `GET` | `/dashboard/menu` | member | Editor with `?page=N`, 12 rows per page, tenant-scoped. |
+| `POST` | `/dashboard/menu/addons/public-options` | owner, manager | `_csrf` plus `menu.draft.edit`. Saves the display preference in the draft and redirects to the add-on groups page. |
 | `POST` | `/dashboard/publish` | member | `_csrf`, then `authorize(menu.publish)`. On success, redirects to `/dashboard` with `flash.published`. An entitlement denial redirects to `/dashboard/billing`. A rendering failure redirects with `error.publish_failed` and leaves the previous snapshot intact. |
 | `POST` | `/dashboard/unpublish` | member | `_csrf`. Removes the snapshot and redirects with `flash.unpublished`. |
 | `GET` | `/dashboard/qr` | member | QR preview for `/c/{slug}`. Sub-routes: `/dashboard/qr/print`, `/dashboard/qr.svg`, `/dashboard/qr.png`. |

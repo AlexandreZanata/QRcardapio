@@ -6,8 +6,17 @@
   <a href="/dashboard/menu" data-i18n="nav.menu">{{ page.t("nav.menu") }}</a>
   <h1 data-i18n="{{ page.title_key }}">{{ page.t(page.title_key) }}</h1>
   {% match view %}
-    {% when CatalogView::Groups with { groups } %}
+    {% when CatalogView::Groups with { groups, public_options_enabled } %}
     <div class="commerce-stack">
+      <section class="commerce-card">
+        <h2 data-i18n="commerce.catalog.public_options_title">{{ page.t("commerce.catalog.public_options_title") }}</h2>
+        <form class="commerce-stack" method="post" action="/dashboard/menu/addons/public-options">
+          {{ fields::csrf() }}
+          {{ fields::check("commerce.catalog.public_options_enabled", "enabled", *public_options_enabled) }}
+          <p data-i18n="commerce.catalog.public_options_hint">{{ page.t("commerce.catalog.public_options_hint") }}</p>
+          <div>{{ fields::submit("commerce.action.save") }}</div>
+        </form>
+      </section>
       {% for group in groups %}
         <a class="commerce-card commerce-row" href="/dashboard/menu/addons/{{ group.id }}">
           <strong data-pt="{{ group.name }}" data-en="{{ group.name_en }}" data-es="{{ group.name_es }}">{{ group.name }}</strong>

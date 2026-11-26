@@ -97,7 +97,7 @@ Run `scripts/bench_commerce.sh checkout`, `mixed`, `outbox`, or `push` on Linux.
 
 Rollback smoke test on 2026-11-25 applied migrations `20261125000015` through `20261125000018` on a temporary database initialized by Increment 2. `integrity_check` and `foreign_key_check` passed. Both release binaries returned HTTP 200 for `/readyz` and the public demo. Demo HTML matched after normalizing the build version in static asset URLs.
 
-The full-size outbox run on 2026-11-25 published 43,200 of 100,000 events before it was stopped during local I/O contention. On one pinned logical CPU with SQLite `FULL`, sampled windows recorded 103.3 and 27.5 published events/s. This run used the optimized cursor before the final Commerce write queue change. The 1,000 events/s launch gate remains open.
+The full-size outbox run on 2026-11-25 published 43,200 of 100,000 events before it was stopped during local I/O contention. On one pinned logical CPU with SQLite `FULL`, sampled windows recorded 103.3 and 27.5 published events/s. This run used the optimized cursor before the final Commerce write queue change. It missed the 1,000 events/s launch gate.
 
 The final outbox small-backlog run reached 674 events/s across 200 queued events and 136 events/s across 2,000 ongoing events. The steady-state publication lag was 515 ms at p95 and 613 ms at maximum.
 
@@ -108,10 +108,49 @@ The two 10-minute checkout runs used one pinned logical CPU each and shared an e
 | Orders and staff transitions | 2,391 | 320 | 3.90 | 279 ms | 620 ms |
 | Orders, staff transitions and static menu reads | 2,308 | 260 | 3.78 | 1,315 ms | 3,862 ms |
 
-The mixed run served 53,209 static menu reads. The menu p95 was 0.271 ms, or 1.74× the 0.155 ms pinned baseline. The 30 orders/s sustained load gate remains open.
+The mixed run served 53,209 static menu reads. The menu p95 was 0.271 ms, or 1.74× the 0.155 ms pinned baseline. Both local checkout runs missed the 30 orders/s sustained load gate.
 
 The Web Push benchmark completed all 1,000 synthetic deliveries in 20.747 seconds (2,892/min) after batching outcome writes. Peak concurrency was eight. Checkout p95 was 313 ms in the baseline and 102 ms with sends. The host's changing disk contention prevents attributing that difference to the push workload.
 
 Memory: 14.6 MB RSS idle, 61.4 MB after load. Database scaling with `bench-gen` matched the baseline (100 000 establishments: 768.9 MB, 19.5 s).
 
 Query plans: the entitlement view and the rebuilt `billing_coverage` view force an index-driven join order (`commercial_contracts` or `billing_checkouts` by establishment, then `idx_billing_payments_subscription`). Without it SQLite scanned every payment of the environment on each request, a cost that grows with the customer base. Contract periods and grants are read in one `UNION ALL` round trip. The enforced dashboard still performs one extra pooled query per request; caching the decision per request batch is unnecessary at current traffic. The enforced script lives in the session notes, not in `scripts/`, because it needs Asaas-shaped configuration.
+
+### VPS capacity validation
+
+Run the Commerce Core qualification on the VPS in a dedicated checkout and temporary directory on persistent storage. The fixtures create their own SQLite files. Keep `TMPDIR` on the same persistent filesystem for all scenarios, since a tmpfs run cannot measure durable writes. Run one workload at a time and record the CPU, memory limit, build commit, filesystem and pressure during the run.
+
+Set `COMMERCE_BENCH_CPU` to one allowed CPU and `COMMERCE_BENCH_MEMORY_MAX=1G` to cap the benchmark process in a systemd scope with swap disabled. The scope applies to the executable and leaves the build outside the runtime memory limit. Run `scripts/bench_commerce.sh checkout`, `mixed`, `outbox` and `push` separately, using the default 600-second checkout duration and 100,000-event backlog for qualification.
+
+Checkout reports new placements and replays separately. It reconciles each order against its items and exactly one pending collection record. The mixed workload measures `/c/{slug}` through the application router on the same host. Storefront traffic and public checkout HTTP status are validated when QR Delivery exposes those routes. The outbox benchmark checks the full backlog throughput and the maximum publication delay during the steady phase.
+
+The VPS baseline on 2026-11-25 used `b7c0793`, ext4, one pinned CPU and SQLite `FULL`. The 90-second checkout sample placed 3,481 orders and replayed 409 requests. Including staff drain, throughput was 36.36 orders/s and combined request p95/p99 were 37.76/339.29 ms. The outbox baseline had published 39,400 of 100,000 events after 292 seconds, with 99% utilization of the pinned CPU and near-zero disk pressure at the observation. The baseline was stopped after it exceeded the time implied by the 1,000 events/s target. These baseline measurements used the host's available memory. The candidate runs cap memory separately.
+
+Candidate `24a42a1` ran on the same VPS with CPU 3 pinned, a 1 GiB memory cap, swap disabled, and SQLite WAL with `synchronous=FULL`. The workloads ran sequentially against separate synthetic fixtures. Formatting, strict Clippy and 185 tests passed on the VPS, including replays during concurrent writes and rollback across consumers after dispatch interruption.
+
+| 600-second workload | Orders | Replays | Orders/s | Checkout p95 / p99 | Replay p95 / p99 |
+|---|---:|---:|---:|---:|---:|
+| Orders and staff transitions | 39,290 | 4,416 | 65.32 | 14.615 / 26.230 ms | 0.576 / 1.204 ms |
+| Orders, staff transitions and static menu reads | 41,566 | 4,672 | 69.17 | 14.174 / 25.907 ms | 0.553 / 0.942 ms |
+
+Both runs passed the order throughput and latency gates and completed with zero errors, duplicate orders or monetary discrepancies. The mixed run served 52,933 static menu reads with p95 of 0.798 ms, 1.344× the pinned reference of 0.594 ms, within the 2× limit.
+
+The outbox published all 100,000 queued events for two no-op subscribers in 9.610 seconds (10,406.15 events/s). The steady run published 2,000 events at 200/s, with p95 lag of 216 ms and maximum lag of 255 ms.
+
+Web Push delivered 1,000 synthetic notifications in 13.693 seconds (4,381.71/min), with at most eight sends in flight. Observed checkout p95 rose from 6.295 ms in the reference run to 9.063 ms with active sends, within the benchmark's 300 ms latency budget.
+
+### VPS replay validation
+
+The admin replay candidate passed formatting, strict Clippy, 187 functional tests and a locked release build on the VPS on 2026-11-25. In the isolated HTTP check, an admin scheduled an original dead-letter event (`303`), and the duplicate submission received `409`. The dispatcher recorded two receipts for that event and its parked successor. The previous release `b7c0793` started against the database with migration `20261125000019`, served the demo and `/readyz` with HTTP 200, and retained the single audit record. SQLite integrity and foreign key checks passed.
+
+The outbox release benchmark used the same pinned CPU, 1 GiB memory cap without swap and persistent SQLite WAL with `synchronous=FULL`. It drained 100,000 events with two consumers in 9.236 seconds (10,827.35 events/s). At 200 events/s in steady state, the p95 publication delay was 211 ms and the maximum was 220 ms.
+
+### VPS catalog, checkout and expiry validation
+
+The combined candidate passed formatting, strict Clippy, 193 functional tests and a locked release build on the VPS on 2026-11-26. The catalog regressions check immutable history, tenant and channel scoping, and concurrency on repeated availability updates. The checkout regressions check repricing when a fee and discount move by the same amount, idempotent retries and the legacy request digest. The expiry regression injects failures across an entire batch and verifies that a healthy order advances before later-eligible retries. It then restores the operation and checks each deferred order's history and event.
+
+The isolated HTTP test upgraded a database from migration `20261125000019` to `20261126000020`. The candidate and both previous binaries (migration lists through 19 and 18) served the demo and `/readyz` with HTTP 200. SQLite integrity and foreign key checks passed after the rollback test.
+
+The 600-second mixed benchmark exercised full quote confirmation in release on CPU 3, with a 1 GiB memory cap, zero swap and SQLite WAL using `synchronous=FULL` on ext4. With 200 establishments and 64 clients, it placed 50,182 orders and replayed 5,631 requests. Including staff transitions, throughput was 83.51 orders/s. Checkout p95 and p99 were 11.888 ms and 20.632 ms. Replay p95 and p99 were 0.494 ms and 0.779 ms. There were zero errors, duplicate orders or monetary discrepancies.
+
+The mixed workload served 53,113 static menu reads. Menu p95 was 0.718 ms, or 1.864× the pinned baseline of 0.385 ms, within the 2× limit.

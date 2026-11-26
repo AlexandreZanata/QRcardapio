@@ -145,6 +145,10 @@ impl WebPushSender {
         })
     }
 
+    pub fn public_key(&self) -> String {
+        URL_SAFE_NO_PAD.encode(self.key.public_key().as_ref())
+    }
+
     pub(crate) async fn send(
         &self,
         subscription: &PushSubscription,
@@ -240,7 +244,7 @@ impl WebPushSender {
             .sign(&SystemRandom::new(), jwt.as_bytes())
             .map_err(|_| ())?;
         let signature = URL_SAFE_NO_PAD.encode(signature.as_ref());
-        let public_key = URL_SAFE_NO_PAD.encode(self.key.public_key().as_ref());
+        let public_key = self.public_key();
         Ok(format!("vapid t={jwt}.{signature}, k={public_key}"))
     }
 }

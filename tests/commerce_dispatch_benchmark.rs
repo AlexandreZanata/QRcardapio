@@ -87,11 +87,11 @@ async fn drain_and_steady_state() {
     let started = Instant::now();
     drain(pool).await;
     let duration = started.elapsed().as_secs_f64();
+    let drain_rate = backlog as f64 / duration;
     assert_eq!(published(pool).await, backlog);
     println!(
-        "dispatcher backlog: {backlog} events, {} consumers, {duration:.3} s, {:.0} events/s",
+        "dispatcher backlog: {backlog} events, {} consumers, {duration:.3} s, {drain_rate:.2} events/s",
         CONSUMERS.len(),
-        backlog as f64 / duration,
     );
 
     let expected = backlog + BURST * BURSTS;
@@ -134,11 +134,19 @@ async fn drain_and_steady_state() {
         .await
         .unwrap();
     assert_eq!(receipts, expected * CONSUMERS.len() as i64);
+    let maximum_lag = *samples.last().unwrap();
     println!(
         "dispatcher steady: {} events, {duration:.3} s, {:.0} events/s, lag p95={} ms, max={} ms",
         samples.len(),
         samples.len() as f64 / duration,
         samples[(samples.len() * 95).div_ceil(100) - 1],
-        samples.last().unwrap(),
+        maximum_lag,
     );
+    assert!(
+        maximum_lag <= 2_000,
+        "steady-state lag was {maximum_lag} ms"
+    );
+    if backlog >= BACKLOG {
+        assert!(drain_rate >= 1_000.0, "backlog drain was {drain_rate:.2}/s");
+    }
 }

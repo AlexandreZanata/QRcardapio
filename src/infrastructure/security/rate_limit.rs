@@ -1,6 +1,7 @@
 use std::net::IpAddr;
 use std::num::NonZeroU32;
 use std::sync::Arc;
+use std::time::Duration;
 
 use governor::clock::DefaultClock;
 use governor::state::keyed::DashMapStateStore;
@@ -8,7 +9,7 @@ use governor::{Quota, RateLimiter};
 
 type KeyedLimiter<K> = RateLimiter<K, DashMapStateStore<K>, DefaultClock>;
 
-/// Bounded per-IP and per-account GCRA rate limiters for abuse-sensitive endpoints.
+/// Bounded per-IP, per-account, and per-phone GCRA rate limiters for abuse-sensitive endpoints.
 #[derive(Clone)]
 pub struct AppRateLimiters {
     pub mcp_oauth_ip: Arc<KeyedLimiter<IpAddr>>,
@@ -22,6 +23,11 @@ pub struct AppRateLimiters {
     pub billing_establishment: Arc<KeyedLimiter<String>>,
     pub tool_qr_ip: Arc<KeyedLimiter<IpAddr>>,
     pub affiliate_click_ip: Arc<KeyedLimiter<IpAddr>>,
+    pub delivery_quote_ip: Arc<KeyedLimiter<IpAddr>>,
+    pub delivery_order_ip: Arc<KeyedLimiter<IpAddr>>,
+    pub delivery_order_phone: Arc<KeyedLimiter<String>>,
+    pub delivery_track_ip: Arc<KeyedLimiter<IpAddr>>,
+    pub delivery_cancel_ip: Arc<KeyedLimiter<IpAddr>>,
 }
 
 impl Default for AppRateLimiters {
@@ -32,6 +38,9 @@ impl Default for AppRateLimiters {
 
 impl AppRateLimiters {
     pub fn new() -> Self {
+        let phone_quota = Quota::with_period(Duration::from_secs(200))
+            .expect("non-zero")
+            .allow_burst(NonZeroU32::new(3).expect("non-zero"));
         Self {
             mcp_oauth_ip: Arc::new(RateLimiter::dashmap(Quota::per_minute(
                 NonZeroU32::new(120).expect("non-zero"),
@@ -66,6 +75,19 @@ impl AppRateLimiters {
             affiliate_click_ip: Arc::new(RateLimiter::dashmap(Quota::per_minute(
                 NonZeroU32::new(60).expect("non-zero"),
             ))),
+            delivery_quote_ip: Arc::new(RateLimiter::dashmap(Quota::per_minute(
+                NonZeroU32::new(60).expect("non-zero"),
+            ))),
+            delivery_order_ip: Arc::new(RateLimiter::dashmap(Quota::per_minute(
+                NonZeroU32::new(5).expect("non-zero"),
+            ))),
+            delivery_order_phone: Arc::new(RateLimiter::dashmap(phone_quota)),
+            delivery_track_ip: Arc::new(RateLimiter::dashmap(Quota::per_minute(
+                NonZeroU32::new(120).expect("non-zero"),
+            ))),
+            delivery_cancel_ip: Arc::new(RateLimiter::dashmap(Quota::per_minute(
+                NonZeroU32::new(5).expect("non-zero"),
+            ))),
         }
     }
 
@@ -93,5 +115,15 @@ impl AppRateLimiters {
         self.tool_qr_ip.shrink_to_fit();
         self.affiliate_click_ip.retain_recent();
         self.affiliate_click_ip.shrink_to_fit();
+        self.delivery_quote_ip.retain_recent();
+        self.delivery_quote_ip.shrink_to_fit();
+        self.delivery_order_ip.retain_recent();
+        self.delivery_order_ip.shrink_to_fit();
+        self.delivery_order_phone.retain_recent();
+        self.delivery_order_phone.shrink_to_fit();
+        self.delivery_track_ip.retain_recent();
+        self.delivery_track_ip.shrink_to_fit();
+        self.delivery_cancel_ip.retain_recent();
+        self.delivery_cancel_ip.shrink_to_fit();
     }
 }

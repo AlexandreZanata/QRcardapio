@@ -8,18 +8,18 @@ use crate::infrastructure::storage::atomic_write_file;
 // The HTML can remain usable for max-age=60 plus stale-while-revalidate=300.
 const HTML_CACHE_WINDOW: Duration = Duration::from_secs(360);
 
-pub(super) struct RetiredAssets {
+pub(crate) struct RetiredAssets {
     root: PathBuf,
 }
 
 impl RetiredAssets {
-    pub(super) fn new(staging_dir: &Path, slug: &str) -> Self {
+    pub(crate) fn new(staging_dir: &Path, slug: &str) -> Self {
         Self {
             root: staging_dir.join("retired-assets").join(slug),
         }
     }
 
-    pub(super) fn keep_live(&self, folder: &str, filename: &str) -> io::Result<()> {
+    pub(crate) fn keep_live(&self, folder: &str, filename: &str) -> io::Result<()> {
         match fs::remove_file(self.root.join(folder).join(filename)) {
             Err(error) if error.kind() == ErrorKind::NotFound => Ok(()),
             result => result,
@@ -30,7 +30,7 @@ impl RetiredAssets {
         self.root.join("product-refs")
     }
 
-    pub(super) fn prune(
+    pub(crate) fn prune(
         &self,
         dir: &Path,
         folder: &str,
@@ -72,7 +72,7 @@ impl RetiredAssets {
         }
     }
 
-    pub(super) fn clear(self) {
+    pub(crate) fn clear(self) {
         let _ = fs::remove_dir_all(self.root);
     }
 }

@@ -1,0 +1,58 @@
+{% extends "layouts/dashboard.html" %}
+{% import "dashboard/commerce/fields.html" as fields %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="/static/css/dashboard-commerce.css">
+<link rel="stylesheet" href="/static/css/delivery-orders.css">
+{% endblock %}
+
+{% block content %}
+<div class="commerce-page">
+  <header class="commerce-row">
+    <div>
+      <h1 data-i18n="delivery.orders.heading">{{ page.t("delivery.orders.heading") }}</h1>
+      <p data-i18n="delivery.orders.subtitle">{{ page.t("delivery.orders.subtitle") }}</p>
+    </div>
+    <div class="commerce-actions">
+      <button class="btn btn-secondary" type="button" data-delivery-sound aria-pressed="false" data-i18n="delivery.alert.sound">{{ page.t("delivery.alert.sound") }}</button>
+      {% if let Some(key) = push_key %}
+      <button class="btn btn-secondary" type="button" hidden data-delivery-push data-public-key="{{ key }}" data-scope="{{ push_scope }}" data-csrf="{{ csrf_token }}" aria-pressed="false" data-i18n="delivery.alert.push">{{ page.t("delivery.alert.push") }}</button>
+      {% endif %}
+      <a class="btn btn-secondary" href="/dashboard/delivery/orders.csv?state={{ state_filter }}&date={{ date_filter }}" data-i18n="delivery.orders.export_csv">{{ page.t("delivery.orders.export_csv") }}</a>
+      {% if can_settings %}<a class="btn btn-secondary" href="/dashboard/delivery/settings" data-i18n="delivery.settings.heading">{{ page.t("delivery.settings.heading") }}</a>{% endif %}
+    </div>
+  </header>
+
+  <p class="field-hint" aria-live="polite" data-delivery-alert-status
+     data-enabled="{{ page.t("delivery.alert.enabled") }}" data-disabled="{{ page.t("delivery.alert.disabled") }}"
+     data-error="{{ page.t("delivery.alert.error") }}"></p>
+
+  <section class="commerce-card">
+    <form method="get" action="/dashboard/delivery/orders" class="commerce-form-grid">
+      <label class="commerce-field">
+        <span data-i18n="delivery.orders.filter_state">{{ page.t("delivery.orders.filter_state") }}</span>
+        <select name="state">
+          <option value="" data-i18n="delivery.orders.state_all">{{ page.t("delivery.orders.state_all") }}</option>
+          <option value="placed"{% if state_filter == "placed" %} selected{% endif %} data-i18n="storefront.state_placed">{{ page.t("storefront.state_placed") }}</option>
+          <option value="accepted"{% if state_filter == "accepted" %} selected{% endif %} data-i18n="storefront.state_accepted">{{ page.t("storefront.state_accepted") }}</option>
+          <option value="preparing"{% if state_filter == "preparing" %} selected{% endif %} data-i18n="storefront.state_preparing">{{ page.t("storefront.state_preparing") }}</option>
+          <option value="ready"{% if state_filter == "ready" %} selected{% endif %} data-i18n="storefront.state_ready">{{ page.t("storefront.state_ready") }}</option>
+          <option value="completed"{% if state_filter == "completed" %} selected{% endif %} data-i18n="storefront.state_completed">{{ page.t("storefront.state_completed") }}</option>
+          <option value="rejected"{% if state_filter == "rejected" %} selected{% endif %} data-i18n="storefront.state_rejected">{{ page.t("storefront.state_rejected") }}</option>
+          <option value="cancelled"{% if state_filter == "cancelled" %} selected{% endif %} data-i18n="storefront.state_cancelled">{{ page.t("storefront.state_cancelled") }}</option>
+        </select>
+      </label>
+      <label class="commerce-field">
+        <span data-i18n="commerce.hours.date">{{ page.t("commerce.hours.date") }}</span>
+        <input type="date" name="date" value="{{ date_filter }}">
+      </label>
+      <div>
+        <button type="submit" class="btn btn-primary" data-i18n="commerce.action.apply">{{ page.t("commerce.action.apply") }}</button>
+      </div>
+    </form>
+  </section>
+
+  {% include "dashboard/delivery/order_list.html" %}
+</div>
+<script type="module" src="/static/js/delivery-order-center.js"></script>
+{% endblock %}

@@ -1,0 +1,28 @@
+<div class="product-catalog-options">
+  {% if !catalog_options.variations.is_empty() %}
+  <section class="product-options" aria-labelledby="product-variations">
+    <h2 id="product-variations" data-i18n="commerce.catalog.variations">{{ self.t("commerce.catalog.variations") }}</h2>
+    <ul class="product-choice-list" role="list">
+      {% for choice in catalog_options.variations %}
+      <li>
+        <span data-pt="{{ choice.name.pt }}" data-en="{{ choice.name.en }}" data-es="{{ choice.name.es }}">{{ choice.name.display }}</span>
+        <span class="product-extra-price" data-price-centavos="{{ choice.price_centavos }}">{{ choice.price_display }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endif %}
+  {% for group in catalog_options.addon_groups %}
+  <section class="product-options" aria-labelledby="product-addon-group-{{ loop.index }}">
+    <h2 id="product-addon-group-{{ loop.index }}" data-pt="{{ group.name.pt }}" data-en="{{ group.name.en }}" data-es="{{ group.name.es }}">{{ group.name.display }}</h2>
+    <ul class="product-choice-list" role="list">
+      {% for choice in group.options %}
+      <li>
+        <span data-pt="{{ choice.name.pt }}" data-en="{{ choice.name.en }}" data-es="{{ choice.name.es }}">{{ choice.name.display }}</span>
+        <span class="product-extra-price">+ <span data-price-centavos="{{ choice.price_centavos }}">{{ choice.price_display }}</span></span>
+      </li>
+      {% endfor %}
+    </ul>
+  </section>
+  {% endfor %}
+</div>

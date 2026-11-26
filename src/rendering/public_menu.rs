@@ -9,6 +9,7 @@ use crate::i18n::{Catalog, Locale, format_price};
 use crate::seo::schema::public_menu_json_ld;
 use crate::seo::{absolute_url, normalized_base_url, og_image_url};
 
+mod catalog_options;
 mod product_page;
 pub use product_page::render_product_detail_html;
 

@@ -24,6 +24,7 @@ pub struct DeadLetter {
     pub seq: i64,
     pub attempts: i64,
     pub error_key: String,
+    pub replay_generation: i64,
 }
 
 #[derive(Debug, Serialize, sqlx::FromRow)]
@@ -76,7 +77,12 @@ pub async fn status(pool: &SqlitePool, now: DateTime<Utc>) -> AppResult<Dispatch
     .fetch_all(&mut *tx)
     .await?;
     let dead_letters = sqlx::query_as(
-        "SELECT f.consumer, e.event_id, e.event_type, e.seq, f.attempts, f.error_key
+        "SELECT f.consumer, e.event_id, e.event_type, e.seq, f.attempts, f.error_key,
+                COALESCE((
+                    SELECT a.id FROM event_consumer_replays a
+                    WHERE a.consumer = f.consumer AND a.event_seq = f.event_seq
+                    ORDER BY a.id DESC LIMIT 1
+                ), 0) AS replay_generation
          FROM event_consumer_failures f JOIN domain_events e ON e.seq = f.event_seq
          WHERE f.status = 'dead' ORDER BY e.seq DESC, f.consumer LIMIT 50",
     )

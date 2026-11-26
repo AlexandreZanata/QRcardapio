@@ -9,5 +9,5 @@ mod capability;
 pub use access::{
     AccessSource, CoveragePeriod, EntitlementDecision, EntitlementStatus, GrantKind, resolve,
 };
-pub use authorization::{AfterExpiry, MemberRole, Operation, OperationalStatus};
+pub use authorization::{ActorRole, AfterExpiry, MemberRole, Operation, OperationalStatus};
 pub use capability::Capability;

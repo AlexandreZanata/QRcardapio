@@ -40,6 +40,8 @@ Already-published menus keep serving their saved snapshot until they are republi
 
 An optional Google review invitation is rendered into the static HTML on publication. The direct review link takes precedence over the general Google Maps profile link. Removing both links and publishing removes the invitation. Public scans do not fetch any Google data or open the Google link until the visitor chooses it.
 
+Owners and managers can opt in to public product options in the add-on groups dashboard. Publication captures the preference, available options and draft revision in the same SQLite read transaction. The product detail page shows variation prices and the additional charges for linked add-ons. It uses the same language and currency formatting as the menu. Saving the preference updates the authenticated product preview. The public snapshot reads that preference on the next publication, and automatic republication skips pending drafts.
+
 Owner profile updates use the same per-establishment async mutex within the HTTP process. The update statement also checks the stored publication version so a form opened before publication cannot rename a published path.
 
 ## Public demonstration menu
@@ -64,3 +66,9 @@ Owner profile updates use the same per-establishment async mutex within the HTTP
 ## Assinatura e arquivos em preparação
 
 Com Asaas habilitado, a ação de publicar do painel verifica a cobertura da assinatura antes de renderizar o snapshot. A verificação se aplica à gravação de versões novas. A entrega dos snapshots existentes continua estática. No Caddy, `/c/.tmp` e seus descendentes retornam `404` inclusive durante uma publicação.
+
+## QR Delivery storefronts
+
+The ordering storefront lives in `DATA_DIR/storefronts/{slug}`, with its own publication lock and versions separate from the menu on `/c/{slug}`. Public HTML, manifest, worker, images and versioned catalog are served from disk, without SQLite. Consumer quotes and orders use the committed catalog plus current fulfillment rules on the server. Derived publications reuse published product content so changing Delivery settings cannot publish menu drafts.
+
+The committed storefront presentation is retained in SQLite for recovery. `republish-all` restores eligible published storefronts from that version. The service worker uses tenant-scoped caches under `/s/{slug}/`. An offline storefront allows browsing and disables ordering. Transactional API requests and customer tracking data stay outside its cache.

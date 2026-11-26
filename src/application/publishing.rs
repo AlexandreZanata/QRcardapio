@@ -19,7 +19,7 @@ use crate::rendering::public_menu::{generate_brand_theme_css, render_public_menu
 
 mod locks;
 mod product_pages;
-mod retired_assets;
+pub(in crate::application) mod retired_assets;
 pub use locks::PublishLocks;
 use product_pages::ProductPages;
 use retired_assets::RetiredAssets;

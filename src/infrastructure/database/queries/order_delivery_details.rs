@@ -24,7 +24,7 @@ pub(crate) async fn insert(
     .bind(&address.complement)
     .bind(&address.city)
     .bind(&address.uf)
-    .bind(&address.cep)
+    .bind((!address.cep.is_empty()).then_some(address.cep.as_str()))
     .bind(&address.reference)
     .execute(&mut *conn)
     .await?;

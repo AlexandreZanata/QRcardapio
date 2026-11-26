@@ -51,4 +51,5 @@ See [Commerce Core §11](COMMERCE_CORE.md#11-dispatcher) for worker and notifica
 3. Exponential backoff up to 10 attempts, then dead-letter per consumer; later events of the same aggregate are parked for that consumer to keep per-aggregate order, other aggregates continue.
 4. The Commerce Core `system` consumers scope their work to the recorded tenant. Future module consumers must re-check their own capability before creating protected work.
 5. `event_dispatch_publications.published_at` and the partial pending index track publication independently of the source event. Acknowledgement requires a receipt from each subscribed consumer.
-6. A daily `SubscriptionExpired` producer and event archival are planned. Financial and audit events follow the legal retention policy.
+6. A platform admin can schedule a dead-letter replay from `/admin/outbox/recovery`. The audit row and the reset to `parked` commit together. The latest replay ID is the generation the admin observed, so an older submission cannot schedule a later dead-letter cycle. The dispatcher executes the existing event and records its receipt through the usual transaction.
+7. A daily `SubscriptionExpired` producer and event archival are planned. Financial and audit events follow the legal retention policy.

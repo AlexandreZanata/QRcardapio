@@ -67,6 +67,17 @@ docker compose start app
 - If a snapshot file becomes corrupted or missing on disk without touching SQLite, run `qrcardapio republish-all` to rebuild all published static menus cleanly.
 - Never copy an active `qrcardapio.sqlite` without `VACUUM INTO` or stopping the process; never mount `DATA_DIR/db` over NFS.
 
+### Reprocessamento de eventos do outbox
+
+1. Quando `/readyz` indicar `outbox_lag`, abra **Operação → Reprocessamento de eventos** com uma conta administradora. `/admin/outbox` fornece os contadores por consumidor e a idade do evento pendente mais antigo.
+2. Localize a falha pelo consumidor, identificador do evento e chave do erro. Corrija a causa na aplicação ou no ambiente antes de solicitar o reprocessamento.
+3. Use **Reprocessar** na linha do evento. O worker recebe um novo ciclo de tentativas para aquele consumidor e mantém os eventos posteriores do mesmo agregado em espera até o sucesso.
+4. Consulte o diagnóstico novamente para confirmar a queda dos contadores de falhas e eventos em espera. Um `409` pede atualizar o diagnóstico antes de tentar novamente. Se o mesmo evento voltar a falhar, use os novos detalhes para investigar a causa. A tabela `event_consumer_replays` registra a operação aceita.
+
+### Falha na expiração de um pedido
+
+Se o log indicar que a expiração foi adiada, identifique o pedido pelo ID registrado e investigue a chave do erro. O pedido segue na fila com nova tentativa após 30 segundos. Os outros pedidos vencidos podem avançar. Após corrigir a causa, confirme que o pedido foi rejeitado e que `OrderRejected` entrou no outbox antes de verificar a compensação do pagamento.
+
 ## Habilitação do Asaas
 
 1. Separe a implantação de homologação da produção, inclusive banco, domínio HTTPS e chave de API. Configure `PUBLIC_BASE_URL` com a origem pública HTTPS e `COOKIE_SECURE=true`.
@@ -222,3 +233,12 @@ Asaas, Stripe and Inter can be active at the same time ([ADR-011](../decisions/A
 7. Sandbox homologation: save payer data, subscribe with "Pix ou boleto", confirm the charge appears in Inter and on `/dashboard/billing` (Pix QR, digitable line, PDF); simulate payment with `POST /cobranca/v3/cobrancas/{codigoSolicitacao}/pagar` (`{"pagarCom":"PIX"}`, sandbox only, mTLS); confirm the callback (or the next pass) grants coverage; cancel renewal and confirm pending charges become `CANCELADO`.
 
 Refunds of Inter charges are manual (boleto has no refund API; Pix refunds need the end-to-end id). They are not reflected automatically — record the decision and keep the coverage consistent manually until the planned operator command exists.
+
+## QR Delivery preview and recovery
+
+The compiled catalog ships with Delivery in `development`. It cannot grant or sell the module. Preview and production lifecycle changes follow [the Delivery release gates](../modules/DELIVERY.md#27-commercial-launch-requirements).
+
+- Keep `DATA_DIR/storefronts` on a persistent filesystem together with SQLite and original media. Compose mounts the storefront volume read-only in Caddy and blocks the `.tmp` directory. The native service serves the same files on the Axum fallback without SQLite.
+- If the storefront files are lost after a restore, run `qrcardapio republish-all`. It can reconstruct eligible published storefronts from the committed presentation and media. Preserve the publication lock directory while commands are running.
+- Staff sound works with the foreground order center. Browser push uses the existing `COMMERCE_VAPID_PRIVATE_KEY_FILE` and `COMMERCE_VAPID_CONTACT` settings and requires permission on each device. Keep the private key available only to the app.
+- During an order-center network outage, keep the last list visible and verify the current order state after reconnecting before taking action. Use the Commerce Core operator commands for expired orders and the outbox dead-letter queue.

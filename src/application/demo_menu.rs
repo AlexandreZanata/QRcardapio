@@ -97,6 +97,7 @@ pub async fn seed_public_demo(pool: &SqlitePool, config: &Config) -> AppResult<(
                 },
                 image: Some(image),
                 choices: choices::for_product(item.id),
+                catalog_options: Default::default(),
             });
         }
         snapshot.categories.push(category);

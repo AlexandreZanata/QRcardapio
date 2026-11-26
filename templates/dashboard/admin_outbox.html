@@ -1,0 +1,71 @@
+{% extends "layouts/dashboard.html" %}
+{% import "components/panel_empty.html" as empty %}
+{% import "components/panel_controls.html" as controls %}
+
+{% block content %}
+<div class="page-top dashboard-overview-top">
+  <div>
+    <h1 data-i18n="admin_outbox.title">{{ page.t("admin_outbox.title") }}</h1>
+    <p data-i18n="admin_outbox.description">{{ page.t("admin_outbox.description") }}</p>
+  </div>
+  {{ controls::link("/admin", "common.back", "back") }}
+</div>
+
+<section class="card dashboard-table-card" aria-labelledby="dead-letters-heading">
+  <h2 class="dashboard-card-heading" id="dead-letters-heading" data-i18n="admin_outbox.dead_letters">
+    {{ page.t("admin_outbox.dead_letters") }}
+  </h2>
+  {% if dead_letters.is_empty() %}
+  {{ empty::message("admin_outbox.empty") }}
+  {% else %}
+  <div class="table-wrap" role="region" aria-labelledby="dead-letters-heading" tabindex="0">
+    <table class="mobile-table" role="table">
+      <thead role="rowgroup">
+        <tr role="row">
+          <th scope="col" role="columnheader" data-i18n="admin_outbox.event">{{ page.t("admin_outbox.event") }}</th>
+          <th scope="col" role="columnheader" data-i18n="admin_outbox.consumer">{{ page.t("admin_outbox.consumer") }}</th>
+          <th scope="col" role="columnheader" data-i18n="admin_outbox.error">{{ page.t("admin_outbox.error") }}</th>
+          <th scope="col" role="columnheader" data-i18n="admin_outbox.attempts">{{ page.t("admin_outbox.attempts") }}</th>
+          <th scope="col" role="columnheader" data-i18n="admin_outbox.action">{{ page.t("admin_outbox.action") }}</th>
+        </tr>
+      </thead>
+      <tbody role="rowgroup">
+        {% for event in dead_letters %}
+        <tr role="row">
+          <td role="cell">
+            {{ controls::mobile_cell_label("admin_outbox.event") }}
+            <div class="mobile-table-value" id="dead-letter-{{ loop.index }}">
+              <strong>{{ event.event_type }}</strong><br>
+              <code>{{ event.event_id }}</code>
+            </div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("admin_outbox.consumer") }}
+            <div class="mobile-table-value"><code>{{ event.consumer }}</code></div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("admin_outbox.error") }}
+            <div class="mobile-table-value"><code>{{ event.error_key }}</code></div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("admin_outbox.attempts") }}
+            <div class="mobile-table-value">{{ event.attempts }}</div>
+          </td>
+          <td role="cell">
+            {{ controls::mobile_cell_label("admin_outbox.action") }}
+            <form class="mobile-table-value" method="post" action="/admin/outbox/replay">
+              <input type="hidden" name="_csrf" value="{{ csrf_token }}">
+              <input type="hidden" name="consumer" value="{{ event.consumer }}">
+              <input type="hidden" name="event_id" value="{{ event.event_id }}">
+              <input type="hidden" name="generation" value="{{ event.replay_generation }}">
+              <button class="btn panel-action" type="submit" aria-describedby="dead-letter-{{ loop.index }}" data-i18n="admin_outbox.replay">{{ page.t("admin_outbox.replay") }}</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

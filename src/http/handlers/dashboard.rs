@@ -7,6 +7,7 @@ use axum_extra::extract::CookieJar;
 use serde::Deserialize;
 
 use crate::app::AppState;
+use crate::application::delivery::access::staff_access;
 use crate::application::entitlements::{Denial, authorize, can_publish_menu};
 use crate::application::publishing::{publish_establishment, unpublish_establishment};
 use crate::domain::account::AccountRole;
@@ -17,7 +18,7 @@ use crate::http::middleware::auth::{TenantContext, verify_csrf};
 use crate::http::middleware::locale::RequestLocale;
 use crate::http::responses::{take_flash, with_flash_redirect};
 use crate::infrastructure::database::queries::{
-    list_categories_for_est, list_products_for_est, load_menu_snapshot,
+    list_categories_for_est, list_products_for_est, load_menu_preview,
 };
 use crate::rendering::dashboard::OverviewTemplate;
 use crate::rendering::public_menu::{
@@ -40,6 +41,14 @@ pub async fn overview_page(
     let categories = list_categories_for_est(&state.pool, &est.id).await?;
     let products = list_products_for_est(&state.pool, &est.id).await?;
     let can_publish = can_publish_menu(&state.pool, state.billing.enforcement(), &est.id).await?;
+    let delivery = staff_access(
+        &state.pool,
+        &state.commercial_catalog,
+        state.billing.enforcement(),
+        &est.id,
+        tenant.role,
+    )
+    .await?;
     let (jar, flash) = take_flash(jar);
 
     let tpl = OverviewTemplate {
@@ -60,6 +69,7 @@ pub async fn overview_page(
         product_count: products.len(),
         billing_enabled: state.billing.enabled(),
         can_publish,
+        delivery,
     };
     Ok((jar, render_html(&tpl, StatusCode::OK)?).into_response())
 }
@@ -81,7 +91,7 @@ pub async fn preview_menu_page(
     RequestLocale(locale): RequestLocale,
     tenant: TenantContext,
 ) -> AppResult<Response> {
-    let snapshot = load_menu_snapshot(&state.pool, &tenant.establishment.id, true)
+    let snapshot = load_menu_preview(&state.pool, &tenant.establishment.id)
         .await?
         .ok_or(AppError::NotFound("error.not_found"))?;
 
@@ -103,7 +113,7 @@ pub async fn preview_product_page(
     tenant: TenantContext,
     Path(id): Path<String>,
 ) -> AppResult<Response> {
-    let snapshot = load_menu_snapshot(&state.pool, &tenant.establishment.id, true)
+    let snapshot = load_menu_preview(&state.pool, &tenant.establishment.id)
         .await?
         .ok_or(AppError::NotFound("error.not_found"))?;
     let (category, product) = snapshot

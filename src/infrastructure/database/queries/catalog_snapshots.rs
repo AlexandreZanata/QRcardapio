@@ -1,9 +1,8 @@
-use std::collections::HashMap;
-
 use sqlx::{SqliteConnection, SqlitePool};
 
-use super::{addon_groups, addon_options, product_variations, publications};
-use crate::domain::commerce::catalog_snapshot::{CatalogAddonGroup, CatalogContent};
+use super::{menu_options, publications};
+use crate::domain::commerce::catalog_snapshot::{AvailabilityTarget, CatalogContent};
+use crate::domain::publication::MenuSnapshot;
 use crate::error::{AppError, AppResult};
 use crate::infrastructure::database::commerce_writes;
 
@@ -74,50 +73,13 @@ pub async fn publish(
     now: &str,
 ) -> AppResult<CatalogSnapshot> {
     let (_turn, mut tx) = commerce_writes::begin(pool).await?;
-    let menu = publications::load_menu_snapshot_in(&mut tx, est_id, false)
-        .await?
-        .ok_or(AppError::NotFound("error.not_found"))?;
-
-    let mut variations = HashMap::new();
-    for (product_id, variation) in product_variations::list_in(&mut tx, est_id, None).await? {
-        variations
-            .entry(product_id)
-            .or_insert_with(Vec::new)
-            .push(variation);
-    }
-    let mut options = HashMap::new();
-    for (group_id, option) in addon_options::list_in(&mut tx, est_id, None).await? {
-        options
-            .entry(group_id)
-            .or_insert_with(Vec::new)
-            .push(option);
-    }
-    let groups: HashMap<_, _> = addon_groups::list_in(&mut tx, est_id)
-        .await?
-        .into_iter()
-        .map(|group| {
-            let options = options.remove(&group.id).unwrap_or_default();
-            (group.id.clone(), CatalogAddonGroup::new(&group, options))
-        })
-        .collect();
-    let mut product_groups = HashMap::new();
-    for (product_id, group_id) in addon_groups::list_product_links_in(&mut tx, est_id).await? {
-        let group = groups
-            .get(&group_id)
-            .ok_or_else(|| AppError::Internal("catalog link references a missing group".into()))?;
-        product_groups
-            .entry(product_id)
-            .or_insert_with(Vec::new)
-            .push(group.clone());
-    }
-
-    let content = CatalogContent::build(menu, variations, product_groups);
-    let snapshot = insert_version(&mut tx, est_id, channel, now, &content).await?;
+    let (_, content) = capture_in(&mut tx, est_id).await?;
+    let snapshot = insert_version(&mut tx, est_id, channel, now, &content, true).await?;
     tx.commit().await?;
     Ok(snapshot)
 }
 
-/// Publish an availability adjustment from the current publicable catalog alone.
+/// Publish an availability adjustment for a product in the current catalog.
 pub async fn publish_product_availability(
     pool: &SqlitePool,
     est_id: &str,
@@ -126,21 +88,97 @@ pub async fn publish_product_availability(
     is_available: bool,
     now: &str,
 ) -> AppResult<CatalogSnapshot> {
+    publish_availability(
+        pool,
+        est_id,
+        channel,
+        AvailabilityTarget::Product(product_id),
+        is_available,
+        now,
+    )
+    .await
+}
+
+/// Derive an availability-only version for a channel that the caller has authorized.
+pub async fn publish_availability(
+    pool: &SqlitePool,
+    est_id: &str,
+    channel: &str,
+    target: AvailabilityTarget<'_>,
+    is_available: bool,
+    now: &str,
+) -> AppResult<CatalogSnapshot> {
     let (_turn, mut tx) = commerce_writes::begin(pool).await?;
     let previous = current_in(&mut tx, est_id, channel)
         .await?
         .ok_or(AppError::NotFound("error.not_found"))?;
     let mut content = previous.decode()?;
-    if content
-        .product(product_id)
-        .is_some_and(|product| product.is_available == is_available)
-    {
+    if !content.set_availability(target, is_available)? {
         return Ok(previous);
     }
-    content.set_product_availability(product_id, is_available)?;
-    let snapshot = insert_version(&mut tx, est_id, channel, now, &content).await?;
+    let snapshot = insert_version(&mut tx, est_id, channel, now, &content, true).await?;
     tx.commit().await?;
     Ok(snapshot)
+}
+
+pub(crate) async fn capture_in(
+    conn: &mut SqliteConnection,
+    est_id: &str,
+) -> AppResult<(MenuSnapshot, CatalogContent)> {
+    let mut menu = publications::load_menu_snapshot_in(conn, est_id, false)
+        .await?
+        .ok_or(AppError::NotFound("error.not_found"))?;
+    menu_options::attach_catalog_options(conn, &mut menu).await?;
+    let content = CatalogContent::build(menu.clone());
+    Ok((menu, content))
+}
+
+/// Reserve a version while the publisher stages files. Checkouts keep using the current row.
+pub(crate) async fn reserve_version(
+    pool: &SqlitePool,
+    est_id: &str,
+    channel: &str,
+    now: &str,
+    content: &CatalogContent,
+) -> AppResult<CatalogSnapshot> {
+    let (_turn, mut tx) = commerce_writes::begin(pool).await?;
+    let snapshot = insert_version(&mut tx, est_id, channel, now, content, false).await?;
+    tx.commit().await?;
+    Ok(snapshot)
+}
+
+pub(crate) async fn activate_version_in(
+    conn: &mut SqliteConnection,
+    snapshot: &CatalogSnapshot,
+    previous_version: Option<i64>,
+) -> AppResult<()> {
+    let current_version: Option<i64> = sqlx::query_scalar(
+        "SELECT version FROM catalog_snapshots WHERE channel = ? AND establishment_id = ? AND is_current = 1",
+    )
+    .bind(&snapshot.channel)
+    .bind(&snapshot.establishment_id)
+    .fetch_optional(&mut *conn)
+    .await?;
+    if current_version != previous_version {
+        return Err(AppError::Conflict("commerce.checkout_repriced"));
+    }
+    clear_current(conn, &snapshot.establishment_id, &snapshot.channel).await?;
+    let active = sqlx::query(
+        "UPDATE catalog_snapshots SET is_current = 1 WHERE channel = ? AND establishment_id = ?
+             AND version = ? AND content_hash = ?",
+    )
+    .bind(&snapshot.channel)
+    .bind(&snapshot.establishment_id)
+    .bind(snapshot.version)
+    .bind(&snapshot.content_hash)
+    .execute(&mut *conn)
+    .await?;
+    if active.rows_affected() != 1 {
+        return Err(AppError::Internal(
+            "prepared catalog snapshot missing".into(),
+        ));
+    }
+    Ok(())
 }
 
 async fn insert_version(
@@ -149,6 +187,7 @@ async fn insert_version(
     channel: &str,
     now: &str,
     content: &CatalogContent,
+    is_current: bool,
 ) -> AppResult<CatalogSnapshot> {
     let last_version: i64 = sqlx::query_scalar(
         "SELECT COALESCE(MAX(version), 0) FROM catalog_snapshots WHERE channel = ? AND establishment_id = ?",
@@ -162,17 +201,13 @@ async fn insert_version(
         .ok_or_else(|| AppError::Internal("catalog snapshot version exhausted".into()))?;
     let (snapshot_json, content_hash) = content.canonical()?;
 
-    sqlx::query(
-        "UPDATE catalog_snapshots SET is_current = 0 WHERE channel = ? AND establishment_id = ? AND is_current = 1",
-    )
-    .bind(channel)
-    .bind(est_id)
-    .execute(&mut *conn)
-    .await?;
+    if is_current {
+        clear_current(conn, est_id, channel).await?;
+    }
     Ok(sqlx::query_as(
         "INSERT INTO catalog_snapshots (establishment_id, channel, version, content_hash, snapshot_json,
                                         published_at, is_current)
-         VALUES (?, ?, ?, ?, ?, ?, 1)
+         VALUES (?, ?, ?, ?, ?, ?, ?)
          RETURNING establishment_id, channel, version, content_hash, snapshot_json, published_at, is_current",
     )
     .bind(est_id)
@@ -181,6 +216,18 @@ async fn insert_version(
     .bind(content_hash)
     .bind(snapshot_json)
     .bind(now)
+    .bind(is_current)
     .fetch_one(&mut *conn)
     .await?)
+}
+
+async fn clear_current(conn: &mut SqliteConnection, est_id: &str, channel: &str) -> AppResult<()> {
+    sqlx::query(
+        "UPDATE catalog_snapshots SET is_current = 0 WHERE channel = ? AND establishment_id = ? AND is_current = 1",
+    )
+    .bind(channel)
+    .bind(est_id)
+    .execute(conn)
+    .await?;
+    Ok(())
 }

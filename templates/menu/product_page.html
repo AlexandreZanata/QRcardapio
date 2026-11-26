@@ -97,6 +97,9 @@
           </ul>
         </section>
         {% endif %}
+        {% if !catalog_options.is_empty() %}
+        {% include "menu/catalog_options.html" %}
+        {% endif %}
       </div>
     </main>
 

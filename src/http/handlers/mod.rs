@@ -10,6 +10,7 @@ pub mod billing_webhooks;
 pub mod categories;
 pub mod commerce;
 pub mod dashboard;
+pub mod delivery;
 pub mod google;
 pub mod health;
 pub mod mcp;

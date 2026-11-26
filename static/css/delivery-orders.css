@@ -1,0 +1,19 @@
+[data-delivery-orders] [data-order-id] { overflow-wrap: anywhere; }
+[data-delivery-orders] [data-order-state="placed"] {
+  border-inline-start: 4px solid var(--brand-accent);
+}
+[data-delivery-alert-status]:empty { display: none; }
+
+@media print {
+  .is-printing-delivery * { visibility: hidden; }
+  .is-printing-delivery .delivery-print-ticket,
+  .is-printing-delivery .delivery-print-ticket * { visibility: visible; }
+  .is-printing-delivery .delivery-print-ticket {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    box-shadow: none;
+    border: none;
+  }
+  .is-printing-delivery .delivery-print-ticket .commerce-actions { display: none; }
+}

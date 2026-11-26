@@ -116,3 +116,21 @@ A migração `20261124000010_multi_provider_billing.sql` (expand) adiciona `prov
 - `20261125000016_commerce_order_payments.sql` acrescenta `order_payments`, `payment_refunds` e `order_payment_transitions`. Há no máximo uma cobrança vigente por pedido, no valor do total. Estornos parciais são entradas imutáveis e o saldo a devolver é atualizado na mesma transação. Uma intenção cancelada sem recebimento pode ser substituída.
 - `20261125000017_event_dispatch.sql` acrescenta checkpoints, recibos e a fila de falhas do outbox. `event_dispatch_publications` guarda o instante de publicação por `seq`. Uma trigger registra eventos novos na fila, inclusive durante rollback para o binário anterior.
 - `20261125000018_commerce_notifications.sql` acrescenta o índice parcial de pedidos aguardando aceitação e as tabelas `commerce_push_subscriptions` e `commerce_push_deliveries`. As assinaturas referenciam o vínculo do membro. Cada entrega referencia o evento, pedido e assinatura do mesmo estabelecimento.
+
+### Recuperação operacional do outbox
+
+- `20261125000019_event_consumer_replays.sql` acrescenta a auditoria de reprocessamentos aceitos, com consumidor, sequência do evento, conta administradora, instante UTC em milissegundos e chave do erro anterior. O ID da solicitação de reprocessamento funciona como geração. Reenfileirar e auditar fazem parte da mesma transação. O binário anterior continua a consumir as falhas reenfileiradas como `parked`.
+
+### Retentativa da expiração de pedidos
+
+- `20261126000020_order_expiry_retries.sql` registra o próximo instante de tentativa em milissegundos UTC, com chave estrangeira composta para o pedido do estabelecimento. O worker mantém a alteração de estado, histórico e outbox no mesmo savepoint. Uma trigger remove o agendamento quando o pedido sai de `placed`.
+
+### Exibição das opções no QR Menu
+
+- `20261126000021_public_menu_options.sql` acrescenta `public_menu_option_preferences`. A presença de uma linha com o ID do estabelecimento habilita a exibição no próximo cardápio publicado. Gravar ou remover a preferência atualiza a revisão do rascunho na mesma transação. A captura usa essa revisão e as opções do mesmo estabelecimento.
+
+## QR Delivery
+
+Migration `20261126000022_delivery_foundation.sql` adds storefront state and presentation data, publication history, delivery zones, coupons and redemptions, customer phone blocks, order metadata and item notes. Commerce Core remains the source for orders, line items and the offline payment ledger. Order creation, coupon redemption, metadata, notes and outbox append commit together. Rejection and cancellation release a redemption in the same transaction, including automatic expiry.
+
+Disclosure of order and item notes is limited to the staff center and customer LGPD export. Erasure clears these notes and detaches the customer's identity while preserving the amounts and state history. All reads and mutations in these tables are scoped to the establishment.
