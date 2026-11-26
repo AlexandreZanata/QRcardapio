@@ -38,6 +38,18 @@ pub struct ToolCardView {
     pub name: &'static str,
     pub short_desc: &'static str,
     pub href: &'static str,
+    pub art: &'static str,
+}
+
+impl ToolCardView {
+    pub fn new(tool: &ToolContent, locale: Locale) -> Self {
+        Self {
+            name: tool.name,
+            short_desc: tool.short_desc,
+            href: tool.id.full_path(locale),
+            art: tool.id.art(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -98,11 +110,7 @@ pub fn segment_cards(locale: Locale) -> Vec<SegmentCardView> {
 pub fn tool_cards(locale: Locale) -> Vec<ToolCardView> {
     all_tools(locale)
         .into_iter()
-        .map(|t| ToolCardView {
-            name: t.name,
-            short_desc: t.short_desc,
-            href: t.id.full_path(locale),
-        })
+        .map(|tool| ToolCardView::new(tool, locale))
         .collect()
 }
 
@@ -176,14 +184,7 @@ pub fn other_tool_cards(locale: Locale, current: ToolId) -> Vec<ToolCardView> {
     ToolId::ALL
         .into_iter()
         .filter(|id| *id != current)
-        .map(|id| {
-            let t = id.content(locale);
-            ToolCardView {
-                name: t.name,
-                short_desc: t.short_desc,
-                href: t.id.full_path(locale),
-            }
-        })
+        .map(|id| ToolCardView::new(id.content(locale), locale))
         .collect()
 }
 

@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <path id="tool-spark" d="M14 1c1 7 5 11 12 12-7 1-11 5-12 12C13 18 9 14 2 13 9 12 13 8 14 1Z" fill="#ffdc38" stroke="#161721" stroke-width="2.5" stroke-linejoin="round"/>
+    <g id="tool-qr-motif" fill="#263be8">
+      <path fill-rule="evenodd" d="M0 0h29v29H0Zm6 6v17h17V6ZM55 0h29v29H55Zm6 6v17h17V6ZM0 55h29v29H0Zm6 6v17h17V61Z"/>
+      <path d="M10 10h9v9h-9Zm55 0h9v9h-9ZM10 65h9v9h-9ZM38 0h9v18h-9ZM38 31h18v9H38ZM0 38h18v9H0ZM26 40h9v12h-9Zm29 8h20v9H55Zm20-12h9v9h-9ZM38 49h9v18h-9Zm14 15h11v10H52Zm18-2h14v22H70v-8h6v-6h-6ZM35 75h15v9H35Z"/>
+    </g>
+  </defs>
+
+  <symbol id="qr-generator" viewBox="0 0 420 300">
+    <path d="M66 221C23 174 37 113 78 78c38-33 89-39 146-50 74-14 139 12 159 68 28 77-20 144-101 164C196 280 106 263 66 221Z" fill="#e5e9ff"/>
+    <path d="M253 245c-23-17-36-57-11-88 18-22 46-22 75-38 26-14 59-12 74 13 21 35-9 72-42 100-33 27-62 32-96 13Z" fill="#ffc9df"/>
+    <ellipse cx="202" cy="259" rx="135" ry="14" fill="#161721" opacity=".13"/>
+
+    <!-- Generator window, with a simplified QR motif inside the canvas. -->
+    <g transform="rotate(-8 152 152)" stroke="#161721" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="54" y="78" width="205" height="153" rx="16" fill="#161721"/>
+      <rect x="48" y="70" width="205" height="153" rx="16" fill="#fff9ee"/>
+      <path d="M48 106V86q0-16 16-16h173q16 0 16 16v20Z" fill="#263be8"/>
+      <path d="M66 88h.1m13 0h.1m13 0h.1" stroke="#fff9ee" stroke-width="6"/>
+      <path d="M206 88h26" stroke="#b0bcff" stroke-width="5"/>
+      <rect x="62" y="121" width="89" height="88" rx="10" fill="#ffffff" stroke="#a4b2ff" stroke-width="2.5"/>
+      <use href="#tool-qr-motif" transform="translate(74 133) scale(.77)" stroke="none"/>
+      <rect x="166" y="125" width="69" height="17" rx="6" fill="#dce3ff" stroke="none"/>
+      <path d="M174 150h44m-44 12h31" fill="none" stroke="#263be8" stroke-width="4"/>
+      <rect x="166" y="176" width="70" height="25" rx="7" fill="#ffdc38" stroke-width="3"/>
+      <path d="M183 188h35" stroke-width="3.5"/>
+    </g>
+
+    <!-- The phone shows a successful scan, leaving the example art non-interactive. -->
+    <g transform="rotate(10 294 171)" stroke="#161721" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="247" y="86" width="103" height="169" rx="18" fill="#161721"/>
+      <rect x="242" y="79" width="103" height="169" rx="18" fill="#ff6fa8"/>
+      <rect x="251" y="92" width="85" height="137" rx="11" fill="#fff9ee" stroke-width="3.5"/>
+      <path d="M279 102h29m-22 134h15" fill="none" stroke-width="3.5"/>
+      <path d="M266 135v-12h12m43 12v-12h-12m-43 51v12h12m43-12v12h-12" fill="none" stroke="#263be8" stroke-width="4"/>
+      <circle cx="294" cy="154" r="18" fill="#ffdc38" stroke-width="3.5"/>
+      <path d="m285 154 6 6 12-13" fill="none" stroke-width="4.25"/>
+    </g>
+    <use href="#tool-spark" transform="translate(328 44) scale(1.14)"/>
+    <path d="m366 87 12-6m-3 21 15 2M34 119l-9-5m5 21-10 2" fill="none" stroke="#263be8" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="228" cy="46" r="4" fill="#ff6fa8"/>
+  </symbol>
+
+  <symbol id="cmv-calculator" viewBox="0 0 420 300">
+    <path d="M58 208C26 158 47 95 100 65 152 36 229 31 293 41c61 10 105 59 92 119-13 57-62 92-132 103-77 11-167-5-195-55Z" fill="#ffe4f0"/>
+    <path d="M219 94c29-32 76-41 118-22 38 17 60 59 38 97-19 33-54 63-99 52-44-11-82-67-57-127Z" fill="#dbe1ff"/>
+    <ellipse cx="214" cy="258" rx="139" ry="15" fill="#161721" opacity=".13"/>
+
+    <!-- Cost worksheet behind the calculator. -->
+    <g transform="rotate(13 262 143)" stroke="#161721" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M204 61h112l20 21v148l-10-5-10 6-11-5-10 6-11-6-10 5-10-6-11 6-10-6-10 5-11-5-10 5-10-6-10 6V75q0-14 12-14Z" fill="#161721" transform="translate(5 7)"/>
+      <path d="M204 61h112l20 21v148l-10-5-10 6-11-5-10 6-11-6-10 5-10-6-11 6-10-6-10 5-11-5-10 5-10-6-10 6V75q0-14 12-14Z" fill="#fff9ee"/>
+      <path d="M315 61v21h21" fill="#ffdc38" stroke-width="4"/>
+      <path d="M217 87h70m-70 13h42" fill="none" stroke="#263be8" stroke-width="5"/>
+      <path d="M217 178h103" fill="none" stroke="#a7b5ff" stroke-width="2.5"/>
+      <path d="M224 176v-23h20v23Z" fill="#ff91be" stroke-width="3.25"/>
+      <path d="M258 176v-35h20v35Z" fill="#ffdc38" stroke-width="3.25"/>
+      <path d="M292 176v-54h20v54Z" fill="#8497ff" stroke-width="3.25"/>
+      <path d="M219 193h91m-91 13h59" stroke="#b8c1e8" stroke-width="4"/>
+    </g>
+
+    <!-- Contrasting keypad and simplified currency tokens. -->
+    <g transform="rotate(-11 143 165)" stroke="#161721" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="80" y="70" width="131" height="184" rx="19" fill="#161721"/>
+      <rect x="74" y="62" width="131" height="184" rx="19" fill="#263be8"/>
+      <rect x="89" y="80" width="101" height="43" rx="9" fill="#fff9ee" stroke-width="3.5"/>
+      <path d="M105 102h46m9 0h12" stroke="#263be8" stroke-width="5"/>
+      <g fill="#dce3ff" stroke-width="3">
+        <rect x="89" y="138" width="25" height="21" rx="5"/><rect x="127" y="138" width="25" height="21" rx="5"/><rect x="165" y="138" width="25" height="21" rx="5"/>
+        <rect x="89" y="171" width="25" height="21" rx="5"/><rect x="127" y="171" width="25" height="21" rx="5"/>
+        <rect x="89" y="204" width="25" height="21" rx="5"/><rect x="127" y="204" width="25" height="21" rx="5"/>
+        <rect x="165" y="171" width="25" height="54" rx="6" fill="#ffdc38"/>
+      </g>
+      <path d="M173 194h9m-9 8h9" fill="none" stroke-width="3"/>
+    </g>
+    <g stroke="#161721" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M244 235v9c0 8 16 15 35 15s35-7 35-15v-9Z" fill="#e9a729"/>
+      <ellipse cx="279" cy="235" rx="35" ry="15" fill="#ffdc38"/>
+      <path d="M275 247v9m13-10v9m12-13v9" stroke-width="2.5"/>
+      <circle cx="324" cy="218" r="26" fill="#ffdc38"/>
+      <circle cx="324" cy="218" r="18" fill="#fff0b1" stroke-width="2.5"/>
+      <path d="m317 218 5 5 9-11" fill="none" stroke-width="3"/>
+    </g>
+    <use href="#tool-spark" transform="translate(349 53) scale(.94)"/>
+    <path d="m48 126-12-7m8 22-14 1m317 61 13-9m-5 21 13 1" fill="none" stroke="#dc337d" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="156" cy="33" r="4" fill="#263be8"/>
+  </symbol>
+
+  <symbol id="table-placard" viewBox="0 0 420 300">
+    <path d="M40 183C26 130 64 68 125 48c70-23 161-20 215 18 55 38 63 105 21 152-44 48-135 66-196 61C99 274 53 240 40 183Z" fill="#ffedb5"/>
+    <path d="M55 251c-21-27-14-55 16-78 25-20 60-22 99-20 48 2 88-17 106 7 24 33-13 73-56 95-56 29-141 26-165-4Z" fill="#fbc5de"/>
+    <ellipse cx="222" cy="259" rx="139" ry="14" fill="#161721" opacity=".14"/>
+
+    <!-- Print sheet and fold guides. -->
+    <g transform="rotate(-13 130 161)" stroke="#161721" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="62" y="83" width="138" height="146" rx="10" fill="#263be8"/>
+      <rect x="56" y="76" width="138" height="146" rx="10" fill="#fff9ee"/>
+      <path d="M70 95h52m-52 108h67" fill="none" stroke="#b6c1ff" stroke-width="4"/>
+      <path d="M75 115h94v62H75Z" fill="#e4e9ff" stroke="#263be8" stroke-width="2.5" stroke-dasharray="6 5"/>
+      <path d="M103 115v62m38-62v62" fill="none" stroke="#263be8" stroke-width="2.5" stroke-dasharray="6 5"/>
+    </g>
+
+    <!-- Folded tabletop card with a storefront valance. -->
+    <g stroke="#161721" stroke-width="5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="m258 96 52 8 63 136-66 15-131-8Z" fill="#161721"/>
+      <path d="m260 93 44 7 60 133-60 14-118-8Z" fill="#263be8"/>
+      <path d="m302 105 55 125-47 10Z" fill="#8b9fff" stroke-width="3"/>
+      <path d="m196 89 111 10-12 152-134-11Z" fill="#ffdc38"/>
+      <path d="m193 101 105 9-10 129-114-8Z" fill="#fff9ee" stroke-width="3"/>
+      <path d="m190 110 108 9-1 17q-7 10-17-1-10 12-20-2-11 12-21-2-12 11-22-2-12 10-26-3Z" fill="#ff6fa8" stroke-width="3.5"/>
+      <path d="m208 112-3 16m24-14-2 16m22-14-2 16m23-14-2 16m20-14-1 16" fill="none" stroke-width="2.5"/>
+      <use href="#tool-qr-motif" transform="translate(211 147) rotate(5) scale(.69)" stroke="none"/>
+      <path d="m198 219 72 6" fill="none" stroke-width="4"/>
+    </g>
+    <use href="#tool-spark" transform="translate(321 44) scale(1.12)"/>
+    <path d="m354 111 15-7m-8 24 16-1M53 153l-12-4m10 19-13 3" fill="none" stroke="#263be8" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="162" cy="49" r="4" fill="#e53d83"/>
+  </symbol>
+</svg>

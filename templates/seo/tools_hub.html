@@ -1,23 +1,49 @@
 {% extends "seo/layout.html" %}
+{% import "components/icons.html" as icons %}
 {% import "seo/breadcrumb.html" as breadcrumb %}
+{% import "seo/segment_art.html" as segment_art %}
+{% import "seo/tool_art.html" as art %}
+
+{% block seo_head %}
+<link rel="stylesheet" href="/static/css/tool-visuals.css">
+<link rel="stylesheet" href="/static/css/tools-hub.css">
+{% endblock %}
 
 {% block seo_main %}
-<div class="landing-container seo-shell">
+<div class="landing-container seo-shell tools-hub">
   {{ breadcrumb::trail(nav.home_url, page.t("seo.tools")) }}
 
-  <header class="seo-hero">
-    <h1>{{ page.t("seo.tools_hub_h1") }}</h1>
-    <p class="seo-lead">{{ page.t("seo.tools_hub_lead") }}</p>
+  <header class="tools-hub-hero">
+    <div>
+      <h1 class="tool-display-title" data-i18n="seo.tools_hub_h1">{{ page.t("seo.tools_hub_h1") }}</h1>
+      <p class="seo-lead" data-i18n="seo.tools_hub_lead">{{ page.t("seo.tools_hub_lead") }}</p>
+    </div>
+    <div class="tools-hub-stickers" aria-hidden="true">
+      <span class="tools-hub-sticker">{{ icons::sticker("qr-printer") }}</span>
+      <span class="tools-hub-sticker">{{ icons::sticker("menu-book") }}</span>
+      <span class="tools-hub-sticker">{{ icons::sticker("placard") }}</span>
+      <span class="tools-hub-burst">{{ icons::sticker("burst") }}</span>
+    </div>
   </header>
 
-  <section class="seo-card-grid seo-card-grid-3">
+  <ul class="tools-gallery" role="list">
     {% for tool in nav.tools %}
-    <article class="seo-card">
-      <h2><a href="{{ tool.href }}">{{ tool.name }}</a></h2>
-      <p>{{ tool.short_desc }}</p>
-      <a class="seo-inline-link" href="{{ tool.href }}">{{ page.t("seo.open_tool") }}</a>
-    </article>
+    <li>
+      <a class="tools-card tool-palette" data-tool-theme="{{ tool.art }}" href="{{ tool.href }}"
+         aria-labelledby="tool-title-{{ loop.index }} tool-action-{{ loop.index }}"
+         aria-describedby="tool-description-{{ loop.index }}">
+        <div class="tools-card-scene">{{ art::scene(tool.art) }}</div>
+        <div class="tools-card-body">
+          <h2 id="tool-title-{{ loop.index }}">{{ tool.name }}</h2>
+          <p id="tool-description-{{ loop.index }}">{{ tool.short_desc }}</p>
+          <span class="tools-card-action">
+            <span id="tool-action-{{ loop.index }}" data-i18n="seo.open_tool">{{ page.t("seo.open_tool") }}</span>
+            {{ segment_art::next() }}
+          </span>
+        </div>
+      </a>
+    </li>
     {% endfor %}
-  </section>
+  </ul>
 </div>
 {% endblock %}
