@@ -1,4 +1,6 @@
 use super::category::Category;
+use super::commerce::catalog_options::ProductVariation;
+use super::commerce::catalog_snapshot::CatalogAddonGroup;
 use super::establishment::Establishment;
 use super::product::Product;
 
@@ -64,6 +66,13 @@ pub struct SnapshotProduct {
     pub product: Product,
     pub image: Option<MediaAsset>,
     pub choices: Vec<MenuItemChoice>,
+    pub catalog_options: ProductCatalogOptions,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ProductCatalogOptions {
+    pub variations: Vec<ProductVariation>,
+    pub addon_groups: Vec<CatalogAddonGroup>,
 }
 
 #[derive(Debug, Clone)]

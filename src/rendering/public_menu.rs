@@ -8,7 +8,10 @@ use crate::i18n::{Catalog, Locale, format_price};
 use crate::seo::schema::public_menu_json_ld;
 use crate::seo::{absolute_url, normalized_base_url, og_image_url};
 
-pub struct PublicProductView {
+mod catalog_options;
+use catalog_options::{CatalogOptionsView, LocalizedOptionText};
+
+pub struct PublicProductView<'a> {
     pub name: String,
     pub name_en: String,
     pub name_es: String,
@@ -23,6 +26,7 @@ pub struct PublicProductView {
     pub is_available: bool,
     pub removals: Vec<ChoiceView>,
     pub extras: Vec<ChoiceView>,
+    pub catalog_options: CatalogOptionsView<'a>,
 }
 
 pub struct ChoiceView {
@@ -31,7 +35,7 @@ pub struct ChoiceView {
     pub price: Option<(i64, String)>,
 }
 
-pub struct PublicCategoryView {
+pub struct PublicCategoryView<'a> {
     pub id: String,
     pub name: String,
     pub name_en: String,
@@ -41,12 +45,12 @@ pub struct PublicCategoryView {
     pub description_en: String,
     pub description_es: String,
     pub display_description: String,
-    pub products: Vec<PublicProductView>,
+    pub products: Vec<PublicProductView<'a>>,
 }
 
 #[derive(Template)]
 #[template(path = "menu/public_menu.html")]
-pub struct PublicMenuTemplate {
+pub struct PublicMenuTemplate<'a> {
     pub locale_code: &'static str,
     pub establishment_name: String,
     pub establishment_description: String,
@@ -71,10 +75,12 @@ pub struct PublicMenuTemplate {
     pub choices_text: String,
     pub removable_text: String,
     pub extras_text: String,
+    pub catalog_options_label: LocalizedOptionText<'static>,
+    pub variations_label: LocalizedOptionText<'static>,
     pub empty_menu_text: String,
     pub no_results_text: String,
     pub powered_by_text: String,
-    pub categories: Vec<PublicCategoryView>,
+    pub categories: Vec<PublicCategoryView<'a>>,
     pub menu_i18n_json: String,
     pub robots_meta: &'static str,
     pub canonical_url: String,
@@ -195,6 +201,7 @@ pub fn render_public_menu_html(
                         is_available: p.is_available,
                         removals,
                         extras,
+                        catalog_options: CatalogOptionsView::new(&sp.catalog_options, locale),
                     }
                 })
                 .collect();
@@ -246,6 +253,11 @@ pub fn render_public_menu_html(
         choices_text: cat.t(locale, "public_menu.product_choices").into(),
         removable_text: cat.t(locale, "public_menu.removable_ingredients").into(),
         extras_text: cat.t(locale, "public_menu.extras").into(),
+        catalog_options_label: LocalizedOptionText::label(
+            locale,
+            "commerce.catalog.product_options",
+        ),
+        variations_label: LocalizedOptionText::label(locale, "commerce.catalog.variations"),
         empty_menu_text: cat.t(locale, "public_menu.empty_menu").to_string(),
         no_results_text: cat.t(locale, "public_menu.no_results").to_string(),
         powered_by_text: cat.t(locale, "public_menu.powered_by").to_string(),

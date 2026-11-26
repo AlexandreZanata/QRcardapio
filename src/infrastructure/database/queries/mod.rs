@@ -33,6 +33,7 @@ pub mod mcp_menu;
 pub mod mcp_oauth;
 pub mod media;
 pub mod menu_editor;
+pub mod menu_options;
 pub mod ocr_imports;
 pub mod order_customers;
 pub mod order_delivery_details;

@@ -137,7 +137,7 @@
                   {% endfor %}
                 </ul>
                 {% endif %}
-              </details>{% endif %}
+              </details>{% endif %}{% if !item.catalog_options.is_empty() %}{% include "menu/catalog_options.html" %}{% endif %}
             </div>
             {% if let Some(img) = item.image_url %}
             <img class="item-photo" src="{{ img }}" alt="" loading="lazy" width="112" height="112">

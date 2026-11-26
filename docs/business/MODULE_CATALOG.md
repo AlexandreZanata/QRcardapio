@@ -20,6 +20,8 @@ Prices are monthly list prices in integer centavos. Cycle discounts (`billing-cy
 
 Sum of individual modules: 32910 centavos (R$ 329,10) per month. [Commerce Core](../architecture/COMMERCE_CORE.md) is the free QR Core foundation. Shared checkout, offline payments and event processing are internal services. QR Delivery remains planned.
 
+QR Menu offers an opt-in read-only display of catalog variations and add-ons in the published menu. [QR Menu scope](../modules/MENU.md#4-mvp-scope)
+
 ## Bundles
 
 | Code | Bundle | Monthly (centavos) | Modules | Lifecycle | Sellable now |

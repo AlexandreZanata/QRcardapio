@@ -1,9 +1,7 @@
-use std::collections::HashMap;
-
 use sqlx::{SqliteConnection, SqlitePool};
 
-use super::{addon_groups, addon_options, product_variations, publications};
-use crate::domain::commerce::catalog_snapshot::{CatalogAddonGroup, CatalogContent};
+use super::{menu_options, publications};
+use crate::domain::commerce::catalog_snapshot::CatalogContent;
 use crate::error::{AppError, AppResult};
 use crate::infrastructure::database::commerce_writes;
 
@@ -74,44 +72,11 @@ pub async fn publish(
     now: &str,
 ) -> AppResult<CatalogSnapshot> {
     let (_turn, mut tx) = commerce_writes::begin(pool).await?;
-    let menu = publications::load_menu_snapshot_in(&mut tx, est_id, false)
+    let mut menu = publications::load_menu_snapshot_in(&mut tx, est_id, false)
         .await?
         .ok_or(AppError::NotFound("error.not_found"))?;
-
-    let mut variations = HashMap::new();
-    for (product_id, variation) in product_variations::list_in(&mut tx, est_id, None).await? {
-        variations
-            .entry(product_id)
-            .or_insert_with(Vec::new)
-            .push(variation);
-    }
-    let mut options = HashMap::new();
-    for (group_id, option) in addon_options::list_in(&mut tx, est_id, None).await? {
-        options
-            .entry(group_id)
-            .or_insert_with(Vec::new)
-            .push(option);
-    }
-    let groups: HashMap<_, _> = addon_groups::list_in(&mut tx, est_id)
-        .await?
-        .into_iter()
-        .map(|group| {
-            let options = options.remove(&group.id).unwrap_or_default();
-            (group.id.clone(), CatalogAddonGroup::new(&group, options))
-        })
-        .collect();
-    let mut product_groups = HashMap::new();
-    for (product_id, group_id) in addon_groups::list_product_links_in(&mut tx, est_id).await? {
-        let group = groups
-            .get(&group_id)
-            .ok_or_else(|| AppError::Internal("catalog link references a missing group".into()))?;
-        product_groups
-            .entry(product_id)
-            .or_insert_with(Vec::new)
-            .push(group.clone());
-    }
-
-    let content = CatalogContent::build(menu, variations, product_groups);
+    menu_options::attach_catalog_options(&mut tx, &mut menu).await?;
+    let content = CatalogContent::build(menu);
     let snapshot = insert_version(&mut tx, est_id, channel, now, &content).await?;
     tx.commit().await?;
     Ok(snapshot)

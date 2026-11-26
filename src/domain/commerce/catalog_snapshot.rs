@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
 
@@ -69,11 +67,7 @@ impl CatalogAddonGroup {
 }
 
 impl CatalogContent {
-    pub(crate) fn build(
-        menu: MenuSnapshot,
-        mut variations: HashMap<String, Vec<ProductVariation>>,
-        mut addon_groups: HashMap<String, Vec<CatalogAddonGroup>>,
-    ) -> Self {
+    pub(crate) fn build(menu: MenuSnapshot) -> Self {
         let categories = menu
             .categories
             .into_iter()
@@ -90,8 +84,8 @@ impl CatalogContent {
                     .map(|item| {
                         let product = item.product;
                         CatalogProduct {
-                            variations: variations.remove(&product.id).unwrap_or_default(),
-                            addon_groups: addon_groups.remove(&product.id).unwrap_or_default(),
+                            variations: item.catalog_options.variations,
+                            addon_groups: item.catalog_options.addon_groups,
                             id: product.id,
                             name: product.name,
                             name_en: product.name_en,

@@ -1,8 +1,8 @@
-use qrcardapio::application::publishing::{PublishLocks, publish_establishment, republish_all};
+use qrcardapio::application::publishing::{PublishLocks, republish_all, write_static_snapshot};
 use qrcardapio::error::AppError;
 use qrcardapio::infrastructure::database::queries::{
-    addon_groups, addon_options, catalog_snapshots, find_establishment_by_id, product_variations,
-    update_product_for_est,
+    addon_groups, addon_options, catalog_snapshots, find_establishment_by_id, load_menu_snapshot,
+    product_variations, update_product_for_est,
 };
 use qrcardapio::infrastructure::database::{MIGRATOR, init_pool, open_pool_at};
 use sha2::{Digest, Sha256};
@@ -277,9 +277,19 @@ async fn republish_all_preserves_public_menu_bytes_across_commerce_migration_wit
     MIGRATOR.run_to(20261124000012, &pool).await.unwrap();
     seed(&pool).await;
     let locks = PublishLocks::default();
-    publish_establishment(&pool, &cfg, &locks, "a")
+    // The pre-Commerce schema published from the base menu without catalog options.
+    let snapshot = load_menu_snapshot(&pool, "a", false)
         .await
+        .unwrap()
         .unwrap();
+    write_static_snapshot(&cfg, &snapshot).await.unwrap();
+    sqlx::query(
+        "UPDATE establishments SET is_published = 1, published_version = 1,
+         has_unpublished_changes = 0 WHERE id = 'a'",
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
     let index = cfg.published_dir().join("commerce-a/index.html");
     let before = std::fs::read(&index).unwrap();
 

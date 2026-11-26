@@ -19,7 +19,7 @@ use crate::http::middleware::auth::{TenantContext, verify_csrf};
 use crate::http::middleware::locale::RequestLocale;
 use crate::i18n::Locale;
 use crate::infrastructure::database::queries::{
-    addon_groups, addon_options, find_product_for_est, product_variations,
+    addon_groups, addon_options, find_product_for_est, menu_options, product_variations,
 };
 use crate::rendering::{PageMeta, render_html};
 
@@ -45,6 +45,7 @@ struct CatalogTemplate {
 enum CatalogView {
     Groups {
         groups: Vec<AddonGroup>,
+        public_options_enabled: bool,
     },
     Group {
         group: AddonGroup,
@@ -92,11 +93,16 @@ pub async fn groups(
     allowed(&state, &tenant, Operation::EditMenuDraft).await?;
     let groups =
         addon_groups::list_for_establishment(&state.pool, &tenant.establishment.id).await?;
+    let public_options_enabled =
+        menu_options::enabled(&state.pool, &tenant.establishment.id).await?;
     render(
         tenant,
         locale,
         "commerce.catalog.groups",
-        CatalogView::Groups { groups },
+        CatalogView::Groups {
+            groups,
+            public_options_enabled,
+        },
     )
 }
 
@@ -162,6 +168,33 @@ pub async fn product(
 async fn write(state: &AppState, tenant: &TenantContext, csrf: &str) -> AppResult<()> {
     verify_csrf(&tenant.auth, csrf)?;
     allowed(state, tenant, Operation::EditMenuDraft).await
+}
+
+#[derive(Deserialize)]
+pub struct PublicOptionsForm {
+    _csrf: String,
+    enabled: Option<String>,
+}
+
+pub async fn set_public_options(
+    State(state): State<AppState>,
+    tenant: TenantContext,
+    Form(form): Form<PublicOptionsForm>,
+) -> AppResult<Response> {
+    write(&state, &tenant, &form._csrf).await?;
+    let enabled = match form.enabled.as_deref() {
+        Some("1") => true,
+        None => false,
+        _ => return Err(AppError::Validation("commerce.catalog.invalid_options")),
+    };
+    menu_options::set_enabled(
+        &state.pool,
+        &tenant.establishment.id,
+        enabled,
+        &Utc::now().to_rfc3339(),
+    )
+    .await?;
+    Ok(Redirect::to(GROUPS_PATH).into_response())
 }
 
 pub async fn save_group(

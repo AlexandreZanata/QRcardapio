@@ -1,0 +1,26 @@
+
+              <details class="item-choices">
+                <summary data-i18n="commerce.catalog.product_options" data-pt="{{ catalog_options_label.pt }}" data-en="{{ catalog_options_label.en }}" data-es="{{ catalog_options_label.es }}">{{ catalog_options_label.display }}</summary>
+                {% if !item.catalog_options.variations.is_empty() %}
+                <p data-i18n="commerce.catalog.variations" data-pt="{{ variations_label.pt }}" data-en="{{ variations_label.en }}" data-es="{{ variations_label.es }}">{{ variations_label.display }}</p>
+                <ul class="item-choice-list">
+                  {% for choice in item.catalog_options.variations %}
+                  <li>
+                    <span data-pt="{{ choice.name.pt }}" data-en="{{ choice.name.en }}" data-es="{{ choice.name.es }}">{{ choice.name.display }}</span>
+                    <span class="item-extra-price" data-price-centavos="{{ choice.price_centavos }}">{{ choice.price_display }}</span>
+                  </li>
+                  {% endfor %}
+                </ul>
+                {% endif %}
+                {% for group in item.catalog_options.addon_groups %}
+                <p data-pt="{{ group.name.pt }}" data-en="{{ group.name.en }}" data-es="{{ group.name.es }}">{{ group.name.display }}</p>
+                <ul class="item-choice-list">
+                  {% for choice in group.options %}
+                  <li>
+                    <span data-pt="{{ choice.name.pt }}" data-en="{{ choice.name.en }}" data-es="{{ choice.name.es }}">{{ choice.name.display }}</span>
+                    <span class="item-extra-price">+ <span data-price-centavos="{{ choice.price_centavos }}">{{ choice.price_display }}</span></span>
+                  </li>
+                  {% endfor %}
+                </ul>
+                {% endfor %}
+              </details>

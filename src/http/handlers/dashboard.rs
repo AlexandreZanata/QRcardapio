@@ -17,7 +17,7 @@ use crate::http::middleware::auth::{TenantContext, verify_csrf};
 use crate::http::middleware::locale::RequestLocale;
 use crate::http::responses::{take_flash, with_flash_redirect};
 use crate::infrastructure::database::queries::{
-    list_categories_for_est, list_products_for_est, load_menu_snapshot,
+    list_categories_for_est, list_products_for_est, load_menu_preview,
 };
 use crate::rendering::dashboard::OverviewTemplate;
 use crate::rendering::public_menu::{generate_brand_theme_css, render_public_menu_html};
@@ -79,7 +79,7 @@ pub async fn preview_menu_page(
     RequestLocale(locale): RequestLocale,
     tenant: TenantContext,
 ) -> AppResult<Response> {
-    let snapshot = load_menu_snapshot(&state.pool, &tenant.establishment.id, true)
+    let snapshot = load_menu_preview(&state.pool, &tenant.establishment.id)
         .await?
         .ok_or(AppError::NotFound("error.not_found"))?;
 
