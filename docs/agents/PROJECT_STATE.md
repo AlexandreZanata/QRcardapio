@@ -176,6 +176,8 @@ A galeria e os quatro guias têm artes vetoriais e paletas próprias. Nas págin
 
 ## Cardápio público de demonstração
 
+A vitrine pública abre fichas estáticas de produto com foto maior, descrição e opções disponíveis. A navegação usa filtros no topo em telas pequenas e categorias na lateral em telas largas. O painel abre as fichas do rascunho pela prévia autenticada. A publicação prepara as fichas e suas mídias antes de substituir o índice que o QR Code abre.
+
 O QR original da home encaminha para o Bistrô da Praça em `/c/bistro-da-praca`. O seed executado antes da prontidão do servidor publica cinco categorias e nove produtos com fotos, preços e conteúdo em português, inglês e espanhol. O catálogo é fictício, tem endereço reservado e usa os arquivos estáticos de publicação.
 
 ## Autodeploy na VPS (Pull + Sigstore)

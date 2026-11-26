@@ -81,7 +81,7 @@ A ilustração foi criada com o ImageGen integrado e exportada como WebP transpa
 
 ## Public Menu
 
-The public menu uses a branded cover and a centered establishment identity. The cover uses the first visible, available product photo in menu order when the snapshot provides one. An illustrated cover uses the same brand color for menus without photos. The layout supports the shared static stylesheet on previously published snapshots, including empty menus and menus with no logo. A sticky search and category strip precedes product cards. Cards use one column on phones and two on wider screens.
+The public menu uses the establishment's brand color, logo and cover. The catalog keeps search and category navigation close to the list on touch screens. On desktop, navigation sits alongside a grid. Each product card is a link with a thumbnail, name, price and availability. A product page shows the larger photo, description and any published ingredients or extras, with a return link to its category. Language switching applies in place to both views. Links remain usable with JavaScript disabled. Use `menu-catalog.css` for the catalog and `menu-product.css` for product layouts. Legacy snapshots continue to use `menu.css`.
 
 ## Illustrated States
 

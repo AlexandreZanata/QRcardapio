@@ -961,6 +961,8 @@
   "error.payment_method_unavailable": "Esta forma de pago no está disponible.",
   "landing.demo_open": "Explora el menú de demostración",
   "public_menu.product_choices": "Ingredientes y extras",
+  "public_menu.back_to_menu": "Volver al menú",
+  "public_menu.no_product_photo": "Producto sin foto",
   "public_menu.removable_ingredients": "Ingredientes que puedes quitar",
   "public_menu.extras": "Extras opcionales",
   "commerce.action.save": "Guardar",
