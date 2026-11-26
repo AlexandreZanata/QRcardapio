@@ -105,6 +105,8 @@ Phases 4 to 11 run one at a time. Each module reaches `available` and is consoli
 
 The [Commerce Core OpenAPI contract v1](../../contracts/openapi/commerce.v1.json) describes the implemented administrative outbox interface. Channel-facing ordering contracts are listed under their respective module phases.
 
+The readiness increment extends published availability revisions to options, checks the quoted breakdown in checkout, and keeps the acceptance deadline queue moving after an individual order failure.
+
 **Completion criteria.** State-machine transitions tested exhaustively, including illegal transitions; idempotency keys tested against retries and concurrent submissions; dispatcher at-least-once delivery with idempotent consumers tested; tenant isolation tests on every new table; integer totals reconcile to the centavo; load test of concurrent order writes on the 1 vCPU target; no sellable module change.
 
 ## Phase 4 — QR Delivery

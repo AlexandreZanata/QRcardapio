@@ -11,7 +11,7 @@ use super::pricing::{LinePrice, OrderTotal};
 pub const REPRICED_CODE: &str = "commerce.checkout_repriced";
 
 /// The channel adapter authorizes the operation and resolves these values server-side.
-/// A client body supplies selections and the expected total through `CheckoutRequest`.
+/// A client body supplies selections and the expected price through `CheckoutRequest`.
 #[derive(Clone, Copy)]
 pub struct CheckoutTarget<'a> {
     pub establishment_id: &'a str,
@@ -31,6 +31,9 @@ pub struct CheckoutRequest {
     pub idempotency_key: Uuid,
     pub cart: CheckoutCart,
     pub expected_total_centavos: i64,
+    /// Confirms the quoted subtotal, discount, fee and total together. `None` preserves
+    /// total-only matching and idempotency for existing callers.
+    pub expected_totals: Option<OrderTotal>,
     pub customer: CustomerProfile,
     pub address: Option<PostalAddress>,
     pub payment: OfflinePaymentChoice,

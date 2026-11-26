@@ -1,3 +1,5 @@
+#[path = "commerce/expiry_regressions.rs"]
+mod expiry_regressions;
 #[path = "commerce/order_fixtures.rs"]
 mod fixture;
 #[path = "commercial/support.rs"]

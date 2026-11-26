@@ -211,6 +211,7 @@ Increment 1 adds options to the shared draft catalog as new tables (expand-only,
 | Add-on option (`addon_options`) | Belongs to one group; `price_centavos >= 0` (removals such as "sem cebola" are free options); `max_quantity >= 1`; `is_available`. |
 | Tenancy | Every row has `establishment_id`; linking verifies product, group and option belong to the same establishment. |
 | Draft vs published | Edits mark `has_unpublished_changes = 1`. Ordering channels never read draft tables (section 8). |
+| Availability revisions | A channel can change product, variation or add-on availability from its current snapshot. Shared add-on changes update each published copy of the option. A repeated value keeps the current version. |
 | Dashboard | Owners and managers manage draft variations, reusable groups, options and product links. The fictitious public menu renders its own read-only optional ingredients and extras. |
 
 ## 6. Customers and addresses
@@ -228,7 +229,7 @@ The tenant dashboard persists pickup and delivery independently, an integer mini
 
 ## 7. Order financial invariants
 
-1. **Backend pricing only.** Unit prices come from the published catalog snapshot. Client-sent prices are never trusted; the client sends only ids, quantities and `expected_total_centavos`, used solely to detect changes.
+1. **Backend pricing.** The server resolves unit prices from the current published catalog and computes the totals in centavos. A checkout echoes the quoted total and may echo the full breakdown to detect changes.
 2. **Integer money.** All amounts are `i64` centavos with checked arithmetic (`checked_mul`, `checked_add`); overflow or a total above the order cap of 1,000,000 centavos is a validation error. See [ADR-012](../decisions/ADR-012-commerce-core-increment-1.md). JSON amounts are integers; no floats anywhere, including discount math.
 3. **Line math.** `unit = (variation or product price) + Σ(option price × option quantity)`; `line_total = unit × quantity`; `items_subtotal = Σ line_total`.
 4. **Deterministic discounts.** At most one coupon per order. Percentage: `round_half_up(items_subtotal × bps / 10000)`; fixed: `min(amount, items_subtotal)`. Discounts never apply to the delivery fee and never make a total negative.
@@ -247,7 +248,7 @@ Published catalog snapshots are immutable canonical JSON with SHA-256 and an inc
 
 1. A channel adapter is responsible for resolving the tenant and authorizing its operation before using `checkout::quote` and `checkout::place_order`. Fee and discount inputs come from the server. QR Delivery will supply zone and coupon rules.
 2. A tenant-scoped read can return a committed live attempt without entering the writer queue. A matching hash returns the original receipt and a different hash returns `commerce.idempotency_mismatch` (`422`). On a miss, `BEGIN IMMEDIATE` serializes checkout with catalog and settings writes and the service rechecks the attempt before writing. The attempt expires after seven days.
-3. Validate hours, mode, pause, minimum and selections against the current published snapshot. A changed version, unavailable line or changed total returns `CheckoutOutcome::Repriced` with the current version and quote. The future HTTP adapter returns `409 commerce.checkout_repriced` so the customer can reconfirm.
+3. Validate hours, mode, pause, minimum and selections against the current published snapshot. A changed version, unavailable line or changed quoted amount returns `CheckoutOutcome::Repriced` with the latest quote. Full confirmation compares subtotal, discount, fee and total, so offsetting changes still require reconfirmation. The keyed checkout fingerprint binds the breakdown when present. Existing total-only attempts keep their original fingerprints. The future HTTP adapter returns `409 commerce.checkout_repriced`.
 4. Atomically upsert the customer, write immutable order items and details, create a pending offline payment, append `OrderCreated` and record the attempt. `place_order_in` gives a trusted channel adapter a savepoint and the new order ID to consume a coupon in the same outer transaction. Replays return the original public ID and skip this hook.
 5. A future storefront returns `201` with the public ID and tracking path.
 
@@ -281,6 +282,7 @@ Commerce Core appends machine events in the transaction of the transition, with 
 - **Idempotent consumers**: each dispatcher pass commits its bounded scans, grouped `event_consumer_receipts(consumer, event_id)` rows, checkpoints and ready publications in one `BEGIN IMMEDIATE` transaction. Handler savepoints roll back individual failures. A crash before commit replays the whole pass without duplicate effects. The pass releases its FIFO writer turn before the next batch. Handlers with external effects store outbound records before calling out.
 - **Authorization**: the platform `system` actor is limited to internal workers. Commerce payment compensation and staff notifications operate on the tenant and order that emitted the event. Future module consumers must re-check their capability before creating new commercial work. Existing-work compensation can continue through suspension or expiry.
 - **Registered consumers**: `commerce.payments` handles `OrderRejected` and `OrderCancelled`. `commerce.notifications` durably queues opted-in staff alerts for `OrderCreated` while it is awaiting acceptance. The timer uses persisted deadlines and records an ordinary `OrderRejected` event with `acceptance_timeout`.
+- The acceptance timer uses an order savepoint for each rejection. A failed rejection rolls back the state, history and event together, and schedules another attempt 30 seconds later. Each batch merges new deadlines and retries in eligibility order using bounded index scans. The persisted wait is cleared when the order leaves `placed`.
 - **Retries**: exponential backoff with jitter (1 s, 5 s, 30 s, 2 min, 10 min, 1 h), up to 10 attempts, recorded in `event_consumer_failures`.
 - **Dead letter**: after the last attempt the event is marked `dead` for that consumer. Later events of the same aggregate are parked for that consumer, and other aggregates continue. Platform admins can schedule a replay in `/admin/outbox/recovery` after correcting the cause. The transaction checks the observed recovery generation, records the actor and prior error key, and makes the failure eligible for dispatch with a fresh retry budget. The dispatcher releases successors after it commits the handler and receipt. Discard is planned.
 - **Publication**: `event_dispatch_publications.published_at` records acknowledgement when all subscribed consumers have receipts, or when no consumer subscribed. A checkpoint can advance past a failed event to deliver other aggregates. The failure row keeps the affected aggregate parked and the event unpublished.
@@ -397,6 +399,12 @@ Items 1–4, 6 and 9 are implemented in Increment 1. Item 17 is implemented for 
 1. Expose the dead-letter recovery page in the platform admin panel and protect replay requests with the authenticated admin session and CSRF.
 2. Audit scheduling atomically and reuse the dispatcher's retries, receipts and aggregate ordering. See the [operator procedure](../operations/RUNBOOK.md#reprocessamento-de-eventos-do-outbox).
 3. Version the three implemented outbox routes in the [Commerce Core OpenAPI contract](../../contracts/openapi/commerce.v1.json). Check diagnostics and replay behavior against the application router, including admin authorization, CSRF, private response headers and stale generations.
+
+**Catalog, checkout and acceptance readiness**
+
+1. Extend availability-only revisions to published variations and add-ons.
+2. Compare the full submitted quote with the latest price breakdown inside checkout and preserve total-only idempotency records.
+3. Isolate timer failures per order and persist the next attempt so the deadline queue can continue across establishments.
 
 ## 16. Decisions still open
 

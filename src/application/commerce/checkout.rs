@@ -137,6 +137,9 @@ async fn place_locked(
     let Some(totals) = fresh.totals.filter(|totals| {
         version == request.cart.catalog_version
             && totals.total_centavos == request.expected_total_centavos
+            && request
+                .expected_totals
+                .is_none_or(|expected| expected == *totals)
     }) else {
         return Ok(CheckoutPlacement {
             outcome: CheckoutOutcome::Repriced(fresh),
@@ -325,7 +328,7 @@ fn request_fingerprint(
         ServiceMode::Delivery => "delivery",
         ServiceMode::Pickup => "pickup",
     };
-    let bytes = serde_json::to_vec(&(
+    let legacy = (
         "commerce.checkout.v1",
         target.catalog_channel,
         fulfillment,
@@ -334,7 +337,12 @@ fn request_fingerprint(
         &request.customer,
         &request.address,
         request.payment,
-    ))
+    );
+    // Keep the exact original bytes for attempts already stored by total-only callers.
+    let bytes = match request.expected_totals {
+        Some(totals) => serde_json::to_vec(&("commerce.checkout.quote.v1", legacy, totals)),
+        None => serde_json::to_vec(&legacy),
+    }
     .map_err(|error| AppError::Internal(format!("checkout serialization failed: {error}")))?;
     // The client key is secret; only its digest is retained alongside the request HMAC.
     let key = hmac::Key::new(hmac::HMAC_SHA256, request.idempotency_key.as_bytes());

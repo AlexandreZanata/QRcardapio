@@ -6,7 +6,8 @@ use sqlx::migrate::Migrator;
 use tempfile::tempdir;
 
 const LEGACY_RELEASE: i64 = 20261124000010;
-const PREVIOUS_RELEASE: i64 = 20261125000018;
+const NOTIFICATIONS_RELEASE: i64 = 20261125000018;
+const REPLAY_RELEASE: i64 = 20261125000019;
 
 #[tokio::test]
 async fn expand_migrations_preserve_rows_and_allow_previous_startup() {
@@ -30,7 +31,7 @@ async fn expand_migrations_preserve_rows_and_allow_previous_startup() {
     .await
     .unwrap();
 
-    MIGRATOR.run_to(PREVIOUS_RELEASE, &pool).await.unwrap();
+    MIGRATOR.run_to(NOTIFICATIONS_RELEASE, &pool).await.unwrap();
     let event_seq: i64 = sqlx::query_scalar(
         "INSERT INTO domain_events (
              event_id, event_type, event_version, establishment_id, aggregate_type,
@@ -77,9 +78,9 @@ async fn expand_migrations_preserve_rows_and_allow_previous_startup() {
     pool.close().await;
 
     // Exercise init_pool's migration and registry initialization with the embedded
-    // migration lists of both the legacy and immediately preceding binaries.
+    // migration lists of the legacy and immediately preceding binaries.
     let pool = open_pool_at(&path, 2, DbSynchronous::Full).await.unwrap();
-    for version in [LEGACY_RELEASE, PREVIOUS_RELEASE] {
+    for version in [LEGACY_RELEASE, NOTIFICATIONS_RELEASE, REPLAY_RELEASE] {
         let mut previous = Migrator::with_migrations(
             MIGRATOR
                 .iter()

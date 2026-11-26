@@ -144,3 +144,13 @@ Web Push delivered 1,000 synthetic notifications in 13.693 seconds (4,381.71/min
 The admin replay candidate passed formatting, strict Clippy, 187 functional tests and a locked release build on the VPS on 2026-11-25. In the isolated HTTP check, an admin scheduled an original dead-letter event (`303`), and the duplicate submission received `409`. The dispatcher recorded two receipts for that event and its parked successor. The previous release `b7c0793` started against the database with migration `20261125000019`, served the demo and `/readyz` with HTTP 200, and retained the single audit record. SQLite integrity and foreign key checks passed.
 
 The outbox release benchmark used the same pinned CPU, 1 GiB memory cap without swap and persistent SQLite WAL with `synchronous=FULL`. It drained 100,000 events with two consumers in 9.236 seconds (10,827.35 events/s). At 200 events/s in steady state, the p95 publication delay was 211 ms and the maximum was 220 ms.
+
+### VPS catalog, checkout and expiry validation
+
+The combined candidate passed formatting, strict Clippy, 193 functional tests and a locked release build on the VPS on 2026-11-26. The catalog regressions check immutable history, tenant and channel scoping, and concurrency on repeated availability updates. The checkout regressions check repricing when a fee and discount move by the same amount, idempotent retries and the legacy request digest. The expiry regression injects failures across an entire batch and verifies that a healthy order advances before later-eligible retries. It then restores the operation and checks each deferred order's history and event.
+
+The isolated HTTP test upgraded a database from migration `20261125000019` to `20261126000020`. The candidate and both previous binaries (migration lists through 19 and 18) served the demo and `/readyz` with HTTP 200. SQLite integrity and foreign key checks passed after the rollback test.
+
+The 600-second mixed benchmark exercised full quote confirmation in release on CPU 3, with a 1 GiB memory cap, zero swap and SQLite WAL using `synchronous=FULL` on ext4. With 200 establishments and 64 clients, it placed 50,182 orders and replayed 5,631 requests. Including staff transitions, throughput was 83.51 orders/s. Checkout p95 and p99 were 11.888 ms and 20.632 ms. Replay p95 and p99 were 0.494 ms and 0.779 ms. There were zero errors, duplicate orders or monetary discrepancies.
+
+The mixed workload served 53,113 static menu reads. Menu p95 was 0.718 ms, or 1.864× the pinned baseline of 0.385 ms, within the 2× limit.

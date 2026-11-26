@@ -26,6 +26,7 @@ pub fn request(key: Uuid, cart: &CheckoutCart) -> CheckoutRequest {
         idempotency_key: key,
         cart: cart.clone(),
         expected_total_centavos: 4_775,
+        expected_totals: None,
         customer: CustomerProfile {
             name: " Cliente Checkout ".into(),
             phone_e164: "(65) 99900-1234".into(),

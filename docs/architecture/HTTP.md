@@ -117,7 +117,7 @@ Todas as rotas abaixo aplicam `Cache-Control: no-store` e limite de corpo de 16 
 
 ## Commerce Core
 
-The catalog publication, order transitions, checkout, offline payment ledger and Web Push subscription management have internal Rust interfaces. Dispatcher diagnostics and replay scheduling are exposed only on the platform admin routes. A future authorized channel adapter will map `CheckoutOutcome::Repriced` to `409 commerce.checkout_repriced` with the current quote and `commerce.idempotency_mismatch` to `422`. See the [QR Delivery API specification](../modules/DELIVERY.md#16-http-contracts).
+The catalog publication, order transitions, checkout, offline payment ledger and Web Push subscription management have internal Rust interfaces. Dispatcher diagnostics and replay scheduling are exposed only on the platform admin routes. A future authorized channel adapter can submit the full quoted breakdown for comparison. It will map `CheckoutOutcome::Repriced` to `409 commerce.checkout_repriced` with the current quote and `commerce.idempotency_mismatch` to `422`. See the [QR Delivery API specification](../modules/DELIVERY.md#16-http-contracts).
 
 ### Commerce Core dashboard (Increment 2)
 

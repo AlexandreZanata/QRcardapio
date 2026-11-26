@@ -8,6 +8,8 @@ use qrcardapio::infrastructure::database::{MIGRATOR, init_pool, open_pool_at};
 use sha2::{Digest, Sha256};
 use tempfile::TempDir;
 
+#[path = "commerce_catalog/availability.rs"]
+mod availability;
 #[path = "commerce_catalog/fixtures.rs"]
 mod fixtures;
 use fixtures::{NOW, config, group, option, seed, variation};

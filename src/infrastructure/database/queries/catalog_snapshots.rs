@@ -3,7 +3,9 @@ use std::collections::HashMap;
 use sqlx::{SqliteConnection, SqlitePool};
 
 use super::{addon_groups, addon_options, product_variations, publications};
-use crate::domain::commerce::catalog_snapshot::{CatalogAddonGroup, CatalogContent};
+use crate::domain::commerce::catalog_snapshot::{
+    AvailabilityTarget, CatalogAddonGroup, CatalogContent,
+};
 use crate::error::{AppError, AppResult};
 use crate::infrastructure::database::commerce_writes;
 
@@ -117,7 +119,7 @@ pub async fn publish(
     Ok(snapshot)
 }
 
-/// Publish an availability adjustment from the current publicable catalog alone.
+/// Publish an availability adjustment for a product in the current catalog.
 pub async fn publish_product_availability(
     pool: &SqlitePool,
     est_id: &str,
@@ -126,18 +128,34 @@ pub async fn publish_product_availability(
     is_available: bool,
     now: &str,
 ) -> AppResult<CatalogSnapshot> {
+    publish_availability(
+        pool,
+        est_id,
+        channel,
+        AvailabilityTarget::Product(product_id),
+        is_available,
+        now,
+    )
+    .await
+}
+
+/// Derive an availability-only version for a channel that the caller has authorized.
+pub async fn publish_availability(
+    pool: &SqlitePool,
+    est_id: &str,
+    channel: &str,
+    target: AvailabilityTarget<'_>,
+    is_available: bool,
+    now: &str,
+) -> AppResult<CatalogSnapshot> {
     let (_turn, mut tx) = commerce_writes::begin(pool).await?;
     let previous = current_in(&mut tx, est_id, channel)
         .await?
         .ok_or(AppError::NotFound("error.not_found"))?;
     let mut content = previous.decode()?;
-    if content
-        .product(product_id)
-        .is_some_and(|product| product.is_available == is_available)
-    {
+    if !content.set_availability(target, is_available)? {
         return Ok(previous);
     }
-    content.set_product_availability(product_id, is_available)?;
     let snapshot = insert_version(&mut tx, est_id, channel, now, &content).await?;
     tx.commit().await?;
     Ok(snapshot)

@@ -19,6 +19,7 @@ use qrcardapio::domain::commerce::checkout::{
 use qrcardapio::domain::commerce::customer::CustomerProfile;
 use qrcardapio::domain::commerce::order::{OrderAction, OrderItemSelection, TransitionOrder};
 use qrcardapio::domain::commerce::order_payment::{OfflineMethod, OfflinePaymentChoice};
+use qrcardapio::domain::commerce::pricing::OrderTotal;
 use qrcardapio::domain::commerce::state_machine::Actor;
 use qrcardapio::infrastructure::database::queries::{catalog_snapshots, orders};
 
@@ -127,6 +128,12 @@ async fn place(pool: &SqlitePool, tenant: &Tenant, customer: usize, key: Uuid) -
         idempotency_key: key,
         cart: tenant.cart.clone(),
         expected_total_centavos: EXPECTED_CENTAVOS,
+        expected_totals: Some(OrderTotal {
+            items_subtotal_centavos: EXPECTED_CENTAVOS,
+            discount_centavos: 0,
+            delivery_fee_centavos: 0,
+            total_centavos: EXPECTED_CENTAVOS,
+        }),
         customer: CustomerProfile {
             name: "Benchmark".into(),
             phone_e164: format!("+556599999{customer:04}"),

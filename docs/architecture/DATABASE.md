@@ -120,3 +120,7 @@ A migração `20261124000010_multi_provider_billing.sql` (expand) adiciona `prov
 ### Recuperação operacional do outbox
 
 - `20261125000019_event_consumer_replays.sql` acrescenta a auditoria de reprocessamentos aceitos, com consumidor, sequência do evento, conta administradora, instante UTC em milissegundos e chave do erro anterior. O ID da solicitação de reprocessamento funciona como geração. Reenfileirar e auditar fazem parte da mesma transação. O binário anterior continua a consumir as falhas reenfileiradas como `parked`.
+
+### Retentativa da expiração de pedidos
+
+- `20261126000020_order_expiry_retries.sql` registra o próximo instante de tentativa em milissegundos UTC, com chave estrangeira composta para o pedido do estabelecimento. O worker mantém a alteração de estado, histórico e outbox no mesmo savepoint. Uma trigger remove o agendamento quando o pedido sai de `placed`.

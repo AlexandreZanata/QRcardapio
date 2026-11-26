@@ -37,6 +37,7 @@ pub mod menu_editor;
 pub mod ocr_imports;
 pub mod order_customers;
 pub mod order_delivery_details;
+pub(crate) mod order_expiry_retries;
 pub mod order_items;
 pub mod order_payments;
 pub mod order_transitions;

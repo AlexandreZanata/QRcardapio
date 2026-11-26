@@ -74,6 +74,10 @@ docker compose start app
 3. Use **Reprocessar** na linha do evento. O worker recebe um novo ciclo de tentativas para aquele consumidor e mantém os eventos posteriores do mesmo agregado em espera até o sucesso.
 4. Consulte o diagnóstico novamente para confirmar a queda dos contadores de falhas e eventos em espera. Um `409` pede atualizar o diagnóstico antes de tentar novamente. Se o mesmo evento voltar a falhar, use os novos detalhes para investigar a causa. A tabela `event_consumer_replays` registra a operação aceita.
 
+### Falha na expiração de um pedido
+
+Se o log indicar que a expiração foi adiada, identifique o pedido pelo ID registrado e investigue a chave do erro. O pedido segue na fila com nova tentativa após 30 segundos. Os outros pedidos vencidos podem avançar. Após corrigir a causa, confirme que o pedido foi rejeitado e que `OrderRejected` entrou no outbox antes de verificar a compensação do pagamento.
+
 ## Habilitação do Asaas
 
 1. Separe a implantação de homologação da produção, inclusive banco, domínio HTTPS e chave de API. Configure `PUBLIC_BASE_URL` com a origem pública HTTPS e `COOKIE_SECURE=true`.

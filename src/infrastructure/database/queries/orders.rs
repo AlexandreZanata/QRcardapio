@@ -1,5 +1,5 @@
 use chrono::{DateTime, NaiveDate, Utc};
-use sqlx::{Sqlite, SqliteExecutor, SqlitePool, Transaction};
+use sqlx::{Sqlite, SqliteExecutor, Transaction};
 
 use crate::domain::commerce::order::{Fulfillment, Order, OrderChannel, TransitionOrder};
 use crate::error::{AppError, AppResult};
@@ -95,18 +95,38 @@ pub(crate) struct ExpiredOrder {
     pub version: i64,
 }
 
-/// Platform maintenance scans the deadline index. Any subsequent write is tenant-scoped.
-pub(crate) async fn expired_batch(
-    pool: &SqlitePool,
+/// Merge bounded scans in deadline and retry order. A failed order rejoins at its retry time.
+pub(crate) async fn expired_batch<'e>(
+    executor: impl SqliteExecutor<'e>,
     at: DateTime<Utc>,
+    limit: i64,
 ) -> AppResult<Vec<ExpiredOrder>> {
     Ok(sqlx::query_as(
-        "SELECT establishment_id, id, version FROM orders
-         WHERE state = 'placed' AND acceptance_deadline_at <= ?
-         ORDER BY acceptance_deadline_at, id LIMIT 32",
+        "WITH first_attempts AS MATERIALIZED (
+             SELECT o.establishment_id, o.id, o.version,
+                    unixepoch(o.acceptance_deadline_at, 'subsec') AS eligible_at
+             FROM orders o
+             WHERE o.state = 'placed' AND o.acceptance_deadline_at <= ?1
+               AND NOT EXISTS (
+                    SELECT 1 FROM order_expiry_retries r
+                    WHERE r.order_id = o.id AND r.establishment_id = o.establishment_id
+               )
+             ORDER BY o.acceptance_deadline_at, o.id LIMIT ?3
+         ), retries AS MATERIALIZED (
+             SELECT o.establishment_id, o.id, o.version, r.retry_at / 1000.0 AS eligible_at
+             FROM order_expiry_retries r
+             CROSS JOIN orders o ON o.id = r.order_id AND o.establishment_id = r.establishment_id
+             WHERE r.retry_at <= ?2 AND o.state = 'placed' AND o.acceptance_deadline_at <= ?1
+             ORDER BY r.retry_at, r.order_id LIMIT ?3
+         )
+         SELECT establishment_id, id, version FROM (
+             SELECT * FROM first_attempts UNION ALL SELECT * FROM retries
+         ) ORDER BY eligible_at, id LIMIT ?3",
     )
     .bind(at)
-    .fetch_all(pool)
+    .bind(at.timestamp_millis())
+    .bind(limit)
+    .fetch_all(executor)
     .await?)
 }
 

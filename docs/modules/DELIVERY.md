@@ -135,7 +135,7 @@ Out of scope permanently or until explicitly decided: an own courier network (no
 ### 9.3 Minimum order and limits
 
 - Effective minimum = zone override, else global minimum; pickup uses the global minimum.
-- Up to 50 lines per order, quantity 1–99 per line, line note ≤ 140 characters, order note ≤ 280 characters, order total ≤ 99 999 999 centavos.
+- Up to 50 lines per order, quantity 1–99 per line, line note ≤ 140 characters and order note ≤ 280 characters. The order total follows the [Commerce Core price cap](../decisions/ADR-012-commerce-core-increment-1.md#decision).
 
 ### 9.4 Fees by neighborhood
 
@@ -307,7 +307,9 @@ Static files published next to `index.html` under `/s/{slug}/`: `manifest.webman
 
 Quote request: `catalog_version`, `fulfillment` (`delivery`/`pickup`), `zone_id` (delivery), optional `coupon_code`, `lines[]` of `{product_id, variation_id, quantity, options[{option_id, quantity}], note}`. Quote response: per-line `unit_price_centavos`, `line_total_centavos`, `available`; `items_subtotal_centavos`, `discount_centavos`, `delivery_fee_centavos`, `total_centavos`, `minimum_order_centavos`, `coupon.status`, `open_now`, `eta_minutes[min,max]`, `issues[]`.
 
-Order request: header `Idempotency-Key` (UUID generated when checkout opens, reused on retries); body = quote request + `expected_total_centavos`, `customer{name, phone}`, `address{street, number, complement, neighborhood_zone_id, city, uf, cep, reference}` (delivery only), `payment{method, change_for_centavos}`, `note`.
+Order placement uses the `Idempotency-Key` header with a UUID generated when checkout opens and reused on retries. The body extends the quote request with `expected_total_centavos`, `expected_totals`, `customer{name, phone}`, `address{street, number, complement, neighborhood_zone_id, city, uf, cep, reference}` (delivery only), `payment{method, change_for_centavos}` and `note`.
+
+The planned storefront adapter will also pass the confirmed `expected_totals` (`items_subtotal_centavos`, `discount_centavos`, `delivery_fee_centavos`, `total_centavos`) to Commerce Core. The fields represent the quote shown to the customer. The server calculates the payable amounts, and any change in the breakdown requires reconfirmation even when the total matches.
 
 | Status | Code | Meaning |
 |---|---|---|

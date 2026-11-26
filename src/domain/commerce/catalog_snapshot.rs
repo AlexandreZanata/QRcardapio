@@ -10,6 +10,19 @@ use super::catalog_options::{AddonGroup, AddonOption, ProductVariation};
 
 const SCHEMA_VERSION: u8 = 1;
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AvailabilityTarget<'a> {
+    Product(&'a str),
+    Variation {
+        product_id: &'a str,
+        variation_id: &'a str,
+    },
+    AddonOption {
+        group_id: &'a str,
+        option_id: &'a str,
+    },
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct CatalogContent {
     schema_version: u8,
@@ -129,19 +142,49 @@ impl CatalogContent {
             .find(|product| product.id == product_id)
     }
 
-    pub(crate) fn set_product_availability(
+    pub(crate) fn set_availability(
         &mut self,
-        id: &str,
+        target: AvailabilityTarget<'_>,
         is_available: bool,
-    ) -> AppResult<()> {
-        let product = self
+    ) -> AppResult<bool> {
+        let mut products = self
             .categories
             .iter_mut()
-            .flat_map(|category| &mut category.products)
-            .find(|product| product.id == id)
-            .ok_or(AppError::NotFound("error.not_found"))?;
-        product.is_available = is_available;
-        Ok(())
+            .flat_map(|category| &mut category.products);
+        let not_found = AppError::NotFound("error.not_found");
+        let availability = match target {
+            AvailabilityTarget::Product(id) => products
+                .find(|product| product.id == id)
+                .map(|product| &mut product.is_available),
+            AvailabilityTarget::Variation {
+                product_id,
+                variation_id,
+            } => products
+                .find(|product| product.id == product_id)
+                .and_then(|product| product.variations.iter_mut().find(|v| v.id == variation_id))
+                .map(|variation| &mut variation.is_available),
+            AvailabilityTarget::AddonOption {
+                group_id,
+                option_id,
+            } => {
+                // The snapshot embeds reusable groups separately for every linked product.
+                let options = products
+                    .flat_map(|product| &mut product.addon_groups)
+                    .filter(|group| group.id == group_id)
+                    .flat_map(|group| &mut group.options)
+                    .filter(|option| option.id == option_id);
+                let mut found = false;
+                let mut changed = false;
+                for option in options {
+                    found = true;
+                    changed |=
+                        std::mem::replace(&mut option.is_available, is_available) != is_available;
+                }
+                return if found { Ok(changed) } else { Err(not_found) };
+            }
+        };
+        let availability = availability.ok_or(not_found)?;
+        Ok(std::mem::replace(availability, is_available) != is_available)
     }
 
     pub(crate) fn canonical(&self) -> AppResult<(String, String)> {
