@@ -172,7 +172,7 @@ A galeria de Soluções reutiliza as oito ilustrações e paletas das páginas i
 
 ## Guias práticos
 
-A galeria e os quatro guias têm artes vetoriais e paletas próprias. A leitura das páginas individuais inclui resumo, índice, perguntas frequentes e links para guias, soluções e ferramentas no idioma selecionado.
+A galeria e os quatro guias têm artes vetoriais e paletas próprias. Nas páginas individuais, a capa oferece um atalho ao primeiro capítulo e separa o resumo do texto da introdução. As seções de leitura têm índice, perguntas frequentes e links para guias, soluções e ferramentas no idioma selecionado.
 
 ## Cardápio público de demonstração
 

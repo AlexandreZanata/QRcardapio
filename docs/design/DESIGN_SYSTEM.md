@@ -140,7 +140,7 @@ As páginas de cada segmento usam uma cena própria de `static/icons/segment-sce
 
 A galeria de Soluções reutiliza as cenas e as paletas das páginas individuais. Cada card é um link para o modelo daquele segmento e usa título, descrição e ação visível. Em telas estreitas, a ilustração fica ao lado do texto em uma única coluna de cards.
 
-A galeria de Guias usa cartões com título, descrição e tempo estimado de leitura. O tema de cada guia é definido em `guide-visuals.css` e sua ilustração vem de `guide-scenes.svg` por meio de `seo/guide_art.html`. A mesma arte aparece na galeria, no cabeçalho do artigo e na navegação entre guias. As páginas de leitura incluem um índice por âncoras, comparação em tabela quando disponível e perguntas frequentes com os controles da landing. O índice e as perguntas funcionam com HTML nativo.
+A galeria de Guias usa cartões com título, descrição e tempo estimado de leitura. O tema de cada guia é definido em `guide-visuals.css` e sua ilustração vem de `guide-scenes.svg` por meio de `seo/guide_art.html`. A mesma arte aparece na galeria, na capa do artigo e na navegação entre guias. `guide-hero.css` organiza a capa ilustrada, o resumo e a ação que leva ao primeiro capítulo. `guide-detail.css` organiza o índice, os capítulos, a tabela comparativa e as perguntas frequentes. A navegação por âncoras e os controles de expansão funcionam com HTML nativo.
 
 ### Login com o Google
 
