@@ -132,6 +132,8 @@ As páginas de segmentos (`/solucoes`, `/cardapio-digital/{slug}`), ferramentas 
 
 O componente `seo/breadcrumb.html` usa rótulos traduzidos, separadores decorativos e um marcador amarelo com `aria-current="page"`. Os itens quebram para a linha seguinte quando o espaço diminui. Soluções, ferramentas e guias também usam o cabeçalho compacto da landing para manter a navegação de caminho abaixo de uma única linha de controles no celular.
 
+A galeria de ferramentas em `seo/tools_hub.html` usa um cartão inteiro como link e adapta a grade para celulares. `tool-visuals.css` define o tema de cada ferramenta em amarelo, rosa ou azul, e `seo/tool_art.html` monta as três ilustrações vetoriais de `static/icons/tool-scenes.svg`. As artes são decorativas. O nome e a descrição de cada ferramenta ficam em texto.
+
 As páginas de cada segmento usam uma cena própria de `static/icons/segment-scenes.svg` e uma combinação de cores definida em `static/css/segment-visuals.css`. A estrutura é compartilhada e inclui benefícios em cards, exemplos em formato de cardápio com os preços alinhados, dicas, perguntas com `<details>` e segmentos relacionados. A arte é decorativa. O título, o resumo, os itens e as respostas continuam disponíveis como texto.
 
 A galeria de Soluções reutiliza as cenas e as paletas das páginas individuais. Cada card é um link para o modelo daquele segmento e usa título, descrição e ação visível. Em telas estreitas, a ilustração fica ao lado do texto em uma única coluna de cards.

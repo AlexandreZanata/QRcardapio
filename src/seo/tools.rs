@@ -10,6 +10,14 @@ pub enum ToolId {
 impl ToolId {
     pub const ALL: [ToolId; 3] = [Self::QrGenerator, Self::CmvCalculator, Self::TablePlacard];
 
+    pub const fn art(self) -> &'static str {
+        match self {
+            Self::QrGenerator => "qr-generator",
+            Self::CmvCalculator => "cmv-calculator",
+            Self::TablePlacard => "table-placard",
+        }
+    }
+
     pub const fn slug(self, locale: Locale) -> &'static str {
         match (self, locale) {
             (Self::QrGenerator, Locale::PtBr) => "gerador-qr-code-cardapio",
