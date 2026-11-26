@@ -1,0 +1,70 @@
+<section id="tool-workspace" class="seo-tool-grid tool-workspace" data-seo-tool="cmv" data-locale="{{ page.locale_code }}" aria-label="{{ tool.name }}" tabindex="-1">
+  <form id="seo-cmv-form" class="seo-tool-form tool-form">
+    <div class="tool-cmv-costs">
+      <label class="seo-field">
+        <span data-i18n="seo.tool_cmv_ingredients">{{ page.t("seo.tool_cmv_ingredients") }}</span>
+        <input id="cmv-ingredients" type="text" inputmode="decimal" value="12,50">
+      </label>
+      <label class="seo-field">
+        <span data-i18n="seo.tool_cmv_packaging">{{ page.t("seo.tool_cmv_packaging") }}</span>
+        <input id="cmv-packaging" type="text" inputmode="decimal" value="2,50">
+      </label>
+    </div>
+    <div class="tool-cmv-target">
+      <label class="seo-field">
+        <span data-i18n="seo.tool_cmv_target">{{ page.t("seo.tool_cmv_target") }}</span>
+        <input id="cmv-target" type="number" min="5" max="85" step="1" value="30">
+      </label>
+      <div class="seo-preset-row">
+        <button class="btn landing-button seo-preset-btn" type="button" data-cmv-preset="25">25%</button>
+        <button class="btn landing-button seo-preset-btn" type="button" data-cmv-preset="30">30%</button>
+        <button class="btn landing-button seo-preset-btn" type="button" data-cmv-preset="35">35%</button>
+      </div>
+    </div>
+    <label class="seo-field">
+      <span data-i18n="seo.tool_cmv_fees">{{ page.t("seo.tool_cmv_fees") }}</span>
+      <input id="cmv-fees" type="number" min="0" max="40" step="0.5" value="5">
+    </label>
+  </form>
+
+  <div class="tool-output tool-cmv-output">
+    <h2 data-i18n="seo.tool_cmv_results_heading">{{ page.t("seo.tool_cmv_results_heading") }}</h2>
+    <div aria-live="polite" aria-atomic="true">
+      <dl class="seo-metric-grid">
+        <div class="tool-metric tool-metric-primary">
+          <dt data-i18n="seo.tool_cmv_suggested_price">{{ page.t("seo.tool_cmv_suggested_price") }}</dt>
+          <dd id="cmv-out-price">R$ 52,63</dd>
+        </div>
+        <div class="tool-metric">
+          <dt data-i18n="seo.tool_cmv_total_cost">{{ page.t("seo.tool_cmv_total_cost") }}</dt>
+          <dd id="cmv-out-cost">R$ 15,00</dd>
+        </div>
+        <div class="tool-metric">
+          <dt data-i18n="seo.tool_cmv_margin_unit">{{ page.t("seo.tool_cmv_margin_unit") }}</dt>
+          <dd id="cmv-out-margin">R$ 35,00 (67%)</dd>
+        </div>
+        <div class="tool-metric">
+          <dt data-i18n="seo.tool_cmv_profit_100">{{ page.t("seo.tool_cmv_profit_100") }}</dt>
+          <dd id="cmv-out-profit100">R$ 3.500,00</dd>
+        </div>
+      </dl>
+      <p id="cmv-out-warning" class="seo-warning" hidden data-i18n="seo.tool_cmv_invalid">{{ page.t("seo.tool_cmv_invalid") }}</p>
+    </div>
+    <div class="tool-benchmark">
+      <table class="seo-table">
+        <thead>
+          <tr>
+            <th scope="col" data-i18n="seo.tool_cmv_bench_segment">{{ page.t("seo.tool_cmv_bench_segment") }}</th>
+            <th scope="col" data-i18n="seo.tool_cmv_bench_range">{{ page.t("seo.tool_cmv_bench_range") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td data-i18n="seo.tool_cmv_bench_coffee">{{ page.t("seo.tool_cmv_bench_coffee") }}</td><td>18% – 25%</td></tr>
+          <tr><td data-i18n="seo.tool_cmv_bench_burger">{{ page.t("seo.tool_cmv_bench_burger") }}</td><td>28% – 34%</td></tr>
+          <tr><td data-i18n="seo.tool_cmv_bench_restaurant">{{ page.t("seo.tool_cmv_bench_restaurant") }}</td><td>28% – 35%</td></tr>
+          <tr><td data-i18n="seo.tool_cmv_bench_pizza">{{ page.t("seo.tool_cmv_bench_pizza") }}</td><td>24% – 30%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>

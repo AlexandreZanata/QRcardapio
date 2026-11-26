@@ -166,6 +166,8 @@ As oito páginas de segmentos combinam uma arte exclusiva, cores por tema, benef
 
 A galeria de ferramentas gratuitas destaca o gerador de QR Code, a calculadora de CMV e o criador de placas com uma arte vetorial por ferramenta e cartões responsivos em português, inglês e espanhol.
 
+As páginas das ferramentas reutilizam as artes da galeria e têm uma área de trabalho com formulário, prévia ou resultado, instruções e perguntas frequentes. O gerador oferece SVG e PNG de pelo menos 1024 pixels, a calculadora destaca o preço sugerido e o criador de placas imprime o resultado em uma folha A5.
+
 A galeria de Soluções reutiliza as oito ilustrações e paletas das páginas individuais. Cada card abre o modelo do segmento no idioma selecionado.
 
 ## Cardápio público de demonstração

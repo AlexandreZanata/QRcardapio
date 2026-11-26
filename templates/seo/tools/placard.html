@@ -1,0 +1,36 @@
+<section id="tool-workspace" class="seo-tool-grid tool-workspace" data-seo-tool="placard" aria-label="{{ tool.name }}" tabindex="-1">
+  <form class="seo-tool-form tool-form" method="get" action="{{ form_action }}">
+    <label class="seo-field">
+      <span data-i18n="seo.tool_placard_name">{{ page.t("seo.tool_placard_name") }}</span>
+      <input id="placard-name" name="name" type="text" maxlength="80" value="{{ placard_name }}">
+    </label>
+    <label class="seo-field">
+      <span data-i18n="seo.tool_placard_cta">{{ page.t("seo.tool_placard_cta") }}</span>
+      <input id="placard-cta" name="cta" type="text" maxlength="120" value="{{ placard_cta }}">
+    </label>
+    <label class="seo-field">
+      <span data-i18n="seo.tool_qr_url_label">{{ page.t("seo.tool_qr_url_label") }}</span>
+      <input id="placard-url" name="url" type="url" required maxlength="512" value="{{ qr_target_url }}">
+    </label>
+    <div class="seo-tool-actions">
+      <button class="btn landing-button landing-button-blue" type="submit" data-i18n="seo.tool_qr_generate">{{ page.t("seo.tool_qr_generate") }}</button>
+    </div>
+  </form>
+
+  <div class="tool-output tool-placard-output">
+    <header class="tool-preview-heading">
+      <h2 data-i18n="seo.tool_preview_heading">{{ page.t("seo.tool_preview_heading") }}</h2>
+      <span class="tool-paper-size">A5</span>
+    </header>
+    <article class="seo-placard-sheet" aria-label="{{ tool.name }}">
+      <p class="seo-placard-brand" id="placard-preview-name">{{ placard_name }}</p>
+      <img id="placard-preview-qr" src="{{ qr_preview_src }}" width="260" height="260" alt="{{ tool.name }}">
+      <p class="seo-placard-cta" id="placard-preview-cta">{{ placard_cta }}</p>
+      <p class="seo-placard-url" id="placard-preview-url">{{ qr_target_url }}</p>
+    </article>
+    <div class="tool-placard-actions">
+      <button id="placard-print-btn" class="btn landing-button landing-button-yellow" type="button" aria-describedby="tool-print-hint" data-i18n="print.button">{{ page.t("print.button") }}</button>
+      <p id="tool-print-hint" class="seo-field-hint" data-i18n="print.helper">{{ page.t("print.helper") }}</p>
+    </div>
+  </div>
+</section>

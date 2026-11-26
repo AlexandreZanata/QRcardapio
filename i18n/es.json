@@ -729,6 +729,8 @@
   "seo.read_guide": "Leer guía completa",
   "seo.other_tools": "Otras herramientas gratuitas",
   "seo.next_steps": "Siguientes pasos recomendados",
+  "seo.tool_preview_heading": "Vista previa",
+  "seo.tool_cmv_results_heading": "Resultado del cálculo",
   "seo.tool_qr_url_label": "Dirección HTTPS del menú o enlace de Google",
   "seo.tool_qr_generate": "Actualizar código QR",
   "seo.tool_qr_hint": "Ingresa una URL con https://. El formato SVG escala sin pérdida para imprenta.",
