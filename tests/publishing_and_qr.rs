@@ -3,7 +3,7 @@ use std::path::PathBuf;
 use std::sync::Arc;
 
 use axum::body::Body;
-use axum::http::header::{ETAG, IF_NONE_MATCH};
+use axum::http::header::{CACHE_CONTROL, COOKIE, ETAG, IF_NONE_MATCH};
 use axum::http::{HeaderMap, Request, StatusCode};
 use http_body_util::BodyExt;
 use image::{DynamicImage, ImageEncoder, codecs::png::PngEncoder};
@@ -79,7 +79,7 @@ async fn public_demo_reseeds_without_creating_a_tenant_and_serves_the_complete_m
     assert_eq!(first, std::fs::read_to_string(&index).unwrap());
     assert_eq!(first.matches("data-cat-section=").count(), 5);
     assert_eq!(first.matches("data-menu-item").count(), 9);
-    assert_eq!(first.matches("class=\"item-photo\"").count(), 9);
+    assert_eq!(first.matches("class=\"catalog-product-image\"").count(), 9);
     assert!(first.contains("data-en=\"House Burger\""));
     assert!(first.contains("data-es=\"Hamburguesa de la casa\""));
     assert!(first.contains("name=\"robots\" content=\"noindex, follow\""));
@@ -113,7 +113,10 @@ async fn public_demo_reseeds_without_creating_a_tenant_and_serves_the_complete_m
     assert_eq!(first, std::fs::read_to_string(&index).unwrap());
     pool.close().await;
 
-    for image in first.split("class=\"item-photo\" src=\"").skip(1) {
+    for image in first
+        .split("class=\"catalog-product-image\" src=\"")
+        .skip(1)
+    {
         let url = image.split('"').next().unwrap();
         let path = url
             .strip_prefix(&format!("/c/{PUBLIC_DEMO_SLUG}/"))
@@ -128,6 +131,43 @@ async fn public_demo_reseeds_without_creating_a_tenant_and_serves_the_complete_m
         .await;
         assert_eq!(response.status(), StatusCode::OK);
         assert_eq!(response.headers()["content-type"], "image/jpeg");
+    }
+    let product_paths: Vec<_> = first
+        .split(&format!("href=\"/c/{PUBLIC_DEMO_SLUG}/p/"))
+        .skip(1)
+        .map(|part| format!("p/{}", part.split('"').next().unwrap()))
+        .collect();
+    assert_eq!(product_paths.len(), 9);
+    for path in product_paths {
+        let response = serve_published_file_from_disk(
+            &cfg.published_dir(),
+            PUBLIC_DEMO_SLUG,
+            &path,
+            Locale::PtBr,
+            &HeaderMap::new(),
+        )
+        .await;
+        assert_eq!(response.status(), StatusCode::OK);
+        assert_eq!(
+            response.headers()["content-type"],
+            "text/html; charset=utf-8"
+        );
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let product = std::str::from_utf8(&bytes).unwrap();
+        let (_, photo) = product
+            .split_once("class=\"product-photo\" src=\"")
+            .unwrap();
+        let url = photo.split('"').next().unwrap();
+        let image_path = url
+            .strip_prefix(&format!("/c/{PUBLIC_DEMO_SLUG}/"))
+            .unwrap();
+        assert!(image_path.ends_with(".jpg"));
+        assert!(
+            cfg.published_dir()
+                .join(PUBLIC_DEMO_SLUG)
+                .join(image_path)
+                .is_file()
+        );
     }
 }
 
@@ -207,6 +247,33 @@ async fn atomic_publish_xss_escaping_zero_db_delivery_and_recovery() {
 
     // Unpublished menu returns 404
     let app = build_router(AppState::new(cfg.clone(), pool.clone()));
+    let preview_path = format!("/dashboard/preview/produto/{}", prod.id);
+    let preview_cookie = format!("qr_session={}", auth.raw_session_token);
+    let preview = app
+        .clone()
+        .oneshot(
+            Request::get(preview_path.as_str())
+                .header(COOKIE, &preview_cookie)
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(preview.status(), StatusCode::OK);
+    assert_eq!(preview.headers()[CACHE_CONTROL], "no-store");
+    let preview_body = preview.into_body().collect().await.unwrap().to_bytes();
+    let preview_html = std::str::from_utf8(&preview_body).unwrap();
+    assert!(preview_html.contains("noindex, nofollow"));
+    assert!(preview_html.contains("/dashboard/media/"));
+    assert!(!preview_html.contains("<img src=x onerror="));
+
+    let unauthenticated = app
+        .clone()
+        .oneshot(Request::get(preview_path).body(Body::empty()).unwrap())
+        .await
+        .unwrap();
+    assert!(unauthenticated.status().is_redirection());
+
     let res_404 = app
         .clone()
         .oneshot(
@@ -277,7 +344,17 @@ async fn atomic_publish_xss_escaping_zero_db_delivery_and_recovery() {
             .unwrap()
             .unwrap();
     let cover_url = format!("/c/cantina-bella/media/{}", cover_asset.filename_large);
-    assert!(html.contains(&format!("class=\"menu-cover\" src=\"{cover_url}\"")));
+    assert!(html.contains(&format!(
+        "class=\"catalog-cover-image\" src=\"{cover_url}\""
+    )));
+    let product_id_attribute = format!("id=\"item-{}\" href=\"/c/cantina-bella/", prod.id);
+    let product_path = html
+        .split_once(&product_id_attribute)
+        .unwrap()
+        .1
+        .split('"')
+        .next()
+        .unwrap();
     let cover_response = app
         .clone()
         .oneshot(
@@ -440,6 +517,15 @@ async fn atomic_publish_xss_escaping_zero_db_delivery_and_recovery() {
     )
     .await;
     assert_eq!(after_unpub.status(), StatusCode::NOT_FOUND);
+    let after_unpub_product = serve_published_file_from_disk(
+        &cfg.published_dir(),
+        "cantina-bella",
+        product_path,
+        Locale::PtBr,
+        &HeaderMap::new(),
+    )
+    .await;
+    assert_eq!(after_unpub_product.status(), StatusCode::NOT_FOUND);
 
     // Republish once more, then close & DELETE SQLite DB to prove zero-DB public delivery!
     publish_establishment(&pool, &cfg, &locks, &est.id)

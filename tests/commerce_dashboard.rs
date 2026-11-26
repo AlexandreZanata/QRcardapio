@@ -314,10 +314,20 @@ async fn landing_button_keeps_demo_qr_and_demo_has_translated_read_only_customiz
         assert!(landing.contains("href=\"/c/bistro-da-praca\""));
     }
     let menu = html(&h.app, "/c/bistro-da-praca").await;
-    assert!(menu.contains("<details class=\"item-choices\">"));
-    assert!(menu.contains("Ingredientes que podem ser retirados"));
-    assert!(menu.contains("Extras opcionales"));
-    assert!(menu.contains("Extra cheddar"));
-    assert!(menu.contains("data-price-centavos=\"350\""));
+    assert!(!menu.contains("data-price-centavos=\"350\""));
+    let product_url = menu
+        .split_once("id=\"item-classico\" href=\"")
+        .unwrap()
+        .1
+        .split('"')
+        .next()
+        .unwrap();
+    let product = html(&h.app, product_url).await;
+    assert!(product.contains("Ingredientes que podem ser retirados"));
+    assert!(product.contains("Extras opcionales"));
+    assert!(product.contains("Extra cheddar"));
+    assert!(product.contains("data-price-centavos=\"350\""));
+    assert!(product.contains("href=\"/c/bistro-da-praca#cat-"));
     assert!(!menu.contains("<form"));
+    assert!(!product.contains("<form"));
 }

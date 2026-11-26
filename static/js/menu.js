@@ -87,6 +87,12 @@
       btn.setAttribute(btn.matches("a") ? "aria-current" : "aria-pressed", String(active));
     });
 
+    document.querySelectorAll("[data-menu-localized-link]").forEach((link) => {
+      const url = new URL(link.href);
+      url.searchParams.set("lang", locale);
+      link.href = url.pathname + url.search + url.hash;
+    });
+
     if (persist) {
       try {
         localStorage.setItem(STORAGE_KEY, locale);
@@ -116,13 +122,22 @@
   // Category filter pills + live instant search
   const searchInput = document.getElementById("menu-search");
   const noResultsBox = document.getElementById("menu-no-results");
+  const categoryFilters = Array.from(document.querySelectorAll("[data-cat-filter]"));
+  const sections = Array.from(document.querySelectorAll("[data-cat-section]"));
+  const hasAnyItems = Boolean(document.querySelector("[data-menu-item]"));
+  const menuPath = window.location.pathname.replace(/\/$/, "");
+  const returnKey = "qr_menu_return:" + menuPath;
   let activeCategory = "all";
 
+  function searchText(value) {
+    return value.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().trim();
+  }
+
   function filterMenu() {
-    const q = searchInput ? searchInput.value.trim().toLowerCase() : "";
+    const q = searchText(searchInput?.value || "");
     let totalVisible = 0;
 
-    document.querySelectorAll("[data-cat-section]").forEach((sec) => {
+    sections.forEach((sec) => {
       const catId = sec.dataset.catSection;
       const catMatches = activeCategory === "all" || activeCategory === catId;
       if (!catMatches) {
@@ -132,8 +147,12 @@
 
       let secVisible = 0;
       sec.querySelectorAll("[data-menu-item]").forEach((card) => {
-        const text = (card.textContent || "").toLowerCase();
-        const show = q.length === 0 || text.includes(q);
+        const title = card.querySelector(".catalog-product-name");
+        const description = card.querySelector("[data-menu-search-description]");
+        const text = title
+          ? (title.textContent || "") + " " + (description?.textContent || "")
+          : card.textContent || "";
+        const show = !q || searchText(text).includes(q);
         card.classList.toggle("is-hidden", !show);
         if (show) secVisible++;
       });
@@ -143,40 +162,102 @@
     });
 
     if (noResultsBox) {
-      const hasAnyItems = document.querySelectorAll("[data-menu-item]").length > 0;
       noResultsBox.classList.toggle("is-hidden", !hasAnyItems || totalVisible > 0);
     }
   }
 
-  document.querySelectorAll("[data-cat-filter]").forEach((pill) => {
-    pill.addEventListener("click", () => {
-      activeCategory = pill.dataset.catFilter;
-      document.querySelectorAll("[data-cat-filter]").forEach((p) => {
-        const active = p === pill;
-        p.classList.toggle("is-active", active);
-        p.setAttribute("aria-pressed", active ? "true" : "false");
-      });
-      filterMenu();
+  function selectCategory(category) {
+    activeCategory = category;
+    categoryFilters.forEach((control) => {
+      const active = control.dataset.catFilter === category;
+      control.classList.toggle("is-active", active);
+      if (control.matches("a")) {
+        if (active) control.setAttribute("aria-current", "true");
+        else control.removeAttribute("aria-current");
+      } else {
+        control.setAttribute("aria-pressed", String(active));
+      }
+    });
+    filterMenu();
+  }
+
+  categoryFilters.forEach((control) => {
+    control.addEventListener("click", (event) => {
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      event.preventDefault();
+      selectCategory(control.dataset.catFilter);
+      if (control.matches("a")) {
+        document.getElementById("menu-content")?.scrollIntoView({ block: "start" });
+      }
     });
   });
 
-  if (searchInput) {
-    searchInput.addEventListener("input", filterMenu);
+  if (searchInput) searchInput.addEventListener("input", filterMenu);
+  if (sections.length) window.addEventListener("qr:langchange", filterMenu);
+  document.querySelectorAll("[data-menu-search-control]").forEach((control) => {
+    control.hidden = false;
+  });
+
+  document.querySelectorAll("[data-menu-product-link]").forEach((link) => {
+    link.addEventListener("click", (event) => {
+      if (event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+      try {
+        sessionStorage.setItem(returnKey, JSON.stringify({
+          productPath: new URL(link.href).pathname,
+          productId: link.id,
+          query: searchInput?.value || "",
+          category: activeCategory,
+        }));
+      } catch {
+        // The product link still works when session storage is unavailable.
+      }
+    });
+  });
+
+  function restoreMenu() {
+    if (!searchInput || !document.querySelector("[data-menu-product-link]")) return;
+    let saved;
+    try {
+      saved = JSON.parse(sessionStorage.getItem(returnKey));
+      if (!saved) return;
+      const referrer = document.referrer && new URL(document.referrer);
+      const isProductReturn = referrer?.origin === location.origin &&
+        referrer.pathname === saved.productPath;
+      const isHistoryReturn = performance.getEntriesByType("navigation")[0]?.type === "back_forward";
+      if (!isProductReturn && !isHistoryReturn) return;
+      sessionStorage.removeItem(returnKey);
+    } catch {
+      return;
+    }
+
+    searchInput.value = typeof saved.query === "string" ? saved.query : "";
+    const category = categoryFilters.some((control) => control.dataset.catFilter === saved.category)
+      ? saved.category
+      : "all";
+    selectCategory(category);
+    const product = document.getElementById(saved.productId);
+    if (product && product.getClientRects().length) {
+      // The browser can reset focus while resolving the category fragment on load.
+      const focusProduct = () => requestAnimationFrame(() => {
+        product.focus({ preventScroll: true });
+        product.scrollIntoView({ block: "center" });
+      });
+      if (document.readyState === "complete") focusProduct();
+      else window.addEventListener("pageshow", focusProduct, { once: true });
+    }
   }
 
   // Initialize from saved preference on static pages without reloading
+  const paramLang = new URLSearchParams(window.location.search).get("lang");
+  let savedLocale;
   try {
-    const params = new URLSearchParams(window.location.search);
-    const paramLang = params.get("lang");
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (paramLang) {
-      applyLocale(paramLang, true);
-    } else if (saved) {
-      applyLocale(saved, false);
-    }
+    savedLocale = localStorage.getItem(STORAGE_KEY);
   } catch {
     // Ignore storage access errors.
   }
+  const initialLocale = paramLang || savedLocale;
+  if (initialLocale) applyLocale(initialLocale, Boolean(paramLang));
+  restoreMenu();
 
   if (document.querySelector(".lang-switcher")) {
     import("/static/js/language-picker.js").catch(() => {});

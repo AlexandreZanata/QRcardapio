@@ -18,8 +18,10 @@ use crate::infrastructure::storage::{atomic_write_file, resolve_safe_subpath};
 use crate::rendering::public_menu::{generate_brand_theme_css, render_public_menu_html};
 
 mod locks;
+mod product_pages;
 mod retired_assets;
 pub use locks::PublishLocks;
+use product_pages::ProductPages;
 use retired_assets::RetiredAssets;
 
 #[derive(Debug, Clone)]
@@ -31,7 +33,7 @@ pub struct PublishOutcome {
 }
 
 /// Publishes an establishment's visible menu into a self-contained static directory:
-/// `published/{slug}/index.html`, `theme-{hash8}.css`, and content-addressed `media/*`.
+/// `published/{slug}/index.html`, product pages, a theme, and content-addressed media.
 /// Preserves any previous live snapshot if an error happens before the atomic `index.html` rename.
 pub async fn publish_establishment(
     pool: &SqlitePool,
@@ -147,6 +149,7 @@ pub(crate) fn write_static_snapshot_with_media<'a>(
     let theme_href = format!("/c/{slug_str}/{theme_filename}");
     let media_base = format!("/c/{slug_str}/media");
 
+    let product_pages = ProductPages::render(snapshot, &media_base, &theme_href, &theme_filename)?;
     let html = render_public_menu_html(
         snapshot,
         Locale::PtBr,
@@ -154,6 +157,7 @@ pub(crate) fn write_static_snapshot_with_media<'a>(
         &media_base,
         &theme_href,
         &config.public_base_url,
+        &product_pages.urls,
     )?;
 
     // Collect referenced content-addressed filenames.
@@ -168,6 +172,7 @@ pub(crate) fn write_static_snapshot_with_media<'a>(
         for sp in &sc.products {
             if let Some(img) = &sp.image {
                 keep_media.insert(img.filename_thumb.clone());
+                keep_media.insert(img.filename_large.clone());
             }
         }
     }
@@ -189,6 +194,8 @@ pub(crate) fn write_static_snapshot_with_media<'a>(
         atomic_write_file(&tmp_dir, &theme_dest, &theme_css_bytes)?;
     }
 
+    product_pages.stage(&pub_dir, &tmp_dir, &retired)?;
+
     // Atomic POSIX rename replaces index.html in a single filesystem step.
     let html_bytes = html.as_bytes();
     let index_dest = pub_dir.join("index.html");
@@ -196,14 +203,29 @@ pub(crate) fn write_static_snapshot_with_media<'a>(
 
     // Cached HTML still references assets from the preceding publication.
     let now = SystemTime::now();
-    retired.prune(&pub_dir, "themes", now, |name| {
-        name.starts_with("theme-") && name.ends_with(".css") && name != theme_filename
-    });
-    retired.prune(&pub_media_dir, "media", now, |name| {
-        !keep_media.contains(name)
-    });
+    let asset_count = keep_media.len();
+    let mut keep_themes = HashSet::from([theme_filename]);
+    match product_pages.prune_and_retain_assets(
+        &pub_dir,
+        &retired,
+        now,
+        &mut keep_media,
+        &mut keep_themes,
+    ) {
+        Ok(()) => {
+            retired.prune(&pub_dir, "themes", now, |name| {
+                name.starts_with("theme-") && name.ends_with(".css") && !keep_themes.contains(name)
+            });
+            retired.prune(&pub_media_dir, "media", now, |name| {
+                !keep_media.contains(name)
+            });
+        }
+        Err(error) => {
+            tracing::warn!(slug = slug_str, %error, "product page asset cleanup deferred");
+        }
+    }
 
-    Ok((html_bytes.len(), keep_media.len()))
+    Ok((html_bytes.len(), asset_count))
 }
 
 pub async fn unpublish_establishment(

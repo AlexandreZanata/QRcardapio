@@ -26,6 +26,10 @@ impl RetiredAssets {
         }
     }
 
+    pub(super) fn product_refs_dir(&self) -> PathBuf {
+        self.root.join("product-refs")
+    }
+
     pub(super) fn prune(
         &self,
         dir: &Path,

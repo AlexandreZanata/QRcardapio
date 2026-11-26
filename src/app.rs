@@ -200,6 +200,10 @@ pub fn build_router(state: AppState) -> Router {
         .route("/dashboard/theme.css", get(dashboard::dashboard_theme_css))
         .route("/dashboard/preview", get(dashboard::preview_menu_page))
         .route(
+            "/dashboard/preview/produto/{id}",
+            get(dashboard::preview_product_page),
+        )
+        .route(
             "/dashboard/media/{filename}",
             get(dashboard::serve_tenant_media),
         )
