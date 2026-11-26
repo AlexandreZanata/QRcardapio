@@ -96,6 +96,7 @@ pub struct Catalog {
     es: BTreeMap<String, String>,
     version_hash: String,
     public_menu_embedded_json: String,
+    storefront_embedded_json: String,
 }
 
 static CATALOG: LazyLock<Catalog> = LazyLock::new(Catalog::build);
@@ -147,12 +148,46 @@ impl Catalog {
             .expect("serialize menu i18n bundle")
             .replace("</", "<\\/");
 
+        let mut storefront_bundle: BTreeMap<&str, BTreeMap<&str, &str>> = BTreeMap::new();
+        for locale in Locale::ALL {
+            let src = match locale {
+                Locale::PtBr => &pt_br,
+                Locale::En => &en,
+                Locale::Es => &es,
+            };
+            let mut subset = BTreeMap::new();
+            for (k, v) in src {
+                if k.starts_with("storefront.")
+                    || k.starts_with("delivery.")
+                    || k.starts_with("public_menu.")
+                    || k.starts_with("lang.")
+                    || k.starts_with("error.")
+                    || k.starts_with("commerce.")
+                    || matches!(
+                        k.as_str(),
+                        "app.name"
+                            | "billing.method_heading"
+                            | "common.back"
+                            | "common.close"
+                            | "common.skip_to_content"
+                    )
+                {
+                    subset.insert(k.as_str(), v.as_str());
+                }
+            }
+            storefront_bundle.insert(locale.code(), subset);
+        }
+        let storefront_embedded_json = serde_json::to_string(&storefront_bundle)
+            .expect("serialize storefront i18n bundle")
+            .replace("</", "<\\/");
+
         Self {
             pt_br,
             en,
             es,
             version_hash,
             public_menu_embedded_json,
+            storefront_embedded_json,
         }
     }
 
@@ -186,6 +221,10 @@ impl Catalog {
 
     pub fn public_menu_embedded_json(&self) -> &str {
         &self.public_menu_embedded_json
+    }
+
+    pub fn storefront_embedded_json(&self) -> &str {
+        &self.storefront_embedded_json
     }
 }
 

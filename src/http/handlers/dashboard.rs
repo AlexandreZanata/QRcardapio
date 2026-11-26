@@ -7,6 +7,7 @@ use axum_extra::extract::CookieJar;
 use serde::Deserialize;
 
 use crate::app::AppState;
+use crate::application::delivery::access::staff_access;
 use crate::application::entitlements::{Denial, authorize, can_publish_menu};
 use crate::application::publishing::{publish_establishment, unpublish_establishment};
 use crate::domain::account::AccountRole;
@@ -40,6 +41,14 @@ pub async fn overview_page(
     let categories = list_categories_for_est(&state.pool, &est.id).await?;
     let products = list_products_for_est(&state.pool, &est.id).await?;
     let can_publish = can_publish_menu(&state.pool, state.billing.enforcement(), &est.id).await?;
+    let delivery = staff_access(
+        &state.pool,
+        &state.commercial_catalog,
+        state.billing.enforcement(),
+        &est.id,
+        tenant.role,
+    )
+    .await?;
     let (jar, flash) = take_flash(jar);
 
     let tpl = OverviewTemplate {
@@ -60,6 +69,7 @@ pub async fn overview_page(
         product_count: products.len(),
         billing_enabled: state.billing.enabled(),
         can_publish,
+        delivery,
     };
     Ok((jar, render_html(&tpl, StatusCode::OK)?).into_response())
 }

@@ -1,0 +1,182 @@
+{% import "dashboard/commerce/fields.html" as fields %}
+  <section id="delivery-orders-list" data-delivery-orders class="commerce-stack">
+    {% if orders.is_empty() %}
+    <div class="commerce-card">
+      <p data-i18n="delivery.orders.empty">{{ page.t("delivery.orders.empty") }}</p>
+    </div>
+    {% endif %}
+
+    {% for o in orders %}
+    <article class="commerce-card commerce-stack" data-order-id="{{ o.id }}" data-order-state="{{ o.state }}">
+      <header class="commerce-row">
+        <div>
+          <strong>#{{ o.order_number }}</strong>
+          <span>· {{ o.public_id }}</span>
+          {% let state_key = ("storefront.state_" ~ o.state).to_string() %}
+          <span class="badge" data-i18n="{{ state_key }}">{{ page.t(state_key) }}</span>
+          {% let mode_key = ("commerce.hours." ~ o.fulfillment).to_string() %}
+          <span class="badge" data-i18n="{{ mode_key }}">{{ page.t(mode_key) }}</span>
+        </div>
+        <strong>{{ o.total_display }}</strong>
+      </header>
+
+      {% if o.payment_pending_on_completed %}
+      <p class="badge badge-warn" data-i18n="delivery.orders.payment_pending_warning">{{ page.t("delivery.orders.payment_pending_warning") }}</p>
+      {% endif %}
+      {% if o.payment_refund_due_centavos > 0 %}
+      <p class="badge badge-warn" data-i18n="delivery.orders.refund_due_warning">{{ page.t("delivery.orders.refund_due_warning") }}</p>
+      {% endif %}
+
+      {% if !o.customer_name.is_empty() %}
+      <p><strong>{{ o.customer_name }}</strong>{% if !o.customer_phone.is_empty() %} · {{ o.customer_phone }}{% endif %}</p>
+      {% endif %}
+      <p>
+        {% if !o.neighborhood_label.is_empty() && o.address_summary.is_empty() %}
+        <span>{{ o.neighborhood_label }}</span> ·
+        {% endif %}
+        {% if !o.address_summary.is_empty() %}
+        <span>{{ o.address_summary }}</span> ·
+        {% endif %}
+        {% if let Some(code) = o.coupon_code %}
+        <span>{{ code }} (-{{ o.discount_display }})</span> ·
+        {% endif %}
+        <span>{{ o.business_date }}</span>
+        {% if !o.fee_display.is_empty() %} · <span data-i18n="delivery.orders.fee">{{ page.t("delivery.orders.fee") }}</span> {{ o.fee_display }}{% endif %}
+      </p>
+
+      {% if !o.order_note.is_empty() %}
+      <p>{{ o.order_note }}</p>
+      {% endif %}
+
+      <ul>
+        {% for item in o.items %}
+        <li>
+          {{ item.quantity }}× {{ item.name }}{% if let Some(v) = item.variation_name %} ({{ v }}){% endif %}
+          {% if !item.options_summary.is_empty() %} — {{ item.options_summary }}{% endif %}
+          · {{ item.line_total_display }}
+          {% if !item.note.is_empty() %}<p>{{ item.note }}</p>{% endif %}
+        </li>
+        {% endfor %}
+      </ul>
+
+      {% if let Some(pm) = o.payment_method %}
+      <p>
+        <span data-i18n="billing.method_heading">{{ page.t("billing.method_heading") }}</span>:
+        {% let payment_key = ("delivery.payment." ~ pm).to_string() %}
+        <strong data-i18n="{{ payment_key }}">{{ page.t(payment_key) }}</strong>
+        {% if let Some(ps) = o.payment_state %}
+        {% let payment_state_key = ("delivery.payment_state." ~ ps).to_string() %}
+        <span data-i18n="{{ payment_state_key }}">{{ page.t(payment_state_key) }}</span>
+        {% endif %}
+        {% if let Some(change) = o.change_for_display %}
+        · <span data-i18n="delivery.orders.change_for">{{ page.t("delivery.orders.change_for") }}</span> {{ change }}
+        {% endif %}
+      </p>
+      {% endif %}
+
+      <div class="commerce-actions">
+        <button class="btn btn-secondary" type="button" data-print-order data-i18n="delivery.orders.print">{{ page.t("delivery.orders.print") }}</button>
+        {% if o.can_accept %}
+        <form method="post" action="/dashboard/delivery/orders/{{ o.id }}/transition" class="commerce-actions">
+          {{ fields::csrf() }}
+          <input type="hidden" name="to" value="accepted">
+          <input type="hidden" name="expected_version" value="{{ o.version }}">
+          <button type="submit" class="btn btn-primary" data-i18n="delivery.orders.accept">{{ page.t("delivery.orders.accept") }}</button>
+        </form>
+        {% endif %}
+
+        {% if o.can_reject %}
+        <form method="post" action="/dashboard/delivery/orders/{{ o.id }}/transition" class="commerce-actions">
+          {{ fields::csrf() }}
+          <input type="hidden" name="to" value="rejected">
+          <input type="hidden" name="expected_version" value="{{ o.version }}">
+          <select name="reason_code" aria-label="{{ page.t("delivery.orders.reason") }}" data-i18n-aria="delivery.orders.reason">
+            <option value="too_busy" data-i18n="delivery.reason.too_busy">{{ page.t("delivery.reason.too_busy") }}</option>
+            <option value="item_unavailable" data-i18n="delivery.reason.item_unavailable">{{ page.t("delivery.reason.item_unavailable") }}</option>
+            <option value="closed" data-i18n="delivery.reason.closed">{{ page.t("delivery.reason.closed") }}</option>
+            <option value="address_not_served" data-i18n="delivery.reason.address_not_served">{{ page.t("delivery.reason.address_not_served") }}</option>
+            <option value="suspected_fraud" data-i18n="delivery.reason.suspected_fraud">{{ page.t("delivery.reason.suspected_fraud") }}</option>
+            <option value="other" data-i18n="delivery.reason.other">{{ page.t("delivery.reason.other") }}</option>
+          </select>
+          <button type="submit" class="btn btn-secondary" data-i18n="delivery.orders.reject">{{ page.t("delivery.orders.reject") }}</button>
+        </form>
+        {% endif %}
+
+        {% if o.can_prepare %}
+        <form method="post" action="/dashboard/delivery/orders/{{ o.id }}/transition">
+          {{ fields::csrf() }}
+          <input type="hidden" name="to" value="preparing">
+          <input type="hidden" name="expected_version" value="{{ o.version }}">
+          <button type="submit" class="btn btn-primary" data-i18n="delivery.orders.prepare">{{ page.t("delivery.orders.prepare") }}</button>
+        </form>
+        {% endif %}
+
+        {% if o.can_ready %}
+        <form method="post" action="/dashboard/delivery/orders/{{ o.id }}/transition">
+          {{ fields::csrf() }}
+          <input type="hidden" name="to" value="ready">
+          <input type="hidden" name="expected_version" value="{{ o.version }}">
+          <button type="submit" class="btn btn-primary" data-i18n="delivery.orders.ready">{{ page.t("delivery.orders.ready") }}</button>
+        </form>
+        {% endif %}
+
+        {% if o.can_complete %}
+        <form method="post" action="/dashboard/delivery/orders/{{ o.id }}/transition">
+          {{ fields::csrf() }}
+          <input type="hidden" name="to" value="completed">
+          <input type="hidden" name="expected_version" value="{{ o.version }}">
+          <button type="submit" class="btn btn-primary" data-i18n="delivery.orders.complete">{{ page.t("delivery.orders.complete") }}</button>
+        </form>
+        {% endif %}
+
+        {% if o.can_cancel %}
+        <form method="post" action="/dashboard/delivery/orders/{{ o.id }}/transition" class="commerce-actions">
+          {{ fields::csrf() }}
+          <input type="hidden" name="to" value="cancelled">
+          <input type="hidden" name="expected_version" value="{{ o.version }}">
+          <select name="reason_code" aria-label="{{ page.t("delivery.orders.reason") }}" data-i18n-aria="delivery.orders.reason">
+            <option value="consumer_request" data-i18n="delivery.reason.consumer_request">{{ page.t("delivery.reason.consumer_request") }}</option>
+            <option value="item_unavailable" data-i18n="delivery.reason.item_unavailable">{{ page.t("delivery.reason.item_unavailable") }}</option>
+            <option value="delivery_failed" data-i18n="delivery.reason.delivery_failed">{{ page.t("delivery.reason.delivery_failed") }}</option>
+            <option value="payment_issue" data-i18n="delivery.reason.payment_issue">{{ page.t("delivery.reason.payment_issue") }}</option>
+            <option value="other" data-i18n="delivery.reason.other">{{ page.t("delivery.reason.other") }}</option>
+          </select>
+          <button type="submit" class="btn btn-secondary" data-i18n="delivery.orders.cancel">{{ page.t("delivery.orders.cancel") }}</button>
+        </form>
+        {% endif %}
+
+        {% if o.can_confirm_payment %}
+        {% if let Some(pid) = o.payment_id %}
+        <form method="post" action="/dashboard/delivery/orders/{{ o.id }}/payments/{{ pid }}/confirm" class="commerce-actions">
+          {{ fields::csrf() }}
+          <input type="hidden" name="expected_version" value="{{ o.payment_version.unwrap_or(1) }}">
+          <select name="method">
+            <option value="cash" data-i18n="delivery.payment.cash">{{ page.t("delivery.payment.cash") }}</option>
+            <option value="card_on_delivery" data-i18n="delivery.payment.card_on_delivery">{{ page.t("delivery.payment.card_on_delivery") }}</option>
+            <option value="pix_on_delivery" data-i18n="delivery.payment.pix_on_delivery">{{ page.t("delivery.payment.pix_on_delivery") }}</option>
+          </select>
+          <button type="submit" class="btn btn-primary" data-i18n="delivery.orders.confirm_payment">{{ page.t("delivery.orders.confirm_payment") }}</button>
+        </form>
+        {% endif %}
+        {% endif %}
+
+        {% if o.can_refund %}
+        {% if let Some(pid) = o.payment_id %}
+        <form method="post" action="/dashboard/delivery/orders/{{ o.id }}/refunds" class="commerce-actions">
+          {{ fields::csrf() }}
+          <input type="hidden" name="payment_id" value="{{ pid }}">
+          <input type="text" name="amount" aria-label="{{ page.t("delivery.orders.refund_amount") }}" data-i18n-aria="delivery.orders.refund_amount" placeholder="0,00" required>
+          <select name="reason_code" aria-label="{{ page.t("delivery.orders.reason") }}" data-i18n-aria="delivery.orders.reason">
+            <option value="order_cancelled" data-i18n="delivery.reason.order_cancelled">{{ page.t("delivery.reason.order_cancelled") }}</option>
+            <option value="customer_request" data-i18n="delivery.reason.customer_request">{{ page.t("delivery.reason.customer_request") }}</option>
+            <option value="payment_error" data-i18n="delivery.reason.payment_error">{{ page.t("delivery.reason.payment_error") }}</option>
+            <option value="other" data-i18n="delivery.reason.other">{{ page.t("delivery.reason.other") }}</option>
+          </select>
+          <button type="submit" class="btn btn-secondary" data-i18n="delivery.orders.refund">{{ page.t("delivery.orders.refund") }}</button>
+        </form>
+        {% endif %}
+        {% endif %}
+      </div>
+    </article>
+    {% endfor %}
+  </section>

@@ -64,3 +64,9 @@ Checkout compares a submitted quote breakdown to amounts recomputed from the pub
 Web Push endpoints and key material are scoped to the opted-in staff member and excluded from event payloads and diagnostics. The sender restricts destinations to supported HTTPS push service domains, disables redirects and proxies, encrypts payloads, and signs VAPID requests with a separately configured private key file. Removing the membership also removes its subscriptions and pending deliveries. The platform outbox diagnostic route uses `AdminContext` and `Cache-Control: no-store`.
 
 Outbox replay also requires `AdminContext` and a session-bound CSRF token. The request identifies the exact consumer, event and observed generation. The application verifies that the registered consumer still subscribes to that event type. The audit stores the admin account ID, event sequence, consumer, time and prior error key.
+
+## QR Delivery
+
+Storefront writes use same-origin JSON, bounded request bodies, IP rate limits, and a per-store phone limit for new checkout attempts. An idempotent replay returns the original result. Tracking requires the opaque order ID and returns no customer identity, contact or delivery address. Cancelling additionally requires the secret token issued in the receipt. Tracking and receipts send `Cache-Control: no-store`; the worker never caches API responses.
+
+Staff routes scope reads and writes to authenticated establishment members and verify CSRF on every mutation. Payment and order permissions use Commerce Core’s state machines and Delivery operations. Push endpoints reuse Commerce Core’s restricted provider validation and send only order references. LGPD export and erasure are handled by the existing tenant customer service, including optional notes added at checkout.

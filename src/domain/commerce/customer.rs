@@ -83,20 +83,35 @@ pub const FEDERAL_UNITS: [&str; 27] = [
 
 impl PostalAddress {
     pub fn normalized(self) -> AppResult<Self> {
+        self.normalize(true)
+    }
+
+    pub(crate) fn normalized_with_optional_cep(self) -> AppResult<Self> {
+        self.normalize(false)
+    }
+
+    fn normalize(self, cep_required: bool) -> AppResult<Self> {
         const INVALID: &str = "commerce.customer.invalid_address";
         let text = |raw: &str, max, required| bounded_text(raw, max, required, INVALID);
         let uf = self.uf.trim().to_ascii_uppercase();
+        if !FEDERAL_UNITS.contains(&uf.as_str()) {
+            return Err(AppError::Validation(INVALID));
+        }
         let raw_cep = self.cep.trim();
-        if !FEDERAL_UNITS.contains(&uf.as_str())
-            || !matches!(raw_cep.len(), 8 | 9)
-            || (raw_cep.len() == 9 && raw_cep.as_bytes()[5] != b'-')
-        {
-            return Err(AppError::Validation(INVALID));
-        }
-        let cep = raw_cep.replace('-', "");
-        if cep.len() != 8 || !cep.bytes().all(|part| part.is_ascii_digit()) {
-            return Err(AppError::Validation(INVALID));
-        }
+        let cep = if raw_cep.is_empty() && !cep_required {
+            String::new()
+        } else {
+            if !matches!(raw_cep.len(), 8 | 9)
+                || (raw_cep.len() == 9 && raw_cep.as_bytes()[5] != b'-')
+            {
+                return Err(AppError::Validation(INVALID));
+            }
+            let cep = raw_cep.replace('-', "");
+            if cep.len() != 8 || !cep.bytes().all(|part| part.is_ascii_digit()) {
+                return Err(AppError::Validation(INVALID));
+            }
+            cep
+        };
         Ok(Self {
             street: text(&self.street, 120, true)?,
             street_number: text(&self.street_number, 20, true)?,
@@ -141,5 +156,28 @@ mod tests {
         );
         assert!(normalize_phone("00 1 2015550123").is_err());
         assert!(normalize_phone("+55 65 99999 0020 ramal 43").is_err());
+    }
+
+    #[test]
+    fn postal_code_is_optional_only_when_requested() {
+        let address = |cep: &str| PostalAddress {
+            street: "Rua A".into(),
+            street_number: "10".into(),
+            neighborhood: "Centro".into(),
+            city: "Cuiabá".into(),
+            uf: "mt".into(),
+            cep: cep.into(),
+            ..PostalAddress::default()
+        };
+        assert!(address(" ").normalized().is_err());
+        assert_eq!(address(" ").normalized_with_optional_cep().unwrap().cep, "");
+        assert!(address("1234-5678").normalized_with_optional_cep().is_err());
+        assert_eq!(
+            address("78000-001")
+                .normalized_with_optional_cep()
+                .unwrap()
+                .cep,
+            "78000001"
+        );
     }
 }

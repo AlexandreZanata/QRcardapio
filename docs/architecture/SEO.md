@@ -49,3 +49,7 @@ All JSON-LD payloads are serialized through `src/seo/schema.rs` using `safe_json
 
 - [tests/seo.rs](../../tests/seo.rs) and [tests/seo_contracts.rs](../../tests/seo_contracts.rs) validate every URL emitted by `/sitemap.xml` (57 static multilingual pages + dynamic `/c/{slug}` menus): `200 OK`, strict CSP, zero inline styles/scripts, single `<h1>`, unique titles (`30..=68` chars) and descriptions (`110..=165` chars), HTML/XML `hreflang` parity and full bidirectional reciprocity, valid `@graph` JSON-LD without fabricated `aggregateRating`/`Review` nodes, exact OG/icon PNG dimensions, live `llms.txt` and footer link integrity, and `noindex, nofollow` on auth/error/preview routes.
 - GitHub Actions runs `branch-policy` (enforcing [BRANCH_POLICY.md](../agents/BRANCH_POLICY.md)), `seo-contracts`, and `quality` as required PR checks before merging into protected `main`.
+
+## QR Delivery storefront discovery
+
+The development storefront at `/s/{slug}/` is separate from the indexed menu at `/c/{slug}`. The storefront points to its own canonical URL and uses `noindex`. No storefront entries are added to the public sitemap during development. The private tracking panel shares the storefront route and its data is only retrieved using a high-entropy order ID.

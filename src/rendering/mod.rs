@@ -4,6 +4,7 @@ pub mod assets;
 pub mod auth;
 pub mod billing;
 pub mod dashboard;
+pub mod delivery;
 pub mod error_page;
 pub mod google;
 pub mod landing;
@@ -13,6 +14,7 @@ pub mod ocr;
 pub mod public_menu;
 pub mod qr;
 pub mod seo;
+pub mod storefront;
 
 use askama::Template;
 use axum::http::StatusCode;

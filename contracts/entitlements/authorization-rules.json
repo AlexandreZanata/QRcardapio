@@ -28,12 +28,12 @@
     {
       "role": "cashier",
       "scope": "establishment",
-      "status": "planned"
+      "status": "implemented"
     },
     {
       "role": "waiter",
       "scope": "establishment",
-      "status": "planned"
+      "status": "implemented"
     },
     {
       "role": "kitchen_operator",
@@ -48,7 +48,7 @@
     {
       "role": "consumer",
       "scope": "storefront",
-      "status": "planned"
+      "status": "implemented"
     },
     {
       "role": "integration_credential",
@@ -138,26 +138,45 @@
     },
     {
       "operation": "delivery.storefront.publish",
-      "status": "planned",
+      "status": "implemented",
       "roles": [
         "owner",
         "manager"
       ],
       "capability": "delivery.storefront.publish",
-      "after_expiry": "deny"
+      "after_expiry": "deny",
+      "surfaces": [
+        "dashboard"
+      ]
+    },
+    {
+      "operation": "delivery.storefront.unpublish",
+      "status": "implemented",
+      "roles": [
+        "owner",
+        "manager"
+      ],
+      "capability": null,
+      "after_expiry": "allow",
+      "surfaces": [
+        "dashboard"
+      ]
     },
     {
       "operation": "delivery.order.place",
-      "status": "planned",
+      "status": "implemented",
       "roles": [
         "consumer"
       ],
       "capability": "delivery.order.create",
-      "after_expiry": "deny"
+      "after_expiry": "deny",
+      "surfaces": [
+        "storefront_api"
+      ]
     },
     {
       "operation": "delivery.order.progress",
-      "status": "planned",
+      "status": "implemented",
       "roles": [
         "owner",
         "manager",
@@ -165,27 +184,36 @@
         "waiter"
       ],
       "capability": "delivery.order.manage",
-      "after_expiry": "complete_existing"
+      "after_expiry": "complete_existing",
+      "surfaces": [
+        "dashboard"
+      ]
     },
     {
       "operation": "delivery.order.refund",
-      "status": "planned",
+      "status": "implemented",
       "roles": [
         "owner",
         "manager"
       ],
       "capability": null,
-      "after_expiry": "allow"
+      "after_expiry": "allow",
+      "surfaces": [
+        "dashboard"
+      ]
     },
     {
       "operation": "delivery.settings.update",
-      "status": "planned",
+      "status": "implemented",
       "roles": [
         "owner",
         "manager"
       ],
       "capability": "delivery.settings.manage",
-      "after_expiry": "deny"
+      "after_expiry": "deny",
+      "surfaces": [
+        "dashboard"
+      ]
     },
     {
       "operation": "tables.session.open",
@@ -358,12 +386,15 @@
     },
     {
       "operation": "delivery.order.cancel",
-      "status": "planned",
+      "status": "implemented",
       "roles": [
         "consumer"
       ],
       "capability": null,
       "after_expiry": "allow",
+      "surfaces": [
+        "storefront_api"
+      ],
       "notes": "Consumer cancellation while the order is still placed."
     },
     {

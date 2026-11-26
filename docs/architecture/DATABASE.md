@@ -128,3 +128,9 @@ A migração `20261124000010_multi_provider_billing.sql` (expand) adiciona `prov
 ### Exibição das opções no QR Menu
 
 - `20261126000021_public_menu_options.sql` acrescenta `public_menu_option_preferences`. A presença de uma linha com o ID do estabelecimento habilita a exibição no próximo cardápio publicado. Gravar ou remover a preferência atualiza a revisão do rascunho na mesma transação. A captura usa essa revisão e as opções do mesmo estabelecimento.
+
+## QR Delivery
+
+Migration `20261126000022_delivery_foundation.sql` adds storefront state and presentation data, publication history, delivery zones, coupons and redemptions, customer phone blocks, order metadata and item notes. Commerce Core remains the source for orders, line items and the offline payment ledger. Order creation, coupon redemption, metadata, notes and outbox append commit together. Rejection and cancellation release a redemption in the same transaction, including automatic expiry.
+
+Disclosure of order and item notes is limited to the staff center and customer LGPD export. Erasure clears these notes and detaches the customer's identity while preserving the amounts and state history. All reads and mutations in these tables are scoped to the establishment.

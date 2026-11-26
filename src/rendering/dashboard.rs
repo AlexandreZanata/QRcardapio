@@ -43,6 +43,7 @@ pub struct OverviewTemplate {
     pub product_count: usize,
     pub billing_enabled: bool,
     pub can_publish: bool,
+    pub delivery: crate::application::delivery::access::StaffAccess,
 }
 
 #[derive(Template)]

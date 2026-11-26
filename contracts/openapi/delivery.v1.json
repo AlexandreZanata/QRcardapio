@@ -1,0 +1,1276 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "QR Cardápio — Consumer Storefront API",
+    "version": "1.0.0",
+    "description": "Consumer quote, checkout and tracking for the QR Delivery development module. All responses are marked no-store."
+  },
+  "paths": {
+    "/api/storefront/v1/{slug}/quotes": {
+      "post": {
+        "operationId": "quoteStorefrontCart",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuoteRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Current price and cart issues",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuoteResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON, content type or required header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Cross-origin request or establishment cannot accept new orders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Storefront unpublished or not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request exceeds 32 KiB"
+          },
+          "422": {
+            "description": "Invalid cart or business rule refused",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request rate limit reached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storefront/v1/{slug}/orders": {
+      "post": {
+        "operationId": "placeStorefrontOrder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OrderRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Order placed or original idempotent receipt replayed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderReceipt"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Order requires reconfirmation with a fresh quote",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Repriced"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON, content type or required header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Cross-origin request or establishment cannot accept new orders",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Storefront unpublished or not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request exceeds 32 KiB"
+          },
+          "422": {
+            "description": "Invalid cart or business rule refused",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request rate limit reached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storefront/v1/{slug}/orders/{order_id}": {
+      "get": {
+        "operationId": "trackStorefrontOrder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "in": "header",
+            "name": "If-None-Match",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Current order state and public summary",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Tracking"
+                }
+              }
+            },
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Tracking representation unchanged",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Order not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Request rate limit reached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/storefront/v1/{slug}/orders/{order_id}/cancel": {
+      "post": {
+        "operationId": "cancelStorefrontOrder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "in": "path",
+            "name": "order_id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Cancellation recorded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Cancelled"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed JSON, content type or required header",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Cross-origin request or invalid cancellation secret",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Order not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Order can no longer be cancelled by the consumer",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "Request exceeds 32 KiB"
+          },
+          "429": {
+            "description": "Request rate limit reached",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "LineInput": {
+        "type": "object",
+        "required": [
+          "product_id",
+          "quantity"
+        ],
+        "properties": {
+          "product_id": {
+            "type": "string",
+            "minLength": 1
+          },
+          "variation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "quantity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 99
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "option_id",
+                "quantity"
+              ],
+              "properties": {
+                "option_id": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 99
+                }
+              }
+            }
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 140
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "QuoteRequest": {
+        "type": "object",
+        "required": [
+          "catalog_version",
+          "fulfillment",
+          "lines"
+        ],
+        "properties": {
+          "catalog_version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "fulfillment": {
+            "type": "string",
+            "enum": [
+              "delivery",
+              "pickup"
+            ]
+          },
+          "zone_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "coupon_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LineInput"
+            },
+            "minItems": 1,
+            "maxItems": 50
+          }
+        }
+      },
+      "QuoteResponse": {
+        "type": "object",
+        "required": [
+          "catalog_version",
+          "lines",
+          "items_subtotal_centavos",
+          "discount_centavos",
+          "delivery_fee_centavos",
+          "total_centavos",
+          "minimum_order_centavos",
+          "coupon",
+          "open_now",
+          "eta_minutes",
+          "issues"
+        ],
+        "properties": {
+          "catalog_version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "unit_price_centavos",
+                "line_total_centavos",
+                "available"
+              ],
+              "properties": {
+                "unit_price_centavos": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "line_total_centavos": {
+                  "anyOf": [
+                    {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "available": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "items_subtotal_centavos": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "discount_centavos": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "delivery_fee_centavos": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "total_centavos": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "minimum_order_centavos": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "coupon": {
+            "anyOf": [
+              {
+                "type": "object",
+                "required": [
+                  "status"
+                ],
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "applied",
+                      "invalid"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "open_now": {
+            "type": "boolean"
+          },
+          "eta_minutes": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "minItems": 2,
+                "maxItems": 2
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "issues": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "OrderRequest": {
+        "type": "object",
+        "required": [
+          "catalog_version",
+          "fulfillment",
+          "lines",
+          "expected_total_centavos",
+          "expected_totals",
+          "customer",
+          "payment"
+        ],
+        "properties": {
+          "catalog_version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "fulfillment": {
+            "type": "string",
+            "enum": [
+              "delivery",
+              "pickup"
+            ]
+          },
+          "zone_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "coupon_code": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 20
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "lines": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/LineInput"
+            },
+            "minItems": 1,
+            "maxItems": 50
+          },
+          "expected_total_centavos": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "expected_totals": {
+            "$ref": "#/components/schemas/OrderTotals"
+          },
+          "customer": {
+            "type": "object",
+            "required": [
+              "name",
+              "phone"
+            ],
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              "phone": {
+                "type": "string",
+                "minLength": 1
+              }
+            }
+          },
+          "address": {
+            "anyOf": [
+              {
+                "type": "object",
+                "required": [
+                  "street",
+                  "number",
+                  "city",
+                  "uf"
+                ],
+                "properties": {
+                  "street": {
+                    "type": "string"
+                  },
+                  "number": {
+                    "type": "string"
+                  },
+                  "complement": {
+                    "type": "string"
+                  },
+                  "neighborhood_zone_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "city": {
+                    "type": "string"
+                  },
+                  "uf": {
+                    "type": "string"
+                  },
+                  "cep": {
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "reference": {
+                    "type": "string"
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "payment": {
+            "type": "object",
+            "required": [
+              "method"
+            ],
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": [
+                  "cash",
+                  "card_on_delivery",
+                  "pix_on_delivery"
+                ]
+              },
+              "change_for_centavos": {
+                "anyOf": [
+                  {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 280
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "OrderTotals": {
+        "type": "object",
+        "required": [
+          "items_subtotal_centavos",
+          "discount_centavos",
+          "delivery_fee_centavos",
+          "total_centavos"
+        ],
+        "properties": {
+          "items_subtotal_centavos": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "discount_centavos": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "delivery_fee_centavos": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "total_centavos": {
+            "type": "integer",
+            "minimum": 0
+          }
+        }
+      },
+      "OrderReceipt": {
+        "type": "object",
+        "required": [
+          "order_id",
+          "tracking_path",
+          "cancel_token"
+        ],
+        "properties": {
+          "order_id": {
+            "type": "string"
+          },
+          "tracking_path": {
+            "type": "string"
+          },
+          "cancel_token": {
+            "type": "string"
+          },
+          "pix_key_display": {
+            "type": "string",
+            "description": "Merchant Pix key returned only with a Pix-on-delivery receipt."
+          }
+        }
+      },
+      "Repriced": {
+        "type": "object",
+        "required": [
+          "code",
+          "message",
+          "quote"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "const": "commerce.checkout_repriced"
+          },
+          "message": {
+            "type": "string"
+          },
+          "quote": {
+            "$ref": "#/components/schemas/QuoteResponse"
+          }
+        }
+      },
+      "Tracking": {
+        "type": "object",
+        "required": [
+          "order_id",
+          "order_number",
+          "channel",
+          "fulfillment",
+          "state",
+          "version",
+          "can_cancel",
+          "placed_at",
+          "accepted_at",
+          "promised_at",
+          "preparing_at",
+          "ready_at",
+          "completed_at",
+          "rejected_at",
+          "cancelled_at",
+          "reason_code",
+          "neighborhood_label",
+          "contact_whatsapp",
+          "totals",
+          "payment",
+          "items"
+        ],
+        "properties": {
+          "order_id": {
+            "type": "string"
+          },
+          "order_number": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "channel": {
+            "type": "string",
+            "enum": [
+              "delivery",
+              "pickup"
+            ]
+          },
+          "fulfillment": {
+            "type": "string",
+            "enum": [
+              "delivery",
+              "pickup"
+            ]
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "placed",
+              "accepted",
+              "preparing",
+              "ready",
+              "completed",
+              "rejected",
+              "cancelled"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "can_cancel": {
+            "type": "boolean"
+          },
+          "placed_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "accepted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "promised_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "preparing_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "ready_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rejected_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "cancelled_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "neighborhood_label": {
+            "type": "string"
+          },
+          "contact_whatsapp": {
+            "type": "string"
+          },
+          "totals": {
+            "$ref": "#/components/schemas/OrderTotals"
+          },
+          "payment": {
+            "anyOf": [
+              {
+                "type": "object",
+                "required": [
+                  "method",
+                  "state",
+                  "amount_centavos",
+                  "change_for_centavos"
+                ],
+                "properties": {
+                  "method": {
+                    "type": "string",
+                    "enum": [
+                      "cash",
+                      "card_on_delivery",
+                      "pix_on_delivery"
+                    ]
+                  },
+                  "state": {
+                    "type": "string"
+                  },
+                  "amount_centavos": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "change_for_centavos": {
+                    "anyOf": [
+                      {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "name",
+                "name_en",
+                "name_es",
+                "unit_price_centavos",
+                "quantity",
+                "variation_name",
+                "variation_name_en",
+                "variation_name_es",
+                "line_total_centavos",
+                "options"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "name_en": {
+                  "type": "string"
+                },
+                "name_es": {
+                  "type": "string"
+                },
+                "unit_price_centavos": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "variation_name": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "variation_name_en": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "variation_name_es": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ]
+                },
+                "line_total_centavos": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "options": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "required": [
+                      "name",
+                      "name_en",
+                      "name_es",
+                      "unit_price_centavos",
+                      "quantity",
+                      "group_name",
+                      "group_name_en",
+                      "group_name_es"
+                    ],
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "name_en": {
+                        "type": "string"
+                      },
+                      "name_es": {
+                        "type": "string"
+                      },
+                      "unit_price_centavos": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "quantity": {
+                        "type": "integer",
+                        "minimum": 1
+                      },
+                      "group_name": {
+                        "type": "string"
+                      },
+                      "group_name_en": {
+                        "type": "string"
+                      },
+                      "group_name_es": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "CancelRequest": {
+        "type": "object",
+        "required": [
+          "cancel_token"
+        ],
+        "properties": {
+          "cancel_token": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "Cancelled": {
+        "type": "object",
+        "required": [
+          "order_id",
+          "state",
+          "version"
+        ],
+        "properties": {
+          "order_id": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "const": "cancelled"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      }
+    }
+  }
+}

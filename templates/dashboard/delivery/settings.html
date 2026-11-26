@@ -1,0 +1,386 @@
+{% extends "layouts/dashboard.html" %}
+{% import "dashboard/commerce/fields.html" as fields %}
+
+{% block page_styles %}
+<link rel="stylesheet" href="/static/css/dashboard-commerce.css">
+{% endblock %}
+
+{% block content %}
+<div class="commerce-page">
+  <header class="commerce-row">
+    <div>
+      <h1 data-i18n="delivery.settings.heading">{{ page.t("delivery.settings.heading") }}</h1>
+      <p data-i18n="delivery.settings.subtitle">{{ page.t("delivery.settings.subtitle") }}</p>
+    </div>
+    <a class="btn btn-secondary" href="/dashboard/delivery/orders" data-i18n="delivery.orders.open_center">{{ page.t("delivery.orders.open_center") }}</a>
+  </header>
+
+  <section class="commerce-card commerce-stack">
+    <div class="commerce-row">
+      <div>
+        <h2 data-i18n="delivery.storefront.status_heading">{{ page.t("delivery.storefront.status_heading") }}</h2>
+        <p>
+          {% let state_key = ("delivery.storefront.state_" ~ storefront.status.as_str()).to_string() %}
+          <span class="badge" data-i18n="{{ state_key }}">{{ page.t(state_key) }}</span>
+          <span>v{{ storefront.published_version }}</span>
+          {% if storefront.has_unpublished_changes %}
+          <span class="badge badge-warn" data-i18n="delivery.storefront.pending_changes">{{ page.t("delivery.storefront.pending_changes") }}</span>
+          {% endif %}
+        </p>
+        {% if storefront.status.as_str() == "published" %}
+        <p><a href="/s/{{ slug }}/" target="_blank" rel="noopener">{{ storefront_url }}</a></p>
+        {% endif %}
+      </div>
+      <div class="commerce-actions">
+        {% if can_edit %}
+        <form method="post" action="/dashboard/delivery/publish">
+          {{ fields::csrf() }}
+          <button type="submit" class="btn btn-primary" data-i18n="delivery.storefront.publish">{{ page.t("delivery.storefront.publish") }}</button>
+        </form>
+        {% endif %}
+        {% if storefront.status.as_str() == "published" %}
+        <form method="post" action="/dashboard/delivery/unpublish">
+          {{ fields::csrf() }}
+          <button type="submit" class="btn btn-secondary" data-i18n="delivery.storefront.unpublish">{{ page.t("delivery.storefront.unpublish") }}</button>
+        </form>
+        {% endif %}
+      </div>
+    </div>
+    <p>
+      <span data-i18n="commerce.hours.delivery">{{ page.t("commerce.hours.delivery") }}</span>:
+      <strong>{% if commercial.delivery %}✓{% else %}—{% endif %}</strong> ·
+      <span data-i18n="commerce.hours.pickup">{{ page.t("commerce.hours.pickup") }}</span>:
+      <strong>{% if commercial.pickup %}✓{% else %}—{% endif %}</strong> ·
+      <a href="/dashboard/hours" data-i18n="commerce.hours.title">{{ page.t("commerce.hours.title") }}</a>
+    </p>
+  </section>
+
+  {% if can_edit %}
+  <section class="commerce-card">
+    <h2 data-i18n="delivery.settings.payments_heading">{{ page.t("delivery.settings.payments_heading") }}</h2>
+    <form method="post" action="/dashboard/delivery/settings" class="commerce-stack">
+      {{ fields::csrf() }}
+      <div class="commerce-actions">
+        <label class="commerce-check">
+          <input type="checkbox" name="accept_cash" value="1"{% if storefront.accept_cash %} checked{% endif %}>
+          <span data-i18n="delivery.payment.cash">{{ page.t("delivery.payment.cash") }}</span>
+        </label>
+        <label class="commerce-check">
+          <input type="checkbox" name="accept_card_on_delivery" value="1"{% if storefront.accept_card_on_delivery %} checked{% endif %}>
+          <span data-i18n="delivery.payment.card_on_delivery">{{ page.t("delivery.payment.card_on_delivery") }}</span>
+        </label>
+        <label class="commerce-check">
+          <input type="checkbox" name="accept_pix_on_delivery" value="1"{% if storefront.accept_pix_on_delivery %} checked{% endif %}>
+          <span data-i18n="delivery.payment.pix_on_delivery">{{ page.t("delivery.payment.pix_on_delivery") }}</span>
+        </label>
+      </div>
+      <div class="commerce-form-grid">
+        <label class="commerce-field">
+          <span data-i18n="delivery.settings.pix_key">{{ page.t("delivery.settings.pix_key") }}</span>
+          <input type="text" name="pix_key_display" value="{{ storefront.pix_key_display }}" maxlength="140">
+        </label>
+        <label class="commerce-field">
+          <span data-i18n="delivery.settings.whatsapp">{{ page.t("delivery.settings.whatsapp") }}</span>
+          <input type="text" name="contact_whatsapp" value="{{ storefront.contact_whatsapp }}" maxlength="32">
+        </label>
+        <label class="commerce-field">
+          <span data-i18n="delivery.settings.prep_minutes">{{ page.t("delivery.settings.prep_minutes") }}</span>
+          <input type="number" name="default_prep_minutes" value="{{ storefront.default_prep_minutes }}" min="1" max="240" required>
+        </label>
+      </div>
+      <label class="commerce-field">
+        <span data-i18n="delivery.settings.pickup_instructions">{{ page.t("delivery.settings.pickup_instructions") }}</span>
+        <textarea name="pickup_instructions" rows="2" maxlength="300">{{ storefront.pickup_instructions }}</textarea>
+      </label>
+      <div>
+        <button type="submit" class="btn btn-primary" data-i18n="commerce.action.save">{{ page.t("commerce.action.save") }}</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="commerce-card commerce-stack">
+    <h2 data-i18n="delivery.zones.heading">{{ page.t("delivery.zones.heading") }}</h2>
+    {% for z in zones %}
+    <details class="commerce-entry">
+      <summary>{{ z.neighborhood }} — {{ z.city }} ({{ page.price(*z.fee_centavos) }})</summary>
+      <form method="post" action="/dashboard/delivery/zones/{{ z.id }}" class="commerce-stack">
+        {{ fields::csrf() }}
+        <div class="commerce-form-grid">
+          <label class="commerce-field">
+            <span data-i18n="delivery.zones.neighborhood">{{ page.t("delivery.zones.neighborhood") }}</span>
+            <input type="text" name="neighborhood" value="{{ z.neighborhood }}" maxlength="80" required>
+          </label>
+          <label class="commerce-field">
+            <span data-i18n="delivery.zones.city">{{ page.t("delivery.zones.city") }}</span>
+            <input type="text" name="city" value="{{ z.city }}" maxlength="80" required>
+          </label>
+          <label class="commerce-field">
+            <span data-i18n="delivery.zones.fee">{{ page.t("delivery.zones.fee") }}</span>
+            <input type="text" name="fee" value="{{ z.fee_centavos / 100 }},{% if z.fee_centavos % 100 < 10 %}0{% endif %}{{ z.fee_centavos % 100 }}" required>
+          </label>
+          <label class="commerce-field">
+            <span data-i18n="delivery.zones.min_order">{{ page.t("delivery.zones.min_order") }}</span>
+            <input type="text" name="min_order" value="{% if let Some(v) = z.min_order_centavos %}{{ v / 100 }},{% if v % 100 < 10 %}0{% endif %}{{ v % 100 }}{% endif %}">
+          </label>
+          <label class="commerce-field">
+            <span data-i18n="delivery.zones.free_from">{{ page.t("delivery.zones.free_from") }}</span>
+            <input type="text" name="free_delivery_from" value="{% if let Some(v) = z.free_delivery_from_centavos %}{{ v / 100 }},{% if v % 100 < 10 %}0{% endif %}{{ v % 100 }}{% endif %}">
+          </label>
+          <label class="commerce-field">
+            <span data-i18n="delivery.zones.eta_min">{{ page.t("delivery.zones.eta_min") }}</span>
+            <input type="number" name="eta_min_minutes" value="{{ z.eta_min_minutes }}" min="1" max="240" required>
+          </label>
+          <label class="commerce-field">
+            <span data-i18n="delivery.zones.eta_max">{{ page.t("delivery.zones.eta_max") }}</span>
+            <input type="number" name="eta_max_minutes" value="{{ z.eta_max_minutes }}" min="1" max="360" required>
+          </label>
+          <label class="commerce-field">
+            <span data-i18n="commerce.field.position">{{ page.t("commerce.field.position") }}</span>
+            <input type="number" name="position" value="{{ z.position }}" min="0">
+          </label>
+        </div>
+        <div class="commerce-actions">
+          <label class="commerce-check">
+            <input type="checkbox" name="is_active" value="1"{% if z.is_active %} checked{% endif %}>
+            <span data-i18n="delivery.zones.active">{{ page.t("delivery.zones.active") }}</span>
+          </label>
+          <button type="submit" class="btn btn-primary" data-i18n="commerce.action.save">{{ page.t("commerce.action.save") }}</button>
+        </div>
+      </form>
+      <form method="post" action="/dashboard/delivery/zones/{{ z.id }}/delete" class="commerce-delete">
+        {{ fields::csrf() }}
+        <button type="submit" class="btn btn-secondary" data-i18n="commerce.action.remove">{{ page.t("commerce.action.remove") }}</button>
+      </form>
+    </details>
+    {% endfor %}
+
+    <h3 data-i18n="delivery.zones.add_new">{{ page.t("delivery.zones.add_new") }}</h3>
+    <form method="post" action="/dashboard/delivery/zones" class="commerce-stack">
+      {{ fields::csrf() }}
+      <div class="commerce-form-grid">
+        <label class="commerce-field">
+          <span data-i18n="delivery.zones.neighborhood">{{ page.t("delivery.zones.neighborhood") }}</span>
+          <input type="text" name="neighborhood" maxlength="80" required>
+        </label>
+        <label class="commerce-field">
+          <span data-i18n="delivery.zones.city">{{ page.t("delivery.zones.city") }}</span>
+          <input type="text" name="city" maxlength="80" required>
+        </label>
+        <label class="commerce-field">
+          <span data-i18n="delivery.zones.fee">{{ page.t("delivery.zones.fee") }}</span>
+          <input type="text" name="fee" value="0,00" required>
+        </label>
+        <label class="commerce-field">
+          <span data-i18n="delivery.zones.min_order">{{ page.t("delivery.zones.min_order") }}</span>
+          <input type="text" name="min_order">
+        </label>
+        <label class="commerce-field">
+          <span data-i18n="delivery.zones.free_from">{{ page.t("delivery.zones.free_from") }}</span>
+          <input type="text" name="free_delivery_from">
+        </label>
+        <label class="commerce-field">
+          <span data-i18n="delivery.zones.eta_min">{{ page.t("delivery.zones.eta_min") }}</span>
+          <input type="number" name="eta_min_minutes" value="30" min="1" max="240" required>
+        </label>
+        <label class="commerce-field">
+          <span data-i18n="delivery.zones.eta_max">{{ page.t("delivery.zones.eta_max") }}</span>
+          <input type="number" name="eta_max_minutes" value="50" min="1" max="360" required>
+        </label>
+        <label class="commerce-field">
+          <span data-i18n="commerce.field.position">{{ page.t("commerce.field.position") }}</span>
+          <input type="number" name="position" value="0" min="0">
+        </label>
+      </div>
+      <div class="commerce-actions">
+        <label class="commerce-check">
+          <input type="checkbox" name="is_active" value="1" checked>
+          <span data-i18n="delivery.zones.active">{{ page.t("delivery.zones.active") }}</span>
+        </label>
+        <button type="submit" class="btn btn-primary" data-i18n="delivery.zones.add_new">{{ page.t("delivery.zones.add_new") }}</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="commerce-card commerce-stack">
+    <h2 data-i18n="delivery.blocks.heading">{{ page.t("delivery.blocks.heading") }}</h2>
+    <form method="post" action="/dashboard/delivery/customers/block" class="commerce-stack">
+      {{ fields::csrf() }}
+      <div class="commerce-form-grid">
+        <label class="commerce-field">
+          <span data-i18n="commerce.customer.phone">{{ page.t("commerce.customer.phone") }}</span>
+          <input type="tel" name="phone" autocomplete="off" maxlength="32" required>
+        </label>
+        <label class="commerce-field">
+          <span data-i18n="delivery.blocks.action">{{ page.t("delivery.blocks.action") }}</span>
+          <select name="block">
+            <option value="1" data-i18n="delivery.blocks.block">{{ page.t("delivery.blocks.block") }}</option>
+            <option value="0" data-i18n="delivery.blocks.unblock">{{ page.t("delivery.blocks.unblock") }}</option>
+          </select>
+        </label>
+        <label class="commerce-field">
+          <span data-i18n="delivery.blocks.reason">{{ page.t("delivery.blocks.reason") }}</span>
+          <input name="reason" maxlength="100">
+        </label>
+      </div>
+      <div>{{ fields::submit("commerce.action.save") }}</div>
+    </form>
+  </section>
+
+  <section class="commerce-card commerce-stack">
+    <h2 data-i18n="delivery.coupons.heading">{{ page.t("delivery.coupons.heading") }}</h2>
+    {% for c in coupons %}
+    <details class="commerce-entry">
+      <summary>{{ c.code }} ·
+        {% if c.kind.as_str() == "percent_bps" %}
+        <span data-i18n="delivery.coupons.kind_percent">{{ page.t("delivery.coupons.kind_percent") }}</span>
+        {% else %}
+        <span data-i18n="delivery.coupons.kind_amount">{{ page.t("delivery.coupons.kind_amount") }}</span>
+        {% endif %}
+      </summary>
+      <form method="post" action="/dashboard/delivery/coupons/{{ c.id }}" class="commerce-stack">
+        {{ fields::csrf() }}
+        <div class="commerce-form-grid">
+          <label class="commerce-field">
+            <span data-i18n="delivery.coupons.code">{{ page.t("delivery.coupons.code") }}</span>
+            <input type="text" name="code" value="{{ c.code }}" maxlength="20" required>
+          </label>
+          <label class="commerce-field">
+            <span data-i18n="delivery.coupons.kind">{{ page.t("delivery.coupons.kind") }}</span>
+            <select name="kind">
+              <option value="percent_bps"{% if c.kind.as_str() == "percent_bps" %} selected{% endif %} data-i18n="delivery.coupons.kind_percent">{{ page.t("delivery.coupons.kind_percent") }}</option>
+              <option value="amount_centavos"{% if c.kind.as_str() == "amount_centavos" %} selected{% endif %} data-i18n="delivery.coupons.kind_amount">{{ page.t("delivery.coupons.kind_amount") }}</option>
+            </select>
+          </label>
+          <label class="commerce-field">
+            <span data-i18n="delivery.coupons.value">{{ page.t("delivery.coupons.value") }}</span>
+            <input type="text" name="value" value="{% if let Some(v) = c.percent_bps %}{{ v / 100 }},{% if v % 100 < 10 %}0{% endif %}{{ v % 100 }}{% else if let Some(v) = c.amount_centavos %}{{ v / 100 }},{% if v % 100 < 10 %}0{% endif %}{{ v % 100 }}{% endif %}" required>
+          </label>
+          <label class="commerce-field">
+            <span data-i18n="delivery.coupons.min_subtotal">{{ page.t("delivery.coupons.min_subtotal") }}</span>
+            <input type="text" name="min_subtotal" value="{{ c.min_subtotal_centavos / 100 }},{% if c.min_subtotal_centavos % 100 < 10 %}0{% endif %}{{ c.min_subtotal_centavos % 100 }}">
+          </label>
+          <label class="commerce-field">
+            <span data-i18n="delivery.coupons.starts">{{ page.t("delivery.coupons.starts") }}</span><small>{{ commercial.time_zone }}</small>
+            <input type="datetime-local" name="valid_from" step="1" value="{% if let Some(value) = c.valid_from %}{{ value.format("%Y-%m-%dT%H:%M:%S") }}{% endif %}">
+          </label>
+          <label class="commerce-field">
+            <span data-i18n="delivery.coupons.ends">{{ page.t("delivery.coupons.ends") }}</span><small>{{ commercial.time_zone }}</small>
+            <input type="datetime-local" name="valid_until" step="1" value="{% if let Some(value) = c.valid_until %}{{ value.format("%Y-%m-%dT%H:%M:%S") }}{% endif %}">
+          </label>
+          <label class="commerce-field">
+            <span data-i18n="delivery.coupons.max_redemptions">{{ page.t("delivery.coupons.max_redemptions") }}</span>
+            <input type="number" name="max_redemptions" min="1" value="{% if let Some(v) = c.max_redemptions %}{{ v }}{% endif %}">
+          </label>
+          <label class="commerce-field">
+            <span data-i18n="delivery.coupons.max_per_customer">{{ page.t("delivery.coupons.max_per_customer") }}</span>
+            <input type="number" name="max_per_customer" min="1" value="{% if let Some(v) = c.max_per_customer %}{{ v }}{% endif %}">
+          </label>
+        </div>
+        <div class="commerce-actions">
+          <label class="commerce-check">
+            <input type="checkbox" name="allow_delivery" value="1"{% if c.allow_delivery %} checked{% endif %}>
+            <span data-i18n="commerce.hours.delivery">{{ page.t("commerce.hours.delivery") }}</span>
+          </label>
+          <label class="commerce-check">
+            <input type="checkbox" name="allow_pickup" value="1"{% if c.allow_pickup %} checked{% endif %}>
+            <span data-i18n="commerce.hours.pickup">{{ page.t("commerce.hours.pickup") }}</span>
+          </label>
+          <label class="commerce-check">
+            <input type="checkbox" name="is_active" value="1"{% if c.is_active %} checked{% endif %}>
+            <span data-i18n="delivery.zones.active">{{ page.t("delivery.zones.active") }}</span>
+          </label>
+          <button type="submit" class="btn btn-primary" data-i18n="commerce.action.save">{{ page.t("commerce.action.save") }}</button>
+        </div>
+      </form>
+      <form method="post" action="/dashboard/delivery/coupons/{{ c.id }}/delete" class="commerce-delete">
+        {{ fields::csrf() }}
+        <button type="submit" class="btn btn-secondary" data-i18n="commerce.action.remove">{{ page.t("commerce.action.remove") }}</button>
+      </form>
+    </details>
+    {% endfor %}
+
+    <h3 data-i18n="delivery.coupons.add_new">{{ page.t("delivery.coupons.add_new") }}</h3>
+    <form method="post" action="/dashboard/delivery/coupons" class="commerce-stack">
+      {{ fields::csrf() }}
+      <div class="commerce-form-grid">
+        <label class="commerce-field">
+          <span data-i18n="delivery.coupons.code">{{ page.t("delivery.coupons.code") }}</span>
+          <input type="text" name="code" maxlength="20" required>
+        </label>
+        <label class="commerce-field">
+          <span data-i18n="delivery.coupons.kind">{{ page.t("delivery.coupons.kind") }}</span>
+          <select name="kind">
+            <option value="percent_bps" data-i18n="delivery.coupons.kind_percent">{{ page.t("delivery.coupons.kind_percent") }}</option>
+            <option value="amount_centavos" data-i18n="delivery.coupons.kind_amount">{{ page.t("delivery.coupons.kind_amount") }}</option>
+          </select>
+        </label>
+        <label class="commerce-field">
+          <span data-i18n="delivery.coupons.value">{{ page.t("delivery.coupons.value") }}</span>
+          <input type="text" name="value" required>
+        </label>
+        <label class="commerce-field">
+          <span data-i18n="delivery.coupons.min_subtotal">{{ page.t("delivery.coupons.min_subtotal") }}</span>
+          <input type="text" name="min_subtotal" value="0,00">
+        </label>
+        <label class="commerce-field">
+          <span data-i18n="delivery.coupons.starts">{{ page.t("delivery.coupons.starts") }}</span><small>{{ commercial.time_zone }}</small>
+          <input type="datetime-local" name="valid_from" step="1">
+        </label>
+        <label class="commerce-field">
+          <span data-i18n="delivery.coupons.ends">{{ page.t("delivery.coupons.ends") }}</span><small>{{ commercial.time_zone }}</small>
+          <input type="datetime-local" name="valid_until" step="1">
+        </label>
+        <label class="commerce-field">
+          <span data-i18n="delivery.coupons.max_redemptions">{{ page.t("delivery.coupons.max_redemptions") }}</span>
+          <input type="number" name="max_redemptions" min="1">
+        </label>
+        <label class="commerce-field">
+          <span data-i18n="delivery.coupons.max_per_customer">{{ page.t("delivery.coupons.max_per_customer") }}</span>
+          <input type="number" name="max_per_customer" min="1">
+        </label>
+      </div>
+      <div class="commerce-actions">
+        <label class="commerce-check">
+          <input type="checkbox" name="allow_delivery" value="1" checked>
+          <span data-i18n="commerce.hours.delivery">{{ page.t("commerce.hours.delivery") }}</span>
+        </label>
+        <label class="commerce-check">
+          <input type="checkbox" name="allow_pickup" value="1" checked>
+          <span data-i18n="commerce.hours.pickup">{{ page.t("commerce.hours.pickup") }}</span>
+        </label>
+        <label class="commerce-check">
+          <input type="checkbox" name="is_active" value="1" checked>
+          <span data-i18n="delivery.zones.active">{{ page.t("delivery.zones.active") }}</span>
+        </label>
+        <button type="submit" class="btn btn-primary" data-i18n="delivery.coupons.add_new">{{ page.t("delivery.coupons.add_new") }}</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="commerce-card commerce-stack">
+    <h2 data-i18n="delivery.blocks.heading">{{ page.t("delivery.blocks.heading") }}</h2>
+    <form method="post" action="/dashboard/delivery/customers/block" class="commerce-form-grid">
+      {{ fields::csrf() }}
+      <label class="commerce-field">
+        <span data-i18n="commerce.customer.phone">{{ page.t("commerce.customer.phone") }}</span>
+        <input type="text" name="phone" required>
+      </label>
+      <label class="commerce-field">
+        <span data-i18n="delivery.blocks.action">{{ page.t("delivery.blocks.action") }}</span>
+        <select name="block">
+          <option value="1" data-i18n="delivery.blocks.block">{{ page.t("delivery.blocks.block") }}</option>
+          <option value="0" data-i18n="delivery.blocks.unblock">{{ page.t("delivery.blocks.unblock") }}</option>
+        </select>
+      </label>
+      <label class="commerce-field">
+        <span data-i18n="delivery.blocks.reason">{{ page.t("delivery.blocks.reason") }}</span>
+        <input type="text" name="reason" maxlength="200">
+      </label>
+      <div>
+        <button type="submit" class="btn btn-secondary" data-i18n="commerce.action.apply">{{ page.t("commerce.action.apply") }}</button>
+      </div>
+    </form>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

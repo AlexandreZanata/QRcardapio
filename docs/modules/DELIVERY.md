@@ -1,12 +1,12 @@
 # QR Delivery
 
-**Status: Planned.** [Commerce Core](../architecture/COMMERCE_CORE.md) provides shared checkout, the order aggregate, offline payments, event processing and staff Web Push. QR Delivery’s routes, screens and channel-specific behavior remain specifications.
+**Status: In development (not sellable).** [Commerce Core](../architecture/COMMERCE_CORE.md) provides shared checkout, the order aggregate, offline payments, event processing and staff Web Push. QR Delivery's foundation (schema, domain rules, dashboard settings/zones/coupons, static storefront PWA publisher, consumer transactional API, and staff order center) is implemented behind `Lifecycle::Development` (`sale: never`, `grants: never` in production).
 
 | Field | Value |
 |---|---|
 | Module code | `delivery` |
 | Phase | 4 (requires [Commerce Core](../architecture/COMMERCE_CORE.md), phase 3) |
-| Lifecycle | `planned` ([`contracts/commercial/modules.json`](../../contracts/commercial/modules.json)) |
+| Lifecycle | `development` ([`contracts/commercial/modules.json`](../../contracts/commercial/modules.json)) |
 | Monthly price | R$ 69,90 (`monthly_price_centavos: 6990`, catalog version 1, effective 2026-11-24) |
 | Module contract | [`contracts/modules/delivery.json`](../../contracts/modules/delivery.json) (single source of truth; this document follows it). Overview: [MODULE_CATALOG.md](../business/MODULE_CATALOG.md); events: [EVENT_CONTRACTS.md](../architecture/EVENT_CONTRACTS.md) |
 | Standalone | Yes. Works without QR Menu. |
@@ -196,11 +196,12 @@ The consumer tracking view maps states to labels; for delivery orders `ready` re
 
 ## 11. Permissions
 
-Operations from [`authorization-rules.json`](../../contracts/entitlements/authorization-rules.json) (all `planned`), evaluated by `authorize(...)` in order: module lifecycle, establishment operational state, member permission, deployment enforcement, commercial entitlement.
+Operations from [`authorization-rules.json`](../../contracts/entitlements/authorization-rules.json) (`status: implemented`, gated by `Lifecycle::Development` for capability-protected operations), evaluated by `authorize(...)` in order: module lifecycle, establishment operational state, member permission, deployment enforcement, commercial entitlement.
 
 | Operation | Roles | Capability | After expiry | Covers |
 |---|---|---|---|---|
 | `delivery.storefront.publish` | owner, manager | `delivery.storefront.publish` | deny | Publish, republish and derived snapshots |
+| `delivery.storefront.unpublish` | owner, manager | none | allow | Unpublish the static storefront snapshot |
 | `delivery.order.place` | consumer | `delivery.order.create` | deny | Quotes and checkout |
 | `delivery.order.progress` | owner, manager, cashier, waiter | `delivery.order.manage` | complete_existing | Accept, reject, progress, complete, staff cancel, pay-on-delivery payment confirmation |
 | `delivery.order.refund` | owner, manager | none | allow | Recording refunds |
@@ -208,15 +209,15 @@ Operations from [`authorization-rules.json`](../../contracts/entitlements/author
 | `delivery.order.cancel` | consumer | none | allow | Consumer cancellation while the order is still `placed` |
 
 - A transition requires both the operation role and membership in the transition's contract actors (section 10); staff cancellation therefore stays owner/manager only.
-- Automatic transitions (acceptance timeout, `KitchenTicketStarted`, all tickets ready, `DeliveryCompleted`, payment cancellation on rejection or cancellation) run as the planned `system` role: the acceptance timer and idempotent outbox consumers that run only when the triggering event was produced under a valid operation and re-check `delivery.order.manage` (existing orders pass under `complete_existing`).
-- Viewing the order center and history needs establishment membership only and stays available after expiry.
+- Automatic transitions (acceptance timeout, `KitchenTicketStarted`, all tickets ready, `DeliveryCompleted`, payment cancellation on rejection or cancellation) run as the `system` role: the acceptance timer and idempotent outbox consumers that run only when the triggering event was produced under a valid operation and re-check `delivery.order.manage` (existing orders pass under `complete_existing`).
+- Viewing the order center requires establishment membership and current Delivery access or a previously published storefront. History and CSV export stay available after expiry under an eligible lifecycle.
 - Customer data export uses the QR Core `data.export` operation (owner only, no capability, `allow`).
 - Administrative and security suspension block only the `deny` operations (`delivery.storefront.publish`, `delivery.order.place`, `delivery.settings.update`); see section 24.
 
-Open decisions:
+Settled / open decisions:
 
-- Courier payment confirmation: `courier` is a contract actor of payment `pending → confirmed`, but holds neither `delivery.order.progress` nor a Fleet operation that confirms payments, so cash collected at the door is confirmed by staff until an operation is assigned.
-- Storefront unpublishing has no operation yet (candidate: `delivery.storefront.unpublish`, owner and manager, no capability, `allow`, mirroring `menu.unpublish`).
+- Settled: storefront unpublishing uses `delivery.storefront.unpublish` (owner and manager, no capability, `allow`, mirroring `menu.unpublish`).
+- Open: courier payment confirmation (`courier` is a contract actor of payment `pending → confirmed`, but holds neither `delivery.order.progress` nor a Fleet operation that confirms payments, so cash collected at the door is confirmed by staff until an operation is assigned).
 
 ## 12. Commercial capabilities
 
@@ -244,7 +245,7 @@ QR Business (16990) and QR Complete (21990) also include `delivery` v1. Delivery
 | `commercial`, `entitlements` | implemented | Contracts, capabilities, `authorize(...)` |
 | `catalog` | partial | Variations and add-ons arrive with Commerce Core |
 | `events` | implemented | Outbox append, dispatcher, retries and dead-letter diagnostics |
-| `business_hours`, `commercial_settings`, `customers`, `addresses` | available to internal callers | Store schedule, settings and customer privacy records, with Delivery zone association pending |
+| `business_hours`, `commercial_settings`, `customers`, `addresses` | available to internal callers | Store schedule, settings and customer privacy records |
 | `orders`, `order_payments`, `notifications` | available to internal callers | Checkout and order state, offline ledger, and staff Web Push. Delivery owns authorization, routes, UX and subscription registration. |
 
 Infrastructure: Axum 0.8 (`{slug}` paths), SQLx SQLite WAL with `BEGIN IMMEDIATE`, Askama, vanilla JS modules, Caddy. Delivery adds a Caddy `handle_path /s/*` block mirroring `/c/*` (including the `/.tmp` 404 rule). Web Push uses the shared VAPID sender in Commerce Core. No Node runtime, broker, maps API or per-tenant database.
@@ -283,23 +284,36 @@ The registry defines dedupe keys only for implemented events; the "Design" keys 
 
 ## 16. HTTP contracts
 
-### 16.1 Endpoints in the contract (all planned)
+### 16.1 Endpoints in the contract (`status: development`)
 
 | Method | Path | Audience | Operation | Behavior |
 |---|---|---|---|---|
-| `GET` | `/s/{slug}` | consumer | none (static) | Static storefront from disk, zero DB queries; `301` to `/s/{slug}/`; `max-age=60, stale-while-revalidate=300` + ETag |
+| `GET` | `/s/{slug}` | consumer | none (static) | `301` to `/s/{slug}/` |
+| `GET` | `/s/{slug}/` | consumer | none (static) | Static storefront from disk, zero DB queries; `max-age=60, stale-while-revalidate=300` + ETag |
 | `GET` | `/s/{slug}/catalog.v{version}.json` | consumer | none (static) | Static immutable snapshot (`max-age=31536000, immutable`); last 3 versions kept |
 | `POST` | `/api/storefront/v1/{slug}/quotes` | consumer | `delivery.order.place` | Prices a cart; persists nothing |
 | `POST` | `/api/storefront/v1/{slug}/orders` | consumer | `delivery.order.place` | Idempotent checkout; `201` with order id and cancel token |
-| `GET` | `/api/storefront/v1/{slug}/orders/{order_id}` | consumer | none | Tracking by 128-bit public id; ETag/`304`; no PII in the body |
+| `GET` | `/api/storefront/v1/{slug}/orders/{order_id}` | consumer | none | Tracking by opaque public ID with ETag/`304` and `Cache-Control: no-store`; body omits PII |
 | `POST` | `/api/storefront/v1/{slug}/orders/{order_id}/cancel` | consumer | `delivery.order.cancel` | Body: cancel token; `200` when `placed → cancelled`, `403` on a wrong token, `409` once the order left `placed` |
-| `GET` | `/dashboard/delivery/orders` | member | membership | Order center and history (`?state=`, `?date=`); fragment polling with ETag |
+| `GET` | `/dashboard/delivery/orders` | member | membership | Order center and history (`?state=`, `?date=`, `?fragment=1`); ETag/`304` |
+| `GET` | `/dashboard/delivery/orders.csv` | member | membership | CSV export with the same filters, RFC-4180 quoting, and spreadsheet formula neutralization. More than 10,000 matches require a narrower filter. |
 | `POST` | `/dashboard/delivery/orders/{id}/transition` | member | `delivery.order.progress` | Form: `_csrf`, `to`, `expected_version`, `reason_code`, `prep_minutes`; `303` or `409` with current state |
 | `POST` | `/dashboard/delivery/orders/{id}/payments/{payment_id}/confirm` | member | `delivery.order.progress` | Form: `_csrf`, collected `method`, `expected_version`; payment `pending → confirmed`; `409` on a stale version |
-| `POST` | `/dashboard/delivery/orders/{id}/refunds` | member | `delivery.order.refund` | Form: `_csrf`, `payment_id`, `amount_centavos`; refused when refunds would exceed the confirmed amount |
-| `GET` | `/dashboard/delivery/settings` | member | membership | Settings, zones, coupons, storefront status |
-| `POST` | `/dashboard/delivery/settings` | member | `delivery.settings.update` | Hours, modes, minimum order, payment methods; a derived storefront snapshot when published values change |
+| `POST` | `/dashboard/delivery/orders/{id}/refunds` | member | `delivery.order.refund` | Form: `_csrf`, `payment_id`, decimal `amount` in BRL, `reason_code`; refused when refunds would exceed the confirmed amount |
+| `GET` | `/dashboard/delivery/settings` | owner, manager | `delivery.settings.update` or storefront history | Status and unpublish control. Payment methods, zones and coupons are editable with active settings access. |
+| `POST` | `/dashboard/delivery/settings` | member | `delivery.settings.update` | Payment methods, Pix display, WhatsApp, pickup instructions, default prep minutes; derived storefront snapshot when published |
+| `POST` | `/dashboard/delivery/zones` | member | `delivery.settings.update` | Create delivery zone; derived storefront snapshot when published |
+| `POST` | `/dashboard/delivery/zones/{id}` | member | `delivery.settings.update` | Update delivery zone; derived storefront snapshot when published |
+| `POST` | `/dashboard/delivery/zones/{id}/delete` | member | `delivery.settings.update` | Delete delivery zone; derived storefront snapshot when published |
+| `POST` | `/dashboard/delivery/coupons` | member | `delivery.settings.update` | Create coupon |
+| `POST` | `/dashboard/delivery/coupons/{id}` | member | `delivery.settings.update` | Update coupon |
+| `POST` | `/dashboard/delivery/coupons/{id}/delete` | member | `delivery.settings.update` | Delete coupon |
+| `POST` | `/dashboard/delivery/customers/block` | member | `delivery.settings.update` | Block or unblock a phone number for this establishment |
 | `POST` | `/dashboard/delivery/publish` | member | `delivery.storefront.publish` | Publishes or republishes the storefront snapshot; emits `CatalogPublished` (`channel: "storefront"`) |
+| `POST` | `/dashboard/delivery/unpublish` | member | `delivery.storefront.unpublish` | Unpublishes the static storefront snapshot without touching `/c/{slug}` |
+| `GET` | `/dashboard/delivery/sw.js` | member | membership | Staff worker scoped to `/dashboard/delivery/` when VAPID is configured |
+| `POST` | `/dashboard/delivery/push-subscriptions` | member | `delivery.order.progress` | Register a validated Web Push subscription for the current member |
+| `POST` | `/dashboard/delivery/push-subscriptions/{id}/revoke` | member | membership | Revoke the current member’s subscription |
 
 Static files published next to `index.html` under `/s/{slug}/`: `manifest.webmanifest` (`max-age=300`), `sw.js` (`no-cache`), `theme-{hash8}.css` and `media/*` (immutable), `icon-192.png`, `icon-512.png`.
 
@@ -309,21 +323,21 @@ Quote request: `catalog_version`, `fulfillment` (`delivery`/`pickup`), `zone_id`
 
 Order placement uses the `Idempotency-Key` header with a UUID generated when checkout opens and reused on retries. The body extends the quote request with `expected_total_centavos`, `expected_totals`, `customer{name, phone}`, `address{street, number, complement, neighborhood_zone_id, city, uf, cep, reference}` (delivery only), `payment{method, change_for_centavos}` and `note`.
 
-The planned storefront adapter will also pass the confirmed `expected_totals` (`items_subtotal_centavos`, `discount_centavos`, `delivery_fee_centavos`, `total_centavos`) to Commerce Core. The fields represent the quote shown to the customer. The server calculates the payable amounts, and any change in the breakdown requires reconfirmation even when the total matches.
+The storefront adapter passes the confirmed `expected_totals` (`items_subtotal_centavos`, `discount_centavos`, `delivery_fee_centavos`, `total_centavos`) to Commerce Core. The fields represent the quote shown to the customer. The server calculates the payable amounts, and any change in the breakdown requires reconfirmation even when the total matches.
 
 | Status | Code | Meaning |
 |---|---|---|
 | `201` | — | Order placed (same body on an idempotent replay) |
 | `400` | `validation.*` | Malformed body or limits exceeded |
 | `404` | `delivery.storefront_not_found` | Unknown or unpublished slug |
-| `409` | `commerce.checkout_repriced` | Snapshot, price, availability or coupon changed; body has current `catalog_version` and a fresh quote; client must show differences and reconfirm |
+| `409` | `commerce.checkout_repriced` | Snapshot, price, availability or coupon changed; body has a fresh `quote` containing the current `catalog_version`; client must show differences and reconfirm |
 | `422` | `delivery.closed`, `delivery.below_minimum`, `delivery.zone_not_served`, `delivery.mode_unavailable`, `commerce.idempotency_mismatch` | Business rule refused |
 | `403` | `delivery.ordering_unavailable` | Authorization denied (expired capability, suspension, lifecycle); localized message only |
 | `429` | `error.rate_limited` | Rate limit |
 
-### 16.3 Open decision: endpoints not yet in `delivery.json`
+### 16.3 Remaining optional endpoints not yet in `delivery.json`
 
-Decide whether these become separate contract endpoints or fold into the ones above: `POST /dashboard/delivery/zones[/{id}]` and `POST /dashboard/delivery/coupons[/{id}]` (`delivery.settings.update`), `POST /dashboard/delivery/unpublish` (needs the storefront unpublish operation, section 11), `POST /dashboard/delivery/availability` (sold-out toggles; a QR Core catalog edit or a Delivery operation), `GET /dashboard/delivery/orders.csv`, `POST /dashboard/delivery/push-subscriptions`. All authenticated `POST`s verify `_csrf`.
+Decide before `beta` whether to add: `POST /dashboard/delivery/availability` (sold-out toggles; QR Core already provides `derive_availability`), consumer push registration on the tracking page. All authenticated `POST`s verify `_csrf`.
 
 ## 17. Integration contracts
 

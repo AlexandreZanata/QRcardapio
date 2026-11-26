@@ -233,3 +233,12 @@ Asaas, Stripe and Inter can be active at the same time ([ADR-011](../decisions/A
 7. Sandbox homologation: save payer data, subscribe with "Pix ou boleto", confirm the charge appears in Inter and on `/dashboard/billing` (Pix QR, digitable line, PDF); simulate payment with `POST /cobranca/v3/cobrancas/{codigoSolicitacao}/pagar` (`{"pagarCom":"PIX"}`, sandbox only, mTLS); confirm the callback (or the next pass) grants coverage; cancel renewal and confirm pending charges become `CANCELADO`.
 
 Refunds of Inter charges are manual (boleto has no refund API; Pix refunds need the end-to-end id). They are not reflected automatically — record the decision and keep the coverage consistent manually until the planned operator command exists.
+
+## QR Delivery preview and recovery
+
+The compiled catalog ships with Delivery in `development`. It cannot grant or sell the module. Preview and production lifecycle changes follow [the Delivery release gates](../modules/DELIVERY.md#27-commercial-launch-requirements).
+
+- Keep `DATA_DIR/storefronts` on a persistent filesystem together with SQLite and original media. Compose mounts the storefront volume read-only in Caddy and blocks the `.tmp` directory. The native service serves the same files on the Axum fallback without SQLite.
+- If the storefront files are lost after a restore, run `qrcardapio republish-all`. It can reconstruct eligible published storefronts from the committed presentation and media. Preserve the publication lock directory while commands are running.
+- Staff sound works with the foreground order center. Browser push uses the existing `COMMERCE_VAPID_PRIVATE_KEY_FILE` and `COMMERCE_VAPID_CONTACT` settings and requires permission on each device. Keep the private key available only to the app.
+- During an order-center network outage, keep the last list visible and verify the current order state after reconnecting before taking action. Use the Commerce Core operator commands for expired orders and the outbox dead-letter queue.

@@ -20,7 +20,7 @@ Status: principles 1 to 5 **Implemented and tested**; principle 6 **Implemented 
 | Offer | Code | Monthly | Lifecycle | Affiliate-eligible |
 |---|---|---|---|---|
 | QR Menu | `menu` | 2990 | `available` | yes |
-| QR Delivery | `delivery` | 6990 | `planned` | yes |
+| QR Delivery | `delivery` | 6990 | `development` | yes |
 | QR Tables | `tables` | 3990 | `planned` | yes |
 | QR Kitchen | `kitchen` | 2490 | `planned` | yes |
 | QR Fleet | `fleet` | 2990 | `planned` | yes |

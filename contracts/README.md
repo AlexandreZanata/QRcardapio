@@ -11,6 +11,7 @@ Versioned, validated contracts shared by the code, the tests and the documentati
 | `events/registry.json`, `events/schemas/*.json` | Domain events | Event names, versions, payload schemas | Parity test (`domain::events::EventType`) |
 | `commerce/state-machines.json` | Commerce Core state machines (planned) | Order, payment, preparation, delivery, table session, cash session | Consistency test, `docs/architecture/COMMERCE_CORE.md` |
 | `openapi/commerce.v1.json` | Commerce Core admin HTTP contract | Outbox diagnostics, recovery page and replay submission | `cargo test --locked --test event_dispatcher http_contract` |
+| `openapi/delivery.v1.json` | QR Delivery storefront HTTP contract | Consumer quotes, order placement, zero-PII tracking, cancellation | `tests/delivery.rs` |
 | `core/components.json` | QR Core components and free-tier limits | Allowed module dependencies | Module contract test |
 | `modules/<code>.json` | Per-module contract | Capabilities, operations, events, entities, planned HTTP surface, release gates | Module contract test, `docs/modules/<CODE>.md` |
 | `mcp/`, `auth/` | Existing MCP and Google sign-in contracts | — | `tests/mcp.rs`, Google tests |

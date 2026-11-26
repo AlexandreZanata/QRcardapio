@@ -23,6 +23,7 @@ services:
       - db_data:/data/db
       - media_data:/data/media
       - published_data:/data/published
+      - storefronts_data:/data/storefronts
     mem_limit: 512m
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://127.0.0.1:8080/healthz"]
@@ -46,6 +47,7 @@ services:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
       - ./static:/srv/static:ro
       - published_data:/srv/published:ro
+      - storefronts_data:/srv/storefronts:ro
       - caddy_data:/data
       - caddy_config:/config
     mem_limit: 128m
@@ -54,5 +56,6 @@ volumes:
   db_data:
   media_data:
   published_data:
+  storefronts_data:
   caddy_data:
   caddy_config:

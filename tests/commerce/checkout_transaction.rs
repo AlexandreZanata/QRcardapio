@@ -46,11 +46,11 @@ async fn committed_checkout_can_replay_while_another_writer_holds_the_database()
             .unwrap();
     assert_eq!(stored_digest, old_digest.as_ref());
 
-    // Keep an established reader available so connection setup pragmas do not
-    // compete with the writer lock this test uses to check the replay query.
-    let reader = pool.acquire().await.unwrap();
+    // Wait until the reader has returned to the pool so the replay neither opens a
+    // new SQLite connection nor runs its setup pragmas while the writer holds the lock.
+    let mut reader = pool.acquire().await.unwrap();
     let writer = begin_immediate(pool).await.unwrap();
-    drop(reader);
+    reader.return_to_pool().await;
     let retry = tokio::time::timeout(
         Duration::from_secs(2),
         place_order(pool, target, checkout::request(key, &cart), now),

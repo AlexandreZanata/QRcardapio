@@ -2,7 +2,7 @@
   "contract": "modules.delivery",
   "contract_version": 1,
   "module": "delivery",
-  "status": "planned",
+  "status": "development",
   "phase": 4,
   "standalone": true,
   "core_dependencies": [
@@ -40,6 +40,7 @@
   ],
   "operations": [
     "delivery.storefront.publish",
+    "delivery.storefront.unpublish",
     "delivery.order.place",
     "delivery.order.progress",
     "delivery.order.refund",
@@ -91,79 +92,157 @@
       "method": "GET",
       "path": "/s/{slug}",
       "audience": "consumer",
-      "status": "planned"
+      "status": "development"
+    },
+    {
+      "method": "GET",
+      "path": "/s/{slug}/",
+      "audience": "consumer",
+      "status": "development"
     },
     {
       "method": "GET",
       "path": "/s/{slug}/catalog.v{version}.json",
       "audience": "consumer",
-      "status": "planned"
+      "status": "development"
     },
     {
       "method": "POST",
       "path": "/api/storefront/v1/{slug}/quotes",
       "audience": "consumer",
-      "status": "planned"
+      "status": "development"
     },
     {
       "method": "POST",
       "path": "/api/storefront/v1/{slug}/orders",
       "audience": "consumer",
-      "status": "planned"
+      "status": "development"
     },
     {
       "method": "GET",
       "path": "/api/storefront/v1/{slug}/orders/{order_id}",
       "audience": "consumer",
-      "status": "planned"
+      "status": "development"
     },
     {
       "method": "GET",
       "path": "/dashboard/delivery/orders",
       "audience": "member",
-      "status": "planned"
+      "status": "development"
+    },
+    {
+      "method": "GET",
+      "path": "/dashboard/delivery/orders.csv",
+      "audience": "member",
+      "status": "development"
     },
     {
       "method": "POST",
       "path": "/dashboard/delivery/orders/{id}/transition",
       "audience": "member",
-      "status": "planned"
+      "status": "development"
     },
     {
       "method": "GET",
       "path": "/dashboard/delivery/settings",
       "audience": "member",
-      "status": "planned"
+      "status": "development"
     },
     {
       "method": "POST",
       "path": "/api/storefront/v1/{slug}/orders/{order_id}/cancel",
       "audience": "consumer",
-      "status": "planned"
+      "status": "development"
     },
     {
       "method": "POST",
       "path": "/dashboard/delivery/settings",
       "audience": "member",
-      "status": "planned"
+      "status": "development"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/delivery/zones",
+      "audience": "member",
+      "status": "development"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/delivery/zones/{id}",
+      "audience": "member",
+      "status": "development"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/delivery/zones/{id}/delete",
+      "audience": "member",
+      "status": "development"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/delivery/coupons",
+      "audience": "member",
+      "status": "development"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/delivery/coupons/{id}",
+      "audience": "member",
+      "status": "development"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/delivery/coupons/{id}/delete",
+      "audience": "member",
+      "status": "development"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/delivery/customers/block",
+      "audience": "member",
+      "status": "development"
     },
     {
       "method": "POST",
       "path": "/dashboard/delivery/publish",
       "audience": "member",
-      "status": "planned"
+      "status": "development"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/delivery/unpublish",
+      "audience": "member",
+      "status": "development"
     },
     {
       "method": "POST",
       "path": "/dashboard/delivery/orders/{id}/payments/{payment_id}/confirm",
       "audience": "member",
-      "status": "planned"
+      "status": "development"
     },
     {
       "method": "POST",
       "path": "/dashboard/delivery/orders/{id}/refunds",
       "audience": "member",
-      "status": "planned"
+      "status": "development"
+    },
+    {
+      "method": "GET",
+      "path": "/dashboard/delivery/sw.js",
+      "audience": "member",
+      "status": "development"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/delivery/push-subscriptions",
+      "audience": "member",
+      "status": "development"
+    },
+    {
+      "method": "POST",
+      "path": "/dashboard/delivery/push-subscriptions/{id}/revoke",
+      "audience": "member",
+      "status": "development"
     }
   ],
   "after_expiry": "No new orders or storefront publications. Orders already placed can still be accepted or rejected; accepted orders can be completed, cancelled and refunded; history and exports stay available.",

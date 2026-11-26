@@ -11,8 +11,13 @@ pub(crate) async fn has_member_role(
     actor: Actor,
 ) -> AppResult<bool> {
     Ok(sqlx::query_scalar(
-        "SELECT EXISTS(SELECT 1 FROM establishment_members
-         WHERE account_id = ? AND establishment_id = ? AND member_role = ?)",
+        "SELECT EXISTS(
+             SELECT 1 FROM establishment_members
+             WHERE account_id = ?1 AND establishment_id = ?2 AND member_role = ?3
+             UNION ALL
+             SELECT 1 FROM establishment_member_roles
+             WHERE account_id = ?1 AND establishment_id = ?2 AND member_role = ?3
+         )",
     )
     .bind(account_id)
     .bind(establishment_id)

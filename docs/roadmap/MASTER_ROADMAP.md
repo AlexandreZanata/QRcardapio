@@ -25,7 +25,7 @@ A new operational phase never starts while the previous phase has an open failur
 | 1 | Commercial foundation | **Implemented and tested**; Asaas side **Implemented, not homologated** |
 | 2 | QR Menu consolidation | Technical part **Implemented and tested**; homologation **Blocked**; live checks pending |
 | 3 | Commerce Core | **In progress** (capacity validated on the VPS candidate) |
-| 4 | QR Delivery | **Planned** |
+| 4 | QR Delivery | **Development** |
 | 5 | QR Tables | **Planned** |
 | 6 | QR Kitchen | **Planned** |
 | 7 | QR Fleet | **Planned** |
@@ -110,6 +110,8 @@ The readiness increment extends published availability revisions to options, che
 **Completion criteria.** State-machine transitions tested exhaustively, including illegal transitions; idempotency keys tested against retries and concurrent submissions; dispatcher at-least-once delivery with idempotent consumers tested; tenant isolation tests on every new table; integer totals reconcile to the centavo; load test of concurrent order writes on the 1 vCPU target; no sellable module change.
 
 ## Phase 4 — QR Delivery
+
+**Status.** Development candidate on top of the Commerce Core consolidation. The compiled catalog keeps sales and grants disabled. The local verification suite uses an injected preview catalog and explicit grants. Production capacity, physical device installation, pilot and launch gates remain open.
 
 **Objective.** Own ordering channel for delivery and pickup without marketplace commission.
 

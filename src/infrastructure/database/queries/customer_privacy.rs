@@ -28,6 +28,8 @@ pub async fn export(
             'channel', o.channel, 'fulfillment', o.fulfillment, 'state', o.state, 'placed_at', o.placed_at,
             'items_subtotal_centavos', o.items_subtotal_centavos, 'discount_centavos', o.discount_centavos,
             'delivery_fee_centavos', o.delivery_fee_centavos, 'total_centavos', o.total_centavos,
+            'order_note', (SELECT NULLIF(m.order_note, '') FROM delivery_order_metadata m
+                 WHERE m.order_id = o.id AND m.establishment_id = o.establishment_id),
             'delivery', json((SELECT json_object('recipient_name', d.recipient_name, 'recipient_phone', d.recipient_phone,
                  'street', d.street, 'street_number', d.street_number, 'complement', d.complement,
                  'neighborhood', COALESCE((SELECT n.neighborhood FROM order_delivery_neighborhoods n
@@ -37,6 +39,8 @@ pub async fn export(
             'items', json((SELECT json_group_array(json_object('name', i.name, 'quantity', i.quantity,
                  'variation', i.variation_name, 'unit_price_centavos', i.unit_price_centavos,
                  'line_total_centavos', i.line_total_centavos,
+                 'note', (SELECT n.note FROM delivery_order_item_notes n
+                      WHERE n.order_item_id = i.id AND n.establishment_id = i.establishment_id),
                  'extras', json((SELECT json_group_array(json_object('name', a.name, 'group', a.group_name,
                     'quantity', a.quantity, 'unit_price_centavos', a.unit_price_centavos) ORDER BY a.option_id)
                     FROM order_item_options a WHERE a.order_item_id = i.id AND a.establishment_id = i.establishment_id)))

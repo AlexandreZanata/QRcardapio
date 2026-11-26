@@ -14,7 +14,7 @@ pub struct PublishLocks {
     inner: Arc<Mutex<HashMap<String, Arc<AsyncMutex<()>>>>>,
 }
 
-pub(super) struct PublicationGuard {
+pub(in crate::application) struct PublicationGuard {
     _file: File,
     _local: OwnedMutexGuard<()>,
 }
@@ -30,7 +30,7 @@ impl PublishLocks {
 
     /// Serialize CLI and HTTP publishers sharing a data directory. Keep the async guard
     /// in the blocking task so cancelled requests cannot queue more waiters for this tenant.
-    pub(super) async fn lock_for_publication(
+    pub(in crate::application) async fn lock_for_publication(
         &self,
         staging_dir: &Path,
         est_id: &str,

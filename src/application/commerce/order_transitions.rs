@@ -6,11 +6,13 @@ use super::append_order_event;
 use crate::domain::commerce::order::{
     CancelReason, Order, OrderAction, RejectReason, TransitionOrder,
 };
-use crate::domain::commerce::state_machine::{Actor, Machine, transition as machine_transition};
+use crate::domain::commerce::state_machine::{
+    Actor, Machine, OrderState, transition as machine_transition,
+};
 use crate::domain::events::EventType;
 use crate::error::{AppError, AppResult};
 use crate::infrastructure::database::commerce_writes;
-use crate::infrastructure::database::queries::{order_transitions, orders};
+use crate::infrastructure::database::queries::{delivery_coupons, order_transitions, orders};
 
 const CONFLICT: AppError = AppError::Conflict("commerce.order_state_conflict");
 
@@ -63,6 +65,10 @@ pub(crate) async fn transition_in(
         .await?
         .ok_or(CONFLICT)?;
     order_transitions::append(tx, &changed, command).await?;
+    if matches!(changed.state, OrderState::Rejected | OrderState::Cancelled) {
+        delivery_coupons::release_for_order_in(tx, &changed.establishment_id, &changed.id, at)
+            .await?;
+    }
     append_order_event(
         tx,
         &changed,

@@ -146,8 +146,20 @@ impl Config {
         self.published_dir().join(".tmp")
     }
 
+    pub fn storefronts_dir(&self) -> PathBuf {
+        self.data_dir.join("storefronts")
+    }
+
+    pub fn storefronts_tmp_dir(&self) -> PathBuf {
+        self.storefronts_dir().join(".tmp")
+    }
+
     pub fn public_menu_url(&self, slug: &str) -> String {
         format!("{}/c/{slug}", self.public_base_url.trim_end_matches('/'))
+    }
+
+    pub fn public_storefront_url(&self, slug: &str) -> String {
+        format!("{}/s/{slug}/", self.public_base_url.trim_end_matches('/'))
     }
 }
 

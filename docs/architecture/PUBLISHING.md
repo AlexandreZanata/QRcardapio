@@ -66,3 +66,9 @@ Owner profile updates use the same per-establishment async mutex within the HTTP
 ## Assinatura e arquivos em preparação
 
 Com Asaas habilitado, a ação de publicar do painel verifica a cobertura da assinatura antes de renderizar o snapshot. A verificação se aplica à gravação de versões novas. A entrega dos snapshots existentes continua estática. No Caddy, `/c/.tmp` e seus descendentes retornam `404` inclusive durante uma publicação.
+
+## QR Delivery storefronts
+
+The ordering storefront lives in `DATA_DIR/storefronts/{slug}`, with its own publication lock and versions separate from the menu on `/c/{slug}`. Public HTML, manifest, worker, images and versioned catalog are served from disk, without SQLite. Consumer quotes and orders use the committed catalog plus current fulfillment rules on the server. Derived publications reuse published product content so changing Delivery settings cannot publish menu drafts.
+
+The committed storefront presentation is retained in SQLite for recovery. `republish-all` restores eligible published storefronts from that version. The service worker uses tenant-scoped caches under `/s/{slug}/`. An offline storefront allows browsing and disables ordering. Transactional API requests and customer tracking data stay outside its cache.

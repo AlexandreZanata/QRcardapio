@@ -13,10 +13,11 @@ use tower_http::trace::TraceLayer;
 use crate::application::payments::BillingGateways;
 use crate::application::publishing::PublishLocks;
 use crate::config::Config;
+use crate::domain::commercial::{CommercialCatalog, catalog};
 use crate::http::handlers::{
     admin, admin_affiliates, admin_outbox, affiliates, auth, billing, billing_payer,
-    billing_webhooks, categories, dashboard, google, health, mcp, menu_editor, ocr, onboarding,
-    products, public, qr, seo, settings,
+    billing_webhooks, categories, dashboard, delivery, google, health, mcp, menu_editor, ocr,
+    onboarding, products, public, qr, seo, settings,
 };
 use crate::http::middleware::branded_errors::branded_errors;
 use crate::http::middleware::security_headers::{no_store, security_headers_middleware};
@@ -29,6 +30,7 @@ use crate::infrastructure::security::rate_limit::AppRateLimiters;
 
 #[derive(Clone)]
 pub struct AppState {
+    pub staff_push_public_key: Option<String>,
     pub config: Arc<Config>,
     pub pool: SqlitePool,
     pub catalog: &'static Catalog,
@@ -38,6 +40,7 @@ pub struct AppState {
     pub rate_limiters: AppRateLimiters,
     pub publish_locks: PublishLocks,
     pub billing: BillingGateways,
+    pub commercial_catalog: Arc<CommercialCatalog>,
     pub google: Option<GoogleOidc>,
 }
 
@@ -57,6 +60,8 @@ impl AppState {
             rate_limiters: AppRateLimiters::new(),
             publish_locks: PublishLocks::default(),
             billing,
+            commercial_catalog: Arc::new(catalog().clone()),
+            staff_push_public_key: None,
             google,
         }
     }
@@ -67,6 +72,13 @@ impl AppState {
     #[doc(hidden)]
     pub fn with_billing(mut self, billing: BillingGateways) -> Self {
         self.billing = billing;
+        self
+    }
+
+    /// Replaces the compiled commercial catalog (tests use this to exercise preview lifecycles).
+    #[doc(hidden)]
+    pub fn with_commercial_catalog(mut self, catalog: CommercialCatalog) -> Self {
+        self.commercial_catalog = Arc::new(catalog);
         self
     }
 }
@@ -221,6 +233,7 @@ pub fn build_router(state: AppState) -> Router {
         .route("/dashboard/unpublish", post(dashboard::unpublish_submit))
         .route("/dashboard/menu", get(menu_editor::menu_editor_page))
         .merge(crate::http::handlers::commerce::router())
+        .merge(delivery::router())
         .route(
             "/dashboard/categories/new",
             get(categories::new_category_page),

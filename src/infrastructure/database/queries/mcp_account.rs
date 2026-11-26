@@ -80,20 +80,24 @@ pub async fn apply_settings(
             .map_err(|_| AppError::Internal("invalid stored MCP result".into()));
     }
 
-    let current: Option<(String, i64, String)> = sqlx::query_as(
-        "SELECT slug, published_version, updated_at FROM establishments WHERE id = ?",
+    let current: Option<(String, i64, i64, String)> = sqlx::query_as(
+        "SELECT e.slug, e.published_version,
+                COALESCE((SELECT s.published_version FROM storefronts s WHERE s.establishment_id = e.id), 0) AS storefront_version,
+                e.updated_at
+         FROM establishments e WHERE e.id = ?",
     )
     .bind(est)
     .fetch_optional(&mut *tx)
     .await?;
-    let Some((current_slug, published_version, current_updated_at)) = current else {
+    let Some((current_slug, published_version, storefront_version, current_updated_at)) = current
+    else {
         return Err(AppError::NotFound("error.not_found"));
     };
     if current_updated_at != patch.expected_updated_at {
         return Err(AppError::Conflict("mcp.account_changed"));
     }
     if let Some(new_slug) = patch.slug.as_deref()
-        && published_version > 0
+        && (published_version > 0 || storefront_version > 0)
         && new_slug != current_slug
     {
         return Err(AppError::Validation("error.slug_locked"));
@@ -121,7 +125,12 @@ pub async fn apply_settings(
                  google_review_url = CASE WHEN ? THEN ? ELSE google_review_url END,
                  has_unpublished_changes = 1,
                  updated_at = ?
-             WHERE id = ? AND updated_at = ? AND (published_version = 0 OR slug = ?)",
+             WHERE id = ? AND updated_at = ? AND (
+                 (published_version = 0 AND NOT EXISTS (
+                     SELECT 1 FROM storefronts s WHERE s.establishment_id = establishments.id AND s.published_version > 0
+                 ))
+                 OR slug = ?
+             )",
         )
         .bind(next_slug)
         .bind(patch.name.as_deref())

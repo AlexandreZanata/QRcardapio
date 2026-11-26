@@ -92,6 +92,25 @@ pub async fn current<'e>(
     .transpose()
 }
 
+/// Reads the latest payment record for display, including a cancelled final intent.
+pub async fn latest_for_order<'e>(
+    executor: impl SqliteExecutor<'e>,
+    establishment_id: &str,
+    order_id: &str,
+) -> AppResult<Option<OrderPayment>> {
+    sqlx::query_as::<_, PaymentRow>(
+        "SELECT * FROM order_payments
+         WHERE establishment_id = ? AND order_id = ?
+         ORDER BY created_at DESC, id DESC LIMIT 1",
+    )
+    .bind(establishment_id)
+    .bind(order_id)
+    .fetch_optional(executor)
+    .await?
+    .map(OrderPayment::try_from)
+    .transpose()
+}
+
 pub(crate) async fn insert(
     tx: &mut Transaction<'_, Sqlite>,
     payment: &OrderPayment,

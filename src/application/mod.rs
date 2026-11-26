@@ -8,6 +8,7 @@ pub mod billing_events;
 pub mod billing_inter;
 pub mod commerce;
 pub mod commercial;
+pub mod delivery;
 pub mod demo_menu;
 pub mod entitlements;
 pub mod establishments;

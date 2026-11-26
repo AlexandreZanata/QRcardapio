@@ -94,7 +94,7 @@ There is no native work now. The PWA must reach feature parity for consumers bef
 | Route | Purpose | Status | Rules |
 |---|---|---|---|
 | `/c/{slug}` | Permanent read-only menu (QR Menu) | Implemented | Printed QR Codes depend on it. It never moves, never redirects to another channel and never changes meaning. The slug is locked after the first publication. |
-| `/s/{slug}` | Ordering storefront (QR Delivery) | Planned | A separate snapshot directory and a separate `CatalogPublished` channel (`storefront`). |
+| `/s/{slug}` | Ordering storefront (QR Delivery) | Development | A separate snapshot directory and a separate `CatalogPublished` channel (`storefront`). |
 | `/t/{table_token}` | Table entry (QR Tables) | Planned | An opaque token, independent of the slug. `noindex`. |
 | `{slug}.qrcardapio.com.br` | Establishment subdomain | Planned | Alias of the path routes over the same snapshots. Needs a wildcard certificate (DNS-01). |
 | Custom domain | `branding.custom_domain` add-on | Planned | See below. Domain registration is not included. Requires a module with a public menu or storefront. |
