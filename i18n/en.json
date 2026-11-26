@@ -729,6 +729,8 @@
   "seo.read_guide": "Read full guide",
   "seo.other_tools": "More free tools",
   "seo.next_steps": "Recommended next steps",
+  "seo.tool_preview_heading": "Preview",
+  "seo.tool_cmv_results_heading": "Calculation results",
   "seo.tool_qr_url_label": "HTTPS menu link or Google review URL",
   "seo.tool_qr_generate": "Update QR Code",
   "seo.tool_qr_hint": "Enter an https:// link. SVG files scale cleanly for print shops at any dimension.",

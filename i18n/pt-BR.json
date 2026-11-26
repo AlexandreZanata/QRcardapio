@@ -729,6 +729,8 @@
   "seo.read_guide": "Ler guia completo",
   "seo.other_tools": "Outras ferramentas gratuitas",
   "seo.next_steps": "Próximos passos recomendados",
+  "seo.tool_preview_heading": "Prévia",
+  "seo.tool_cmv_results_heading": "Resultado do cálculo",
   "seo.tool_qr_url_label": "Endereço HTTPS do cardápio ou link do Google",
   "seo.tool_qr_generate": "Atualizar QR Code",
   "seo.tool_qr_hint": "Use links começando com https://. Arquivos SVG escalam sem perda de nitidez para gráfica.",

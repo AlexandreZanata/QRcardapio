@@ -330,7 +330,6 @@ body:has(.seo-page) {
   padding: 0.45rem 0.9rem;
 }
 
-.seo-qr-preview-box,
 .seo-placard-sheet {
   display: grid;
   justify-items: center;
@@ -343,7 +342,6 @@ body:has(.seo-page) {
   padding: 1.6rem 1.25rem;
 }
 
-.seo-qr-preview-box img,
 .seo-placard-sheet img {
   max-width: 100%;
   height: auto;
@@ -371,37 +369,6 @@ body:has(.seo-page) {
   margin: 0;
   font-size: 1.05rem;
   font-weight: 750;
-}
-
-.seo-metric-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.seo-metric {
-  background: var(--landing-paper);
-  border: 2px solid var(--landing-ink);
-  border-radius: 0.75rem;
-  padding: 0.75rem 0.9rem;
-  display: grid;
-  gap: 0.25rem;
-}
-
-.seo-metric span {
-  font-size: 0.84rem;
-  color: #45414b;
-  font-weight: 700;
-}
-
-.seo-metric strong {
-  font-size: 1.28rem;
-  font-weight: 900;
-}
-
-.seo-metric-highlight {
-  background: var(--landing-yellow);
 }
 
 .seo-warning {
@@ -458,35 +425,8 @@ body:has(.seo-page) {
 }
 
 @media (max-width: 34rem) {
-  .seo-card-grid-4,
-  .seo-metric-grid {
+  .seo-card-grid-4 {
     grid-template-columns: 1fr;
-  }
-}
-
-@media print {
-  .landing-header,
-  .landing-footer,
-  .landing-final,
-  .seo-breadcrumb,
-  .seo-hero,
-  .seo-tool-form,
-  .seo-section {
-    display: none;
-  }
-  body:has(.seo-placard-sheet) {
-    background: #ffffff;
-  }
-  .seo-tool-grid {
-    display: block;
-    margin: 0;
-  }
-  .seo-placard-sheet {
-    box-shadow: none;
-    border: 2px solid #161721;
-    max-width: 148mm;
-    margin: 20mm auto;
-    padding: 14mm;
   }
 }
 
