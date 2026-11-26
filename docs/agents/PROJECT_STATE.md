@@ -15,7 +15,7 @@ All 5 implementation phases of the **QR Cardápio MVP** (including full native z
 
 ## Modular Platform Foundation — Phases 0, 1 and technical part of 2 (2026-11-24)
 
-QR Cardápio is now a free **QR Core** plus independently sold modules. Only **QR Menu** is sellable. Delivery is in `development`; Tables, Kitchen, Fleet, Loyalty, Analytics, POS and Connect remain `planned`.
+QR Cardápio is now a free **QR Core** plus independently sold modules. Only **QR Menu** is sellable. Delivery is in `internal_preview` with explicit operator grants. Tables, Kitchen, Fleet, Loyalty, Analytics, POS and Connect remain `planned`.
 
 | Area | Status | Where |
 |---|---|---|
@@ -32,7 +32,7 @@ QR Cardápio is now a free **QR Core** plus independently sold modules. Only **Q
 | Rollback-tolerant migrator, idempotent expand migration | Implemented and tested | ADR-010, [RUNBOOK](../operations/RUNBOOK.md#rollback-of-the-commercial-foundation-release) |
 | `republish-all` no longer publishes pending drafts after deploys | Fixed | `application/publishing.rs` |
 | Subscription changes (add/remove modules, cycle change, proration, credits) | Planned — blocked until a second module is sellable and Asaas updates are homologated | [SUBSCRIPTION_RULES](../business/SUBSCRIPTION_RULES.md) |
-| Commerce Core, Delivery and later modules | Commerce Core consolidation candidate. Delivery in development. Later modules planned | [Commerce Core](../architecture/COMMERCE_CORE.md), [MASTER_ROADMAP](../roadmap/MASTER_ROADMAP.md) |
+| Commerce Core, Delivery and later modules | Commerce Core consolidated. Delivery in internal preview. Later modules planned | [Commerce Core](../architecture/COMMERCE_CORE.md), [MASTER_ROADMAP](../roadmap/MASTER_ROADMAP.md) |
 
 Contract drift is enforced by `tests/commercial_contracts.rs` (catalog, capabilities, lifecycle, authorization rules, events and schemas, module contracts, state machines, module docs, catalog doc).
 
@@ -85,9 +85,9 @@ The product owner authorized Phase 3 production work in writing on 2026-11-25 wh
 
 ## QR Delivery — Phase 4
 
-The development candidate provides a white-label storefront, tenant-scoped cart, delivery and pickup, neighborhood fees, coupon redemption, checkout revalidation, private tracking and cancellation, and a staff order center with offline payment confirmation, refunds and CSV export. The lifecycle denies sales and grants in the compiled catalog. The request and response contract lives in [Delivery OpenAPI v1](../../contracts/openapi/delivery.v1.json).
+The internal preview provides a white-label storefront, tenant-scoped cart, delivery and pickup, neighborhood fees, coupon redemption, checkout revalidation, private tracking and cancellation, and a staff order center with offline payment confirmation, refunds and CSV export. Access requires an audited, establishment-specific operator grant. Sales remain disabled. The request and response contract lives in [Delivery OpenAPI v1](../../contracts/openapi/delivery.v1.json).
 
-The HTTP suite injects `internal_preview` with explicit grants and checks tenant isolation, disk-only public delivery, quotes, idempotency, concurrent coupon use, expiry, tracking and staff permissions. Real-device PWA installation and staff Web Push, capacity measurements on the VPS, and the pilot remain release gates.
+The HTTP suite exercises the compiled preview lifecycle and the operator grant. It checks tenant isolation, disk-only public delivery, quotes, idempotency, concurrent coupon use, expiry, tracking and staff permissions. The first production grant is managed separately from deployment. Real-device PWA installation and staff Web Push, capacity measurements on the VPS, and the broader pilot remain release gates.
 
 ## Landing and Panel Refresh
 

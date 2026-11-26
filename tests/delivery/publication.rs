@@ -1,11 +1,12 @@
 use axum::http::{StatusCode, header};
 use serde_json::Value;
 
+use qrcardapio::app::{AppState, build_router};
 use qrcardapio::application::publishing::{PublishLocks, publish_establishment};
 
 use crate::fixture::{
-    PUBLISH, SETTINGS, Shop, UNPUBLISH, body, expect_json, get_public, grant, grant_preview,
-    preview_router, submit,
+    PUBLISH, SETTINGS, Shop, UNPUBLISH, body, development_catalog, expect_json, force_grant,
+    get_public, grant_preview, preview_router, submit,
 };
 use crate::support::{config, get, harness, post_form};
 
@@ -15,8 +16,6 @@ async fn delivery_access_requires_the_preview_lifecycle_and_a_scoped_explicit_gr
     let alpha = Shop::create(&h, "delivery-access-alpha", 0).await;
     let beta = Shop::create(&h, "delivery-access-beta", 0).await;
 
-    // A grant still cannot activate a Development offer.
-    grant_preview(&h, &alpha).await;
     assert_eq!(
         submit(&h.app, &alpha.owner, PUBLISH, "").await.status(),
         StatusCode::FORBIDDEN
@@ -26,38 +25,70 @@ async fn delivery_access_requires_the_preview_lifecycle_and_a_scoped_explicit_gr
         StatusCode::NOT_FOUND
     );
 
-    let preview = preview_router(&h).await;
-    grant(&h, &beta, "courtesy").await;
+    let granted = grant_preview(&h, &alpha).await;
+    let event_kind: String = sqlx::query_scalar(
+        "SELECT json_extract(payload, '$.grant_kind') FROM domain_events
+         WHERE establishment_id = ? AND aggregate_id = ? AND event_type = 'EntitlementGranted'",
+    )
+    .bind(&alpha.id)
+    .bind(&granted)
+    .fetch_one(&h.pool)
+    .await
+    .unwrap();
+    assert_eq!(event_kind, "internal_preview");
+    let development = build_router(
+        AppState::new(config(&h.dir, false), h.pool.clone())
+            .with_commercial_catalog(development_catalog()),
+    );
     assert_eq!(
-        submit(&preview, &beta.owner, PUBLISH, "").await.status(),
+        submit(&development, &alpha.owner, PUBLISH, "")
+            .await
+            .status(),
+        StatusCode::FORBIDDEN,
+        "an earlier build in development must still refuse the grant"
+    );
+
+    let preview = &h.app;
+    force_grant(&h, &beta, "courtesy").await;
+    force_grant(&h, &beta, "trial").await;
+    assert_eq!(
+        submit(preview, &beta.owner, PUBLISH, "").await.status(),
         StatusCode::FORBIDDEN
     );
     assert_eq!(
-        post_form(&preview, &alpha.owner, PUBLISH, "_csrf=wrong".into())
+        get(preview, &beta.owner, SETTINGS).await.status(),
+        StatusCode::FORBIDDEN
+    );
+    assert_eq!(
+        get(preview, &beta.owner, "/dashboard/delivery/orders")
             .await
             .status(),
         StatusCode::FORBIDDEN
     );
     assert_eq!(
-        get_public(&preview, SETTINGS, None).await.status(),
+        post_form(preview, &alpha.owner, PUBLISH, "_csrf=wrong".into())
+            .await
+            .status(),
+        StatusCode::FORBIDDEN
+    );
+    assert_eq!(
+        get_public(preview, SETTINGS, None).await.status(),
         StatusCode::SEE_OTHER
     );
     assert_eq!(
-        get(&preview, &alpha.owner, SETTINGS).await.status(),
+        get(preview, &alpha.owner, SETTINGS).await.status(),
         StatusCode::OK
     );
 
-    alpha.publish(&preview).await;
+    alpha.publish(preview).await;
     assert_eq!(
-        get_public(&preview, &alpha.storefront(), None)
+        get_public(preview, &alpha.storefront(), None)
             .await
             .status(),
         StatusCode::OK
     );
     assert_eq!(
-        get_public(&preview, &beta.storefront(), None)
-            .await
-            .status(),
+        get_public(preview, &beta.storefront(), None).await.status(),
         StatusCode::NOT_FOUND
     );
 }

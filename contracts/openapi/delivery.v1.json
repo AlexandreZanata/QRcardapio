@@ -3,7 +3,7 @@
   "info": {
     "title": "QR Cardápio — Consumer Storefront API",
     "version": "1.0.0",
-    "description": "Consumer quote, checkout and tracking for the QR Delivery development module. All responses are marked no-store."
+    "description": "Consumer quote, checkout and tracking for QR Delivery internal preview. New orders require a storefront with an explicit internal_preview grant. Responses are marked no-store."
   },
   "paths": {
     "/api/storefront/v1/{slug}/quotes": {

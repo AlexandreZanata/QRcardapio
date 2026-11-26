@@ -38,7 +38,7 @@ fn catalog_prices_match_the_commercial_proposal() {
     let catalog = catalog();
     let expected = [
         ("menu", 2990, Lifecycle::Available),
-        ("delivery", 6990, Lifecycle::Development),
+        ("delivery", 6990, Lifecycle::InternalPreview),
         ("tables", 3990, Lifecycle::Planned),
         ("kitchen", 2490, Lifecycle::Planned),
         ("fleet", 2990, Lifecycle::Planned),
@@ -142,7 +142,7 @@ fn invalid_catalogs_are_rejected() {
     );
     rejects(
         &load_with(|_, b, _, _| b["bundles"][0]["lifecycle"] = "available".into()),
-        "contains development module",
+        "contains internal_preview module delivery",
     );
     rejects(
         &load_with(|_, b, _, _| {
@@ -201,11 +201,7 @@ fn capability_registry_matches_the_rust_enum() {
         let capability = Capability::parse(id).unwrap_or_else(|| panic!("{id} missing in Rust"));
         assert_eq!(entry["offer"], capability.offer(), "{id}");
         let lifecycle = catalog().capability_lifecycle(capability);
-        let expected = match lifecycle {
-            Lifecycle::Available => "implemented",
-            Lifecycle::Development => "development",
-            _ => "planned",
-        };
+        let expected = catalog_contract_status(lifecycle);
         assert_eq!(entry["status"], expected, "{id}");
     }
     let rust: BTreeSet<String> = Capability::ALL
@@ -213,6 +209,14 @@ fn capability_registry_matches_the_rust_enum() {
         .map(|c| c.as_str().to_owned())
         .collect();
     assert_eq!(ids, rust);
+}
+
+fn catalog_contract_status(lifecycle: Lifecycle) -> &'static str {
+    match lifecycle {
+        Lifecycle::Available => "implemented",
+        Lifecycle::Development | Lifecycle::InternalPreview => lifecycle.as_str(),
+        _ => "planned",
+    }
 }
 
 #[test]
@@ -326,6 +330,14 @@ fn authorization_rules_match_implemented_operations() {
             operation.as_str()
         );
         assert_eq!(row["after_expiry"], operation.after_expiry().as_str());
+        if operation.as_str().starts_with("delivery.") {
+            assert_eq!(
+                row["lifecycle"],
+                catalog().module("delivery").unwrap().lifecycle.as_str(),
+                "{} lifecycle",
+                operation.as_str()
+            );
+        }
     }
     for role in ActorRole::ALL {
         let row = rules["roles"]
@@ -430,11 +442,7 @@ fn module_contracts_reference_existing_contracts() {
     for module in &catalog().modules {
         let contract = json(&format!("contracts/modules/{}.json", module.code));
         assert_eq!(contract["module"], module.code.as_str());
-        let expected_status = match module.lifecycle {
-            Lifecycle::Available => "implemented",
-            Lifecycle::Development => "development",
-            _ => "planned",
-        };
+        let expected_status = catalog_contract_status(module.lifecycle);
         assert_eq!(contract["status"], expected_status, "{}", module.code);
         assert_eq!(
             contract["standalone"], true,
@@ -499,13 +507,8 @@ fn module_contracts_reference_existing_contracts() {
                     "{} advertises {} as available",
                     module.code, endpoint["path"]
                 );
-                let expected = if module.lifecycle == Lifecycle::Development {
-                    "development"
-                } else {
-                    "planned"
-                };
                 assert_eq!(
-                    status, expected,
+                    status, expected_status,
                     "{} endpoint {} status mismatch",
                     module.code, endpoint["path"]
                 );
@@ -622,6 +625,12 @@ fn module_documentation_matches_module_contracts() {
             assert!(
                 doc.contains("In development"),
                 "{} doc must say it is in development",
+                module.code
+            );
+        } else if module.lifecycle == Lifecycle::InternalPreview {
+            assert!(
+                doc.contains("`internal_preview`"),
+                "{} doc must state the internal preview lifecycle",
                 module.code
             );
         } else if module.lifecycle != Lifecycle::Available {

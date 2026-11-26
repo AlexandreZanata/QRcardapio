@@ -12,7 +12,7 @@ QR Cardápio is a Brazilian multi-tenant SaaS enabling food establishments (rest
 
 ## 2. Product Scope and Phase Discipline
 
-QR Cardápio is evolving into a modular platform (QR Core + nine commercial modules). Only **QR Menu** is sellable. QR Delivery is in `development` with sales and grants disabled. Tables, Kitchen, Fleet, Loyalty, Analytics, POS and Connect remain `planned`.
+QR Cardápio is evolving into a modular platform (QR Core + nine commercial modules). Only **QR Menu** is sellable. QR Delivery is in `internal_preview` for establishments with an audited operator grant. Tables, Kitchen, Fleet, Loyalty, Analytics, POS and Connect remain `planned`.
 
 - Do NOT implement operational features of a planned module (ordering, carts, checkout for food, payments from consumers, KDS, POS, loyalty, delivery tracking, courier apps, public APIs) unless the task explicitly starts that module's phase in [MASTER_ROADMAP](docs/roadmap/MASTER_ROADMAP.md). Phase order: Commerce Core → Delivery → Tables → Kitchen → Fleet → Loyalty → Analytics → POS → Connect.
 - Never create fictitious screens, functional buttons or endpoints for planned modules, and never document planned endpoints as available.

@@ -139,6 +139,7 @@
     {
       "operation": "delivery.storefront.publish",
       "status": "implemented",
+      "lifecycle": "internal_preview",
       "roles": [
         "owner",
         "manager"
@@ -152,6 +153,7 @@
     {
       "operation": "delivery.storefront.unpublish",
       "status": "implemented",
+      "lifecycle": "internal_preview",
       "roles": [
         "owner",
         "manager"
@@ -165,6 +167,7 @@
     {
       "operation": "delivery.order.place",
       "status": "implemented",
+      "lifecycle": "internal_preview",
       "roles": [
         "consumer"
       ],
@@ -177,6 +180,7 @@
     {
       "operation": "delivery.order.progress",
       "status": "implemented",
+      "lifecycle": "internal_preview",
       "roles": [
         "owner",
         "manager",
@@ -192,6 +196,7 @@
     {
       "operation": "delivery.order.refund",
       "status": "implemented",
+      "lifecycle": "internal_preview",
       "roles": [
         "owner",
         "manager"
@@ -205,6 +210,7 @@
     {
       "operation": "delivery.settings.update",
       "status": "implemented",
+      "lifecycle": "internal_preview",
       "roles": [
         "owner",
         "manager"
@@ -387,6 +393,7 @@
     {
       "operation": "delivery.order.cancel",
       "status": "implemented",
+      "lifecycle": "internal_preview",
       "roles": [
         "consumer"
       ],

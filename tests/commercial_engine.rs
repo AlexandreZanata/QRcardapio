@@ -346,6 +346,11 @@ async fn sold_catalog_versions_and_lifecycles_cannot_change_silently() {
             .contains("cannot move from planned to available"),
         "{error}"
     );
+    let delivery_development =
+        catalog_with(|m| m["modules"][1]["lifecycle"] = "development".into());
+    commercial_catalog::sync_registry(&h.pool, &delivery_development)
+        .await
+        .unwrap();
     let delivery_early = catalog_with(|m| m["modules"][1]["lifecycle"] = "available".into());
     let error = commercial_catalog::sync_registry(&h.pool, &delivery_early)
         .await
@@ -364,13 +369,17 @@ async fn sold_catalog_versions_and_lifecycles_cannot_change_silently() {
     commercial_catalog::sync_registry(&h.pool, &refined)
         .await
         .unwrap();
-    let back = commercial_catalog::sync_registry(&h.pool, catalog()).await;
+    let back = commercial_catalog::sync_registry(&h.pool, &delivery_development).await;
     assert!(back.is_ok(), "internal_preview -> development is allowed");
 }
 
 #[tokio::test]
 async fn registry_tolerates_rollbacks_but_not_new_sellable_offers() {
     let h = harness(false).await;
+    let development = catalog_with(|m| m["modules"][1]["lifecycle"] = "development".into());
+    commercial_catalog::sync_registry(&h.pool, &development)
+        .await
+        .unwrap();
     // Walk QR Delivery from development through its legal launch path, one release at a time.
     let mut previous = "development";
     for step in ["internal_preview", "beta", "available"] {

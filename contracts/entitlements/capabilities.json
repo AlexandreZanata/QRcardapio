@@ -12,25 +12,25 @@
     {
       "id": "delivery.storefront.publish",
       "offer": "delivery",
-      "status": "development",
+      "status": "internal_preview",
       "summary": "Publish the white-label ordering storefront and its versioned catalog snapshot."
     },
     {
       "id": "delivery.order.create",
       "offer": "delivery",
-      "status": "development",
+      "status": "internal_preview",
       "summary": "Accept new delivery or pickup orders from consumers."
     },
     {
       "id": "delivery.order.manage",
       "offer": "delivery",
-      "status": "development",
+      "status": "internal_preview",
       "summary": "Accept, reject and progress delivery and pickup orders."
     },
     {
       "id": "delivery.settings.manage",
       "offer": "delivery",
-      "status": "development",
+      "status": "internal_preview",
       "summary": "Manage delivery zones, fees, minimum order, coupons and service modes."
     },
     {

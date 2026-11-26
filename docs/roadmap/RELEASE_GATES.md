@@ -73,7 +73,7 @@ From the `release_gates` field of each `contracts/modules/<code>.json`, in addit
 | `menu` | Entitlement parity with legacy coverage | **Implemented and tested** (`tests/commercial_migration.rs`, `tests/entitlements.rs`) |
 | | Asaas sandbox homologation | **Blocked** (no Sandbox credentials) |
 | | `republish-all` after deploy | Implemented in the deploy agent; not yet observed for the commercial foundation release |
-| `delivery` | Commerce Core order engine with idempotent checkout; price and availability revalidation against the published snapshot; per-establishment service worker and cart isolation; load test of concurrent order writes; LGPD export and erasure for customers | **Planned** |
+| `delivery` | Commerce Core order engine with idempotent checkout, price and availability revalidation against the published snapshot, per-establishment service worker and cart isolation, load test of concurrent order writes, and LGPD export and erasure for customers | **Internal preview**. Launch capacity and physical-device checks remain open. |
 | `tables` | Session join codes rotate per session; remote ordering blocked outside an open session; split and transfer keep integer totals exact | **Planned** |
 | `kitchen` | Display refresh under 2 s without polling storms; idempotent ticket creation per order; manual tickets without any other module | **Planned** |
 | `fleet` | External deliveries without any order; courier PWA isolated per establishment; payout ledger is append-only | **Planned** |

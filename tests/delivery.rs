@@ -8,6 +8,8 @@ mod order_fixtures;
 mod order_lifecycle;
 #[path = "delivery/orders.rs"]
 mod orders;
+#[path = "delivery/preview_completion.rs"]
+mod preview_completion;
 #[path = "delivery/publication.rs"]
 mod publication;
 #[path = "commercial/support.rs"]

@@ -10,10 +10,12 @@ use uuid::Uuid;
 
 use qrcardapio::app::{AppState, build_router};
 use qrcardapio::application::auth::AuthSuccess;
+use qrcardapio::application::operator::{GrantRequest, grant as grant_offer};
 use qrcardapio::domain::billing::billing_now;
 use qrcardapio::domain::commerce::business_hours::{CommercialSettings, Windows};
 use qrcardapio::domain::commerce::order::OrderItemSelection;
-use qrcardapio::domain::commercial::CommercialCatalog;
+use qrcardapio::domain::commercial::{CommercialCatalog, catalog};
+use qrcardapio::domain::entitlements::GrantKind;
 use qrcardapio::infrastructure::database::queries::{
     business_hours, catalog_snapshots, commercial_catalog, delivery_zones, entitlements,
     find_account_by_email,
@@ -135,6 +137,10 @@ impl Shop {
 }
 
 pub fn preview_catalog() -> CommercialCatalog {
+    catalog().clone()
+}
+
+pub fn development_catalog() -> CommercialCatalog {
     let mut modules: Value =
         serde_json::from_str(include_str!("../../contracts/commercial/modules.json")).unwrap();
     let delivery = modules["modules"]
@@ -143,7 +149,7 @@ pub fn preview_catalog() -> CommercialCatalog {
         .iter_mut()
         .find(|module| module["code"] == "delivery")
         .unwrap();
-    delivery["lifecycle"] = "internal_preview".into();
+    delivery["lifecycle"] = "development".into();
     CommercialCatalog::load(
         &modules.to_string(),
         include_str!("../../contracts/commercial/bundles.json"),
@@ -164,10 +170,25 @@ pub async fn preview_router(h: &Harness) -> Router {
 }
 
 pub async fn grant_preview(h: &Harness, shop: &Shop) -> String {
-    grant(h, shop, "internal_preview").await
+    ensure_operator(h).await;
+    let today = billing_now().date_naive();
+    grant_offer(
+        &h.pool,
+        GrantRequest {
+            operator_email: OPERATOR,
+            establishment_slug: shop.slug,
+            offer_code: "delivery",
+            kind: GrantKind::InternalPreview,
+            starts_on: today - Duration::days(1),
+            ends_on: today + Duration::days(1),
+            reason: "Testing Delivery preview access",
+        },
+    )
+    .await
+    .unwrap()
 }
 
-pub async fn grant(h: &Harness, shop: &Shop, kind: &str) -> String {
+async fn ensure_operator(h: &Harness) {
     if find_account_by_email(&h.pool, OPERATOR)
         .await
         .unwrap()
@@ -175,6 +196,10 @@ pub async fn grant(h: &Harness, shop: &Shop, kind: &str) -> String {
     {
         support::admin(&h.pool, OPERATOR).await;
     }
+}
+
+pub async fn force_grant(h: &Harness, shop: &Shop, kind: &str) -> String {
+    ensure_operator(h).await;
     let operator = find_account_by_email(&h.pool, OPERATOR)
         .await
         .unwrap()
