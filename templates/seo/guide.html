@@ -1,94 +1,169 @@
 {% extends "seo/layout.html" %}
+{% import "components/icons.html" as icons %}
 {% import "seo/breadcrumb.html" as breadcrumb %}
+{% import "seo/guide_art.html" as art %}
+{% import "seo/segment_art.html" as segments %}
+{% import "seo/tool_art.html" as tools %}
+
+{% block seo_head %}
+<link rel="stylesheet" href="/static/css/guide-visuals.css">
+<link rel="stylesheet" href="/static/css/guide-hero.css">
+<link rel="stylesheet" href="/static/css/guide-detail.css">
+{% endblock %}
 
 {% block seo_main %}
-<article class="landing-container seo-shell seo-article">
-  {{ breadcrumb::trail(nav.home_url, guide.title, nav.guides_url, "seo.guides") }}
+{% let scene = guide.id.art() %}
+<article class="guide-detail guide-palette" data-guide-theme="{{ scene }}" aria-labelledby="guide-title">
+  <div class="landing-container seo-shell guide-intro">
+    {{ breadcrumb::trail(nav.home_url, guide.title, nav.guides_url, "seo.guides") }}
 
-  <header class="seo-hero">
-    <p class="seo-meta-pill">{{ guide.read_minutes }} {{ page.t("seo.read_time") }} · {{ guide.published_date }}</p>
-    <h1>{{ guide.title }}</h1>
-    <div class="seo-answer-box">
-      <p class="seo-answer-kicker">{{ page.t("seo.answer_label") }}</p>
-      <p>{{ guide.answer_summary }}</p>
+    <header class="guide-hero">
+      <div class="guide-hero-copy">
+        <div class="guide-meta">
+          <p class="guide-reading-time">
+            {{ guide.read_minutes }} <span data-i18n="seo.read_time">{{ page.t("seo.read_time") }}</span>
+          </p>
+          <time datetime="{{ guide.published_date }}">{{ guide.published_date }}</time>
+        </div>
+        <h1 id="guide-title" class="guide-display-title">{{ guide.title }}</h1>
+        <p class="guide-hero-lead">{{ guide.short_desc }}</p>
+        <a class="btn landing-button landing-button-blue guide-start" href="#guide-section-1">
+          <span data-i18n="seo.guide_start">{{ page.t("seo.guide_start") }}</span>
+          {{ icons::sticker("segment-arrow") }}
+        </a>
+      </div>
+      <div class="guide-hero-scene" aria-hidden="true">
+        {{ art::scene(scene) }}
+        <span class="guide-hero-spark">{{ icons::sticker("burst") }}</span>
+      </div>
+      <div class="guide-summary">
+        <p class="guide-summary-label" data-i18n="seo.answer_label">{{ page.t("seo.answer_label") }}</p>
+        <p>{{ guide.answer_summary }}</p>
+      </div>
+    </header>
+  </div>
+
+  <div class="guide-reading">
+    <div class="landing-container guide-reading-grid">
+      <nav class="guide-index" aria-labelledby="guide-index-label">
+        <p id="guide-index-label" data-i18n="seo.guide_contents">{{ page.t("seo.guide_contents") }}</p>
+        <ul role="list">
+          {% for sec in guide.sections %}
+          <li><a href="#guide-section-{{ loop.index }}">{{ sec.heading }}</a></li>
+          {% endfor %}
+          {% if let Some(table) = guide.comparison_table %}
+          <li><a href="#guide-comparison">{{ table.title }}</a></li>
+          {% endif %}
+          <li><a href="#guide-faq" data-i18n="seo.faq_heading">{{ page.t("seo.faq_heading") }}</a></li>
+        </ul>
+      </nav>
+
+      <div class="guide-body">
+        {% for sec in guide.sections %}
+        <section class="seo-section guide-chapter" aria-labelledby="guide-section-{{ loop.index }}">
+          <h2 id="guide-section-{{ loop.index }}" tabindex="-1">{{ sec.heading }}</h2>
+          {% for para in sec.paragraphs %}
+          <p>{{ para }}</p>
+          {% endfor %}
+          {% if !sec.bullets.is_empty() %}
+          <ul class="guide-checklist" role="list">
+            {% for bullet in sec.bullets %}
+            <li>
+              <svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><use href="/static/icons/segment-scenes.svg#tip-check"></use></svg>
+              <span>{{ bullet }}</span>
+            </li>
+            {% endfor %}
+          </ul>
+          {% endif %}
+        </section>
+        {% endfor %}
+
+        {% if let Some(table) = guide.comparison_table %}
+        <section class="seo-section guide-comparison" aria-labelledby="guide-comparison">
+          <h2 id="guide-comparison" tabindex="-1">{{ table.title }}</h2>
+          <div class="guide-table-frame">
+            <table class="seo-table" role="table" aria-labelledby="guide-comparison">
+              <thead role="rowgroup">
+                <tr role="row">
+                  <th scope="col" role="columnheader">{{ table.headers[0] }}</th>
+                  <th id="guide-comparison-pdf" scope="col" role="columnheader">{{ table.headers[1] }}</th>
+                  <th id="guide-comparison-digital" scope="col" role="columnheader">{{ table.headers[2] }}</th>
+                </tr>
+              </thead>
+              <tbody role="rowgroup">
+                {% for row in table.rows %}
+                <tr role="row">
+                  <th id="guide-criterion-{{ loop.index }}" scope="row" role="rowheader">{{ row[0] }}</th>
+                  <td role="cell" headers="guide-criterion-{{ loop.index }} guide-comparison-pdf">{{ row[1] }}</td>
+                  <td role="cell" headers="guide-criterion-{{ loop.index }} guide-comparison-digital">{{ row[2] }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </section>
+        {% endif %}
+
+        <section class="seo-section guide-faq" aria-labelledby="guide-faq">
+          <h2 id="guide-faq" tabindex="-1" data-i18n="seo.faq_heading">{{ page.t("seo.faq_heading") }}</h2>
+          <div class="seo-faq-list">
+            {% for (q, a) in guide.faqs %}
+            <details class="seo-faq-item">
+              <summary>
+                <span>{{ q }}</span>
+                <span class="guide-faq-toggle">
+                  {{ icons::sticker("faq-expand") }}
+                  {{ icons::sticker("faq-collapse") }}
+                </span>
+              </summary>
+              <p>{{ a }}</p>
+            </details>
+            {% endfor %}
+          </div>
+        </section>
+      </div>
     </div>
-  </header>
+  </div>
 
-  {% for sec in guide.sections %}
-  <section class="seo-section">
-    <h2>{{ sec.heading }}</h2>
-    {% for para in sec.paragraphs %}
-    <p>{{ para }}</p>
-    {% endfor %}
-    {% if !sec.bullets.is_empty() %}
-    <ul class="seo-checklist">
-      {% for bullet in sec.bullets %}
-      <li>{{ bullet }}</li>
+  <section class="landing-container seo-section guide-related" aria-labelledby="guide-related">
+    <h2 id="guide-related" data-i18n="seo.next_steps">{{ page.t("seo.next_steps") }}</h2>
+    <ul class="guide-related-featured" role="list">
+      <li>
+        <a class="guide-related-card" href="{{ related_segment.href }}" aria-labelledby="guide-related-segment" aria-describedby="guide-related-segment-desc">
+          <div class="guide-related-art">{{ segments::scene(related_segment.art) }}</div>
+          <div class="guide-related-copy">
+            <h3 id="guide-related-segment">{{ related_segment.name }}</h3>
+            <p id="guide-related-segment-desc">{{ related_segment.short_desc }}</p>
+          </div>
+          {{ icons::sticker("segment-arrow") }}
+        </a>
+      </li>
+      <li>
+        <a class="guide-related-card" href="{{ related_tool.href }}" aria-labelledby="guide-related-tool" aria-describedby="guide-related-tool-desc">
+          <div class="guide-related-art">{{ tools::scene(related_tool.art) }}</div>
+          <div class="guide-related-copy">
+            <h3 id="guide-related-tool">{{ related_tool.name }}</h3>
+            <p id="guide-related-tool-desc">{{ related_tool.short_desc }}</p>
+          </div>
+          {{ icons::sticker("segment-arrow") }}
+        </a>
+      </li>
+    </ul>
+    {% if !other_guides.is_empty() %}
+    <ul class="guide-related-articles" role="list">
+      {% for g in other_guides %}
+      <li>
+        <a class="guide-related-card guide-palette" data-guide-theme="{{ g.art }}" href="{{ g.href }}" aria-labelledby="guide-related-page-{{ loop.index }}" aria-describedby="guide-related-page-desc-{{ loop.index }}">
+          <div class="guide-related-art">{{ art::scene(g.art) }}</div>
+          <div class="guide-related-copy">
+            <h3 id="guide-related-page-{{ loop.index }}">{{ g.title }}</h3>
+            <p id="guide-related-page-desc-{{ loop.index }}">{{ g.short_desc }}</p>
+          </div>
+          {{ icons::sticker("segment-arrow") }}
+        </a>
+      </li>
       {% endfor %}
     </ul>
-    {% endif %}
-  </section>
-  {% endfor %}
-
-  {% if let Some(table) = guide.comparison_table %}
-  <section class="seo-section seo-band">
-    <h2>{{ table.title }}</h2>
-    <div class="seo-table-wrap">
-      <table class="seo-table">
-        <thead>
-          <tr>
-            <th>{{ table.headers[0] }}</th>
-            <th>{{ table.headers[1] }}</th>
-            <th>{{ table.headers[2] }}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for row in table.rows %}
-          <tr>
-            <td><strong>{{ row[0] }}</strong></td>
-            <td>{{ row[1] }}</td>
-            <td>{{ row[2] }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </section>
-  {% endif %}
-
-  <section class="seo-section">
-    <h2>{{ page.t("seo.faq_heading") }}</h2>
-    <div class="seo-faq-list">
-      {% for (q, a) in guide.faqs %}
-      <details class="seo-faq-item">
-        <summary>{{ q }}</summary>
-        <p>{{ a }}</p>
-      </details>
-      {% endfor %}
-    </div>
-  </section>
-
-  <section class="seo-section">
-    <h2>{{ page.t("seo.next_steps") }}</h2>
-    <div class="seo-card-grid seo-card-grid-2">
-      <a class="seo-card seo-card-link" href="{{ related_segment.href }}">
-        <h3>{{ related_segment.name }}</h3>
-        <p>{{ related_segment.short_desc }}</p>
-      </a>
-      <a class="seo-card seo-card-link" href="{{ related_tool.href }}">
-        <h3>{{ related_tool.name }}</h3>
-        <p>{{ related_tool.short_desc }}</p>
-      </a>
-    </div>
-    {% if !other_guides.is_empty() %}
-    <div class="seo-card-grid seo-card-grid-3 seo-other-guides">
-      {% for g in other_guides %}
-      <a class="seo-card seo-card-link" href="{{ g.href }}">
-        <h3>{{ g.title }}</h3>
-        <p>{{ g.short_desc }}</p>
-      </a>
-      {% endfor %}
-    </div>
     {% endif %}
   </section>
 </article>

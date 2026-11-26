@@ -20,7 +20,9 @@ use crate::infrastructure::database::queries::{
     list_categories_for_est, list_products_for_est, load_menu_preview,
 };
 use crate::rendering::dashboard::OverviewTemplate;
-use crate::rendering::public_menu::{generate_brand_theme_css, render_public_menu_html};
+use crate::rendering::public_menu::{
+    generate_brand_theme_css, render_product_detail_html, render_public_menu_html,
+};
 use crate::rendering::{PageMeta, render_html};
 
 #[derive(Deserialize)]
@@ -90,8 +92,41 @@ pub async fn preview_menu_page(
         "/dashboard/media",
         "/dashboard/theme.css",
         &state.config.public_base_url,
+        &Default::default(),
     )?;
-    Ok((StatusCode::OK, Html(html)).into_response())
+    Ok(([(CACHE_CONTROL, "no-store")], Html(html)).into_response())
+}
+
+pub async fn preview_product_page(
+    State(state): State<AppState>,
+    RequestLocale(locale): RequestLocale,
+    tenant: TenantContext,
+    Path(id): Path<String>,
+) -> AppResult<Response> {
+    let snapshot = load_menu_preview(&state.pool, &tenant.establishment.id)
+        .await?
+        .ok_or(AppError::NotFound("error.not_found"))?;
+    let (category, product) = snapshot
+        .categories
+        .iter()
+        .find_map(|category| {
+            category
+                .products
+                .iter()
+                .find(|item| item.product.id == id)
+                .map(|product| (category, product))
+        })
+        .ok_or(AppError::NotFound("error.not_found"))?;
+    let html = render_product_detail_html(
+        &snapshot,
+        category,
+        product,
+        locale,
+        true,
+        "/dashboard/media",
+        "/dashboard/theme.css",
+    )?;
+    Ok(([(CACHE_CONTROL, "no-store")], Html(html)).into_response())
 }
 
 pub async fn serve_tenant_media(

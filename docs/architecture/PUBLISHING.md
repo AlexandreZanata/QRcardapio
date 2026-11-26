@@ -12,14 +12,15 @@ Scanning a restaurant table QR Code is an overwhelmingly read-heavy event. Gener
 
 ```text
 data/published/
-├── .tmp/                              # Private staging, retirement markers, and publication locks
+├── .tmp/                              # Private staging, product asset references, and publication locks
 └── {slug}/
     ├── index.html                     # Escaped standalone HTML5 with embedded #qr-menu-i18n JSON
     ├── theme-{hash8}.css              # Content-hashed CSS variables for brand accent & contrast ink
+    ├── p/{hash24}.html                 # Product details linked by the current snapshot
     └── media/
         ├── {logo16}_192.png           # Content-addressed establishment logo
         ├── {item16}_400.jpg           # Content-addressed product thumbnails
-        └── {cover16}_800.jpg          # Optional cover from the first visible, available product with a photo
+        └── {item16}_800.jpg           # Larger images for product pages and the cover
 ```
 
 ## Atomic Publication Lifecycle (`src/application/publishing.rs`)
@@ -28,18 +29,18 @@ data/published/
 2. Validate `slug` (`Slug::validate_existing`) and resolve paths via `resolve_safe_subpath` (blocks path traversal).
 3. Capture `MenuSnapshot` and the tenant's draft revision in one short SQLite read transaction. Filter to `is_visible = 1` categories and products, then release the DB connection before writing files. `republish-all` checks the publication and dirty flags on this captured state under the same per-establishment lock.
 4. Generate `theme-{hash8}.css` (computing WCAG AA foreground ink color from `accent_color`).
-5. Render `index.html` using `PublicMenuTemplate` (Askama auto-escapes all user text; embeds ~1.6 KB `#qr-menu-i18n` JSON for zero-reload PT/EN/ES switching; includes canonical URL, Open Graph metadata, and XSS-safe `FoodEstablishment` + `Menu` JSON-LD for published snapshots while keeping `/dashboard/preview` `noindex, nofollow`).
-6. Stage all referenced media files into `published/{slug}/media/` via `atomic_write_file` (`NamedTempFile::new_in(tmp_dir)` -> `write_all` -> `sync_all` -> `persist`). Stage the large variant of the selected cover alongside the product thumbnails.
-7. Stage `theme-{hash8}.css` via `atomic_write_file`.
+5. Render each product page and hash its HTML with the product ID. Render `index.html` with links to those exact files. Askama escapes text, and both views embed `#qr-menu-i18n` for language switching. The public index carries the established canonical URL and Menu JSON-LD. Product pages have `noindex, follow`, and draft views have `noindex, nofollow`.
+6. Stage referenced media into `published/{slug}/media/` with `atomic_write_file`. The gallery uses thumbnails, and each product page uses the larger variant of its image when available.
+7. Stage `theme-{hash8}.css` and the content-addressed product pages. Store product asset references in the private staging directory for cleanup.
 8. Atomically replace `published/{slug}/index.html` via `atomic_write_file`.
 9. Record retirement of obsolete assets and prune any whose HTML cache window has elapsed.
 10. Set `is_published`, update `published_version` and `last_published_at`, and append a `'published'` row in `publications`. Clear the dirty flag only if the captured draft revision still matches. Each mutation that marks a draft dirty advances `menu_draft_revisions` even when the flag was already set. Edits committed during rendering stay pending for the next owner publication. Because `/sitemap.xml` queries `is_published = 1`, newly published menus enter the sitemap immediately and leave it upon unpublishing.
 
-Already-published menus pick up the visual refresh through the shared stylesheet. They receive a photo cover during their next normal publication.
+Already-published menus keep serving their saved snapshot until they are republished. The deployment republish command updates menus with a matching live draft. Menus with pending edits get the new vitrine and product pages when an owner publishes.
 
 An optional Google review invitation is rendered into the static HTML on publication. The direct review link takes precedence over the general Google Maps profile link. Removing both links and publishing removes the invitation. Public scans do not fetch any Google data or open the Google link until the visitor chooses it.
 
-Owners and managers can opt in to public product options in the add-on groups dashboard. Publication captures the preference, available options and draft revision in the same SQLite read transaction. Variations show their full prices and linked add-ons show their additional charges. The static menu uses its existing translation and price controls. Saving the preference updates the preview and leaves the public HTML in place until publication. Automatic republication skips pending drafts.
+Owners and managers can opt in to public product options in the add-on groups dashboard. Publication captures the preference, available options and draft revision in the same SQLite read transaction. The product detail page shows variation prices and the additional charges for linked add-ons. It uses the same language and currency formatting as the menu. Saving the preference updates the authenticated product preview. The public snapshot reads that preference on the next publication, and automatic republication skips pending drafts.
 
 Owner profile updates use the same per-establishment async mutex within the HTTP process. The update statement also checks the stored publication version so a form opened before publication cannot rename a published path.
 
@@ -54,9 +55,9 @@ Owner profile updates use the same per-establishment async mutex within the HTTP
 
 ## Caching & CDN Propagation Bounds
 
-- `index.html`: `Cache-Control: public, max-age=60, stale-while-revalidate=300` + strong `ETag`. Caches can reuse the preceding HTML for up to 360 seconds under this policy.
+- `index.html` and `p/{hash24}.html`: `Cache-Control: public, max-age=60, stale-while-revalidate=300` + `ETag`. The QR Code points to `/c/{slug}`, and product URLs are specific to their rendered content.
 - `theme-{hash8}.css` & `media/{hash16}_*`: `Cache-Control: public, max-age=31536000, immutable` (new edits emit new content hashes).
-- When assets leave the live menu, a private marker records the retirement time under `published/.tmp/`. Subsequent publications prune retired theme and media files after the HTML cache window. Reusing a file clears its marker before publishing the HTML. An explicit unpublish removes the menu and its retained files immediately.
+- When files leave the live menu, the private retirement marker records when the cache window begins. Later publications prune superseded product pages after the cache window. Their photos and themes stay available while those pages are on disk and get a separate cache window after the pages are removed. Reusing a file clears its marker. Unpublish removes the menu, product pages, and retained assets together.
 
 ## Unpublishing
 

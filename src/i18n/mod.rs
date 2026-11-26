@@ -135,6 +135,7 @@ impl Catalog {
                     || k.starts_with("lang.")
                     || k == "common.skip_to_content"
                     || k == "app.name"
+                    || k == "commerce.catalog.variations"
                 {
                     subset.insert(k.as_str(), v.as_str());
                 }

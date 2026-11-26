@@ -1,0 +1,53 @@
+.guide-palette {
+  --guide-accent: var(--landing-yellow);
+  --guide-soft: #fff0b7;
+  --guide-backdrop: #fff8db;
+}
+
+.guide-palette[data-guide-theme="pdf-vs-digital"] {
+  --guide-accent: #a4adff;
+  --guide-soft: #dee3ff;
+  --guide-backdrop: #eff1ff;
+}
+
+.guide-palette[data-guide-theme="maps-reviews"] {
+  --guide-accent: #ff80b0;
+  --guide-soft: #ffdce9;
+  --guide-backdrop: #fff0f5;
+}
+
+.guide-palette[data-guide-theme="menu-engineering"] {
+  --guide-accent: #ffba76;
+  --guide-soft: #ffdfbd;
+  --guide-backdrop: #fff1e2;
+}
+
+.guide-display-title {
+  max-width: 21ch;
+  margin: 0 0 1rem;
+  color: var(--landing-ink);
+  font-size: clamp(2.1rem, 4.6vw, 4.6rem);
+  font-weight: 900;
+  line-height: 1.02;
+  letter-spacing: -0.06em;
+  text-wrap: balance;
+}
+
+.guide-scene-art {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.guide-reading-time {
+  width: fit-content;
+  margin: 0;
+  padding: 0.22rem 0.58rem;
+  border: 1px solid var(--landing-ink);
+  border-radius: 0.45rem;
+  background: var(--guide-soft);
+  color: var(--landing-ink);
+  font-size: 0.78rem;
+  font-weight: 820;
+  line-height: 1.3;
+}

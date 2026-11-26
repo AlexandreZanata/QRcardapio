@@ -81,7 +81,7 @@ A ilustração foi criada com o ImageGen integrado e exportada como WebP transpa
 
 ## Public Menu
 
-The public menu uses a branded cover and a centered establishment identity. The cover uses the first visible, available product photo in menu order when the snapshot provides one. An illustrated cover uses the same brand color for menus without photos. The layout supports the shared static stylesheet on previously published snapshots, including empty menus and menus with no logo. A sticky search and category strip precedes product cards. Cards use one column on phones and two on wider screens.
+The public menu uses the establishment's brand color, logo and cover. The catalog keeps search and category navigation close to the list on touch screens. On desktop, navigation sits alongside a grid. Each product card is a link with a thumbnail, name, price and availability. A product page shows the larger photo, description and any published ingredients or extras, with a return link to its category. Language switching applies in place to both views. Links remain usable with JavaScript disabled. Use `menu-catalog.css` for the catalog and `menu-product.css` for product layouts. Legacy snapshots continue to use `menu.css`.
 
 ## Illustrated States
 
@@ -128,13 +128,19 @@ A navegação da landing usa um cabeçalho de uma linha. No desktop, o menu Expl
 
 Os cards de segmentos reutilizam o sprite da landing para as ilustrações e a seta de navegação. O selo do perfil no Maps usa um alfinete ilustrado e uma marca de conexão do mesmo sprite. As perguntas frequentes (`#faq`) usam `<details>` com ícones próprios de expansão e recolhimento e uma ilustração por tema em `static/icons/landing-faq.svg`. A cor do hover é aplicada ao próprio cartão para respeitar seu contorno. A grade passa de duas para uma coluna em telas estreitas. O rodapé escuro compartilhado em `templates/landing/footer.html` destaca a marca e os idiomas acima dos quatro grupos de links.
 
-As páginas de segmentos (`/solucoes`, `/cardapio-digital/{slug}`), ferramentas gratuitas (`/ferramentas/{slug}`, usando `static/js/seo-tools.js` sem estilos inline e folha `@media print` dedicada na placa de mesa) e guias (`/guias/{slug}`) compartilham o mesmo sistema visual em `static/css/seo-pages.css`. Os cartões sociais `og-{pt-BR,en,es}.png` (1200×630) e ícones (`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`, `favicon.ico`) seguem a paleta creme, azul cobalto, amarelo e contorno escuro da marca.
+As páginas de segmentos (`/solucoes`, `/cardapio-digital/{slug}`), ferramentas gratuitas (`/ferramentas`, `/ferramentas/{slug}`) e guias (`/guias/{slug}`) compartilham a base visual de `static/css/seo-pages.css`. Os cartões sociais `og-{pt-BR,en,es}.png` (1200×630) e ícones (`icon-192.png`, `icon-512.png`, `icon-maskable-512.png`, `apple-touch-icon.png`, `favicon.ico`) seguem a paleta creme, azul cobalto, amarelo e contorno escuro da marca.
+
+Cada página individual reutiliza a arte e o tema da galeria. `tool-detail.css` cuida do cabeçalho, das perguntas e da navegação entre ferramentas. `tool-workspace.css` organiza formulário e resultado em duas colunas no desktop e em uma coluna no celular. Os formulários de QR Code e da placa preservam a opção de enviar os dados por GET e têm prévia interativa com `static/js/seo-tools.js`. A impressão da placa usa uma página A5 e mostra só o nome, o QR Code, a chamada e o link do estabelecimento.
 
 O componente `seo/breadcrumb.html` usa rótulos traduzidos, separadores decorativos e um marcador amarelo com `aria-current="page"`. Os itens quebram para a linha seguinte quando o espaço diminui. Soluções, ferramentas e guias também usam o cabeçalho compacto da landing para manter a navegação de caminho abaixo de uma única linha de controles no celular.
+
+A galeria de ferramentas em `seo/tools_hub.html` usa um cartão inteiro como link e adapta a grade para celulares. `tool-visuals.css` define o tema de cada ferramenta em amarelo, rosa ou azul, e `seo/tool_art.html` monta as três ilustrações vetoriais de `static/icons/tool-scenes.svg`. As artes são decorativas. O nome e a descrição de cada ferramenta ficam em texto.
 
 As páginas de cada segmento usam uma cena própria de `static/icons/segment-scenes.svg` e uma combinação de cores definida em `static/css/segment-visuals.css`. A estrutura é compartilhada e inclui benefícios em cards, exemplos em formato de cardápio com os preços alinhados, dicas, perguntas com `<details>` e segmentos relacionados. A arte é decorativa. O título, o resumo, os itens e as respostas continuam disponíveis como texto.
 
 A galeria de Soluções reutiliza as cenas e as paletas das páginas individuais. Cada card é um link para o modelo daquele segmento e usa título, descrição e ação visível. Em telas estreitas, a ilustração fica ao lado do texto em uma única coluna de cards.
+
+A galeria de Guias usa cartões com título, descrição e tempo estimado de leitura. O tema de cada guia é definido em `guide-visuals.css` e sua ilustração vem de `guide-scenes.svg` por meio de `seo/guide_art.html`. A mesma arte aparece na galeria, na capa do artigo e na navegação entre guias. `guide-hero.css` organiza a capa ilustrada, o resumo e a ação que leva ao primeiro capítulo. `guide-detail.css` organiza o índice, os capítulos, a tabela comparativa e as perguntas frequentes. A navegação por âncoras e os controles de expansão funcionam com HTML nativo.
 
 ### Login com o Google
 

@@ -75,7 +75,7 @@ The product owner authorized Phase 3 production work in writing on 2026-11-25 wh
 - Increment 1 delivers all six typed machine definitions, checked integer pricing, catalog option persistence, canonical published channel snapshots, and orders with immutable items, per-day numbering and atomic transitions and events.
 - [ADR-012](../decisions/ADR-012-commerce-core-increment-1.md) records the price cap and commercial date, the internal publication boundary, and the interpretation of option quantities.
 - Increment 2 adds dashboard editing for variations and add-ons, hours and service settings, and tenant-scoped customers, addresses and privacy operations. The landing highlights the demo in a wide card directly above the three-step section. The public demo displays removable ingredients and optional extras.
-- Item 5 in Commerce Core §15 also supports an opt-in display of the establishment's available variations and linked add-ons in QR Menu. Owners and managers save the preference in their draft. The same capture supplies the options and draft revision for atomic static publication. On the VPS, 185 tests passed, including delivery of a menu with options after closing the SQLite pool. [Static publication](../architecture/PUBLISHING.md)
+- Item 5 in Commerce Core §15 supports an opt-in display of available variations and linked add-ons on QR Menu product pages. Owners and managers save the preference in their draft. Publication captures the options and the draft revision together. The integration test follows the menu link to a product page after closing the SQLite pool. [Static publication](../architecture/PUBLISHING.md)
 - Increment 3 implements idempotent checkout against the published snapshot, exact offline payment and refund records, dispatcher, timeout rejection and compensation, and optional staff Web Push. Public checkout and notification subscription surfaces belong to QR Delivery. See [Commerce Core §15](../architecture/COMMERCE_CORE.md#15-ordered-task-list-to-start-commerce-core) and the [validation evidence](../performance/PERFORMANCE.md#commerce-core-increment-3).
 - Both Increment 2 and Increment 3 release binaries started on the migrated SQLite database. The local durable checkout and full-size outbox benchmarks missed the throughput gates in Increment 3.
 - The capacity pass uses a tenant-scoped read for committed checkout replays and rechecks misses inside the write transaction. The dispatcher commits bounded scans and grouped receipts in one transaction per pass. In the isolated VPS environment, 185 tests passed, and the candidate met the measured checkout, mixed traffic, outbox and Web Push thresholds. [VPS evidence](../performance/PERFORMANCE.md#vps-capacity-validation)
@@ -169,9 +169,19 @@ O cadastro, o login e o consentimento MCP aceitam Google quando as credenciais O
 
 As oito páginas de segmentos combinam uma arte exclusiva, cores por tema, benefícios em cards, um exemplo de cardápio, dicas operacionais, perguntas frequentes e links relacionados. Soluções, ferramentas e guias compartilham o breadcrumb com destaque para a página atual. O layout serve os mesmos textos e caminhos em português, inglês e espanhol.
 
+A galeria de ferramentas gratuitas destaca o gerador de QR Code, a calculadora de CMV e o criador de placas com uma arte vetorial por ferramenta e cartões responsivos em português, inglês e espanhol.
+
+As páginas das ferramentas reutilizam as artes da galeria e têm uma área de trabalho com formulário, prévia ou resultado, instruções e perguntas frequentes. O gerador oferece SVG e PNG de pelo menos 1024 pixels, a calculadora destaca o preço sugerido e o criador de placas imprime o resultado em uma folha A5.
+
 A galeria de Soluções reutiliza as oito ilustrações e paletas das páginas individuais. Cada card abre o modelo do segmento no idioma selecionado.
 
+## Guias práticos
+
+A galeria e os quatro guias têm artes vetoriais e paletas próprias. Nas páginas individuais, a capa oferece um atalho ao primeiro capítulo e separa o resumo do texto da introdução. As seções de leitura têm índice, perguntas frequentes e links para guias, soluções e ferramentas no idioma selecionado.
+
 ## Cardápio público de demonstração
+
+A vitrine pública abre fichas estáticas de produto com foto maior, descrição e opções disponíveis. A navegação usa filtros no topo em telas pequenas e categorias na lateral em telas largas. O painel abre as fichas do rascunho pela prévia autenticada. A publicação prepara as fichas e suas mídias antes de substituir o índice que o QR Code abre.
 
 O QR original da home encaminha para o Bistrô da Praça em `/c/bistro-da-praca`. O seed executado antes da prontidão do servidor publica cinco categorias e nove produtos com fotos, preços e conteúdo em português, inglês e espanhol. O catálogo é fictício, tem endereço reservado e usa os arquivos estáticos de publicação.
 

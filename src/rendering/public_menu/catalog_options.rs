@@ -1,5 +1,5 @@
 use crate::domain::publication::ProductCatalogOptions;
-use crate::i18n::{Catalog, Locale, format_price, pick_localized_text};
+use crate::i18n::{Locale, format_price, pick_localized_text};
 
 pub struct LocalizedOptionText<'a> {
     pub pt: &'a str,
@@ -16,18 +16,6 @@ impl<'a> LocalizedOptionText<'a> {
             es,
             display: pick_localized_text(locale, pt, en, es),
         }
-    }
-}
-
-impl LocalizedOptionText<'static> {
-    pub(super) fn label(locale: Locale, key: &'static str) -> Self {
-        let catalog = Catalog::global();
-        Self::new(
-            locale,
-            catalog.t(Locale::PtBr, key),
-            catalog.t(Locale::En, key),
-            catalog.t(Locale::Es, key),
-        )
     }
 }
 

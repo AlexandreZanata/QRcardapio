@@ -1,0 +1,26 @@
+<section id="tool-workspace" class="seo-tool-grid tool-workspace" data-seo-tool="qr" aria-label="{{ tool.name }}" tabindex="-1">
+  <form class="seo-tool-form tool-form" method="get" action="{{ form_action }}">
+    <label class="seo-field">
+      <span data-i18n="seo.tool_qr_url_label">{{ page.t("seo.tool_qr_url_label") }}</span>
+      <input id="seo-qr-url" name="url" type="url" required maxlength="512" value="{{ qr_target_url }}" placeholder="https://qrcardapio.com.br/c/seu-negocio" aria-describedby="tool-qr-hint">
+    </label>
+    <div class="seo-tool-actions">
+      <button class="btn landing-button landing-button-blue" type="submit" data-i18n="seo.tool_qr_generate">{{ page.t("seo.tool_qr_generate") }}</button>
+    </div>
+    <p id="tool-qr-hint" class="seo-field-hint" data-i18n="seo.tool_qr_hint">{{ page.t("seo.tool_qr_hint") }}</p>
+  </form>
+
+  <div class="tool-output tool-qr-output">
+    <h2 data-i18n="seo.tool_preview_heading">{{ page.t("seo.tool_preview_heading") }}</h2>
+    <figure class="tool-qr-figure">
+      <div class="tool-qr-frame">
+        <img id="seo-qr-preview" src="{{ qr_preview_src }}" width="260" height="260" alt="{{ tool.name }}">
+      </div>
+      <figcaption id="seo-qr-caption" class="seo-url-caption">{{ qr_target_url }}</figcaption>
+    </figure>
+    <div class="seo-tool-actions">
+      <a id="seo-qr-download-svg" class="btn landing-button landing-button-yellow" href="{{ qr_svg_download }}" data-i18n="qr.download_svg">{{ page.t("qr.download_svg") }}</a>
+      <a id="seo-qr-download-png" class="btn landing-button" href="{{ qr_png_download }}" data-i18n="qr.download_png">{{ page.t("qr.download_png") }}</a>
+    </div>
+  </div>
+</section>

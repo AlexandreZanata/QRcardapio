@@ -19,7 +19,8 @@ Browser errors without an HTML body use a localized illustrated response with th
 | `GET` | `/guias`, `/en/guides`, `/es/guias` | Optional | Practical hospitality guides hub. |
 | `GET` | `/guias/{slug}`, `/en/guides/{slug}`, `/es/guias/{slug}` | Optional | Four localized deep-dive guides with Answer-First GEO summaries and `Article` JSON-LD. |
 | `GET` | `/c/{slug}`, `/c/{slug}/` | None | Static published menu served from disk (**0 SQLite queries**); `ETag` + `304` + branded `404`. |
-| `GET` | `/c/{slug}/{*file}` | None | Static published CSS & media (**0 SQLite queries**); `immutable` cache headers. |
+| `GET` | `/c/{slug}/p/{hash}.html` | None | Static detail page linked by the menu snapshot (**0 SQLite queries**). Uses the same HTML cache and 404 policy as the index. |
+| `GET` | `/c/{slug}/{*file}` | None | Static published files, including content-addressed CSS and media with `immutable` caching. |
 | `GET` | `/static/i18n/{file}` | None | Serves embedded `pt-BR.json`, `en.json`, `es.json` with `ETag`, `304`, and `immutable` caching. |
 | `GET` | `/static/*` | None | Serves CSS, JS, OG images, and icon assets. |
 | `GET` | `/healthz` | None | Liveness probe (`{"status":"ok"}`). |
@@ -46,6 +47,7 @@ All `POST` routes verify `_csrf` against the server session's `csrf_token` in co
 | `GET` | `/dashboard` | Overview: draft/published badge, counts, checklist, publish & unpublish triggers. |
 | `GET` | `/dashboard/theme.css` | Tenant-specific brand CSS variables (`no-store`). |
 | `GET` | `/dashboard/preview` | Live draft preview (includes unpublished changes and draft preview banner). |
+| `GET` | `/dashboard/preview/produto/{id}` | Product detail from the authenticated tenant's draft. Uses private media and `no-store`. |
 | `GET` | `/dashboard/media/{filename}` | Tenant-isolated private media preview (scoped to `establishment_id`). |
 | `POST` | `/dashboard/publish` | Triggers atomic static snapshot build. |
 | `POST` | `/dashboard/unpublish` | Removes published static files and reverts to draft. |
@@ -123,4 +125,4 @@ The catalog publication, order transitions, checkout, offline payment ledger and
 
 `GET /dashboard/products/{id}/options` and `GET /dashboard/menu/addons` let owners and managers manage variations and reusable add-on groups. Tenant-scoped forms save, remove and link entities through POST actions. `GET /dashboard/hours` configures modalities, minimum, acceptance, pauses, weekly windows and date exceptions. `GET /dashboard/customers` and customer detail pages support customer and address management. Owner-only POST actions at `/dashboard/customers/{id}/export` and `/dashboard/customers/{id}/erase` require CSRF. The export is a JSON attachment with `Cache-Control: no-store`. Erasure requires explicit form confirmation.
 
-`POST /dashboard/menu/addons/public-options` requires `TenantContext`, CSRF and `menu.draft.edit`. Submit `enabled=1` to show available product options in the next publication, or omit the field to hide them. The dashboard preview uses the current draft preference. `/c/{slug}` displays the saved static snapshot.
+`POST /dashboard/menu/addons/public-options` requires `TenantContext`, CSRF and `menu.draft.edit`. Submit `enabled=1` to show the available options in the next publication, or omit the field to hide them. `/dashboard/preview/produto/{id}` uses the current draft preference. Public product pages under `/c/{slug}/p/` use the published preference.

@@ -1,0 +1,148 @@
+.tools-hub {
+  padding-block-end: clamp(2.6rem, 6vw, 5.2rem);
+}
+
+.tools-hub-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.8fr);
+  align-items: center;
+  gap: clamp(0.8rem, 4vw, 4.2rem);
+  margin-block: 0.6rem clamp(1.75rem, 4vw, 3.5rem);
+}
+
+.tools-hub-hero .seo-lead {
+  max-width: 54ch;
+  border-inline-start: 4px solid var(--landing-pink);
+  padding-inline-start: 0.85rem;
+  font-size: clamp(1rem, 1.7vw, 1.18rem);
+  line-height: 1.5;
+}
+
+.tools-hub-stickers {
+  position: relative;
+  isolation: isolate;
+  justify-self: center;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: center;
+  width: min(100%, 24rem);
+  min-height: clamp(10rem, 17vw, 15rem);
+  padding: clamp(0.8rem, 2.2vw, 1.75rem);
+}
+
+.tools-hub-stickers::before,
+.tools-hub-stickers::after {
+  position: absolute;
+  z-index: -1;
+  content: "";
+}
+
+.tools-hub-stickers::before {
+  inset: 17% 8% 17% 4%;
+  border-radius: 30% 24% 39% 28%;
+  background: var(--landing-blue);
+  transform: rotate(-10deg);
+}
+
+.tools-hub-stickers::after {
+  inset: 40% 1% 10% 14%;
+  border-radius: 25% 37% 29% 28%;
+  background: var(--landing-pink);
+  transform: rotate(7deg);
+}
+
+.tools-hub-sticker {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 0.93;
+  border: 2px solid var(--landing-ink);
+  border-radius: clamp(0.68rem, 1.6vw, 1.2rem);
+  background: #fff3c3;
+  box-shadow: 3px 4px 0 var(--landing-ink);
+  transform: translateY(5%) rotate(-13deg);
+}
+
+.tools-hub-sticker:nth-child(2) {
+  z-index: 1;
+  background: #ffe3ed;
+  transform: translateY(-13%) rotate(-3deg) scale(1.13);
+}
+
+.tools-hub-sticker:nth-child(3) {
+  background: #e4e8ff;
+  transform: translateY(8%) rotate(11deg);
+}
+
+.tools-hub-sticker .landing-sticker { display: block; width: 73%; height: auto; aspect-ratio: 1; }
+.tools-hub-burst { position: absolute; inset: 6% 2% auto auto; width: clamp(2rem, 4vw, 3.4rem); transform: rotate(12deg); }
+.tools-hub-burst .landing-sticker { display: block; width: 100%; height: auto; aspect-ratio: 5 / 4; }
+
+.tools-gallery {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(1rem, 2vw, 1.55rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tools-card {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  gap: clamp(0.65rem, 1.4vw, 1rem);
+  padding: clamp(0.65rem, 1.3vw, 1rem);
+  border: 2px solid var(--landing-ink);
+  border-radius: 1.15rem;
+  background: #fffdf8;
+  box-shadow: 3px 4px 0 var(--landing-ink);
+  color: var(--landing-ink);
+}
+
+.tools-card-scene {
+  align-self: stretch;
+  padding: clamp(0.1rem, 0.5vw, 0.5rem);
+  border: 1px solid var(--landing-ink);
+  border-radius: 0.77rem;
+  background: var(--tool-backdrop);
+}
+
+.tools-card-body { display: flex; flex: 1; flex-direction: column; min-width: 0; }
+.tools-card h2 { margin: 0 0 0.45rem; font-size: clamp(1.14rem, 1.85vw, 1.62rem); font-weight: 870; letter-spacing: -0.031em; line-height: 1.12; text-wrap: balance; }
+.tools-card p { margin: 0 0 0.7rem; color: #45414b; font-size: 0.96rem; line-height: 1.45; }
+
+.tools-card-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 44px;
+  margin-top: auto;
+  padding-top: 0.2rem;
+  border-top: 1px solid var(--landing-rule);
+  color: var(--landing-blue);
+  font-size: 0.93rem;
+  font-weight: 800;
+  line-height: 1.24;
+}
+
+.tools-card-action svg { width: 1.95rem; height: 1.95rem; flex: none; }
+.tools-card:is(:hover, :focus-visible) { background: var(--tool-soft); text-decoration: none; }
+.tools-card:focus-visible { outline: 3px solid var(--landing-blue); outline-offset: 4px; }
+.tools-card:is(:hover, :focus-visible) .tools-card-action span { text-decoration: underline; text-underline-offset: 0.18em; }
+
+@media (max-width: 51rem) {
+  .tools-gallery { grid-template-columns: minmax(0, 1fr); }
+  .tools-card { display: grid; grid-template-columns: minmax(0, 0.72fr) minmax(0, 1fr); align-items: center; }
+  .tools-card-scene { align-self: center; }
+}
+
+@media (max-width: 42rem) {
+  .tools-hub-hero { grid-template-columns: minmax(0, 1fr); }
+  .tools-hub-stickers { display: none; }
+}
+
+@media (max-width: 30rem) {
+  .tools-card { display: flex; align-items: stretch; }
+  .tools-card-scene { align-self: stretch; }
+}

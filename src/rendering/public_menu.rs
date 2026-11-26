@@ -1,5 +1,6 @@
 use askama::Template;
 use sha2::{Digest, Sha256};
+use std::collections::HashMap;
 
 use crate::domain::establishment::{AccentColor, PUBLIC_DEMO_SLUG};
 use crate::domain::publication::MenuSnapshot;
@@ -9,9 +10,12 @@ use crate::seo::schema::public_menu_json_ld;
 use crate::seo::{absolute_url, normalized_base_url, og_image_url};
 
 mod catalog_options;
-use catalog_options::{CatalogOptionsView, LocalizedOptionText};
+mod product_page;
+pub use product_page::render_product_detail_html;
 
-pub struct PublicProductView<'a> {
+pub struct PublicProductView {
+    pub id: String,
+    pub detail_url: String,
     pub name: String,
     pub name_en: String,
     pub name_es: String,
@@ -24,18 +28,9 @@ pub struct PublicProductView<'a> {
     pub price_display: String,
     pub image_url: Option<String>,
     pub is_available: bool,
-    pub removals: Vec<ChoiceView>,
-    pub extras: Vec<ChoiceView>,
-    pub catalog_options: CatalogOptionsView<'a>,
 }
 
-pub struct ChoiceView {
-    pub name: (&'static str, &'static str, &'static str),
-    pub display_name: &'static str,
-    pub price: Option<(i64, String)>,
-}
-
-pub struct PublicCategoryView<'a> {
+pub struct PublicCategoryView {
     pub id: String,
     pub name: String,
     pub name_en: String,
@@ -45,12 +40,12 @@ pub struct PublicCategoryView<'a> {
     pub description_en: String,
     pub description_es: String,
     pub display_description: String,
-    pub products: Vec<PublicProductView<'a>>,
+    pub products: Vec<PublicProductView>,
 }
 
 #[derive(Template)]
 #[template(path = "menu/public_menu.html")]
-pub struct PublicMenuTemplate<'a> {
+pub struct PublicMenuTemplate {
     pub locale_code: &'static str,
     pub establishment_name: String,
     pub establishment_description: String,
@@ -72,15 +67,10 @@ pub struct PublicMenuTemplate<'a> {
     pub categories_label: String,
     pub all_categories_text: String,
     pub unavailable_text: String,
-    pub choices_text: String,
-    pub removable_text: String,
-    pub extras_text: String,
-    pub catalog_options_label: LocalizedOptionText<'static>,
-    pub variations_label: LocalizedOptionText<'static>,
     pub empty_menu_text: String,
     pub no_results_text: String,
     pub powered_by_text: String,
-    pub categories: Vec<PublicCategoryView<'a>>,
+    pub categories: Vec<PublicCategoryView>,
     pub menu_i18n_json: String,
     pub robots_meta: &'static str,
     pub canonical_url: String,
@@ -115,6 +105,7 @@ pub fn render_public_menu_html(
     media_base_url: &str,
     theme_css_href: &str,
     public_base_url: &str,
+    product_urls: &HashMap<&str, String>,
 ) -> AppResult<String> {
     let cat = Catalog::global();
     let est = &snapshot.establishment;
@@ -171,22 +162,16 @@ pub fn render_public_menu_html(
                         .image
                         .as_ref()
                         .map(|m| format!("{media_base_url}/{}", m.filename_thumb));
-                    let (extras, removals) = sp
-                        .choices
-                        .iter()
-                        .map(|choice| ChoiceView {
-                            name: choice.name,
-                            display_name: match locale {
-                                Locale::PtBr => choice.name.0,
-                                Locale::En => choice.name.1,
-                                Locale::Es => choice.name.2,
-                            },
-                            price: choice
-                                .price_centavos
-                                .map(|price| (price, format_price(price, locale))),
-                        })
-                        .partition(|choice| choice.price.is_some());
-                    PublicProductView {
+                    let detail_url = if is_preview {
+                        format!("/dashboard/preview/produto/{}", p.id)
+                    } else {
+                        product_urls.get(p.id.as_str()).cloned().ok_or_else(|| {
+                            AppError::Internal("published product page missing from menu".into())
+                        })?
+                    };
+                    Ok(PublicProductView {
+                        id: p.id.clone(),
+                        detail_url,
                         name: p.name.clone(),
                         name_en: p.name_en.clone(),
                         name_es: p.name_es.clone(),
@@ -199,14 +184,11 @@ pub fn render_public_menu_html(
                         price_display: format_price(p.price_centavos, locale),
                         image_url,
                         is_available: p.is_available,
-                        removals,
-                        extras,
-                        catalog_options: CatalogOptionsView::new(&sp.catalog_options, locale),
-                    }
+                    })
                 })
-                .collect();
+                .collect::<AppResult<Vec<_>>>()?;
 
-            PublicCategoryView {
+            Ok(PublicCategoryView {
                 id: sc.category.id.clone(),
                 name: sc.category.name.clone(),
                 name_en: sc.category.name_en.clone(),
@@ -217,9 +199,9 @@ pub fn render_public_menu_html(
                 description_es: sc.category.description_es.clone(),
                 display_description: sc.category.effective_description(locale).to_string(),
                 products,
-            }
+            })
         })
-        .collect();
+        .collect::<AppResult<Vec<_>>>()?;
 
     let tpl = PublicMenuTemplate {
         locale_code: locale.code(),
@@ -250,14 +232,6 @@ pub fn render_public_menu_html(
         categories_label: cat.t(locale, "public_menu.categories_label").to_string(),
         all_categories_text: cat.t(locale, "public_menu.all_categories").to_string(),
         unavailable_text: cat.t(locale, "public_menu.unavailable_badge").to_string(),
-        choices_text: cat.t(locale, "public_menu.product_choices").into(),
-        removable_text: cat.t(locale, "public_menu.removable_ingredients").into(),
-        extras_text: cat.t(locale, "public_menu.extras").into(),
-        catalog_options_label: LocalizedOptionText::label(
-            locale,
-            "commerce.catalog.product_options",
-        ),
-        variations_label: LocalizedOptionText::label(locale, "commerce.catalog.variations"),
         empty_menu_text: cat.t(locale, "public_menu.empty_menu").to_string(),
         no_results_text: cat.t(locale, "public_menu.no_results").to_string(),
         powered_by_text: cat.t(locale, "public_menu.powered_by").to_string(),

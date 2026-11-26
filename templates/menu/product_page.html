@@ -1,0 +1,115 @@
+{% import "components/lang_switcher.html" as languages %}
+{% import "components/icons.html" as icons -%}
+<!DOCTYPE html>
+<html lang="{{ locale.code() }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title data-pt="{{ self.title("pt-BR") }}"
+         data-en="{{ self.title("en") }}"
+         data-es="{{ self.title("es") }}">{{ self.title(locale.code()) }}</title>
+  <meta name="robots" content="{% if is_preview %}noindex, nofollow{% else %}noindex, follow{% endif %}">
+  <link rel="icon" href="/favicon.ico" sizes="48x48">
+  <link rel="icon" type="image/svg+xml" href="/static/icons/favicon.svg">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  <link rel="stylesheet" href="/static/css/tokens.css">
+  <link rel="stylesheet" href="/static/css/menu.css">
+  <link rel="stylesheet" href="/static/css/language-picker.css">
+  <link rel="stylesheet" href="/static/css/menu-product.css">
+  <link rel="stylesheet" href="{{ theme_css_href }}">
+</head>
+<body data-menu-detail>
+  <a class="skip-link" href="#menu-content" data-i18n="common.skip_to_content">{{ self.t("common.skip_to_content") }}</a>
+
+  {% if is_preview %}
+  <div class="preview-bar" role="status" data-i18n="public_menu.preview_banner">{{ self.t("public_menu.preview_banner") }}</div>
+  {% endif %}
+
+  <div class="menu-shell product-shell">
+    <header class="product-topbar">
+      <a class="product-back" href="{{ back_href }}" data-menu-back data-menu-localized-link>
+        {{ icons::panel("back") }}
+        <span data-i18n="public_menu.back_to_menu">{{ self.t("public_menu.back_to_menu") }}</span>
+      </a>
+      {{ languages::picker(locale.code(), self.t("lang.switcher_label")) }}
+      <p class="product-merchant">{{ establishment_name }}</p>
+    </header>
+
+    <main id="menu-content" class="product-detail" aria-labelledby="product-title">
+      <div class="product-visual">
+        {% if let Some(picture) = photo %}
+        <img class="product-photo" src="{{ picture.url }}" alt="" width="{{ picture.width }}" height="{{ picture.height }}" fetchpriority="high">
+        {% else %}
+        <div class="product-photo-placeholder">
+          {{ icons::sticker("menu-book") }}
+          <span data-i18n="public_menu.no_product_photo">{{ self.t("public_menu.no_product_photo") }}</span>
+        </div>
+        {% endif %}
+      </div>
+
+      <div class="product-sheet">
+        <header class="product-heading">
+          <p class="product-category" data-pt="{{ category.name }}" data-en="{{ category.name_en }}"
+             data-es="{{ category.name_es }}">{{ self.category_name() }}</p>
+          <h1 id="product-title" data-pt="{{ product.name }}" data-en="{{ product.name_en }}"
+              data-es="{{ product.name_es }}">{{ self.product_name() }}</h1>
+          <div class="product-meta">
+            <span class="product-price" data-price-centavos="{{ product.price_centavos }}">{{ price }}</span>
+            {% if !product.is_available %}
+            <span class="item-unavailable-badge" data-i18n="public_menu.unavailable_badge">{{ self.t("public_menu.unavailable_badge") }}</span>
+            {% endif %}
+          </div>
+          {% let description = self.description() %}
+          <p class="product-description{% if description.is_empty() %} is-hidden{% endif %}" data-pt="{{ product.description }}"
+             data-en="{{ product.description_en }}" data-es="{{ product.description_es }}"
+             data-hide-if-empty="1">{{ description }}</p>
+        </header>
+
+        {% if !removals.is_empty() %}
+        <section class="product-options" aria-labelledby="removable-ingredients">
+          <h2 id="removable-ingredients">
+            {{ icons::sticker("menu-book") }}
+            <span data-i18n="public_menu.removable_ingredients">{{ self.t("public_menu.removable_ingredients") }}</span>
+          </h2>
+          <ul class="product-choice-list" role="list">
+            {% for choice in removals %}
+            <li data-pt="{{ choice.name.0 }}" data-en="{{ choice.name.1 }}" data-es="{{ choice.name.2 }}">{{ choice.display_name }}</li>
+            {% endfor %}
+          </ul>
+        </section>
+        {% endif %}
+
+        {% if !extras.is_empty() %}
+        <section class="product-options" aria-labelledby="product-extras">
+          <h2 id="product-extras">
+            {{ icons::panel("add") }}
+            <span data-i18n="public_menu.extras">{{ self.t("public_menu.extras") }}</span>
+          </h2>
+          <ul class="product-choice-list" role="list">
+            {% for choice in extras %}
+            <li>
+              <span data-pt="{{ choice.name.0 }}" data-en="{{ choice.name.1 }}" data-es="{{ choice.name.2 }}">{{ choice.display_name }}</span>
+              {% if let Some((centavos, extra_price)) = choice.price %}
+              <span class="product-extra-price">+ <span data-price-centavos="{{ centavos }}">{{ extra_price }}</span></span>
+              {% endif %}
+            </li>
+            {% endfor %}
+          </ul>
+        </section>
+        {% endif %}
+        {% if !catalog_options.is_empty() %}
+        {% include "menu/catalog_options.html" %}
+        {% endif %}
+      </div>
+    </main>
+
+    <footer class="menu-footer">
+      <a href="/" data-i18n="public_menu.powered_by">{{ self.t("public_menu.powered_by") }}</a>
+    </footer>
+  </div>
+
+  <script type="application/json" id="qr-menu-i18n">{{ catalog.public_menu_embedded_json()|safe }}</script>
+  <script src="/static/js/menu.js" defer></script>
+  <script src="/static/js/language-picker.js" type="module"></script>
+</body>
+</html>

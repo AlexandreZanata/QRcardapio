@@ -50,7 +50,7 @@ The JSON contracts are authoritative. If this document disagrees with them, the 
 |---|---|---|
 | Establishment profile: name, slug, PT/EN/ES descriptions, accent color, logo, Google Maps and review links | [Tested] | `/dashboard/settings`, onboarding, MCP `update_account_settings` |
 | Categories and products: CRUD, ordering, visibility, sold-out flag, photo, EN/ES translations, integer prices | [Tested] | Free QR Core `catalog` operations (`menu.draft.edit`) |
-| Opt-in display of available variations and add-ons in the static menu | [Tested] | Draft setting in `/dashboard/menu/addons`. Publishing applies the setting and available options together. |
+| Opt-in display of available variations and add-ons on static product pages | [Tested] | Draft setting in `/dashboard/menu/addons`. Publishing applies the preference and available options together. |
 | Editor pagination (12 product or empty-category rows per page) | [Tested] | `/dashboard/menu?page=N` |
 | Draft preview with a `noindex, nofollow` banner | [Tested] | `/dashboard/preview`, `/dashboard/theme.css` |
 | Atomic static publication, republication and unpublishing | [Tested] | `src/application/publishing.rs` |

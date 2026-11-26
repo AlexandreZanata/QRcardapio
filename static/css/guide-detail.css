@@ -1,0 +1,292 @@
+.guide-detail .landing-container {
+  max-width: 76rem;
+}
+
+.guide-related-art svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.guide-reading {
+  padding-block: clamp(1.6rem, 4vw, 3.5rem);
+  border-block: 1px solid var(--landing-rule);
+  background: var(--guide-backdrop);
+}
+
+.guide-detail .guide-reading-grid {
+  display: grid;
+  grid-template-columns: minmax(13rem, 15.5rem) minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(1.2rem, 4vw, 2.6rem);
+  max-width: 66rem;
+}
+
+.guide-index {
+  position: sticky;
+  top: 1.15rem;
+  border: 2px solid var(--landing-ink);
+  border-radius: 0.9rem;
+  background: #fffdf8;
+  box-shadow: 3px 4px 0 var(--landing-ink);
+}
+
+.guide-index p {
+  margin: 0;
+  padding: 0.48rem 0.8rem;
+  border-block-end: 2px solid var(--landing-ink);
+  border-start-start-radius: calc(0.9rem - 2px);
+  border-start-end-radius: calc(0.9rem - 2px);
+  background: var(--guide-accent);
+  font-size: 0.92rem;
+  font-weight: 890;
+}
+
+.guide-index ul,
+.guide-checklist,
+.guide-related-featured,
+.guide-related-articles {
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.guide-index li + li { border-block-start: 1px solid var(--landing-rule); }
+
+.guide-index a {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 44px;
+  padding: 0.38rem 0.8rem;
+  color: var(--landing-ink);
+  font-size: 0.93rem;
+  font-weight: 755;
+  line-height: 1.35;
+  text-underline-offset: 0.17em;
+}
+
+.guide-index a::before {
+  width: 0.48rem;
+  height: 0.48rem;
+  flex: none;
+  border: 1px solid var(--landing-ink);
+  border-radius: 1px;
+  background: var(--guide-accent);
+  content: "";
+  transform: rotate(8deg);
+}
+
+.guide-index li:last-child a { border-radius: 0 0 0.78rem 0.78rem; }
+.guide-index a:is(:hover, :focus-visible) { background: var(--guide-soft); }
+
+.guide-body {
+  display: grid;
+  gap: clamp(0.85rem, 2.2vw, 1.5rem);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.guide-body :is(.guide-chapter, .guide-comparison) {
+  padding: clamp(0.9rem, 3vw, 1.8rem);
+  border: 2px solid var(--landing-ink);
+  border-radius: 0.95rem;
+  background: #fffdf8;
+  box-shadow: 3px 4px 0 var(--landing-ink);
+}
+
+.guide-body h2 {
+  max-width: 36ch;
+  margin-bottom: 0.75rem;
+  font-size: clamp(1.45rem, 2.4vw, 1.93rem);
+  letter-spacing: -0.035em;
+  line-height: 1.14;
+  scroll-margin-block-start: 1.4rem;
+  text-wrap: pretty;
+}
+
+.guide-body h2:focus-visible { outline: 3px solid var(--landing-blue); outline-offset: 4px; }
+
+.guide-chapter > p {
+  max-width: 64ch;
+  margin: 0;
+  color: #373542;
+  font-size: clamp(1rem, 1.25vw, 1.075rem);
+  line-height: 1.66;
+}
+
+.guide-chapter > p + p { margin-top: 0.65rem; }
+
+.guide-checklist {
+  display: grid;
+  gap: 0.6rem;
+  max-width: 64ch;
+  margin-block-start: 1rem;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid var(--landing-rule);
+  border-inline-start: 3px solid var(--guide-accent);
+  border-radius: 0.75rem;
+  background: var(--guide-backdrop);
+}
+
+.guide-checklist li {
+  display: flex;
+  align-items: start;
+  gap: 0.6rem;
+  line-height: 1.48;
+}
+
+.guide-checklist svg { width: 1.3rem; height: 1.3rem; flex: none; }
+
+.guide-table-frame {
+  margin-top: 0.9rem;
+  overflow: hidden;
+  border: 1.5px solid var(--landing-ink);
+  border-radius: 0.65rem;
+}
+
+.guide-table-frame .seo-table {
+  table-layout: fixed;
+  border: 0;
+  font-size: clamp(0.83rem, 1.5vw, 0.98rem);
+  line-height: 1.35;
+}
+
+.guide-table-frame :is(th, td) {
+  padding: clamp(0.43rem, 1.1vw, 0.82rem);
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+
+.guide-table-frame thead th { background: var(--guide-accent); }
+.guide-table-frame thead th:first-child { width: 29%; }
+.guide-table-frame tbody th {
+  background: var(--landing-paper);
+  border-block-end: 1px solid var(--landing-rule);
+  font-weight: 780;
+}
+.guide-table-frame tbody td:last-child { background: var(--guide-backdrop); }
+.guide-table-frame tbody tr:last-child > * { border-block-end: 0; }
+
+.guide-body .guide-faq { padding: clamp(0.75rem, 2.2vw, 1.35rem) 0.1rem 0; }
+.guide-faq .seo-faq-item { padding: 0; box-shadow: 2px 3px 0 var(--landing-ink); }
+.guide-faq summary { padding: 0.52rem 0.85rem; border-radius: calc(0.9rem - 2px); }
+.guide-faq summary::after { content: none; }
+.guide-faq .seo-faq-item:is([open], :has(summary:hover)) { background: var(--guide-soft); }
+.guide-faq .seo-faq-item p { max-width: 64ch; padding-inline: 0.85rem; }
+.guide-faq-toggle { display: grid; flex: none; }
+.guide-faq-toggle .landing-sticker { width: 1.8rem; height: 1.8rem; }
+.guide-faq details:not([open]) .guide-faq-toggle svg:last-child,
+.guide-faq details[open] .guide-faq-toggle svg:first-child { display: none; }
+
+.guide-detail .guide-related {
+  max-width: 66rem;
+  padding-block: clamp(1.7rem, 4vw, 3.25rem);
+}
+
+.guide-related-featured,
+.guide-related-articles {
+  display: grid;
+  gap: 0.95rem;
+  margin-top: 0.95rem;
+}
+
+.guide-related-featured { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.guide-related-articles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+.guide-related-card {
+  display: grid;
+  grid-template-columns: minmax(4rem, 0.58fr) minmax(0, 1.42fr) 1.65rem;
+  align-items: center;
+  gap: clamp(0.5rem, 1.6vw, 0.95rem);
+  height: 100%;
+  padding: 0.7rem;
+  border: 2px solid var(--landing-ink);
+  border-radius: 0.92rem;
+  background: #fffdf8;
+  box-shadow: 3px 4px 0 var(--landing-ink);
+  color: var(--landing-ink);
+}
+
+.guide-related-card:is(:hover, :focus-visible) { background: var(--guide-soft); text-decoration: none; }
+.guide-related-articles .guide-related-card {
+  grid-template-columns: minmax(0, 1fr) 1.65rem;
+  grid-template-rows: auto 1fr;
+  align-items: start;
+}
+
+.guide-related-articles .guide-related-art { grid-column: 1 / -1; }
+.guide-related-articles .guide-related-art svg { width: min(100%, 8.5rem); }
+
+.guide-related-art {
+  display: grid;
+  place-items: center;
+  padding: 0.25rem;
+  border-radius: 0.55rem;
+  background: var(--guide-backdrop);
+}
+
+.guide-related-copy h3 {
+  margin: 0 0 0.32rem;
+  font-size: clamp(1rem, 1.7vw, 1.15rem);
+  font-weight: 870;
+  line-height: 1.23;
+  text-wrap: pretty;
+}
+
+.guide-related-copy p { margin: 0; color: #45414b; font-size: 0.88rem; line-height: 1.43; }
+.guide-related-card > .landing-sticker { width: 100%; height: auto; aspect-ratio: 1; }
+
+.guide-detail :is(.guide-index a, .guide-faq summary, .guide-related-card):focus-visible {
+  outline: 3px solid var(--landing-blue);
+  outline-offset: 3px;
+}
+
+@media (width <= 52rem) {
+  .guide-detail .guide-reading-grid { grid-template-columns: minmax(0, 1fr); }
+  .guide-index { position: static; }
+}
+
+@media (31rem < width <= 52rem) {
+  .guide-index ul { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .guide-index li:nth-child(even) { border-inline-start: 1px solid var(--landing-rule); }
+  .guide-index li:nth-child(2) { border-block-start: 0; }
+  .guide-index li:last-child a { border-radius: 0; }
+}
+
+@media (width <= 42rem) {
+  .guide-related-featured,
+  .guide-related-articles { grid-template-columns: minmax(0, 1fr); }
+
+  .guide-related-card,
+  .guide-related-articles .guide-related-card {
+    grid-template-columns: minmax(3.5rem, 0.48fr) minmax(0, 1.52fr) 1.45rem;
+    grid-template-rows: auto;
+    align-items: center;
+  }
+
+  .guide-related-articles .guide-related-art { grid-column: auto; }
+}
+
+@media (width <= 35rem) {
+  .guide-table-frame :is(table, thead, tbody) { display: block; }
+
+  .guide-table-frame tr {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .guide-table-frame thead th:first-child {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .guide-table-frame :is(th, td) { padding: 0.48rem 0.55rem; }
+  .guide-table-frame tr > :last-child { border-inline-start: 1px solid var(--landing-rule); }
+  .guide-table-frame tbody th { grid-column: 1 / -1; }
+  .guide-table-frame tbody tr:last-child th { border-block-end: 1px solid var(--landing-rule); }
+}

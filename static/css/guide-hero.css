@@ -1,0 +1,152 @@
+.guide-intro {
+  padding-block-end: clamp(1.65rem, 3.8vw, 3.2rem);
+}
+
+.guide-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.32fr) minmax(0, 0.85fr);
+  align-items: center;
+  gap: clamp(1.1rem, 3.4vw, 2.8rem);
+}
+
+.guide-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.38rem 0.75rem;
+  margin-bottom: 0.8rem;
+  color: #45414b;
+  font-size: 0.84rem;
+  font-weight: 740;
+  font-variant-numeric: tabular-nums;
+}
+
+.guide-meta .guide-reading-time {
+  background: var(--guide-accent);
+  box-shadow: 2px 2px 0 var(--landing-ink);
+}
+
+.guide-hero .guide-display-title {
+  max-width: 21ch;
+  margin-bottom: 0.74rem;
+  font-size: clamp(2.05rem, 4.25vw, 4.15rem);
+  overflow-wrap: anywhere;
+}
+
+.guide-hero-lead {
+  max-width: 50ch;
+  margin: 0 0 1.05rem;
+  color: #45414b;
+  font-size: clamp(1rem, 1.45vw, 1.2rem);
+  line-height: 1.47;
+}
+
+.guide-start.landing-button {
+  min-height: 46px;
+  gap: 0.52rem;
+}
+
+.guide-start .landing-sticker {
+  flex: none;
+  width: 1.65rem;
+  height: 1.65rem;
+  transform: rotate(90deg);
+}
+
+.guide-start:focus-visible {
+  outline: 3px solid var(--landing-blue);
+  outline-offset: 4px;
+}
+
+.guide-hero-scene {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  place-items: center;
+  min-width: 0;
+  padding: clamp(0.55rem, 1.25vw, 1.1rem);
+  border: 2px solid var(--landing-ink);
+  border-radius: clamp(0.95rem, 2vw, 1.55rem);
+  background:
+    radial-gradient(circle, rgb(22 23 33 / 0.12) 1px, transparent 1.5px) 0 0 / 15px 15px,
+    var(--guide-soft);
+  box-shadow: 4px 5px 0 var(--landing-ink);
+}
+
+.guide-hero-scene::before {
+  position: absolute;
+  inset: 14% 11%;
+  z-index: -1;
+  border-radius: 37% 30% 36% 27%;
+  background: #fffdf8;
+  content: "";
+  transform: rotate(-8deg);
+}
+
+.guide-hero-scene .guide-scene-art {
+  width: min(100%, 26rem);
+}
+
+.guide-hero-spark {
+  position: absolute;
+  inset: -0.5rem -0.2rem auto auto;
+  width: clamp(2rem, 4.6vw, 3.9rem);
+  transform: rotate(9deg);
+}
+
+.guide-hero-spark .landing-sticker {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 5 / 4;
+}
+
+.guide-summary {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.55rem 1rem;
+  padding: clamp(0.8rem, 1.8vw, 1.25rem);
+  border: 2px solid var(--landing-ink);
+  border-radius: 0.9rem;
+  background: #fffdf8;
+  box-shadow: 3px 4px 0 var(--landing-ink);
+}
+
+.guide-summary p {
+  max-width: 88ch;
+  margin: 0;
+  font-size: clamp(0.97rem, 1.4vw, 1.07rem);
+  line-height: 1.54;
+}
+
+.guide-summary .guide-summary-label {
+  width: fit-content;
+  padding: 0.24rem 0.6rem;
+  border: 1px solid var(--landing-ink);
+  border-radius: 0.45rem;
+  background: var(--guide-accent);
+  color: var(--landing-ink);
+  font-size: 0.82rem;
+  font-weight: 890;
+}
+
+@media (width <= 44rem) {
+  .guide-hero {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 1.05rem;
+  }
+
+  .guide-hero-scene {
+    padding: 0.12rem 0.7rem;
+  }
+
+  .guide-hero-scene .guide-scene-art {
+    width: min(100%, 17rem);
+  }
+
+  .guide-summary {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

@@ -18,9 +18,8 @@ use crate::{fixture, support};
 const NOW: &str = "2026-11-26T15:00:00Z";
 const GROUPS: &str = "/dashboard/menu/addons";
 const PREFERENCE: &str = "/dashboard/menu/addons/public-options";
-const PREVIEW: &str = "/dashboard/preview";
 const PUBLIC: &str = "/c/public-options-a";
-const CHOICES: &str = "<details class=\"item-choices\">";
+const CHOICES: &str = "class=\"product-catalog-options\"";
 
 async fn html(response: Response) -> String {
     assert_eq!(response.status(), StatusCode::OK);
@@ -34,10 +33,24 @@ async fn html(response: Response) -> String {
     String::from_utf8(bytes.to_vec()).unwrap()
 }
 
-async fn public_html(app: &Router) -> String {
-    html(
+async fn public_product_html(app: &Router, product_id: &str) -> String {
+    let index = html(
         app.clone()
             .oneshot(Request::get(PUBLIC).body(Body::empty()).unwrap())
+            .await
+            .unwrap(),
+    )
+    .await;
+    assert!(!index.contains(CHOICES));
+    assert!(!index.contains("data-pt=\"Queijo curado\""));
+
+    let card = format!("id=\"item-{product_id}\" href=\"");
+    let (_, href) = index.split_once(&card).unwrap();
+    let (href, _) = href.split_once('"').unwrap();
+    assert!(href.starts_with(&format!("{PUBLIC}/p/")) && href.ends_with(".html"));
+    html(
+        app.clone()
+            .oneshot(Request::get(href).body(Body::empty()).unwrap())
             .await
             .unwrap(),
     )
@@ -142,6 +155,7 @@ async fn options_require_opt_in_and_publication_then_serve_without_database() {
         support::manager(pool, &establishment, "public-options-manager@example.test").await;
     let catalog = fixture::catalog(&harness, &establishment, fixture::at(NOW)).await;
     let product = &catalog.items[0].product_id;
+    let preview_path = format!("/dashboard/preview/produto/{product}");
     let other_catalog = fixture::catalog(&harness, &other_establishment, fixture::at(NOW)).await;
     let mut unavailable_variation = fixture::variation("public-option-unavailable-variation");
     unavailable_variation.name = "Variação indisponível".into();
@@ -236,27 +250,27 @@ async fn options_require_opt_in_and_publication_then_serve_without_database() {
         StatusCode::FORBIDDEN
     );
     assert!(
-        !html(support::get(app, &owner, PREVIEW).await)
+        !html(support::get(app, &owner, &preview_path).await)
             .await
             .contains(CHOICES)
     );
     publish(app, &owner).await;
-    let plain = public_html(app).await;
+    let plain = public_product_html(app, product).await;
     assert!(!plain.contains(CHOICES));
 
     set_preference(app, &manager, "&enabled=1").await;
     assert!(enabled(app, &owner).await);
     assert!(!enabled(app, &other_owner).await);
-    let preview = html(support::get(app, &owner, PREVIEW).await).await;
+    let preview = html(support::get(app, &owner, &preview_path).await).await;
     assert!(preview.contains(CHOICES));
     assert!(preview.contains("data-pt=\"Queijo\""));
     assert!(!preview.contains("Adicional de outro estabelecimento"));
     assert!(!preview.contains("Adicional sem vínculo"));
     assert_eq!(republish_all(pool, &cfg, &locks).await.unwrap(), 0);
-    assert_eq!(public_html(app).await, plain);
+    assert_eq!(public_product_html(app, product).await, plain);
 
     publish(app, &owner).await;
-    let published = public_html(app).await;
+    let published = public_product_html(app, product).await;
     for expected in [
         CHOICES,
         "data-i18n=\"commerce.catalog.variations\"",
@@ -282,33 +296,33 @@ async fn options_require_opt_in_and_publication_then_serve_without_database() {
         assert!(!published.contains(excluded), "unexpected {excluded}");
     }
     assert_eq!(republish_all(pool, &cfg, &locks).await.unwrap(), 1);
-    assert_eq!(public_html(app).await, published);
+    assert_eq!(public_product_html(app, product).await, published);
 
     option.name = "Queijo curado".into();
     addon_options::save(pool, &establishment, &group.id, &option, NOW)
         .await
         .unwrap();
-    let preview = html(support::get(app, &owner, PREVIEW).await).await;
+    let preview = html(support::get(app, &owner, &preview_path).await).await;
     assert!(preview.contains("data-pt=\"Queijo curado\""));
     assert_eq!(republish_all(pool, &cfg, &locks).await.unwrap(), 0);
-    assert_eq!(public_html(app).await, published);
+    assert_eq!(public_product_html(app, product).await, published);
     publish(app, &owner).await;
-    let updated = public_html(app).await;
+    let updated = public_product_html(app, product).await;
     assert!(updated.contains("data-pt=\"Queijo curado\""));
     assert!(!updated.contains("data-pt=\"Queijo\""));
 
     set_preference(app, &owner, "").await;
     assert!(!enabled(app, &owner).await);
-    let preview = html(support::get(app, &owner, PREVIEW).await).await;
+    let preview = html(support::get(app, &owner, &preview_path).await).await;
     assert!(!preview.contains(CHOICES));
     assert_eq!(republish_all(pool, &cfg, &locks).await.unwrap(), 0);
-    assert_eq!(public_html(app).await, updated);
+    assert_eq!(public_product_html(app, product).await, updated);
     publish(app, &owner).await;
-    assert_eq!(public_html(app).await, plain);
+    assert_eq!(public_product_html(app, product).await, plain);
 
     set_preference(app, &owner, "&enabled=1").await;
     publish(app, &owner).await;
-    assert_eq!(public_html(app).await, updated);
+    assert_eq!(public_product_html(app, product).await, updated);
     pool.close().await;
-    assert_eq!(public_html(app).await, updated);
+    assert_eq!(public_product_html(app, product).await, updated);
 }

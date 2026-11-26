@@ -38,6 +38,18 @@ pub struct ToolCardView {
     pub name: &'static str,
     pub short_desc: &'static str,
     pub href: &'static str,
+    pub art: &'static str,
+}
+
+impl ToolCardView {
+    pub fn new(tool: &ToolContent, locale: Locale) -> Self {
+        Self {
+            name: tool.name,
+            short_desc: tool.short_desc,
+            href: tool.id.full_path(locale),
+            art: tool.id.art(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -46,6 +58,19 @@ pub struct GuideCardView {
     pub short_desc: &'static str,
     pub read_minutes: u8,
     pub href: &'static str,
+    pub art: &'static str,
+}
+
+impl GuideCardView {
+    pub fn new(guide: &GuideContent, locale: Locale) -> Self {
+        Self {
+            title: guide.title,
+            short_desc: guide.short_desc,
+            read_minutes: guide.read_minutes,
+            href: guide.id.full_path(locale),
+            art: guide.id.art(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -98,23 +123,14 @@ pub fn segment_cards(locale: Locale) -> Vec<SegmentCardView> {
 pub fn tool_cards(locale: Locale) -> Vec<ToolCardView> {
     all_tools(locale)
         .into_iter()
-        .map(|t| ToolCardView {
-            name: t.name,
-            short_desc: t.short_desc,
-            href: t.id.full_path(locale),
-        })
+        .map(|tool| ToolCardView::new(tool, locale))
         .collect()
 }
 
 pub fn guide_cards(locale: Locale) -> Vec<GuideCardView> {
     all_guides(locale)
         .into_iter()
-        .map(|g| GuideCardView {
-            title: g.title,
-            short_desc: g.short_desc,
-            read_minutes: g.read_minutes,
-            href: g.id.full_path(locale),
-        })
+        .map(|guide| GuideCardView::new(guide, locale))
         .collect()
 }
 
@@ -176,14 +192,7 @@ pub fn other_tool_cards(locale: Locale, current: ToolId) -> Vec<ToolCardView> {
     ToolId::ALL
         .into_iter()
         .filter(|id| *id != current)
-        .map(|id| {
-            let t = id.content(locale);
-            ToolCardView {
-                name: t.name,
-                short_desc: t.short_desc,
-                href: t.id.full_path(locale),
-            }
-        })
+        .map(|id| ToolCardView::new(id.content(locale), locale))
         .collect()
 }
 
@@ -191,15 +200,7 @@ pub fn other_guide_cards(locale: Locale, current: GuideId) -> Vec<GuideCardView>
     GuideId::ALL
         .into_iter()
         .filter(|id| *id != current)
-        .map(|id| {
-            let g = id.content(locale);
-            GuideCardView {
-                title: g.title,
-                short_desc: g.short_desc,
-                read_minutes: g.read_minutes,
-                href: g.id.full_path(locale),
-            }
-        })
+        .map(|id| GuideCardView::new(id.content(locale), locale))
         .collect()
 }
 

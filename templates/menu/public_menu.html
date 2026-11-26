@@ -29,127 +29,131 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png">
   <link rel="stylesheet" href="/static/css/tokens.css">
   <link rel="stylesheet" href="/static/css/menu.css">
+  <link rel="stylesheet" href="/static/css/menu-catalog.css">
   <link rel="stylesheet" href="/static/css/language-picker.css">
   <link rel="stylesheet" href="{{ theme_css_href }}">
 </head>
-<body>
+<body class="menu-catalog-page">
   <a class="skip-link" href="#menu-content" data-i18n="common.skip_to_content">{{ skip_label }}</a>
 
   {% if is_preview %}
   <div class="preview-bar" role="status" data-i18n="public_menu.preview_banner">{{ preview_banner_text }}</div>
   {% endif %}
 
-  <div class="menu-shell">
-    <header class="menu-hero">
-      {% if let Some(cover) = cover_url %}
-      <img class="menu-cover" src="{{ cover }}" alt="" fetchpriority="high">
-      {% endif %}
-      <div class="menu-hero-top">
-        <div class="menu-brand">
-          {% if let Some(logo) = logo_url %}
-          <img class="menu-logo" src="{{ logo }}" alt="" width="64" height="64">
-          {% endif %}
-          <div>
-            <h1 class="menu-title">{{ establishment_name }}</h1>
-            <p class="menu-desc {% if establishment_display_description.is_empty() %}is-hidden{% endif %}"
-               data-pt="{{ establishment_description }}"
-               data-en="{{ establishment_description_en }}"
-               data-es="{{ establishment_description_es }}"
-               data-hide-if-empty="1">{{ establishment_display_description }}</p>
-          </div>
-        </div>
+  <div class="menu-shell menu-catalog">
+    <header class="catalog-hero">
+      <div class="catalog-cover">
+        {% if let Some(cover) = cover_url %}
+        <img class="catalog-cover-image" src="{{ cover }}" alt="" fetchpriority="high">
+        {% endif %}
+      </div>
 
+      <div class="catalog-language">
         {{ languages::picker(locale_code, switcher_label) }}
+      </div>
+
+      <div class="catalog-brand">
+        {% if let Some(logo) = logo_url %}
+        <img class="catalog-logo" src="{{ logo }}" alt="" width="72" height="72">
+        {% else %}
+        <div class="catalog-logo catalog-logo-fallback" aria-hidden="true">
+          {{ icons::sticker("menu-book") }}
+        </div>
+        {% endif %}
+        <div class="catalog-identity">
+          <h1>{{ establishment_name }}</h1>
+          <p class="{% if establishment_display_description.is_empty() %}is-hidden{% endif %}"
+             data-pt="{{ establishment_description }}"
+             data-en="{{ establishment_description_en }}"
+             data-es="{{ establishment_description_es }}"
+             data-hide-if-empty="1">{{ establishment_display_description }}</p>
+        </div>
       </div>
     </header>
 
-    <main id="menu-content">
+    <main id="menu-content" tabindex="-1">
       {% if categories.is_empty() %}
       <div class="empty-state">
         <p data-i18n="public_menu.empty_menu">{{ empty_menu_text }}</p>
       </div>
       {% else %}
-      <div class="menu-controls">
-        <input id="menu-search" class="menu-search" type="search"
-               placeholder="{{ search_placeholder }}"
-               aria-label="{{ search_placeholder }}"
-               data-i18n-placeholder="public_menu.search_placeholder"
-               data-i18n-aria="public_menu.search_placeholder">
-
-        <nav class="cat-pills" aria-label="{{ categories_label }}" data-i18n-aria="public_menu.categories_label">
-          <button type="button" class="cat-pill is-active" data-cat-filter="all" aria-pressed="true" data-i18n="public_menu.all_categories">{{ all_categories_text }}</button>
-          {% for cat in categories %}
-          <button type="button" class="cat-pill" data-cat-filter="{{ cat.id }}" aria-pressed="false"
-                  data-pt="{{ cat.name }}"
-                  data-en="{{ cat.name_en }}"
-                  data-es="{{ cat.name_es }}">{{ cat.display_name }}</button>
-          {% endfor %}
-        </nav>
-      </div>
-
-      {% for cat in categories %}
-      <section class="menu-section" id="cat-{{ cat.id }}" data-cat-section="{{ cat.id }}">
-        <div class="menu-section-head">
-          <h2 data-pt="{{ cat.name }}" data-en="{{ cat.name_en }}" data-es="{{ cat.name_es }}">{{ cat.display_name }}</h2>
-          <p class="{% if cat.display_description.is_empty() %}is-hidden{% endif %}"
-             data-pt="{{ cat.description }}"
-             data-en="{{ cat.description_en }}"
-             data-es="{{ cat.description_es }}"
-             data-hide-if-empty="1">{{ cat.display_description }}</p>
-        </div>
-
-        <div class="item-list">
-          {% for item in cat.products %}
-          <article class="item-card {% if !item.is_available %}is-unavailable{% endif %}" data-menu-item>
-            <div class="item-body">
-              <div>
-                <h3 class="item-name" data-pt="{{ item.name }}" data-en="{{ item.name_en }}" data-es="{{ item.name_es }}">{{ item.display_name }}</h3>
-                <p class="item-desc {% if item.display_description.is_empty() %}is-hidden{% endif %}"
-                   data-pt="{{ item.description }}"
-                   data-en="{{ item.description_en }}"
-                   data-es="{{ item.description_es }}"
-                   data-hide-if-empty="1">{{ item.display_description }}</p>
-              </div>
-              <div class="item-meta">
-                <span class="item-price" data-price-centavos="{{ item.price_centavos }}">{{ item.price_display }}</span>
-                {% if !item.is_available %}
-                <span class="item-unavailable-badge" data-i18n="public_menu.unavailable_badge">{{ unavailable_text }}</span>
-                {% endif %}
-              </div>{% if !item.removals.is_empty() || !item.extras.is_empty() %}
-              <details class="item-choices">
-                <summary data-i18n="public_menu.product_choices">{{ choices_text }}</summary>
-                {% if !item.removals.is_empty() %}
-                <p data-i18n="public_menu.removable_ingredients">{{ removable_text }}</p>
-                <ul class="item-choice-list">
-                  {% for choice in item.removals %}
-                  <li data-pt="{{ choice.name.0 }}" data-en="{{ choice.name.1 }}" data-es="{{ choice.name.2 }}">{{ choice.display_name }}</li>
-                  {% endfor %}
-                </ul>
-                {% endif %}
-                {% if !item.extras.is_empty() %}
-                <p data-i18n="public_menu.extras">{{ extras_text }}</p>
-                <ul class="item-choice-list">
-                  {% for choice in item.extras %}
-                  <li>
-                    <span data-pt="{{ choice.name.0 }}" data-en="{{ choice.name.1 }}" data-es="{{ choice.name.2 }}">{{ choice.display_name }}</span>
-                    {% if let Some((centavos, price)) = choice.price %}<span class="item-extra-price">+ <span data-price-centavos="{{ centavos }}">{{ price }}</span></span>{% endif %}
-                  </li>
-                  {% endfor %}
-                </ul>
-                {% endif %}
-              </details>{% endif %}{% if !item.catalog_options.is_empty() %}{% include "menu/catalog_options.html" %}{% endif %}
+      <div class="catalog-layout">
+        <div class="catalog-controls">
+          <div class="catalog-search" role="search" data-menu-search-control hidden>
+            <input id="menu-search" class="menu-search" type="search"
+                   placeholder="{{ search_placeholder }}"
+                   aria-label="{{ search_placeholder }}"
+                   data-i18n-placeholder="public_menu.search_placeholder"
+                   data-i18n-aria="public_menu.search_placeholder">
+          </div>
+          <nav class="catalog-categories" aria-label="{{ categories_label }}" data-i18n-aria="public_menu.categories_label">
+            <p class="catalog-categories-title" aria-hidden="true">
+              {{ icons::panel("layers") }}
+              <span data-i18n="public_menu.categories_label">{{ categories_label }}</span>
+            </p>
+            <div class="catalog-category-list">
+              <a class="catalog-category is-active" href="#menu-content" data-cat-filter="all" aria-current="true">
+                <span data-i18n="public_menu.all_categories">{{ all_categories_text }}</span>
+              </a>
+              {% for cat in categories %}
+              <a class="catalog-category" href="#cat-{{ cat.id }}" data-cat-filter="{{ cat.id }}">
+                <span data-pt="{{ cat.name }}" data-en="{{ cat.name_en }}" data-es="{{ cat.name_es }}">{{ cat.display_name }}</span>
+              </a>
+              {% endfor %}
             </div>
-            {% if let Some(img) = item.image_url %}
-            <img class="item-photo" src="{{ img }}" alt="" loading="lazy" width="112" height="112">
-            {% endif %}
-          </article>
-          {% endfor %}
+          </nav>
         </div>
-      </section>
-      {% endfor %}
 
-      <div id="menu-no-results" class="empty-state is-hidden" role="status">
-        <p data-i18n="public_menu.no_results">{{ no_results_text }}</p>
+        <div class="catalog-groups">
+          {% for cat in categories %}
+          <section class="catalog-section" id="cat-{{ cat.id }}" data-cat-section="{{ cat.id }}" aria-labelledby="cat-title-{{ cat.id }}">
+            <header class="catalog-section-header">
+              <h2 id="cat-title-{{ cat.id }}" data-pt="{{ cat.name }}" data-en="{{ cat.name_en }}" data-es="{{ cat.name_es }}">{{ cat.display_name }}</h2>
+              <p class="{% if cat.display_description.is_empty() %}is-hidden{% endif %}"
+                 data-pt="{{ cat.description }}"
+                 data-en="{{ cat.description_en }}"
+                 data-es="{{ cat.description_es }}"
+                 data-hide-if-empty="1">{{ cat.display_description }}</p>
+            </header>
+
+            <div class="catalog-products">
+              {% for item in cat.products %}
+              <article class="catalog-product{% if !item.is_available %} catalog-product-unavailable{% endif %}" data-menu-item>
+                <a class="catalog-product-link" id="item-{{ item.id }}" href="{{ item.detail_url }}"
+                   aria-labelledby="item-name-{{ item.id }} item-price-{{ item.id }}{% if !item.is_available %} item-status-{{ item.id }}{% endif %}"
+                   data-menu-product-link data-menu-localized-link>
+                  <div class="catalog-product-media">
+                    {% if let Some(img) = item.image_url %}
+                    <img class="catalog-product-image" src="{{ img }}" alt="" loading="lazy" decoding="async" width="112" height="112">
+                    {% else %}
+                    <div class="catalog-product-fallback" aria-hidden="true">{{ icons::sticker("trade-restaurant") }}</div>
+                    {% endif %}
+                  </div>
+                  <div class="catalog-product-body">
+                    <div class="catalog-product-summary">
+                      <h3 class="catalog-product-name" id="item-name-{{ item.id }}" data-pt="{{ item.name }}" data-en="{{ item.name_en }}" data-es="{{ item.name_es }}">{{ item.display_name }}</h3>
+                      <span id="item-price-{{ item.id }}" class="catalog-product-price" data-price-centavos="{{ item.price_centavos }}">{{ item.price_display }}</span>
+                      {% if !item.is_available %}
+                      <span id="item-status-{{ item.id }}" class="catalog-product-status" data-i18n="public_menu.unavailable_badge">{{ unavailable_text }}</span>
+                      {% endif %}
+                    </div>
+                    <span class="catalog-product-arrow" aria-hidden="true">{{ icons::panel("next") }}</span>
+                  </div>
+                </a>
+                <span hidden data-menu-search-description
+                      data-pt="{{ item.description }}"
+                      data-en="{{ item.description_en }}"
+                      data-es="{{ item.description_es }}">{{ item.display_description }}</span>
+              </article>
+              {% endfor %}
+            </div>
+          </section>
+          {% endfor %}
+
+          <div id="menu-no-results" class="empty-state is-hidden" role="status">
+            <p data-i18n="public_menu.no_results">{{ no_results_text }}</p>
+          </div>
+        </div>
       </div>
       {% endif %}
     </main>

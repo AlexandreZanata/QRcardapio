@@ -283,11 +283,7 @@ fn render_guide_page(
         nav: SeoNavContext::build(locale, cluster, is_logged_in),
         guide,
         related_segment: SegmentCardView::new(seg, locale),
-        related_tool: ToolCardView {
-            name: tool.name,
-            short_desc: tool.short_desc,
-            href: tool.id.full_path(locale),
-        },
+        related_tool: ToolCardView::new(tool, locale),
         other_guides: other_guide_cards(locale, id),
     };
     with_public_cache(render_html(&tpl, StatusCode::OK)?, is_logged_in)
