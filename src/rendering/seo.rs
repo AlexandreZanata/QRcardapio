@@ -58,6 +58,19 @@ pub struct GuideCardView {
     pub short_desc: &'static str,
     pub read_minutes: u8,
     pub href: &'static str,
+    pub art: &'static str,
+}
+
+impl GuideCardView {
+    pub fn new(guide: &GuideContent, locale: Locale) -> Self {
+        Self {
+            title: guide.title,
+            short_desc: guide.short_desc,
+            read_minutes: guide.read_minutes,
+            href: guide.id.full_path(locale),
+            art: guide.id.art(),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -117,12 +130,7 @@ pub fn tool_cards(locale: Locale) -> Vec<ToolCardView> {
 pub fn guide_cards(locale: Locale) -> Vec<GuideCardView> {
     all_guides(locale)
         .into_iter()
-        .map(|g| GuideCardView {
-            title: g.title,
-            short_desc: g.short_desc,
-            read_minutes: g.read_minutes,
-            href: g.id.full_path(locale),
-        })
+        .map(|guide| GuideCardView::new(guide, locale))
         .collect()
 }
 
@@ -192,15 +200,7 @@ pub fn other_guide_cards(locale: Locale, current: GuideId) -> Vec<GuideCardView>
     GuideId::ALL
         .into_iter()
         .filter(|id| *id != current)
-        .map(|id| {
-            let g = id.content(locale);
-            GuideCardView {
-                title: g.title,
-                short_desc: g.short_desc,
-                read_minutes: g.read_minutes,
-                href: g.id.full_path(locale),
-            }
-        })
+        .map(|id| GuideCardView::new(id.content(locale), locale))
         .collect()
 }
 

@@ -1,24 +1,49 @@
 {% extends "seo/layout.html" %}
+{% import "components/icons.html" as icons %}
 {% import "seo/breadcrumb.html" as breadcrumb %}
+{% import "seo/guide_art.html" as art %}
+{% import "seo/segment_art.html" as segment_art %}
+
+{% block seo_head %}
+<link rel="stylesheet" href="/static/css/guide-visuals.css">
+<link rel="stylesheet" href="/static/css/guides-hub.css">
+{% endblock %}
 
 {% block seo_main %}
-<div class="landing-container seo-shell">
+<div class="landing-container seo-shell guides-hub">
   {{ breadcrumb::trail(nav.home_url, page.t("seo.guides")) }}
 
-  <header class="seo-hero">
-    <h1>{{ page.t("seo.guides_hub_h1") }}</h1>
-    <p class="seo-lead">{{ page.t("seo.guides_hub_lead") }}</p>
+  <header class="guides-hub-hero">
+    <div>
+      <h1 class="guide-display-title" data-i18n="seo.guides_hub_h1">{{ page.t("seo.guides_hub_h1") }}</h1>
+      <p class="seo-lead" data-i18n="seo.guides_hub_lead">{{ page.t("seo.guides_hub_lead") }}</p>
+    </div>
+    <div class="guides-hero-stickers" aria-hidden="true">
+      <span class="guides-hero-book">{{ icons::sticker("menu-book") }}</span>
+      <span class="guides-hero-qr">{{ icons::sticker("placard") }}</span>
+      <span class="guides-hero-burst">{{ icons::sticker("burst") }}</span>
+    </div>
   </header>
 
-  <section class="seo-card-grid seo-card-grid-2">
+  <ul class="guides-gallery" role="list">
     {% for guide in nav.guides %}
-    <article class="seo-card">
-      <p class="seo-meta-pill">{{ guide.read_minutes }} {{ page.t("seo.read_time") }}</p>
-      <h2><a href="{{ guide.href }}">{{ guide.title }}</a></h2>
-      <p>{{ guide.short_desc }}</p>
-      <a class="seo-inline-link" href="{{ guide.href }}">{{ page.t("seo.read_guide") }}</a>
-    </article>
+    <li>
+      <a class="guides-card guide-palette" data-guide-theme="{{ guide.art }}" href="{{ guide.href }}"
+         aria-labelledby="guide-title-{{ loop.index }} guide-action-{{ loop.index }}"
+         aria-describedby="guide-description-{{ loop.index }} guide-reading-time-{{ loop.index }}">
+        <div class="guides-card-scene">{{ art::scene(guide.art) }}</div>
+        <div class="guides-card-body">
+          <p class="guide-reading-time" id="guide-reading-time-{{ loop.index }}">{{ guide.read_minutes }} <span data-i18n="seo.read_time">{{ page.t("seo.read_time") }}</span></p>
+          <h2 id="guide-title-{{ loop.index }}">{{ guide.title }}</h2>
+          <p class="guides-card-description" id="guide-description-{{ loop.index }}">{{ guide.short_desc }}</p>
+          <span class="guides-card-action">
+            <span id="guide-action-{{ loop.index }}" data-i18n="seo.read_guide">{{ page.t("seo.read_guide") }}</span>
+            {{ segment_art::next() }}
+          </span>
+        </div>
+      </a>
+    </li>
     {% endfor %}
-  </section>
+  </ul>
 </div>
 {% endblock %}

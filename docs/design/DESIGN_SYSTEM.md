@@ -140,6 +140,8 @@ As páginas de cada segmento usam uma cena própria de `static/icons/segment-sce
 
 A galeria de Soluções reutiliza as cenas e as paletas das páginas individuais. Cada card é um link para o modelo daquele segmento e usa título, descrição e ação visível. Em telas estreitas, a ilustração fica ao lado do texto em uma única coluna de cards.
 
+A galeria de Guias usa cartões com título, descrição e tempo estimado de leitura. O tema de cada guia é definido em `guide-visuals.css` e sua ilustração vem de `guide-scenes.svg` por meio de `seo/guide_art.html`. A mesma arte aparece na galeria, no cabeçalho do artigo e na navegação entre guias. As páginas de leitura incluem um índice por âncoras, comparação em tabela quando disponível e perguntas frequentes com os controles da landing. O índice e as perguntas funcionam com HTML nativo.
+
 ### Login com o Google
 
 A ação **Continuar com o Google** reaproveita um componente Askama nas telas de login, cadastro e consentimento MCP. O botão usa a marca oficial servida localmente e os três catálogos do projeto. O painel de segurança permite vincular ou desvincular o provedor conforme as opções de entrada da conta.
