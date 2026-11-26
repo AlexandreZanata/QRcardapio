@@ -122,3 +122,5 @@ The catalog publication, order transitions, checkout, offline payment ledger and
 ### Commerce Core dashboard (Increment 2)
 
 `GET /dashboard/products/{id}/options` and `GET /dashboard/menu/addons` let owners and managers manage variations and reusable add-on groups. Tenant-scoped forms save, remove and link entities through POST actions. `GET /dashboard/hours` configures modalities, minimum, acceptance, pauses, weekly windows and date exceptions. `GET /dashboard/customers` and customer detail pages support customer and address management. Owner-only POST actions at `/dashboard/customers/{id}/export` and `/dashboard/customers/{id}/erase` require CSRF. The export is a JSON attachment with `Cache-Control: no-store`. Erasure requires explicit form confirmation.
+
+`POST /dashboard/menu/addons/public-options` requires `TenantContext`, CSRF and `menu.draft.edit`. Submit `enabled=1` to show available product options in the next publication, or omit the field to hide them. The dashboard preview uses the current draft preference. `/c/{slug}` displays the saved static snapshot.

@@ -124,3 +124,7 @@ A migração `20261124000010_multi_provider_billing.sql` (expand) adiciona `prov
 ### Retentativa da expiração de pedidos
 
 - `20261126000020_order_expiry_retries.sql` registra o próximo instante de tentativa em milissegundos UTC, com chave estrangeira composta para o pedido do estabelecimento. O worker mantém a alteração de estado, histórico e outbox no mesmo savepoint. Uma trigger remove o agendamento quando o pedido sai de `placed`.
+
+### Exibição das opções no QR Menu
+
+- `20261126000021_public_menu_options.sql` acrescenta `public_menu_option_preferences`. A presença de uma linha com o ID do estabelecimento habilita a exibição no próximo cardápio publicado. Gravar ou remover a preferência atualiza a revisão do rascunho na mesma transação. A captura usa essa revisão e as opções do mesmo estabelecimento.

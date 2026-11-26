@@ -44,6 +44,10 @@ pub fn router() -> Router<AppState> {
             "/dashboard/menu/addons",
             get(catalog::groups).post(catalog::save_group),
         )
+        .route(
+            "/dashboard/menu/addons/public-options",
+            post(catalog::set_public_options),
+        )
         .route("/dashboard/menu/addons/{id}", get(catalog::group))
         .route(
             "/dashboard/menu/addons/{id}/delete",

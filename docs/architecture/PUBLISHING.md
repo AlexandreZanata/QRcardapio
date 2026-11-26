@@ -39,6 +39,8 @@ Already-published menus pick up the visual refresh through the shared stylesheet
 
 An optional Google review invitation is rendered into the static HTML on publication. The direct review link takes precedence over the general Google Maps profile link. Removing both links and publishing removes the invitation. Public scans do not fetch any Google data or open the Google link until the visitor chooses it.
 
+Owners and managers can opt in to public product options in the add-on groups dashboard. Publication captures the preference, available options and draft revision in the same SQLite read transaction. Variations show their full prices and linked add-ons show their additional charges. The static menu uses its existing translation and price controls. Saving the preference updates the preview and leaves the public HTML in place until publication. Automatic republication skips pending drafts.
+
 Owner profile updates use the same per-establishment async mutex within the HTTP process. The update statement also checks the stored publication version so a form opened before publication cannot rename a published path.
 
 ## Public demonstration menu

@@ -363,7 +363,7 @@ Items 1–4, 6 and 9 are implemented in Increment 1. Item 17 is implemented for 
 2. `domain::commerce::state_machine`: load `state-machines.json` with `include_str!`, typed states and actors, `can_transition(from, to, actor)`; parity test `tests/commerce_contracts.rs`.
 3. `domain::commerce::pricing` and `discount`: line math, half-up basis-point rounding, checked arithmetic, order cap; unit and property tests.
 4. Expand migration for options; query files `product_variations.rs`, `addon_groups.rs`, `addon_options.rs` with tenant cross-checks.
-5. Dashboard UI for variations and add-on groups (Askama, `data-i18n`, three catalogs, CSRF, no inline script or style); optional read-only rendering in the static menu.
+5. Dashboard UI for variations and add-on groups with Askama, three locales and CSRF. Owners and managers can opt in to displaying available options in the read-only static menu. [Static publication](PUBLISHING.md)
 6. `catalog_snapshots` builder producing canonical JSON with content hash and version; availability-only derived versions.
 7. `business_hours` and `commercial_settings` core components with timezone-aware "open now" evaluation.
 8. `customers` and `customer_addresses` with phone normalization, export and erasure services.

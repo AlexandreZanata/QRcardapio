@@ -15,6 +15,7 @@
   "http": [
     { "method": "GET", "path": "/c/{slug}", "audience": "public", "status": "implemented" },
     { "method": "GET", "path": "/dashboard/menu", "audience": "member", "status": "implemented" },
+    { "method": "POST", "path": "/dashboard/menu/addons/public-options", "audience": "member", "status": "implemented" },
     { "method": "POST", "path": "/dashboard/publish", "audience": "member", "status": "implemented" },
     { "method": "POST", "path": "/dashboard/unpublish", "audience": "member", "status": "implemented" },
     { "method": "GET", "path": "/dashboard/qr", "audience": "member", "status": "implemented" },
