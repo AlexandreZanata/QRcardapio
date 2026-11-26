@@ -338,7 +338,7 @@ async fn grants_are_an_independent_audited_source() {
     assert_eq!(count_events(&h.pool, &est, "EntitlementGranted").await, 2);
     assert_eq!(count_events(&h.pool, &est, "EntitlementRevoked").await, 1);
 
-    // One trial per offer, bounded length, planned modules and non-admin operators refused.
+    // One trial per offer, bounded length, incompatible grants and non-admin operators refused.
     operator::grant(
         &h.pool,
         request("menu", GrantKind::Trial, 14, "ent-grants-other"),
@@ -360,6 +360,7 @@ async fn grants_are_an_independent_audited_source() {
     .unwrap_err();
     assert_eq!(long.i18n_key(), "error.operator_period_invalid");
     for (offer, kind) in [
+        ("delivery", GrantKind::Trial),
         ("delivery", GrantKind::Beta),
         ("delivery", GrantKind::Courtesy),
         ("bundle_x", GrantKind::Trial),

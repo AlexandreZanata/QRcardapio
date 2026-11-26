@@ -23,7 +23,7 @@
     {
       "code": "delivery",
       "name": "QR Delivery",
-      "lifecycle": "development",
+      "lifecycle": "internal_preview",
       "phase": 4,
       "affiliate_eligible": true,
       "requires_modules": [],

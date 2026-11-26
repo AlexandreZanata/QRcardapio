@@ -1,12 +1,12 @@
 # QR Delivery
 
-**Status: In development (not sellable).** [Commerce Core](../architecture/COMMERCE_CORE.md) provides shared checkout, the order aggregate, offline payments, event processing and staff Web Push. QR Delivery's foundation (schema, domain rules, dashboard settings/zones/coupons, static storefront PWA publisher, consumer transactional API, and staff order center) is implemented behind `Lifecycle::Development` (`sale: never`, `grants: never` in production).
+**Status — Internal preview.** [Commerce Core](../architecture/COMMERCE_CORE.md) provides shared checkout, the order aggregate, offline payments, event processing and staff Web Push. QR Delivery's dashboard, storefront PWA and consumer API run under `Lifecycle::InternalPreview`. An audited `internal_preview` grant enables access for its establishment. The lifecycle keeps sales disabled.
 
 | Field | Value |
 |---|---|
 | Module code | `delivery` |
 | Phase | 4 (requires [Commerce Core](../architecture/COMMERCE_CORE.md), phase 3) |
-| Lifecycle | `development` ([`contracts/commercial/modules.json`](../../contracts/commercial/modules.json)) |
+| Lifecycle | `internal_preview` ([`contracts/commercial/modules.json`](../../contracts/commercial/modules.json)) |
 | Monthly price | R$ 69,90 (`monthly_price_centavos: 6990`, catalog version 1, effective 2026-11-24) |
 | Module contract | [`contracts/modules/delivery.json`](../../contracts/modules/delivery.json) (single source of truth; this document follows it). Overview: [MODULE_CATALOG.md](../business/MODULE_CATALOG.md); events: [EVENT_CONTRACTS.md](../architecture/EVENT_CONTRACTS.md) |
 | Standalone | Yes. Works without QR Menu. |
@@ -196,7 +196,7 @@ The consumer tracking view maps states to labels; for delivery orders `ready` re
 
 ## 11. Permissions
 
-Operations from [`authorization-rules.json`](../../contracts/entitlements/authorization-rules.json) (`status: implemented`, gated by `Lifecycle::Development` for capability-protected operations), evaluated by `authorize(...)` in order: module lifecycle, establishment operational state, member permission, deployment enforcement, commercial entitlement.
+Operations from [`authorization-rules.json`](../../contracts/entitlements/authorization-rules.json) are implemented under `internal_preview`. Capability checks require an explicit grant even when billing enforcement is off. Authorization evaluates the module lifecycle, establishment operational state, member permission, deployment enforcement and commercial entitlement in that order.
 
 | Operation | Roles | Capability | After expiry | Covers |
 |---|---|---|---|---|
@@ -284,7 +284,7 @@ The registry defines dedupe keys only for implemented events; the "Design" keys 
 
 ## 16. HTTP contracts
 
-### 16.1 Endpoints in the contract (`status: development`)
+### 16.1 Endpoints in the contract (`internal_preview`)
 
 | Method | Path | Audience | Operation | Behavior |
 |---|---|---|---|---|

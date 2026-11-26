@@ -11,7 +11,7 @@ Sources of truth: [`modules.json`](../../contracts/commercial/modules.json), [`b
 3. One rounding rule, one function: `domain::commercial::apply_discount`. Backend, database snapshot, gateway payload and UI all use its output; the UI never recomputes prices.
 4. Only the backend prices a subscription. The browser submits offer codes and a cycle.
 5. A sold price is never changed. Prices change only by adding a new catalog version.
-6. Planned prices are internal targets. They are not announced in the product UI and nothing can be bought at them.
+6. Prices for planned and internal-preview offers are internal targets. The product displays prices and accepts checkout for eligible offers.
 
 Status: principles 1 to 5 **Implemented and tested**; principle 6 **Implemented and tested** for the dashboard (`tests/entitlements.rs::subscription_page_lists_modules_without_selling_planned_ones`).
 
@@ -20,7 +20,7 @@ Status: principles 1 to 5 **Implemented and tested**; principle 6 **Implemented 
 | Offer | Code | Monthly | Lifecycle | Affiliate-eligible |
 |---|---|---|---|---|
 | QR Menu | `menu` | 2990 | `available` | yes |
-| QR Delivery | `delivery` | 6990 | `development` | yes |
+| QR Delivery | `delivery` | 6990 | `internal_preview` | yes |
 | QR Tables | `tables` | 3990 | `planned` | yes |
 | QR Kitchen | `kitchen` | 2490 | `planned` | yes |
 | QR Fleet | `fleet` | 2990 | `planned` | yes |

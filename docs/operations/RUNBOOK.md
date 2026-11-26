@@ -171,7 +171,7 @@ qrcardapio operator suspend --operator admin@example.com --slug bar-k7m2 --kind 
 qrcardapio operator reinstate --operator admin@example.com --slug bar-k7m2 --reason "resolved"
 ```
 
-Planned modules (`delivery`, `tables`, …) cannot be granted: the lifecycle refuses it. Launching a module or changing a price is a code change in `contracts/commercial/` ([MODULE_CATALOG](../business/MODULE_CATALOG.md#changing-the-catalog)); the binary refuses to start if a sold version was edited or a lifecycle moved illegally — fix the contract, never the registry tables.
+The lifecycle controls which grants operators can issue. For QR Delivery in `internal_preview`, an operator can issue only an `internal_preview` grant. Launching a module or changing a price is a code change in `contracts/commercial/` ([MODULE_CATALOG](../business/MODULE_CATALOG.md#changing-the-catalog)). The binary refuses to start if a sold version was edited or a lifecycle moved illegally. Fix the contract rather than the registry tables.
 
 Useful read-only checks:
 
@@ -236,7 +236,31 @@ Refunds of Inter charges are manual (boleto has no refund API; Pix refunds need 
 
 ## QR Delivery preview and recovery
 
-The compiled catalog ships with Delivery in `development`. It cannot grant or sell the module. Preview and production lifecycle changes follow [the Delivery release gates](../modules/DELIVERY.md#27-commercial-launch-requirements).
+The compiled catalog ships with Delivery in `internal_preview`. Sales remain disabled. The operator grants access to the selected establishment after the signed release is healthy. Preview and production lifecycle changes follow [the Delivery release gates](../modules/DELIVERY.md#27-commercial-launch-requirements).
+
+Before the first preview release, check the deployment database in read-only mode. Expect zero rows from both queries. The first detects a grant that would take effect immediately or later. The second detects a storefront whose history would preserve staff access.
+
+```sql
+SELECT establishment_id, offer_kind, starts_on, ends_on
+FROM entitlement_grants
+WHERE offer_code = 'delivery'
+  AND grant_kind = 'internal_preview'
+  AND revoked_at IS NULL
+  AND ends_on > date('now', '-3 hours');
+
+SELECT establishment_id, published_version
+FROM storefronts
+WHERE published_version > 0;
+```
+
+If either query returns rows, reconcile the affected establishment and verify scope before enabling the preview. The billing day rolls over at UTC−03:00. After deployment, confirm the selected establishment and issue its grant through the operator CLI.
+
+```bash
+qrcardapio operator grant --operator <platform-admin-email> --slug <approved-slug> \
+  --offer delivery --kind internal_preview --days <pilot-days> --reason "<approved pilot reason>"
+```
+
+Verify `EntitlementGranted` in the transactional outbox and confirm that Delivery settings and publishing are available to the approved establishment. Check that an ungranted establishment cannot access those settings or publish. Publishing the storefront makes its public URL accessible to customers. If the pilot needs to stop, take the storefront offline and revoke the grant through the operator CLI. Existing orders retain the documented cancellation, refund and history access. The previous `development` binary can be restored by symlink without a schema rollback.
 
 - Keep `DATA_DIR/storefronts` on a persistent filesystem together with SQLite and original media. Compose mounts the storefront volume read-only in Caddy and blocks the `.tmp` directory. The native service serves the same files on the Axum fallback without SQLite.
 - If the storefront files are lost after a restore, run `qrcardapio republish-all`. It can reconstruct eligible published storefronts from the committed presentation and media. Preserve the publication lock directory while commands are running.
