@@ -7,6 +7,7 @@
 
 {% block seo_head %}
 <link rel="stylesheet" href="/static/css/guide-visuals.css">
+<link rel="stylesheet" href="/static/css/guide-hero.css">
 <link rel="stylesheet" href="/static/css/guide-detail.css">
 {% endblock %}
 
@@ -25,12 +26,20 @@
           <time datetime="{{ guide.published_date }}">{{ guide.published_date }}</time>
         </div>
         <h1 id="guide-title" class="guide-display-title">{{ guide.title }}</h1>
-        <div class="guide-summary">
-          <p class="guide-summary-label" data-i18n="seo.answer_label">{{ page.t("seo.answer_label") }}</p>
-          <p>{{ guide.answer_summary }}</p>
-        </div>
+        <p class="guide-hero-lead">{{ guide.short_desc }}</p>
+        <a class="btn landing-button landing-button-blue guide-start" href="#guide-section-1">
+          <span data-i18n="seo.guide_start">{{ page.t("seo.guide_start") }}</span>
+          {{ icons::sticker("segment-arrow") }}
+        </a>
       </div>
-      <div class="guide-hero-scene">{{ art::scene(scene) }}</div>
+      <div class="guide-hero-scene" aria-hidden="true">
+        {{ art::scene(scene) }}
+        <span class="guide-hero-spark">{{ icons::sticker("burst") }}</span>
+      </div>
+      <div class="guide-summary">
+        <p class="guide-summary-label" data-i18n="seo.answer_label">{{ page.t("seo.answer_label") }}</p>
+        <p>{{ guide.answer_summary }}</p>
+      </div>
     </header>
   </div>
 
@@ -73,20 +82,20 @@
         <section class="seo-section guide-comparison" aria-labelledby="guide-comparison">
           <h2 id="guide-comparison" tabindex="-1">{{ table.title }}</h2>
           <div class="guide-table-frame">
-            <table class="seo-table" aria-labelledby="guide-comparison">
-              <thead>
-                <tr>
-                  <th scope="col">{{ table.headers[0] }}</th>
-                  <th scope="col">{{ table.headers[1] }}</th>
-                  <th scope="col">{{ table.headers[2] }}</th>
+            <table class="seo-table" role="table" aria-labelledby="guide-comparison">
+              <thead role="rowgroup">
+                <tr role="row">
+                  <th scope="col" role="columnheader">{{ table.headers[0] }}</th>
+                  <th id="guide-comparison-pdf" scope="col" role="columnheader">{{ table.headers[1] }}</th>
+                  <th id="guide-comparison-digital" scope="col" role="columnheader">{{ table.headers[2] }}</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody role="rowgroup">
                 {% for row in table.rows %}
-                <tr>
-                  <th scope="row">{{ row[0] }}</th>
-                  <td>{{ row[1] }}</td>
-                  <td>{{ row[2] }}</td>
+                <tr role="row">
+                  <th id="guide-criterion-{{ loop.index }}" scope="row" role="rowheader">{{ row[0] }}</th>
+                  <td role="cell" headers="guide-criterion-{{ loop.index }} guide-comparison-pdf">{{ row[1] }}</td>
+                  <td role="cell" headers="guide-criterion-{{ loop.index }} guide-comparison-digital">{{ row[2] }}</td>
                 </tr>
                 {% endfor %}
               </tbody>
