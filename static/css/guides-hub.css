@@ -1,0 +1,154 @@
+.guides-hub {
+  padding-block-end: clamp(2.4rem, 5vw, 4rem);
+}
+
+.guides-hub-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 0.8fr);
+  align-items: center;
+  gap: clamp(1rem, 4vw, 4rem);
+  margin-block: 0.4rem clamp(1.75rem, 4vw, 3.75rem);
+}
+
+.guides-hub-hero .seo-lead {
+  max-width: 53ch;
+  padding-inline-start: 0.85rem;
+  border-inline-start: 4px solid var(--landing-pink);
+  font-size: clamp(1rem, 1.6vw, 1.2rem);
+  line-height: 1.53;
+}
+
+.guides-hero-stickers {
+  position: relative;
+  isolation: isolate;
+  justify-self: center;
+  width: min(100%, 24rem);
+  aspect-ratio: 1.58;
+}
+
+.guides-hero-stickers::before,
+.guides-hero-stickers::after {
+  position: absolute;
+  z-index: -1;
+  content: "";
+}
+
+.guides-hero-stickers::before {
+  inset: 11% 7% 15% 5%;
+  border-radius: 34% 27% 29% 32%;
+  background: var(--landing-blue);
+  transform: rotate(-9deg);
+}
+
+.guides-hero-stickers::after {
+  inset: 40% 5% 7% 17%;
+  border-radius: 27% 39% 32% 28%;
+  background: var(--landing-pink);
+  transform: rotate(8deg);
+}
+
+.guides-hero-book,
+.guides-hero-qr {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--landing-ink);
+  border-radius: clamp(0.7rem, 1.6vw, 1.2rem);
+  box-shadow: 3px 5px 0 var(--landing-ink);
+  aspect-ratio: 1.14;
+}
+
+.guides-hero-book {
+  inset: 12% auto auto 13%;
+  width: 49%;
+  background: #fffdf8;
+  transform: rotate(-11deg);
+}
+
+.guides-hero-qr {
+  inset: 36% 13% auto auto;
+  width: 36%;
+  background: var(--landing-yellow);
+  transform: rotate(12deg);
+}
+
+.guides-hero-burst {
+  position: absolute;
+  inset: 3% 8% auto auto;
+  width: 18%;
+  transform: rotate(12deg);
+}
+
+.guides-hero-stickers .landing-sticker { display: block; width: 77%; height: auto; aspect-ratio: 1; }
+.guides-hero-burst .landing-sticker { width: 100%; aspect-ratio: 5 / 4; }
+
+.guides-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: clamp(1rem, 2vw, 1.55rem);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guides-card {
+  display: grid;
+  grid-template-columns: minmax(0, 0.85fr) minmax(0, 1fr);
+  align-items: center;
+  gap: clamp(0.75rem, 1.45vw, 1.25rem);
+  height: 100%;
+  padding: clamp(0.7rem, 1.4vw, 1rem);
+  border: 2px solid var(--landing-ink);
+  border-radius: 1.05rem;
+  background: #fffdf8;
+  box-shadow: 3px 4px 0 var(--landing-ink);
+  color: var(--landing-ink);
+}
+
+.guides-card-scene {
+  padding: 0.3rem;
+  border: 1px solid var(--landing-ink);
+  border-radius: 0.7rem;
+  background: var(--guide-backdrop);
+}
+
+.guides-card-body { display: flex; flex-direction: column; align-self: stretch; min-width: 0; }
+.guides-card h2 { margin: 0.55rem 0 0.36rem; font-size: clamp(1.1rem, 1.75vw, 1.5rem); font-weight: 870; letter-spacing: -0.028em; line-height: 1.15; text-wrap: balance; }
+.guides-card-description { margin: 0 0 0.65rem; color: #45414b; font-size: 0.94rem; line-height: 1.45; }
+
+.guides-card-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-height: 44px;
+  margin-top: auto;
+  border-top: 1px solid var(--landing-rule);
+  color: var(--landing-blue);
+  font-size: 0.91rem;
+  font-weight: 820;
+}
+
+.guides-card-action svg { flex: none; width: 1.9rem; height: 1.9rem; }
+.guides-card:is(:hover, :focus-visible) { background: var(--guide-soft); text-decoration: none; }
+.guides-card:focus-visible { outline: 3px solid var(--landing-blue); outline-offset: 4px; }
+.guides-card:is(:hover, :focus-visible) .guides-card-action span { text-decoration: underline; text-underline-offset: 0.18em; }
+
+@media (max-width: 64rem) and (width > 48rem) {
+  .guides-card { grid-template-columns: minmax(0, 1fr); align-items: start; }
+  .guides-card-scene .guide-scene-art { width: min(100%, 17rem); margin-inline: auto; }
+}
+
+@media (max-width: 48rem) {
+  .guides-gallery { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (max-width: 42rem) {
+  .guides-hub-hero { grid-template-columns: minmax(0, 1fr); }
+  .guides-hero-stickers { display: none; }
+}
+
+@media (max-width: 32rem) {
+  .guides-card { grid-template-columns: minmax(0, 1fr); gap: 0.65rem; }
+  .guides-card-scene .guide-scene-art { width: min(100%, 15rem); margin-inline: auto; }
+}

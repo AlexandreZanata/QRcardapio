@@ -26,6 +26,15 @@ impl GuideId {
         Self::MenuEngineeringQr,
     ];
 
+    pub const fn art(self) -> &'static str {
+        match self {
+            Self::CreateQrMenu => "create-menu",
+            Self::PdfVsDigital => "pdf-vs-digital",
+            Self::GoogleMapsReviews => "maps-reviews",
+            Self::MenuEngineeringQr => "menu-engineering",
+        }
+    }
+
     pub const fn slug(self, locale: Locale) -> &'static str {
         match (self, locale) {
             (Self::CreateQrMenu, Locale::PtBr) => "como-criar-cardapio-digital-qr-code",

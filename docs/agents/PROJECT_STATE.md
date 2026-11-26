@@ -170,6 +170,10 @@ As páginas das ferramentas reutilizam as artes da galeria e têm uma área de t
 
 A galeria de Soluções reutiliza as oito ilustrações e paletas das páginas individuais. Cada card abre o modelo do segmento no idioma selecionado.
 
+## Guias práticos
+
+A galeria e os quatro guias têm artes vetoriais e paletas próprias. A leitura das páginas individuais inclui resumo, índice, perguntas frequentes e links para guias, soluções e ferramentas no idioma selecionado.
+
 ## Cardápio público de demonstração
 
 O QR original da home encaminha para o Bistrô da Praça em `/c/bistro-da-praca`. O seed executado antes da prontidão do servidor publica cinco categorias e nove produtos com fotos, preços e conteúdo em português, inglês e espanhol. O catálogo é fictício, tem endereço reservado e usa os arquivos estáticos de publicação.
