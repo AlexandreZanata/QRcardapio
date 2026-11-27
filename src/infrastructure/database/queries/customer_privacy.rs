@@ -10,7 +10,15 @@ use crate::infrastructure::database::begin_immediate;
 pub struct CustomerExport {
     customer: customers::Customer,
     addresses: Vec<customer_addresses::CustomerAddress>,
+    delivery_phone_block: DeliveryPhoneBlock,
     orders: Vec<Value>,
+}
+
+#[derive(Default, Serialize, sqlx::FromRow)]
+struct DeliveryPhoneBlock {
+    blocked: bool,
+    reason: Option<String>,
+    blocked_at: Option<String>,
 }
 
 /// Use a consistent read transaction to export the profile, order and entered address together.
@@ -22,6 +30,15 @@ pub async fn export(
     let mut tx = pool.begin().await?;
     let profile = customers::find_in(&mut tx, establishment, customer).await?;
     let addresses = customer_addresses::list_in(&mut tx, establishment, customer).await?;
+    let delivery_phone_block = sqlx::query_as(
+        "SELECT 1 AS blocked, reason, blocked_at FROM delivery_customer_blocks
+         WHERE establishment_id = ? AND phone_e164 = ?",
+    )
+    .bind(establishment)
+    .bind(&profile.phone_e164)
+    .fetch_optional(&mut *tx)
+    .await?
+    .unwrap_or_default();
     let rows: Vec<String> = sqlx::query_scalar(
         "SELECT json_object(
             'public_id', o.public_id, 'order_number', o.order_number, 'business_date', o.business_date,
@@ -57,6 +74,7 @@ pub async fn export(
     Ok(CustomerExport {
         customer: profile,
         addresses,
+        delivery_phone_block,
         orders,
     })
 }
@@ -69,6 +87,17 @@ pub async fn erase(
     now: &str,
 ) -> AppResult<()> {
     let mut tx = begin_immediate(pool).await?;
+    sqlx::query(
+        "DELETE FROM delivery_customer_blocks
+         WHERE establishment_id = ? AND phone_e164 = (
+             SELECT phone_e164 FROM customers WHERE establishment_id = ? AND id = ? AND erased_at IS NULL
+         )",
+    )
+    .bind(establishment)
+    .bind(establishment)
+    .bind(customer)
+    .execute(&mut *tx)
+    .await?;
     let erased = sqlx::query(
         "UPDATE customers SET name = NULL, phone_e164 = NULL, email = NULL, updated_at = ?, erased_at = ?
          WHERE id = ? AND establishment_id = ? AND erased_at IS NULL",

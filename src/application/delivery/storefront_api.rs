@@ -253,8 +253,22 @@ pub async fn place_order(
         delivery_fee_centavos: 0,
         discount: None,
     };
-    let base_quote = checkout::quote_in(&mut tx, base_target, &cart, now).await?;
-    let subtotal = base_quote.totals.map(|t| t.items_subtotal_centavos);
+    let snapshot = checkout::CheckoutSnapshot::load_in(&mut tx, base_target, &schedule).await?;
+    let needs_subtotal = zone
+        .as_ref()
+        .is_some_and(|zone| zone.free_delivery_from_centavos.is_some())
+        || input
+            .coupon_code
+            .as_deref()
+            .is_some_and(|code| !code.trim().is_empty());
+    let subtotal = if needs_subtotal {
+        snapshot
+            .quote(base_target, &cart, now)?
+            .totals
+            .map(|totals| totals.items_subtotal_centavos)
+    } else {
+        None
+    };
 
     let (coupon, coupon_status) = evaluate_coupon(
         &mut tx,
@@ -273,7 +287,7 @@ pub async fn place_order(
         ..base_target
     };
     if coupon.is_none() && coupon_status.is_some() {
-        let fresh = checkout::quote_in(&mut tx, no_coupon_target, &cart, now).await?;
+        let fresh = snapshot.quote(no_coupon_target, &cart, now)?;
         tx.rollback().await?;
         return Ok(StorefrontOrderOutcome::Repriced(build_quote_response(
             &fresh,
@@ -307,6 +321,7 @@ pub async fn place_order(
             minimum_override,
             allow_missing_cep: true,
         },
+        Some(&snapshot),
     )
     .await?;
     match placement.outcome {
@@ -340,8 +355,7 @@ pub async fn place_order(
                     )
                     .await?;
                     if !consumed {
-                        let fresh =
-                            checkout::quote_in(&mut tx, no_coupon_target, &cart, now).await?;
+                        let fresh = snapshot.quote(no_coupon_target, &cart, now)?;
                         tx.rollback().await?;
                         return Ok(StorefrontOrderOutcome::Repriced(build_quote_response(
                             &fresh,

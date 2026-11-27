@@ -10,6 +10,8 @@ mod order_lifecycle;
 mod orders;
 #[path = "delivery/preview_completion.rs"]
 mod preview_completion;
+#[path = "delivery/privacy.rs"]
+mod privacy;
 #[path = "delivery/publication.rs"]
 mod publication;
 #[path = "commercial/support.rs"]

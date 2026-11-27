@@ -35,6 +35,7 @@ print(executable)
     fi
 }
 
+delivery() { run_bench delivery_capacity sustained_delivery_capacity --test delivery_capacity; }
 checkout() { run_bench commerce_checkout_bench sustained_checkout --test commerce_checkout_bench; }
 outbox() { run_bench commerce_dispatch_benchmark drain_and_steady_state --test commerce_dispatch_benchmark; }
 push() { run_bench qrcardapio notifications::tests::push_throughput --lib; }
@@ -44,6 +45,7 @@ case "${1:-all}" in
     mixed) COMMERCE_BENCH_MIXED=1 checkout ;;
     outbox) outbox ;;
     push) push ;;
+    delivery) delivery ;;
     all) checkout; COMMERCE_BENCH_MIXED=1 checkout; outbox; push ;;
-    *) printf 'Usage: %s [checkout|mixed|outbox|push|all]\n' "$0" >&2; exit 2 ;;
+    *) printf 'Usage: %s [checkout|mixed|outbox|push|delivery|all]\n' "$0" >&2; exit 2 ;;
 esac

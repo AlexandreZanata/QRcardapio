@@ -3,10 +3,13 @@ use axum::http::{StatusCode, header};
 use serde_json::{Value, json};
 use uuid::Uuid;
 
+use qrcardapio::infrastructure::database::queries::product_variations;
+
 use crate::fixture::{
     CUSTOMER, ORIGIN, PHONE, PRIVATE_NOTE, STREET, Shop, checkout, expect_json, get_public,
     grant_preview, post_json, preview_router,
 };
+use crate::order_fixtures::variation;
 use crate::support::{Harness, harness};
 
 pub(super) async fn quote(app: &Router, shop: &Shop, request: &Value) -> Value {
@@ -66,6 +69,82 @@ pub(super) fn assert_private_response(view: &Value, receipt: &Value) {
             "public tracking exposed private input: {view}"
         );
     }
+}
+
+#[tokio::test]
+async fn republishing_across_free_delivery_threshold_requires_reconfirmation() {
+    let h = harness(false).await;
+    let app = preview_router(&h).await;
+    let shop = Shop::create(&h, "delivery-shipping-threshold", 0).await;
+    grant_preview(&h, &shop).await;
+    let zone = shop.create_zone(&h, &app).await;
+    sqlx::query(
+        "UPDATE delivery_zones SET free_delivery_from_centavos = 5000
+         WHERE id = ? AND establishment_id = ?",
+    )
+    .bind(&zone)
+    .bind(&shop.id)
+    .execute(&h.pool)
+    .await
+    .unwrap();
+    shop.publish(&app).await;
+    let original_version = shop.catalog_version(&h).await;
+    let mut input = shop.quote(original_version, Some(&zone), None);
+    let original = quote(&app, &shop, &input).await;
+    assert_eq!(original["items_subtotal_centavos"], 4_500);
+    assert_eq!(original["delivery_fee_centavos"], 500);
+    let stale = checkout(&input, &original, Some(&zone));
+
+    let mut updated = variation(shop.item.variation_id.as_deref().unwrap());
+    updated.price_centavos = 2_250;
+    product_variations::save(
+        &h.pool,
+        &shop.id,
+        &shop.item.product_id,
+        &updated,
+        &chrono::Utc::now().to_rfc3339(),
+    )
+    .await
+    .unwrap();
+    shop.publish(&app).await;
+    let published_version = shop.catalog_version(&h).await;
+    assert!(published_version > original_version);
+
+    let key = Uuid::new_v4();
+    let repriced = expect_json(
+        post_json(&app, &shop.api("orders"), &stale, ORIGIN, Some(key)).await,
+        StatusCode::CONFLICT,
+    )
+    .await;
+    assert_eq!(repriced["code"], "commerce.checkout_repriced");
+    let fresh = &repriced["quote"];
+    assert_eq!(fresh["catalog_version"], published_version);
+    assert_eq!(fresh["items_subtotal_centavos"], 5_000);
+    assert_eq!(fresh["delivery_fee_centavos"], 0);
+    assert_eq!(fresh["total_centavos"], original["total_centavos"]);
+    let writes: (i64, i64, i64) = sqlx::query_as(
+        "SELECT
+           (SELECT count(*) FROM orders WHERE establishment_id = ?1),
+           (SELECT count(*) FROM order_payments WHERE establishment_id = ?1),
+           (SELECT count(*) FROM checkout_attempts WHERE establishment_id = ?1)",
+    )
+    .bind(&shop.id)
+    .fetch_one(&h.pool)
+    .await
+    .unwrap();
+    assert_eq!(writes, (0, 0, 0));
+
+    input["catalog_version"] = json!(published_version);
+    let confirmed = checkout(&input, fresh, Some(&zone));
+    let receipt = place(&app, &shop, &confirmed, key).await;
+    let tracking = expect_json(
+        get_public(&app, &tracking_api(&shop, &receipt), None).await,
+        StatusCode::OK,
+    )
+    .await;
+    assert_eq!(tracking["totals"]["delivery_fee_centavos"], 0);
+    assert_eq!(tracking["payment"]["amount_centavos"], 5_000);
+    assert_eq!(order_count(&h, &shop).await, 1);
 }
 
 #[tokio::test]
