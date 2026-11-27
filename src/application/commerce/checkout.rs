@@ -52,10 +52,51 @@ pub(crate) async fn quote_in(
 ) -> AppResult<CheckoutQuote> {
     validate_cart(cart)?;
     let schedule = business_hours::load_in(connection, target.establishment_id).await?;
-    let (version, content) = current_catalog(connection, target).await?;
-    let open_now = schedule.service_at(now, target.mode).is_some();
-    let (quote, _) = evaluate_cart(&content, version, target, cart, &schedule, open_now)?;
-    Ok(quote)
+    CheckoutSnapshot::load_in(connection, target, &schedule)
+        .await?
+        .quote(target, cart, now)
+}
+
+/// Pricing inputs established by reads on one SQLite transaction. The caller uses the
+/// same transaction for quoting, repricing and persistence.
+pub(crate) struct CheckoutSnapshot<'a> {
+    schedule: &'a Schedule,
+    version: i64,
+    content: CatalogContent,
+}
+
+impl<'a> CheckoutSnapshot<'a> {
+    pub(crate) async fn load_in(
+        connection: &mut SqliteConnection,
+        target: CheckoutTarget<'_>,
+        schedule: &'a Schedule,
+    ) -> AppResult<Self> {
+        let (version, content) = current_catalog(connection, target).await?;
+        Ok(Self {
+            schedule,
+            version,
+            content,
+        })
+    }
+
+    pub(crate) fn quote(
+        &self,
+        target: CheckoutTarget<'_>,
+        cart: &CheckoutCart,
+        now: DateTime<Utc>,
+    ) -> AppResult<CheckoutQuote> {
+        validate_cart(cart)?;
+        let open_now = self.schedule.service_at(now, target.mode).is_some();
+        let (quote, _) = evaluate_cart(
+            &self.content,
+            self.version,
+            target,
+            cart,
+            self.schedule,
+            open_now,
+        )?;
+        Ok(quote)
+    }
 }
 
 pub async fn place_order(
@@ -79,6 +120,7 @@ pub async fn place_order(
         now,
         &fingerprint,
         CheckoutRules::default(),
+        None,
     )
     .await?;
     tx.commit().await?;
@@ -117,6 +159,7 @@ pub async fn place_order_in(
         now,
         &fingerprint,
         CheckoutRules::default(),
+        None,
     )
     .await
 }
@@ -128,9 +171,22 @@ pub(crate) async fn place_order_with_attempt_in(
     now: DateTime<Utc>,
     fingerprint: &AttemptFingerprint,
     rules: CheckoutRules,
+    // Supplied only by a caller that has already ruled out a replay and loaded
+    // the snapshot under this same BEGIN IMMEDIATE.
+    checked_snapshot: Option<&CheckoutSnapshot<'_>>,
 ) -> AppResult<CheckoutPlacement> {
     let mut checkout = tx.begin().await?;
-    match place_locked(&mut checkout, target, request, now, fingerprint, rules).await {
+    match place_locked(
+        &mut checkout,
+        target,
+        request,
+        now,
+        fingerprint,
+        rules,
+        checked_snapshot,
+    )
+    .await
+    {
         Ok(placement) => {
             checkout.commit().await?;
             Ok(placement)
@@ -149,11 +205,13 @@ async fn place_locked(
     now: DateTime<Utc>,
     fingerprint: &AttemptFingerprint,
     rules: CheckoutRules,
+    checked_snapshot: Option<&CheckoutSnapshot<'_>>,
 ) -> AppResult<CheckoutPlacement> {
     // A concurrent checkout may have committed while this request waited for the writer.
-    if let Some(receipt) = fingerprint
-        .replay(&mut **tx, target.establishment_id, now)
-        .await?
+    if checked_snapshot.is_none()
+        && let Some(receipt) = fingerprint
+            .replay(&mut **tx, target.establishment_id, now)
+            .await?
     {
         return Ok(CheckoutPlacement {
             outcome: CheckoutOutcome::Placed(receipt),
@@ -167,7 +225,13 @@ async fn place_locked(
     }
     let customer = request.customer.normalized()?;
     let address = delivery_address(target.mode, request.address, rules.allow_missing_cep)?;
-    let schedule = business_hours::load_in(tx, target.establishment_id).await?;
+    let loaded_schedule;
+    let schedule = if let Some(snapshot) = checked_snapshot {
+        snapshot.schedule
+    } else {
+        loaded_schedule = business_hours::load_in(tx, target.establishment_id).await?;
+        &loaded_schedule
+    };
     if !schedule.settings.serves(target.mode) {
         return Err(AppError::Validation("delivery.mode_unavailable"));
     }
@@ -176,9 +240,22 @@ async fn place_locked(
         .ok_or(AppError::Validation("delivery.closed"))?;
 
     // The write lock protects this snapshot through order creation and attempt recording.
-    let (version, content) = current_catalog(tx, target).await?;
-    let (mut fresh, items) =
-        evaluate_cart(&content, version, target, &request.cart, &schedule, true)?;
+    let loaded_snapshot;
+    let snapshot = if let Some(snapshot) = checked_snapshot {
+        snapshot
+    } else {
+        loaded_snapshot = CheckoutSnapshot::load_in(tx, target, schedule).await?;
+        &loaded_snapshot
+    };
+    let version = snapshot.version;
+    let (mut fresh, items) = evaluate_cart(
+        &snapshot.content,
+        version,
+        target,
+        &request.cart,
+        schedule,
+        true,
+    )?;
     if let Some(minimum) = rules.minimum_override {
         fresh.minimum_order_centavos = minimum;
     }

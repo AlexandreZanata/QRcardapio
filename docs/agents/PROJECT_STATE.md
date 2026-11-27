@@ -87,7 +87,9 @@ The product owner authorized Phase 3 production work in writing on 2026-11-25 wh
 
 The internal preview provides a white-label storefront, tenant-scoped cart, delivery and pickup, neighborhood fees, coupon redemption, checkout revalidation, private tracking and cancellation, and a staff order center with offline payment confirmation, refunds and CSV export. Access requires an audited, establishment-specific operator grant. Sales remain disabled. The request and response contract lives in [Delivery OpenAPI v1](../../contracts/openapi/delivery.v1.json).
 
-The HTTP suite exercises the compiled preview lifecycle and the operator grant. It checks tenant isolation, disk-only public delivery, quotes, idempotency, concurrent coupon use, expiry, tracking and staff permissions. The first production grant is managed separately from deployment. Real-device PWA installation and staff Web Push, capacity measurements on the VPS, and the broader pilot remain release gates.
+The HTTP suite exercises the compiled preview lifecycle and the operator grant. It checks tenant isolation, disk-only public delivery, quotes, idempotency, concurrent coupon use, expiry, tracking and staff permissions. The first production grant is managed separately from deployment. The suite now checks 100 concurrent checkout attempts against a coupon with ten redemptions and reconciles the ten successful orders, payments and events. The customer privacy regression covers three orders, a partial refund, phone-block export and erasure, and another establishment with the same phone number.
+
+The [sustained local capacity run](../performance/PERFORMANCE.md#sustained-local-run-on-2026-11-27) reconciled 9,795 orders and met the quote and checkout latency budgets. It fell short of the completed orders/s and mixed static read targets. Capacity qualification on the VPS, real-device PWA installation and staff Web Push, and the broader pilot remain release gates.
 
 ## Landing and Panel Refresh
 

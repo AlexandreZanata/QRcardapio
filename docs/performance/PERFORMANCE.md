@@ -154,3 +154,41 @@ The isolated HTTP test upgraded a database from migration `20261125000019` to `2
 The 600-second mixed benchmark exercised full quote confirmation in release on CPU 3, with a 1 GiB memory cap, zero swap and SQLite WAL using `synchronous=FULL` on ext4. With 200 establishments and 64 clients, it placed 50,182 orders and replayed 5,631 requests. Including staff transitions, throughput was 83.51 orders/s. Checkout p95 and p99 were 11.888 ms and 20.632 ms. Replay p95 and p99 were 0.494 ms and 0.779 ms. There were zero errors, duplicate orders or monetary discrepancies.
 
 The mixed workload served 53,113 static menu reads. Menu p95 was 0.718 ms, or 1.864× the pinned baseline of 0.385 ms, within the 2× limit.
+
+## QR Delivery internal preview capacity
+
+Run `COMMERCE_BENCH_CPU=<cpu> COMMERCE_BENCH_MEMORY_MAX=1G ./scripts/bench_commerce.sh delivery` on Linux. Set `TMPDIR` to a directory on persistent storage. The executable creates its own synthetic database and writes with SQLite WAL and `synchronous=FULL`. The scope pins the process to one CPU, caps memory to 1 GiB and disables swap. The release build runs outside that scope.
+
+The default 600-second scenario uses 200 establishments and 64 checkout clients. It alternates delivery and pickup, quotes current prices, exercises idempotent retries and progresses orders through the staff routes. In-process HTTP requests use the real Axum router. The mixed scenario reads the published menu and storefront while orders are written and compares each route with its own read-only baseline. It reconciles order, payment, checkout attempt and outbox records after the workload drains.
+
+The thresholds are those of Commerce Core §13 and QR Delivery §21: at least 30 new orders/s, checkout p95 at most 300 ms and p99 at most 1 s, quote p95 at most 50 ms, static p95 at most twice its own baseline, and zero failed or duplicate writes or monetary discrepancies. The request timings cover application routing and storage. Network and CDN timings require a separate measurement.
+
+Use `COMMERCE_BENCH_SECONDS=15` for a short smoke run. It exercises the routes and reconciliation and reports measurements. Use the full duration and target host for qualification.
+
+### Local comparison on 2026-11-27
+
+Two 30-second release smoke runs used 200 synthetic establishments, 64 clients, logical CPU 4, a verified 1 GiB cgroup limit with swap disabled, and ext4 with SQLite WAL/FULL. The candidate reads the schedule and published catalog once per checkout transaction and reuses them for price verification and order creation.
+
+| Sample | Baseline p95 / p99 | Candidate p95 / p99 |
+|---|---:|---:|
+| Quote | 9.602 / 16.841 ms | 1.482 / 17.641 ms |
+| Checkout | 461.633 / 473.115 ms | 101.713 / 137.452 ms |
+| Idempotent replay | 0.484 / 0.796 ms | 0.515 / 1.139 ms |
+| Static menu under load | 0.362 / 0.585 ms (1.401× p95) | 0.319 / 0.570 ms (1.368× p95) |
+| Static storefront under load | 0.244 / 0.401 ms (1.672× p95) | 0.229 / 0.350 ms (1.614× p95) |
+
+The baseline reconciled 1,248 orders, split equally between delivery and pickup. The candidate reconciled 1,514 orders, including 756 deliveries and 758 pickups, 192 replays, 1,514 pending offline payments, 4,542 staff transitions and 6,056 order events. Including the staff queue drain, throughput rose from 40.54 to 45.92 completed orders/s. Peak memory was 77.5 MiB in the baseline and 80.7 MiB in the candidate. Both samples reconciled without discrepancies.
+
+### Sustained local run on 2026-11-27
+
+The 600-second candidate run used the same CPU, memory limit and persistent SQLite settings. It reconciled 9,795 orders (4,897 deliveries and 4,898 pickups), 1,091 replays, 9,795 pending offline payments, 29,385 staff transitions and 39,180 order events without duplicate or inconsistent records.
+
+| Gate | Sustained result | Outcome |
+|---|---:|---|
+| Completed orders/s ≥ 30 | 16.02 over 611.24 s including drain | Below threshold |
+| Quote p95 ≤ 50 ms | 3.747 ms | Passed |
+| Checkout p95 ≤ 300 ms and p99 ≤ 1 s | 97.047 ms p95 and 408.501 ms p99 | Passed |
+| Static menu p95 ≤ 2× baseline | 0.765 ms, 3.033× baseline | Above threshold |
+| Static storefront p95 ≤ 2× baseline | 0.516 ms, 3.353× baseline | Above threshold |
+
+The benchmark failed the sustained capacity gate. Qualification on the target host remains open.

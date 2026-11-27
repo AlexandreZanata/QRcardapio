@@ -397,7 +397,7 @@ Publication follows [PUBLISHING.md](../architecture/PUBLISHING.md): the shared p
 - Legal basis: performance of the order. Marketing consent is separate, off by default and unused in the MVP.
 - No tracking cookies, third-party analytics, fingerprinting or geolocation on storefronts.
 - Device storage of customer data happens only after opt-in and can be cleared from the storefront.
-- LGPD export and erasure per Commerce Core section 6, including retention exceptions for de-identified financial order records.
+- The existing owner-only customer export includes Delivery order and item notes and the customer’s phone block, when present in the establishment. Erasure removes the notes and phone block, clears personal address fields and detaches the customer link in one transaction. De-identified financial records remain available.
 - Events, push payloads and logs carry no PII; push payloads carry order number and state only.
 
 ## 21. Performance requirements

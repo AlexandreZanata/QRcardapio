@@ -54,7 +54,8 @@ pub async fn quote(
         delivery_fee_centavos: 0,
         discount: None,
     };
-    let base_quote = checkout::quote_in(&mut tx, base_target, &cart, now).await?;
+    let snapshot = checkout::CheckoutSnapshot::load_in(&mut tx, base_target, &schedule).await?;
+    let base_quote = snapshot.quote(base_target, &cart, now)?;
     let subtotal = base_quote.totals.map(|t| t.items_subtotal_centavos);
     let (coupon, coupon_result) = evaluate_coupon(
         &mut tx,
@@ -78,7 +79,7 @@ pub async fn quote(
             delivery_fee_centavos: effective_fee,
             discount,
         };
-        checkout::quote_in(&mut tx, final_target, &cart, now).await?
+        snapshot.quote(final_target, &cart, now)?
     } else {
         base_quote
     };
