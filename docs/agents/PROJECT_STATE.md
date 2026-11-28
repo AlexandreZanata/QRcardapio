@@ -95,6 +95,8 @@ The capacity follow-up reuses the authorized order version during staff transiti
 
 The follow-up local benchmark reconciled 7,972 orders and all 31,888 order events. Quote and checkout latency passed, and throughput and both static p95 ratios remained outside their budgets. [Sustained local follow-up](../performance/PERFORMANCE.md#sustained-local-follow-up-on-2026-11-28)
 
+The isolated local retest passed all six capacity checks in 600 seconds after reducing checkout and staff database round trips and caching the public HTML indexes with a file identity check on each hit. It completed 45.24 orders/s with static p95 ratios of 0.991× for the menu and 1.006× for the storefront. All 27,229 orders and 108,916 events reconciled. The module remains in internal preview and target VPS qualification is pending. [Isolated local capacity retest](../performance/PERFORMANCE.md#isolated-local-capacity-retest-on-2026-11-28)
+
 ## Landing and Panel Refresh
 
 The homepage includes native 4K browser captures of the owner dashboard and public mobile menu, with responsive WebP variants on the landing. The owner dashboard and operational administration share responsive side navigation. Operational tables include translated statuses and empty states.

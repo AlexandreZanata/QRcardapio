@@ -188,6 +188,13 @@ async fn sustained_delivery_capacity() {
         "Delivery capacity: {ESTABLISHMENTS} establishments, {CLIENTS} clients, {seconds}s, router in-process, WAL/FULL"
     );
 
+    // Use warmed caches for both measured phases. Otherwise the reference
+    // includes cache fills the mixed phase will inherit.
+    storefront_get(&harness.app, MENU_PATH).await;
+    for tenant in tenants.iter() {
+        storefront_get(&harness.app, &tenant.index_url).await;
+    }
+
     let baseline_menu = tokio::spawn(read_stream(
         harness.app.clone(),
         tenants.clone(),

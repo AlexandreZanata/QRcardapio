@@ -67,27 +67,19 @@ async fn apply_transition(
     command: TransitionOrder<'_>,
     at: DateTime<Utc>,
 ) -> AppResult<Order> {
-    validate_actor(tx, &order.establishment_id, command).await?;
-    if order.state != command.expected_state || order.version != command.expected_version {
+    let event_type = match validate_transition(order, command, at) {
+        Ok(event_type) => event_type,
+        Err(error) => {
+            validate_actor(tx, &order.establishment_id, command).await?;
+            return Err(error);
+        }
+    };
+    // The conditional write checks current membership alongside state and version.
+    // A failed write resolves the reason without another query on a successful transition.
+    let Some(changed) = orders::update_state(tx, order, command, at).await? else {
+        validate_actor(tx, &order.establishment_id, command).await?;
         return Err(CONFLICT);
-    }
-
-    let rule = machine_transition(
-        Machine::Order,
-        command.expected_state.into(),
-        command.action.target().into(),
-        command.actor,
-    )
-    .ok_or(CONFLICT)?;
-    let event_type = rule
-        .event
-        .and_then(|event| event.implemented())
-        .ok_or_else(|| AppError::Internal("order transition event is missing".into()))?;
-    validate_preconditions(order, command, at)?;
-
-    let changed = orders::update_state(tx, order, command, at)
-        .await?
-        .ok_or(CONFLICT)?;
+    };
     order_transitions::append(tx, &changed, command).await?;
     if matches!(changed.state, OrderState::Rejected | OrderState::Cancelled) {
         delivery_coupons::release_for_order_in(tx, &changed.establishment_id, &changed.id, at)
@@ -108,6 +100,29 @@ async fn apply_transition(
     )
     .await?;
     Ok(changed)
+}
+
+fn validate_transition(
+    order: &Order,
+    command: TransitionOrder<'_>,
+    at: DateTime<Utc>,
+) -> AppResult<EventType> {
+    if order.state != command.expected_state || order.version != command.expected_version {
+        return Err(CONFLICT);
+    }
+    let rule = machine_transition(
+        Machine::Order,
+        command.expected_state.into(),
+        command.action.target().into(),
+        command.actor,
+    )
+    .ok_or(CONFLICT)?;
+    let event_type = rule
+        .event
+        .and_then(|event| event.implemented())
+        .ok_or_else(|| AppError::Internal("order transition event is missing".into()))?;
+    validate_preconditions(order, command, at)?;
+    Ok(event_type)
 }
 
 async fn validate_actor(

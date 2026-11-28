@@ -296,10 +296,12 @@ async fn authorize_inner(
     {
         return Ok(Err(Denial::ModuleUnavailable));
     }
-    let status = queries::operational_status(pool, establishment_id).await?;
-    let status = OperationalStatus::parse(&status).unwrap_or(OperationalStatus::Active);
-    if status.blocks(operation) {
-        return Ok(Err(Denial::EstablishmentSuspended(status)));
+    if operation.requires_active_establishment() {
+        let status = queries::operational_status(pool, establishment_id).await?;
+        let status = OperationalStatus::parse(&status).unwrap_or(OperationalStatus::Active);
+        if status.blocks(operation) {
+            return Ok(Err(Denial::EstablishmentSuspended(status)));
+        }
     }
     if !operation.permits(role) {
         return Ok(Err(Denial::PermissionDenied));

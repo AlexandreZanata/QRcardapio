@@ -1,14 +1,16 @@
-use axum::body::Body;
+use std::io::{Error, ErrorKind};
+
+use axum::body::{Body, Bytes};
 use axum::extract::{Path, State};
 use axum::http::header::{CACHE_CONTROL, CONTENT_TYPE, ETAG, LOCATION};
 use axum::http::{HeaderMap, HeaderName, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Response};
-use sha2::{Digest, Sha256};
 
 use crate::app::AppState;
 use crate::domain::establishment::Slug;
 use crate::error::{AppError, AppResult};
 use crate::http::responses::check_etag_not_modified;
+use crate::http::responses::public_html::{HtmlKind, storefront_etag};
 use crate::infrastructure::storage::resolve_safe_subpath;
 
 pub async fn redirect_trailing_slash(Path(slug): Path<String>) -> AppResult<Response> {
@@ -56,39 +58,54 @@ async fn serve_storefront_file(
     let slug_dir = resolve_safe_subpath(&state.config.storefronts_dir(), slug)?;
     let path = resolve_safe_subpath(&slug_dir, relative)?;
     let (content_type, cache_control, sw_scope) = asset_headers(slug, relative)?;
-    let is_index = relative == "index.html";
-    let (bytes, etag) = tokio::task::spawn_blocking(move || {
-        if !is_index && !slug_dir.join("index.html").try_exists()? {
-            return Err(AppError::NotFound("delivery.storefront_not_found"));
-        }
-        let bytes = std::fs::read(path).map_err(|err| {
-            if err.kind() == std::io::ErrorKind::NotFound {
-                AppError::NotFound("delivery.storefront_not_found")
-            } else {
-                AppError::Io(err)
+    let mut response = if relative == "index.html" {
+        let page = state
+            .public_html
+            .read(path, HtmlKind::Storefront)
+            .await
+            .map_err(storefront_file_error)?;
+        storefront_response(headers, page.body.clone(), &page.etag)
+    } else {
+        let (bytes, etag) = tokio::task::spawn_blocking(move || {
+            if !slug_dir.join("index.html").try_exists()? {
+                return Err(AppError::NotFound("delivery.storefront_not_found"));
             }
-        })?;
-        let digest = Sha256::digest(&bytes);
-        let etag = format!("\"sf-{}\"", hex::encode(&digest[..8]));
-        Ok((bytes, etag))
-    })
-    .await
-    .map_err(|err| AppError::Internal(format!("storefront read failed: {err}")))??;
+            let bytes = std::fs::read(path).map_err(storefront_file_error)?;
+            let etag = storefront_etag(&bytes);
+            Ok((bytes, etag))
+        })
+        .await
+        .map_err(|err| AppError::Internal(format!("storefront read failed: {err}")))??;
+        storefront_response(headers, bytes.into(), &etag)
+    };
 
-    let mut response =
-        check_etag_not_modified(headers, &etag).unwrap_or_else(|| Response::new(Body::from(bytes)));
     let res_headers = response.headers_mut();
     res_headers.insert(CONTENT_TYPE, HeaderValue::from_static(content_type));
     res_headers.insert(CACHE_CONTROL, HeaderValue::from_static(cache_control));
-    if let Ok(etag_val) = HeaderValue::from_str(&etag) {
-        res_headers.insert(ETAG, etag_val);
-    }
     if let Some(scope) = sw_scope
         && let Ok(scope_val) = HeaderValue::from_str(&scope)
     {
         res_headers.insert(HeaderName::from_static("service-worker-allowed"), scope_val);
     }
     Ok(response)
+}
+
+fn storefront_file_error(error: Error) -> AppError {
+    match error.kind() {
+        ErrorKind::NotFound => AppError::NotFound("delivery.storefront_not_found"),
+        _ => AppError::Io(error),
+    }
+}
+
+fn storefront_response(headers: &HeaderMap, bytes: Bytes, etag: &str) -> Response {
+    if let Some(response) = check_etag_not_modified(headers, etag) {
+        return response;
+    }
+    let mut response = Response::new(Body::from(bytes));
+    if let Ok(value) = HeaderValue::from_str(etag) {
+        response.headers_mut().insert(ETAG, value);
+    }
+    response
 }
 
 fn asset_headers(

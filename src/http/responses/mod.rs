@@ -10,6 +10,8 @@ use crate::error::AppError;
 use crate::i18n::{Catalog, Locale};
 use crate::rendering::FlashMessage;
 
+pub(crate) mod public_html;
+
 const FLASH_COOKIE_NAME: &str = "qr_flash";
 
 #[derive(Serialize)]

@@ -108,17 +108,6 @@ pub(crate) async fn insert_metadata_in(
     .bind(now)
     .execute(&mut **tx)
     .await?;
-    if !meta.neighborhood_label.is_empty() {
-        sqlx::query(
-            "UPDATE order_delivery_details SET neighborhood_label = ?
-             WHERE order_id = ? AND establishment_id = ?",
-        )
-        .bind(&meta.neighborhood_label)
-        .bind(&meta.order_id)
-        .bind(&meta.establishment_id)
-        .execute(&mut **tx)
-        .await?;
-    }
     Ok(())
 }
 

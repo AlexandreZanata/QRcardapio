@@ -1,6 +1,7 @@
 use chrono::{DateTime, NaiveDate, Utc};
 use sqlx::{Sqlite, SqliteExecutor, Transaction};
 
+use super::order_transitions::member_role_exists;
 use crate::domain::commerce::order::{Fulfillment, Order, OrderChannel, TransitionOrder};
 use crate::error::{AppError, AppResult};
 
@@ -186,7 +187,7 @@ pub(crate) async fn update_state(
     command: TransitionOrder<'_>,
     at: DateTime<Utc>,
 ) -> AppResult<Option<Order>> {
-    sqlx::query_as::<_, OrderRow>(
+    sqlx::query_as::<_, OrderRow>(concat!(
         "UPDATE orders SET
             state = ?1,
             version = version + 1,
@@ -200,8 +201,11 @@ pub(crate) async fn update_state(
             cancelled_at = CASE WHEN ?1 = 'cancelled' THEN ?2 ELSE cancelled_at END,
             reason_code = COALESCE(?4, reason_code)
          WHERE id = ?5 AND establishment_id = ?6 AND state = ?7 AND version = ?8
-         RETURNING *",
-    )
+           AND ((?9 IS NULL AND ?10 IN ('consumer', 'system'))
+                OR (?10 NOT IN ('consumer', 'system', 'gateway') AND ",
+        member_role_exists!("?9", "?6", "?10"),
+        ")) RETURNING *",
+    ))
     .bind(command.action.target().as_str())
     .bind(at)
     .bind(command.action.promised_at())
@@ -210,6 +214,8 @@ pub(crate) async fn update_state(
     .bind(&order.establishment_id)
     .bind(command.expected_state.as_str())
     .bind(command.expected_version)
+    .bind(command.actor_account_id)
+    .bind(command.actor.as_str())
     .fetch_optional(&mut **tx)
     .await?
     .map(Order::try_from)
