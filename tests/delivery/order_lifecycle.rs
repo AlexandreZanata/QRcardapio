@@ -245,14 +245,23 @@ async fn staff_updates_require_the_right_tenant_role_csrf_and_order_version() {
             .status(),
         StatusCode::NOT_FOUND
     );
-    assert_eq!(
-        submit(&app, &waiter, &transition, &accept).await.status(),
-        StatusCode::SEE_OTHER
+    let (first, second) = tokio::join!(
+        submit(&app, &waiter, &transition, &accept),
+        submit(&app, &waiter, &transition, &accept),
     );
-    assert_eq!(
-        submit(&app, &waiter, &transition, &accept).await.status(),
-        StatusCode::CONFLICT
-    );
+    let mut results = [first.status(), second.status()];
+    results.sort_unstable();
+    assert_eq!(results, [StatusCode::SEE_OTHER, StatusCode::CONFLICT]);
+    let accepted_events: i64 = sqlx::query_scalar(
+        "SELECT count(*) FROM domain_events
+         WHERE aggregate_id = ? AND establishment_id = ? AND event_type = 'OrderAccepted'",
+    )
+    .bind(&id)
+    .bind(&shop.id)
+    .fetch_one(&h.pool)
+    .await
+    .unwrap();
+    assert_eq!(accepted_events, 1);
     let cancel = format!(
         "to=cancelled&expected_version={}&reason_code=other",
         version + 1

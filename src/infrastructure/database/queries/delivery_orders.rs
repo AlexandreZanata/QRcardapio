@@ -157,6 +157,27 @@ pub async fn get_metadata<'e>(
     .await?)
 }
 
+pub(crate) async fn acceptance_estimates(
+    pool: &SqlitePool,
+    est_id: &str,
+    order_id: &str,
+    delivery: bool,
+) -> AppResult<(Option<i64>, i64)> {
+    Ok(sqlx::query_as(
+        "SELECT (SELECT default_prep_minutes FROM storefronts WHERE establishment_id = ?1),
+                COALESCE((
+                    SELECT z.eta_max_minutes FROM delivery_order_metadata m
+                    JOIN delivery_zones z ON z.id = m.zone_id AND z.establishment_id = m.establishment_id
+                    WHERE m.order_id = ?2 AND m.establishment_id = ?1 AND ?3
+                ), 0)",
+    )
+    .bind(est_id)
+    .bind(order_id)
+    .bind(delivery)
+    .fetch_one(pool)
+    .await?)
+}
+
 pub async fn get_customer_id_for_order<'e>(
     executor: impl SqliteExecutor<'e>,
     est_id: &str,

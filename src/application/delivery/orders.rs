@@ -16,11 +16,11 @@ use crate::domain::commerce::order_payment::{
 };
 use crate::domain::commerce::state_machine::{Actor, OrderState};
 use crate::domain::commercial::CommercialCatalog;
+use crate::domain::delivery::storefront::DEFAULT_PREP_MINUTES;
 use crate::domain::entitlements::{MemberRole, Operation};
 use crate::error::{AppError, AppResult};
 use crate::infrastructure::database::queries::{
-    delivery_exports::OrderExportRow, delivery_orders, delivery_storefronts, delivery_zones,
-    order_payments, orders,
+    delivery_exports::OrderExportRow, delivery_orders, order_payments, orders,
 };
 
 #[allow(clippy::too_many_arguments)]
@@ -61,23 +61,16 @@ pub async fn transition_staff_order(
     // - preparing/ready from preparing, and staff cancellations require Owner or Manager.
     let action = match (order.state, target) {
         (OrderState::Placed, OrderState::Accepted) => {
-            let storefront = delivery_storefronts::get_or_default(pool, est_id).await?;
-            let prep = prep_minutes
-                .unwrap_or(storefront.default_prep_minutes)
-                .clamp(1, 240);
-            let zone_eta = if order.fulfillment == Fulfillment::Delivery {
-                match delivery_orders::get_metadata(pool, est_id, &order.id)
-                    .await?
-                    .and_then(|m| m.zone_id)
-                {
-                    Some(zone_id) => delivery_zones::get_in(pool, est_id, &zone_id)
-                        .await?
-                        .map_or(0, |z| z.eta_max_minutes),
-                    None => 0,
-                }
+            let delivery = order.fulfillment == Fulfillment::Delivery;
+            let (default_prep, zone_eta) = if prep_minutes.is_none() || delivery {
+                delivery_orders::acceptance_estimates(pool, est_id, &order.id, delivery).await?
             } else {
-                0
+                (None, 0)
             };
+            let prep = prep_minutes
+                .or(default_prep)
+                .unwrap_or(DEFAULT_PREP_MINUTES)
+                .clamp(1, 240);
             let promised_at = now + Duration::minutes(prep + zone_eta);
             OrderAction::Accept { promised_at }
         }
@@ -118,10 +111,9 @@ pub async fn transition_staff_order(
         _ => return Err(AppError::Conflict("commerce.order_state_conflict")),
     };
 
-    order_transitions::transition(
+    order_transitions::transition_loaded(
         pool,
-        est_id,
-        order_id,
+        &order,
         TransitionOrder {
             expected_state: order.state,
             expected_version,

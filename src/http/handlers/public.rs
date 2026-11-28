@@ -1,8 +1,11 @@
+use std::fs::File;
+use std::io::Read;
 use std::net::IpAddr;
 use std::os::unix::fs::MetadataExt;
+use std::path::PathBuf;
 
 use axum::extract::{Path, Query, State};
-use axum::http::header::{CACHE_CONTROL, CONTENT_TYPE, ETAG};
+use axum::http::header::{CACHE_CONTROL, CONTENT_TYPE, ETAG, IF_NONE_MATCH};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Redirect, Response};
 use axum_extra::extract::CookieJar;
@@ -215,11 +218,23 @@ pub async fn serve_published_file_from_disk(
         return render_public_404(locale);
     };
 
-    let Ok(meta) = tokio::fs::metadata(&target).await else {
-        return render_public_404(locale);
-    };
+    let mut conditional = HeaderMap::new();
+    if let Some(value) = headers.get(IF_NONE_MATCH) {
+        conditional.insert(IF_NONE_MATCH, value.clone());
+    }
+    tokio::task::spawn_blocking(move || read_published_file(target, &conditional))
+        .await
+        .ok()
+        .flatten()
+        .unwrap_or_else(|| render_public_404(locale))
+}
+
+fn read_published_file(target: PathBuf, headers: &HeaderMap) -> Option<Response> {
+    // Metadata and body come from the same generation if publication replaces the path.
+    let mut file = File::open(&target).ok()?;
+    let meta = file.metadata().ok()?;
     if !meta.is_file() {
-        return render_public_404(locale);
+        return None;
     }
 
     let mtime_ns = meta
@@ -230,12 +245,11 @@ pub async fn serve_published_file_from_disk(
         .unwrap_or(0);
     let etag = format!("\"{}-{}-{}\"", meta.ino(), meta.size(), mtime_ns);
     if let Some(not_mod) = check_etag_not_modified(headers, &etag) {
-        return not_mod;
+        return Some(not_mod);
     }
 
-    let Ok(bytes) = tokio::fs::read(&target).await else {
-        return render_public_404(locale);
-    };
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes).ok()?;
 
     let (content_type, cache_control) = match target.extension().and_then(|e| e.to_str()) {
         Some("html") => (
@@ -258,7 +272,7 @@ pub async fn serve_published_file_from_disk(
     if let Ok(hv) = HeaderValue::from_str(&etag) {
         res_headers.insert(ETAG, hv);
     }
-    res
+    Some(res)
 }
 
 fn render_public_404(locale: crate::i18n::Locale) -> Response {

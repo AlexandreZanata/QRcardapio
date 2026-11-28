@@ -111,7 +111,7 @@ The readiness increment extends published availability revisions to options, che
 
 ## Phase 4 — QR Delivery
 
-**Status.** Internal preview on the consolidated Commerce Core. Each participating establishment requires an audited `internal_preview` grant from an operator. Sales remain disabled. The verification suite uses the compiled catalog and exercises grant issuance and tenant isolation. Production capacity, physical device installation, the broader pilot and launch gates remain open.
+**Status.** Internal preview on the consolidated Commerce Core. Each participating establishment requires an audited `internal_preview` grant from an operator. Sales remain disabled. The staff order center supports standalone installation when Web Push is configured. The verification suite exercises grant issuance, tenant isolation and concurrent order acceptance. Capacity qualification on the target VPS, physical-device installation and push, the broader pilot and launch gates remain open. [Capacity evidence](../performance/PERFORMANCE.md#qr-delivery-internal-preview-capacity) · [Device procedure](../operations/RUNBOOK.md#qr-delivery-physical-device-qualification)
 
 **Objective.** Own ordering channel for delivery and pickup without marketplace commission.
 

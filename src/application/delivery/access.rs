@@ -10,7 +10,7 @@ use crate::infrastructure::database::queries::delivery_storefronts;
 #[derive(Default)]
 pub struct StaffAccess {
     pub orders: bool,
-    pub new_orders: bool,
+    pub can_register_push: bool,
     pub settings: bool,
     pub storefront_management: bool,
 }
@@ -61,7 +61,8 @@ pub async fn staff_access(
         orders: progress || settings || has_history,
         storefront_management: settings
             || (has_history && Operation::DeliveryStorefrontUnpublish.permits(role)),
-        new_orders: progress,
+        // Commerce Push subscriptions reference the owner/manager membership table.
+        can_register_push: progress && matches!(role, MemberRole::Owner | MemberRole::Manager),
         settings,
     })
 }

@@ -11,6 +11,8 @@ use crate::application::commerce::notifications;
 use crate::application::delivery::access::staff_access;
 use crate::error::{AppError, AppResult};
 use crate::http::middleware::auth::{TenantContext, verify_csrf};
+use crate::http::middleware::locale::RequestLocale;
+use crate::i18n::Catalog;
 use crate::infrastructure::web_push::PushSubscription;
 
 #[derive(Deserialize)]
@@ -26,21 +28,50 @@ pub struct RevokeInput {
     _csrf: String,
 }
 
+pub async fn manifest(
+    State(state): State<AppState>,
+    tenant: TenantContext,
+    RequestLocale(locale): RequestLocale,
+) -> AppResult<Response> {
+    if state.staff_push_public_key.is_none() {
+        return Err(AppError::NotFound("error.not_found"));
+    }
+    if !can_receive_push(&state, &tenant).await? {
+        return Err(AppError::Forbidden("error.module_unavailable"));
+    }
+
+    let catalog = Catalog::global();
+    let heading = catalog.t(locale, "delivery.orders.heading");
+    let app_name = catalog.t(locale, "app.name");
+    Ok((
+        [(header::CONTENT_TYPE, "application/manifest+json; charset=utf-8")],
+        Json(json!({
+            "id": "/dashboard/delivery/orders",
+            "start_url": "/dashboard/delivery/orders",
+            "scope": "/dashboard/delivery/",
+            "name": format!("{app_name} — {heading}"),
+            "short_name": heading,
+            "lang": locale.code(),
+            "display": "standalone",
+            "background_color": "#fff9ee",
+            "theme_color": "#263be8",
+            "icons": [
+                { "src": "/static/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+                { "src": "/static/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+                { "src": "/static/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+            ]
+        })),
+    )
+        .into_response())
+}
+
 pub async fn subscribe(
     State(state): State<AppState>,
     tenant: TenantContext,
     Json(input): Json<SubscriptionInput>,
 ) -> AppResult<Json<Value>> {
     verify_csrf(&tenant.auth, &input._csrf)?;
-    let access = staff_access(
-        &state.pool,
-        &state.commercial_catalog,
-        state.billing.enforcement(),
-        &tenant.establishment.id,
-        tenant.role,
-    )
-    .await?;
-    if state.staff_push_public_key.is_none() || !access.new_orders {
+    if state.staff_push_public_key.is_none() || !can_receive_push(&state, &tenant).await? {
         return Err(AppError::Forbidden("error.module_unavailable"));
     }
     let subscription = PushSubscription::parse(&input.endpoint, &input.p256dh, &input.auth)?;
@@ -84,4 +115,16 @@ pub async fn worker(State(state): State<AppState>, _tenant: TenantContext) -> Ap
         include_str!("../../../../static/js/delivery-staff-worker.js"),
     )
         .into_response())
+}
+
+async fn can_receive_push(state: &AppState, tenant: &TenantContext) -> AppResult<bool> {
+    let access = staff_access(
+        &state.pool,
+        &state.commercial_catalog,
+        state.billing.enforcement(),
+        &tenant.establishment.id,
+        tenant.role,
+    )
+    .await?;
+    Ok(access.can_register_push)
 }

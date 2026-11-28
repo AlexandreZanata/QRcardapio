@@ -57,9 +57,9 @@ Not targeted in the MVP: multi-store chains, marketplaces, establishments needin
 | Service modes | Delivery and/or pickup |
 | Fees by neighborhood | Fee, ETA range and optional free-delivery threshold per zone |
 | Pay on delivery | Cash (with change), card machine, Pix to the establishment's own key; confirmed by staff |
-| Order center | Live list by state, sound alert, accept/reject, preparing, ready, complete, cancel, printable ticket |
+| Order center | Installable app for owners and managers when Web Push is configured, live list by state, sound alert, accept/reject, preparing, ready, complete, cancel, printable ticket |
 | Tracking and history | Consumer tracking view and device-local order history; staff history with filters and CSV export |
-| Notifications | Order-center sound and web push for staff; optional web push on the tracking view; WhatsApp click-to-chat link (no API) |
+| Notifications | Order-center sound for staff, Web Push for owners and managers with current Delivery access, optional Web Push on the tracking view, WhatsApp click-to-chat link (no API) |
 
 ## 5. Future scope
 
@@ -311,11 +311,14 @@ The registry defines dedupe keys only for implemented events; the "Design" keys 
 | `POST` | `/dashboard/delivery/customers/block` | member | `delivery.settings.update` | Block or unblock a phone number for this establishment |
 | `POST` | `/dashboard/delivery/publish` | member | `delivery.storefront.publish` | Publishes or republishes the storefront snapshot; emits `CatalogPublished` (`channel: "storefront"`) |
 | `POST` | `/dashboard/delivery/unpublish` | member | `delivery.storefront.unpublish` | Unpublishes the static storefront snapshot without touching `/c/{slug}` |
+| `GET` | `/dashboard/delivery/manifest.webmanifest` | owner or manager | `delivery.order.progress` | Authenticated, localized manifest when VAPID is configured. Launches the order center in standalone mode with scope `/dashboard/delivery/`. |
 | `GET` | `/dashboard/delivery/sw.js` | member | membership | Staff worker scoped to `/dashboard/delivery/` when VAPID is configured |
-| `POST` | `/dashboard/delivery/push-subscriptions` | member | `delivery.order.progress` | Register a validated Web Push subscription for the current member |
+| `POST` | `/dashboard/delivery/push-subscriptions` | owner or manager | `delivery.order.progress` | Register a validated Web Push subscription for the current member |
 | `POST` | `/dashboard/delivery/push-subscriptions/{id}/revoke` | member | membership | Revoke the current member’s subscription |
 
 Static files published next to `index.html` under `/s/{slug}/`: `manifest.webmanifest` (`max-age=300`), `sw.js` (`no-cache`), `theme-{hash8}.css` and `media/*` (immutable), `icon-192.png`, `icon-512.png`.
+
+The staff app has its own manifest and notification worker. Device subscriptions use the same establishment membership records as owners and managers. Cashiers and waiters can work in the browser order center and enable its sound alert. The worker handles Web Push and opens the order center from a notification. Dashboard requests require a connection and use `Cache-Control: no-store`. [Physical-device qualification](../operations/RUNBOOK.md#qr-delivery-physical-device-qualification)
 
 ### 16.2 Quote and order bodies
 

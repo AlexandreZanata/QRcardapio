@@ -4,6 +4,10 @@
 {% block page_styles %}
 <link rel="stylesheet" href="/static/css/dashboard-commerce.css">
 <link rel="stylesheet" href="/static/css/delivery-orders.css">
+{% if push_key.is_some() %}
+<link rel="manifest" href="/dashboard/delivery/manifest.webmanifest?lang={{ page.locale_code }}" crossorigin="use-credentials">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+{% endif %}
 {% endblock %}
 
 {% block content %}

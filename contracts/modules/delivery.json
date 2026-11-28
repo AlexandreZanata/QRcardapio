@@ -228,6 +228,12 @@
     },
     {
       "method": "GET",
+      "path": "/dashboard/delivery/manifest.webmanifest",
+      "audience": "member",
+      "status": "internal_preview"
+    },
+    {
+      "method": "GET",
       "path": "/dashboard/delivery/sw.js",
       "audience": "member",
       "status": "internal_preview"

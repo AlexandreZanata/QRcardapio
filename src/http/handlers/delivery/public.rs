@@ -56,20 +56,25 @@ async fn serve_storefront_file(
     let slug_dir = resolve_safe_subpath(&state.config.storefronts_dir(), slug)?;
     let path = resolve_safe_subpath(&slug_dir, relative)?;
     let (content_type, cache_control, sw_scope) = asset_headers(slug, relative)?;
-    if relative != "index.html" && !tokio::fs::try_exists(slug_dir.join("index.html")).await? {
-        return Err(AppError::NotFound("delivery.storefront_not_found"));
-    }
-
-    let bytes = tokio::fs::read(&path).await.map_err(|err| {
-        if err.kind() == std::io::ErrorKind::NotFound {
-            AppError::NotFound("delivery.storefront_not_found")
-        } else {
-            AppError::Io(err)
+    let is_index = relative == "index.html";
+    let (bytes, etag) = tokio::task::spawn_blocking(move || {
+        if !is_index && !slug_dir.join("index.html").try_exists()? {
+            return Err(AppError::NotFound("delivery.storefront_not_found"));
         }
-    })?;
+        let bytes = std::fs::read(path).map_err(|err| {
+            if err.kind() == std::io::ErrorKind::NotFound {
+                AppError::NotFound("delivery.storefront_not_found")
+            } else {
+                AppError::Io(err)
+            }
+        })?;
+        let digest = Sha256::digest(&bytes);
+        let etag = format!("\"sf-{}\"", hex::encode(&digest[..8]));
+        Ok((bytes, etag))
+    })
+    .await
+    .map_err(|err| AppError::Internal(format!("storefront read failed: {err}")))??;
 
-    let digest = Sha256::digest(&bytes);
-    let etag = format!("\"sf-{}\"", &hex::encode(digest)[..16]);
     let mut response =
         check_etag_not_modified(headers, &etag).unwrap_or_else(|| Response::new(Body::from(bytes)));
     let res_headers = response.headers_mut();

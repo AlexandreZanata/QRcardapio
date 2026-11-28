@@ -1,3 +1,5 @@
+use std::time::{Duration, Instant};
+
 use sqlx::SqlitePool;
 
 use crate::fixture::{DELIVERY_FEE, SUBTOTAL};
@@ -133,5 +135,47 @@ pub async fn check(pool: &SqlitePool, delivery: usize, pickup: usize) {
         "reconciled {count} placements, {count} pending offline payments, {} transitions, {} order events, no duplicate or monetary discrepancies",
         3 * count,
         4 * count
+    );
+}
+
+pub async fn check_publications(pool: &SqlitePool, orders: usize) {
+    let started = Instant::now();
+    tokio::time::timeout(Duration::from_secs(30), async {
+        loop {
+            let pending: i64 = sqlx::query_scalar(
+                "SELECT COUNT(*) FROM event_dispatch_publications WHERE published_at IS NULL",
+            )
+            .fetch_one(pool)
+            .await
+            .unwrap();
+            if pending == 0 {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(50)).await;
+        }
+    })
+    .await
+    .expect("outbox publications did not drain after traffic stopped");
+    let published: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM domain_events e
+         JOIN event_dispatch_publications p ON p.event_seq = e.seq
+         WHERE e.aggregate_type = 'order' AND p.published_at IS NOT NULL",
+    )
+    .fetch_one(pool)
+    .await
+    .unwrap();
+    let notified: i64 = sqlx::query_scalar(
+        "SELECT COUNT(*) FROM event_consumer_receipts r
+         JOIN domain_events e ON e.event_id = r.event_id
+         WHERE e.event_type = 'OrderCreated' AND r.consumer = 'commerce.notifications'",
+    )
+    .fetch_one(pool)
+    .await
+    .unwrap();
+    assert_eq!(published, i64::try_from(orders).unwrap() * 4);
+    assert_eq!(notified, i64::try_from(orders).unwrap());
+    println!(
+        "outbox: {published} order events published and {notified} notification receipts reconciled in {:.3}s after ledger reconciliation",
+        started.elapsed().as_secs_f64()
     );
 }
