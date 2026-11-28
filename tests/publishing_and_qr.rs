@@ -478,17 +478,18 @@ async fn atomic_publish_xss_escaping_zero_db_delivery_and_recovery() {
         }
     });
 
-    let pub_root = cfg.published_dir();
+    let reader_app = app.clone();
     let reader = tokio::spawn(async move {
         for _ in 0..25 {
-            let r = serve_published_file_from_disk(
-                &pub_root,
-                "cantina-bella",
-                "index.html",
-                Locale::PtBr,
-                &HeaderMap::new(),
-            )
-            .await;
+            let r = reader_app
+                .clone()
+                .oneshot(
+                    Request::get("/c/cantina-bella")
+                        .body(Body::empty())
+                        .unwrap(),
+                )
+                .await
+                .unwrap();
             assert_eq!(r.status(), StatusCode::OK);
             let body = r.into_body().collect().await.unwrap().to_bytes();
             let text = String::from_utf8(body.to_vec()).unwrap();
@@ -508,14 +509,16 @@ async fn atomic_publish_xss_escaping_zero_db_delivery_and_recovery() {
     unpublish_establishment(&pool, &cfg, &locks, &est_latest)
         .await
         .unwrap();
-    let after_unpub = serve_published_file_from_disk(
-        &cfg.published_dir(),
-        "cantina-bella",
-        "index.html",
-        Locale::PtBr,
-        &HeaderMap::new(),
-    )
-    .await;
+    let after_unpub = app
+        .clone()
+        .oneshot(
+            Request::get("/c/cantina-bella")
+                .header(IF_NONE_MATCH, "*")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
     assert_eq!(after_unpub.status(), StatusCode::NOT_FOUND);
     let after_unpub_product = serve_published_file_from_disk(
         &cfg.published_dir(),
@@ -534,14 +537,14 @@ async fn atomic_publish_xss_escaping_zero_db_delivery_and_recovery() {
     pool.close().await;
     std::fs::remove_file(cfg.db_path()).unwrap();
 
-    let zero_db_res = serve_published_file_from_disk(
-        &cfg.published_dir(),
-        "cantina-bella",
-        "index.html",
-        Locale::PtBr,
-        &HeaderMap::new(),
-    )
-    .await;
+    let zero_db_res = app
+        .oneshot(
+            Request::get("/c/cantina-bella")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
     assert_eq!(zero_db_res.status(), StatusCode::OK);
 
     // QR Code SVG and PNG validity for permanent URL

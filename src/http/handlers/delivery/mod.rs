@@ -71,6 +71,10 @@ pub fn router() -> Router<AppState> {
             post(settings::unpublish_submit),
         )
         .route("/dashboard/delivery/orders", get(orders::orders_page))
+        .route(
+            "/dashboard/delivery/manifest.webmanifest",
+            get(push::manifest),
+        )
         .route("/dashboard/delivery/sw.js", get(push::worker))
         .route(
             "/dashboard/delivery/push-subscriptions",

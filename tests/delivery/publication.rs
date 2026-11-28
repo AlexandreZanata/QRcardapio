@@ -136,6 +136,8 @@ async fn published_storefront_and_scoped_assets_survive_without_sqlite_and_leave
     .unwrap();
     assert_eq!(storefront_event, 1);
 
+    let warm_beta = get_public(&preview, &beta.storefront(), None).await;
+    assert_eq!(warm_beta.status(), StatusCode::OK);
     assert_eq!(
         submit(&preview, &beta.owner, UNPUBLISH, "").await.status(),
         StatusCode::SEE_OTHER
@@ -222,7 +224,7 @@ async fn published_storefront_and_scoped_assets_survive_without_sqlite_and_leave
     assert!(!script.contains(&beta.storefront()));
 
     assert_eq!(
-        get_public(&preview, &beta.storefront(), None)
+        get_public(&preview, &beta.storefront(), Some("*"))
             .await
             .status(),
         StatusCode::NOT_FOUND

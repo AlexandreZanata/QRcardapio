@@ -315,7 +315,7 @@ pub async fn orders_page(
         push_key: state
             .staff_push_public_key
             .clone()
-            .filter(|_| access.new_orders),
+            .filter(|_| access.can_register_push),
         push_scope: format!("{}-{}", est.id, tenant.auth.account.id),
     };
 

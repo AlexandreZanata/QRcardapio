@@ -194,6 +194,10 @@ impl Operation {
         }
     }
 
+    pub(crate) const fn requires_active_establishment(self) -> bool {
+        matches!(self.after_expiry(), AfterExpiry::Deny)
+    }
+
     pub fn permits(self, role: impl Into<ActorRole>) -> bool {
         let role = role.into();
         self.roles().contains(&role)
@@ -226,7 +230,7 @@ impl OperationalStatus {
     /// Suspension blocks new protected commercial activity only. Unpublishing, viewing
     /// data, completing existing work and regularizing the subscription stay available.
     pub const fn blocks(self, operation: Operation) -> bool {
-        !matches!(self, Self::Active) && matches!(operation.after_expiry(), AfterExpiry::Deny)
+        !matches!(self, Self::Active) && operation.requires_active_establishment()
     }
 }
 

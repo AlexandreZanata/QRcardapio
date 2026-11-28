@@ -1,4 +1,5 @@
 use chrono::NaiveDate;
+use sqlx::types::Json;
 use sqlx::{SqliteConnection, SqlitePool};
 
 use crate::domain::commerce::business_hours::{CommercialSettings, Schedule, Windows};
@@ -6,60 +7,63 @@ use crate::error::{AppError, AppResult};
 use crate::infrastructure::database::begin_immediate;
 
 pub async fn load(pool: &SqlitePool, establishment: &str) -> AppResult<Schedule> {
-    let mut tx = pool.begin().await?;
-    let schedule = load_in(&mut tx, establishment).await?;
-    tx.commit().await?;
-    Ok(schedule)
+    let mut connection = pool.acquire().await?;
+    load_in(&mut connection, establishment).await
+}
+
+#[derive(sqlx::FromRow)]
+struct ScheduleRow {
+    time_zone: Option<String>,
+    delivery: Option<bool>,
+    pickup: Option<bool>,
+    minimum_centavos: Option<i64>,
+    acceptance_minutes: Option<i64>,
+    paused: Option<bool>,
+    paused_until: Option<i64>,
+    weekly: Json<Vec<(usize, String)>>,
+    exceptions: Json<Vec<(NaiveDate, String)>>,
 }
 
 pub(crate) async fn load_in(
     conn: &mut SqliteConnection,
     establishment: &str,
 ) -> AppResult<Schedule> {
-    type SettingsRow = (String, bool, bool, i64, i64, bool, Option<i64>);
-    let settings: Option<SettingsRow> = sqlx::query_as(
-        "SELECT time_zone, delivery, pickup, minimum_centavos, acceptance_minutes, paused, paused_until
-         FROM commercial_settings WHERE establishment_id = ?",
+    // The tenant row keeps hours available even before the first settings save.
+    let row: ScheduleRow = sqlx::query_as(
+        "SELECT s.time_zone, s.delivery, s.pickup, s.minimum_centavos, s.acceptance_minutes,
+                s.paused, s.paused_until,
+                (SELECT json_group_array(json_array(weekday, windows_json))
+                 FROM business_hours WHERE establishment_id = ?1) AS weekly,
+                (SELECT json_group_array(json_array(local_date, windows_json))
+                 FROM business_hour_exceptions WHERE establishment_id = ?1) AS exceptions
+         FROM (SELECT ?1 AS establishment_id) tenant
+         LEFT JOIN commercial_settings s USING (establishment_id)",
     )
     .bind(establishment)
-    .fetch_optional(&mut *conn)
+    .fetch_one(conn)
     .await?;
-    let weekly: Vec<(i64, String)> = sqlx::query_as(
-        "SELECT weekday, windows_json FROM business_hours WHERE establishment_id = ? ORDER BY weekday",
-    ).bind(establishment).fetch_all(&mut *conn).await?;
-    let exceptions: Vec<(NaiveDate, String)> = sqlx::query_as(
-        "SELECT local_date, windows_json FROM business_hour_exceptions WHERE establishment_id = ? ORDER BY local_date",
-    ).bind(establishment).fetch_all(&mut *conn).await?;
 
     let mut schedule = Schedule::default();
-    if let Some((
-        time_zone,
-        delivery,
-        pickup,
-        minimum_centavos,
-        acceptance_minutes,
-        paused,
-        paused_until,
-    )) = settings
-    {
-        schedule.settings = CommercialSettings {
-            time_zone,
-            delivery,
-            pickup,
-            minimum_centavos,
-            acceptance_minutes,
-            paused,
-            paused_until,
-        };
+    let settings = &mut schedule.settings;
+    if let Some(time_zone) = row.time_zone {
+        settings.time_zone = time_zone;
+        settings.delivery = row.delivery.unwrap_or(settings.delivery);
+        settings.pickup = row.pickup.unwrap_or(settings.pickup);
+        settings.minimum_centavos = row.minimum_centavos.unwrap_or(settings.minimum_centavos);
+        settings.acceptance_minutes = row
+            .acceptance_minutes
+            .unwrap_or(settings.acceptance_minutes);
+        settings.paused = row.paused.unwrap_or(settings.paused);
+        settings.paused_until = row.paused_until;
     }
     let decode = |raw: &str| {
         Windows::validated_from_json(raw)
             .map_err(|_| AppError::Internal("invalid persisted business hours".into()))
     };
-    for (day, json) in weekly {
-        schedule.weekly[day as usize] = decode(&json)?;
+    for (day, json) in row.weekly.0 {
+        schedule.weekly[day] = decode(&json)?;
     }
-    for (date, json) in exceptions {
+    for (date, json) in row.exceptions.0 {
         schedule.exceptions.insert(date, decode(&json)?);
     }
     Ok(schedule)

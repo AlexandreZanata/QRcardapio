@@ -310,18 +310,20 @@ pub async fn place_order(
         payment,
     };
 
-    let minimum_override = zone.as_ref().and_then(|z| z.min_order_centavos);
-    let placement = checkout::place_order_with_attempt_in(
+    let zone_label = zone
+        .as_ref()
+        .map(|zone| format!("{} — {}", zone.neighborhood, zone.city));
+    let placement = checkout::place_checked_order_in(
         &mut tx,
         target,
         request,
         now,
         &attempt,
         checkout::CheckoutRules {
-            minimum_override,
-            allow_missing_cep: true,
+            minimum_override: zone.as_ref().and_then(|zone| zone.min_order_centavos),
+            delivery_zone_label: zone_label.as_deref(),
         },
-        Some(&snapshot),
+        &snapshot,
     )
     .await?;
     match placement.outcome {
@@ -369,10 +371,7 @@ pub async fn place_order(
                     order_id,
                     cancel_token_hash: sha256_hex(&cancel_token),
                     zone_id: zone.as_ref().map(|z| z.id.clone()),
-                    neighborhood_label: zone
-                        .as_ref()
-                        .map(|z| format!("{} — {}", z.neighborhood, z.city))
-                        .unwrap_or_default(),
+                    neighborhood_label: zone_label.unwrap_or_default(),
                     coupon_id: coupon.as_ref().map(|(c, _)| c.id.clone()),
                     coupon_code: coupon.as_ref().map(|(c, _)| c.code.clone()),
                     order_note: input.note.unwrap_or_default().trim().to_owned(),

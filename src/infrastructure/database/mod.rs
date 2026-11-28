@@ -79,6 +79,8 @@ pub async fn open_pool_at(
     let pool = SqlitePoolOptions::new()
         .max_connections(max_connections)
         .min_connections(1)
+        // SQLx checks the local SQLite worker and drains pending rollback on release.
+        .test_before_acquire(false)
         .acquire_timeout(Duration::from_secs(10))
         .connect_with(options)
         .await?;

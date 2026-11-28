@@ -44,8 +44,8 @@ async fn process_events(pool: &SqlitePool) {
             _ = async {
                 tokio::select! {
                     _ = dispatch.tick() => (),
-                    // A short coalescing window groups commits into one durable batch.
-                    _ = wait_for_commit() => sleep(Duration::from_millis(20)).await,
+                    // Group events from contiguous order writes before competing for the writer.
+                    _ = wait_for_commit() => sleep(Duration::from_millis(100)).await,
                 }
             } => {
                 for _ in 0..8 {

@@ -21,6 +21,7 @@ use crate::http::handlers::{
 };
 use crate::http::middleware::branded_errors::branded_errors;
 use crate::http::middleware::security_headers::{no_store, security_headers_middleware};
+use crate::http::responses::public_html::PublicHtmlCache;
 use crate::i18n::Catalog;
 use crate::infrastructure::assets::AssetProcessor;
 use crate::infrastructure::google::GoogleOidc;
@@ -42,6 +43,7 @@ pub struct AppState {
     pub billing: BillingGateways,
     pub commercial_catalog: Arc<CommercialCatalog>,
     pub google: Option<GoogleOidc>,
+    pub(crate) public_html: Arc<PublicHtmlCache>,
 }
 
 impl AppState {
@@ -63,6 +65,7 @@ impl AppState {
             commercial_catalog: Arc::new(catalog().clone()),
             staff_push_public_key: None,
             google,
+            public_html: Arc::default(),
         }
     }
 }

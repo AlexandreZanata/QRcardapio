@@ -1,6 +1,6 @@
 # Project State
 
-Last updated: 2026-11-25
+Last updated: 2026-11-28
 
 ## Current Status — MVP Complete
 
@@ -90,6 +90,12 @@ The internal preview provides a white-label storefront, tenant-scoped cart, deli
 The HTTP suite exercises the compiled preview lifecycle and the operator grant. It checks tenant isolation, disk-only public delivery, quotes, idempotency, concurrent coupon use, expiry, tracking and staff permissions. The first production grant is managed separately from deployment. The suite now checks 100 concurrent checkout attempts against a coupon with ten redemptions and reconciles the ten successful orders, payments and events. The customer privacy regression covers three orders, a partial refund, phone-block export and erasure, and another establishment with the same phone number.
 
 The [sustained local capacity run](../performance/PERFORMANCE.md#sustained-local-run-on-2026-11-27) reconciled 9,795 orders and met the quote and checkout latency budgets. It fell short of the completed orders/s and mixed static read targets. Capacity qualification on the VPS, real-device PWA installation and staff Web Push, and the broader pilot remain release gates.
+
+The capacity follow-up reuses the authorized order version during staff transitions, checks membership and order version in the same write transaction, and reads preparation and delivery estimates together. The static Axum paths group disk operations in a single blocking task. With Web Push configured, owners and managers can install the staff order center from its authenticated manifest. [Physical-device qualification procedure](../operations/RUNBOOK.md#qr-delivery-physical-device-qualification)
+
+The follow-up local benchmark reconciled 7,972 orders and all 31,888 order events. Quote and checkout latency passed, and throughput and both static p95 ratios remained outside their budgets. [Sustained local follow-up](../performance/PERFORMANCE.md#sustained-local-follow-up-on-2026-11-28)
+
+The isolated local retest passed all six capacity checks in 600 seconds after reducing checkout and staff database round trips and caching the public HTML indexes with a file identity check on each hit. It completed 45.24 orders/s with static p95 ratios of 0.991× for the menu and 1.006× for the storefront. All 27,229 orders and 108,916 events reconciled. The module remains in internal preview and target VPS qualification is pending. [Isolated local capacity retest](../performance/PERFORMANCE.md#isolated-local-capacity-retest-on-2026-11-28)
 
 ## Landing and Panel Refresh
 

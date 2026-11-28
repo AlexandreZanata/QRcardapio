@@ -1,8 +1,10 @@
+use std::fs::File;
+use std::io::Read;
 use std::net::IpAddr;
-use std::os::unix::fs::MetadataExt;
+use std::path::{Path as FsPath, PathBuf};
 
 use axum::extract::{Path, Query, State};
-use axum::http::header::{CACHE_CONTROL, CONTENT_TYPE, ETAG};
+use axum::http::header::{CACHE_CONTROL, CONTENT_TYPE, ETAG, IF_NONE_MATCH};
 use axum::http::{HeaderMap, HeaderValue, StatusCode};
 use axum::response::{IntoResponse, Redirect, Response};
 use axum_extra::extract::CookieJar;
@@ -16,6 +18,7 @@ use crate::http::handlers::seo::with_public_cache;
 use crate::http::middleware::auth::{ClientIp, OptionalAuth};
 use crate::http::middleware::locale::{ExplicitRequestLocale, RequestLocale};
 use crate::http::responses::check_etag_not_modified;
+use crate::http::responses::public_html::{HtmlKind, menu_etag};
 use crate::i18n::{Catalog, Locale};
 use crate::infrastructure::storage::resolve_safe_subpath;
 use crate::rendering::error_page::error_page;
@@ -163,21 +166,27 @@ fn local_plan_preview(public_base_url: &str) -> bool {
         })
 }
 
-/// Serves a published static menu (`/c/{slug}`) directly from disk WITHOUT touching SQLite.
+/// Serves a published static menu (`/c/{slug}`) without touching SQLite.
 pub async fn serve_published_menu(
     State(state): State<AppState>,
     RequestLocale(locale): RequestLocale,
     Path(slug): Path<String>,
     headers: HeaderMap,
 ) -> Response {
-    serve_published_file_from_disk(
-        &state.config.published_dir(),
-        &slug,
-        "index.html",
-        locale,
-        &headers,
-    )
-    .await
+    let Ok(path) = published_target(&state.config.published_dir(), &slug, "index.html") else {
+        return render_public_404(locale);
+    };
+    let Ok(page) = state.public_html.read(path, HtmlKind::Menu).await else {
+        return render_public_404(locale);
+    };
+    check_etag_not_modified(&headers, &page.etag).unwrap_or_else(|| {
+        menu_file_response(
+            page.body.clone(),
+            "text/html; charset=utf-8",
+            "public, max-age=60, stale-while-revalidate=300",
+            &page.etag,
+        )
+    })
 }
 
 /// Serves static assets inside a published menu directory (`/c/{slug}/{*file}`) WITHOUT touching SQLite.
@@ -187,6 +196,10 @@ pub async fn serve_published_asset(
     Path((slug, file)): Path<(String, String)>,
     headers: HeaderMap,
 ) -> Response {
+    if file == "index.html" {
+        return serve_published_menu(State(state), RequestLocale(locale), Path(slug), headers)
+            .await;
+    }
     serve_published_file_from_disk(
         &state.config.published_dir(),
         &slug,
@@ -199,43 +212,48 @@ pub async fn serve_published_asset(
 
 /// Pure filesystem delivery handler that takes only the `published_dir` root (no database handle).
 pub async fn serve_published_file_from_disk(
-    published_dir: &std::path::Path,
+    published_dir: &FsPath,
     slug: &str,
     relative_file: &str,
     locale: crate::i18n::Locale,
     headers: &HeaderMap,
 ) -> Response {
-    let Ok(clean_slug) = Slug::validate_existing(slug) else {
-        return render_public_404(locale);
-    };
-    let Ok(est_dir) = resolve_safe_subpath(published_dir, clean_slug.as_str()) else {
-        return render_public_404(locale);
-    };
-    let Ok(target) = resolve_safe_subpath(&est_dir, relative_file) else {
+    let Ok(target) = published_target(published_dir, slug, relative_file) else {
         return render_public_404(locale);
     };
 
-    let Ok(meta) = tokio::fs::metadata(&target).await else {
-        return render_public_404(locale);
-    };
-    if !meta.is_file() {
-        return render_public_404(locale);
+    let mut conditional = HeaderMap::new();
+    if let Some(value) = headers.get(IF_NONE_MATCH) {
+        conditional.insert(IF_NONE_MATCH, value.clone());
     }
-
-    let mtime_ns = meta
-        .modified()
+    tokio::task::spawn_blocking(move || read_published_file(target, &conditional))
+        .await
         .ok()
-        .and_then(|t| t.duration_since(std::time::UNIX_EPOCH).ok())
-        .map(|d| d.as_nanos())
-        .unwrap_or(0);
-    let etag = format!("\"{}-{}-{}\"", meta.ino(), meta.size(), mtime_ns);
-    if let Some(not_mod) = check_etag_not_modified(headers, &etag) {
-        return not_mod;
+        .flatten()
+        .unwrap_or_else(|| render_public_404(locale))
+}
+
+fn published_target(published_dir: &FsPath, slug: &str, relative_file: &str) -> AppResult<PathBuf> {
+    let slug = Slug::validate_existing(slug)?;
+    let est_dir = resolve_safe_subpath(published_dir, slug.as_str())?;
+    resolve_safe_subpath(&est_dir, relative_file)
+}
+
+fn read_published_file(target: PathBuf, headers: &HeaderMap) -> Option<Response> {
+    // Metadata and body come from the same generation if publication replaces the path.
+    let mut file = File::open(&target).ok()?;
+    let meta = file.metadata().ok()?;
+    if !meta.is_file() {
+        return None;
     }
 
-    let Ok(bytes) = tokio::fs::read(&target).await else {
-        return render_public_404(locale);
-    };
+    let etag = menu_etag(&meta);
+    if let Some(not_mod) = check_etag_not_modified(headers, &etag) {
+        return Some(not_mod);
+    }
+
+    let mut bytes = Vec::new();
+    file.read_to_end(&mut bytes).ok()?;
 
     let (content_type, cache_control) = match target.extension().and_then(|e| e.to_str()) {
         Some("html") => (
@@ -251,11 +269,25 @@ pub async fn serve_published_file_from_disk(
         _ => ("application/octet-stream", "public, max-age=3600"),
     };
 
+    Some(menu_file_response(
+        bytes,
+        content_type,
+        cache_control,
+        &etag,
+    ))
+}
+
+fn menu_file_response(
+    bytes: impl IntoResponse,
+    content_type: &'static str,
+    cache_control: &'static str,
+    etag: &str,
+) -> Response {
     let mut res = (StatusCode::OK, bytes).into_response();
     let res_headers = res.headers_mut();
     res_headers.insert(CONTENT_TYPE, HeaderValue::from_static(content_type));
     res_headers.insert(CACHE_CONTROL, HeaderValue::from_static(cache_control));
-    if let Ok(hv) = HeaderValue::from_str(&etag) {
+    if let Ok(hv) = HeaderValue::from_str(etag) {
         res_headers.insert(ETAG, hv);
     }
     res

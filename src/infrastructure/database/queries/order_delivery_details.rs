@@ -9,11 +9,12 @@ pub(crate) async fn insert(
     order: &Order,
     profile: &CustomerProfile,
     address: &PostalAddress,
+    neighborhood_label: &str,
 ) -> AppResult<()> {
     sqlx::query(
         "INSERT INTO order_delivery_details (establishment_id, order_id, recipient_name, recipient_phone,
             street, street_number, complement, neighborhood_label, city, uf, cep, reference)
-         VALUES (?, ?, ?, ?, ?, ?, ?, '', ?, ?, ?, ?)",
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(&order.establishment_id)
     .bind(&order.id)
@@ -22,6 +23,7 @@ pub(crate) async fn insert(
     .bind(&address.street)
     .bind(&address.street_number)
     .bind(&address.complement)
+    .bind(neighborhood_label)
     .bind(&address.city)
     .bind(&address.uf)
     .bind((!address.cep.is_empty()).then_some(address.cep.as_str()))

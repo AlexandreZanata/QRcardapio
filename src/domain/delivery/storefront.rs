@@ -1,6 +1,8 @@
 use crate::domain::commerce::order_payment::OfflineMethod;
 use crate::error::{AppError, AppResult};
 
+pub(crate) const DEFAULT_PREP_MINUTES: i64 = 25;
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum StorefrontStatus {
     Draft,
@@ -58,7 +60,7 @@ impl StorefrontSettings {
             pix_key_display: String::new(),
             contact_whatsapp: String::new(),
             pickup_instructions: String::new(),
-            default_prep_minutes: 25,
+            default_prep_minutes: DEFAULT_PREP_MINUTES,
             updated_at: String::new(),
         }
     }

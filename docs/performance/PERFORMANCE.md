@@ -159,9 +159,9 @@ The mixed workload served 53,113 static menu reads. Menu p95 was 0.718 ms, or 1.
 
 Run `COMMERCE_BENCH_CPU=<cpu> COMMERCE_BENCH_MEMORY_MAX=1G ./scripts/bench_commerce.sh delivery` on Linux. Set `TMPDIR` to a directory on persistent storage. The executable creates its own synthetic database and writes with SQLite WAL and `synchronous=FULL`. The scope pins the process to one CPU, caps memory to 1 GiB and disables swap. The release build runs outside that scope.
 
-The default 600-second scenario uses 200 establishments and 64 checkout clients. It alternates delivery and pickup, quotes current prices, exercises idempotent retries and progresses orders through the staff routes. In-process HTTP requests use the real Axum router. The mixed scenario reads the published menu and storefront while orders are written and compares each route with its own read-only baseline. It reconciles order, payment, checkout attempt and outbox records after the workload drains.
+The default 600-second scenario uses 200 establishments and 64 checkout clients. It alternates delivery and pickup, quotes current prices, exercises idempotent retries and progresses each order through three real staff requests. In-process HTTP requests use the Axum router. The two static readers run as runtime tasks in both the read-only baseline and the mixed scenario. The harness visits each static page once before measuring either phase so both use the same warmed cache. The report includes staff queue time, processing time and completions by minute. After timing ends, it reconciles orders, payments and checkout attempts, waits for outbox publication and verifies notification consumer receipts.
 
-The thresholds are those of Commerce Core §13 and QR Delivery §21: at least 30 new orders/s, checkout p95 at most 300 ms and p99 at most 1 s, quote p95 at most 50 ms, static p95 at most twice its own baseline, and zero failed or duplicate writes or monetary discrepancies. The request timings cover application routing and storage. Network and CDN timings require a separate measurement.
+The thresholds are those of Commerce Core §13 and QR Delivery §21. The run requires at least 30 new orders/s, checkout p95 at most 300 ms and p99 at most 1 s, quote p95 at most 50 ms, static p95 at most twice its own baseline, and zero failed or duplicate writes or monetary discrepancies. The request timings cover application routing and storage, including the static file path used by the native VPS app. Caddy, network and CDN timings require a separate measurement.
 
 Use `COMMERCE_BENCH_SECONDS=15` for a short smoke run. It exercises the routes and reconciliation and reports measurements. Use the full duration and target host for qualification.
 
@@ -192,3 +192,37 @@ The 600-second candidate run used the same CPU, memory limit and persistent SQLi
 | Static storefront p95 ≤ 2× baseline | 0.516 ms, 3.353× baseline | Above threshold |
 
 The benchmark failed the sustained capacity gate. Qualification on the target host remains open.
+
+### Sustained local follow-up on 2026-11-28
+
+The optimized candidate ran for 600 seconds on a shared local machine with CPU 4 pinned, a 1 GiB cgroup limit, swap disabled and ext4 with SQLite WAL/FULL. The adjusted runner scheduled static readers the same way in both phases. The host experienced I/O pressure during the run.
+
+| Gate | Sustained result | Outcome |
+|---|---:|---|
+| Completed orders/s ≥ 30 | 13.17 over 605.12 s including drain | Below threshold |
+| Quote p95 ≤ 50 ms | 3.915 ms | Passed |
+| Checkout p95 ≤ 300 ms and p99 ≤ 1 s | 108.456 ms p95 and 814.764 ms p99 | Passed |
+| Static menu p95 ≤ 2× baseline | 0.573 ms, 2.254× baseline | Above threshold |
+| Static storefront p95 ≤ 2× baseline | 0.539 ms, 2.186× baseline | Above threshold |
+
+The run reconciled 7,972 orders (3,986 delivery and 3,986 pickup), 896 replays, 7,972 pending offline payments and 23,916 staff transitions without duplicates or monetary discrepancies. The outbox published 31,888 order events and recorded 7,972 notification consumer receipts. Staff queue wait p95 was 19.12 s and staff processing p95 was 163.196 ms per order. Staff completions ranged from 411 in the first minute to 1,100 in the last full minute.
+
+That run missed the sustained capacity gate. The target VPS still requires qualification with its actual static routing path.
+
+### Isolated local capacity retest on 2026-11-28
+
+Two 45-second diagnostics ran the same pre-optimization binary (`732ff04`) on logical CPU 4 under a 1 GiB limit with swap disabled. With the fixtures on the workstation's ext4 system volume, the run completed 16.43 orders/s. With the fixtures on the separate ext4 NVMe, it completed 117.96 orders/s. Both used SQLite WAL/FULL. The short results show the sensitivity to local resource contention and storage. They are diagnostics for the sustained run.
+
+The optimized candidate combines schedule reads, removes the Delivery checkout savepoint when the adapter owns the entire transaction, and records the configured zone label on the initial address write. Staff transitions check the current member role, order state and version in the same statement. The worker groups outbox commits over a 100 ms window. The HTTP benchmark now primes both sets of public HTML indexes before measuring either phase. The 24 MiB Axum cache holds this fixture's 200 storefront indexes, which together occupy about 16 MiB.
+
+The 600-second release run passed every gate in the Axum benchmark. It used logical CPU 4, a verified 1 GiB cgroup with swap disabled, and SQLite WAL/FULL on the separate local ext4 NVMe. The host had concurrent CPU load. Near the end of the run, the benchmark cgroup reported 53.72% CPU pressure and 0.98% I/O pressure (`some avg60`).
+
+| Gate | Sustained result | Outcome |
+|---|---:|---|
+| Completed orders/s ≥ 30 | 45.24 over 601.81 s including drain | Passed |
+| Quote p95 ≤ 50 ms | 7.352 ms | Passed |
+| Checkout p95 ≤ 300 ms and p99 ≤ 1 s | 21.370 ms p95 and 37.168 ms p99 | Passed |
+| Static menu p95 ≤ 2× baseline | 0.308 ms, 0.991× baseline | Passed |
+| Static storefront p95 ≤ 2× baseline | 0.310 ms, 1.006× baseline | Passed |
+
+The run reconciled 27,229 completed orders, including 13,613 deliveries and 13,616 pickups, with 3,072 idempotent replays, 27,229 pending offline payments and 81,687 staff transitions. All 108,916 order events were published, with 27,229 notification consumer receipts. It found zero duplicate orders or monetary discrepancies. The same suite on the target VPS and end-to-end measurements through its production proxy remain part of deployment qualification.

@@ -14,5 +14,7 @@ mod preview_completion;
 mod privacy;
 #[path = "delivery/publication.rs"]
 mod publication;
+#[path = "delivery/staff_push.rs"]
+mod staff_push;
 #[path = "commercial/support.rs"]
 mod support;

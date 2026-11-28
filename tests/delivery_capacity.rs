@@ -5,6 +5,8 @@ mod fixture;
 mod http;
 #[path = "delivery_capacity/reconcile.rs"]
 mod reconcile;
+#[path = "delivery_capacity/staff.rs"]
+mod staff;
 #[path = "commercial/support.rs"]
 mod support;
 
@@ -19,7 +21,8 @@ use uuid::Uuid;
 use qrcardapio::application::commerce::worker;
 
 use fixture::{MENU_PATH, Tenant};
-use http::{Mode, Visitor, assert_quote, complete, order_input, post, quote_input, storefront_get};
+use http::{Mode, Visitor, assert_quote, order_input, post, quote_input, storefront_get};
+use staff::StaffOrder;
 
 const ESTABLISHMENTS: usize = 200;
 const CLIENTS: usize = 64;
@@ -105,7 +108,7 @@ fn report(samples: &mut [Duration], name: &str, elapsed: Duration) -> Percentile
 async fn simulate_visitor(
     app: Router,
     tenants: Arc<Vec<Tenant>>,
-    staff: mpsc::Sender<(usize, String)>,
+    staff: mpsc::Sender<StaffOrder>,
     client: usize,
     deadline: Instant,
 ) -> Sample {
@@ -143,7 +146,11 @@ async fn simulate_visitor(
             samples.replay.push(replay_latency);
         }
         staff
-            .send((tenant_index, public_id.to_owned()))
+            .send(StaffOrder {
+                tenant_index,
+                public_id: public_id.to_owned(),
+                submitted_at: Instant::now(),
+            })
             .await
             .unwrap();
         match mode {
@@ -181,19 +188,28 @@ async fn sustained_delivery_capacity() {
         "Delivery capacity: {ESTABLISHMENTS} establishments, {CLIENTS} clients, {seconds}s, router in-process, WAL/FULL"
     );
 
-    let (mut menu_baseline, mut storefront_baseline) = tokio::join!(
-        read_stream(
-            harness.app.clone(),
-            tenants.clone(),
-            baseline_duration,
-            false
-        ),
-        read_stream(
-            harness.app.clone(),
-            tenants.clone(),
-            baseline_duration,
-            true
-        ),
+    // Use warmed caches for both measured phases. Otherwise the reference
+    // includes cache fills the mixed phase will inherit.
+    storefront_get(&harness.app, MENU_PATH).await;
+    for tenant in tenants.iter() {
+        storefront_get(&harness.app, &tenant.index_url).await;
+    }
+
+    let baseline_menu = tokio::spawn(read_stream(
+        harness.app.clone(),
+        tenants.clone(),
+        baseline_duration,
+        false,
+    ));
+    let baseline_storefront = tokio::spawn(read_stream(
+        harness.app.clone(),
+        tenants.clone(),
+        baseline_duration,
+        true,
+    ));
+    let (mut menu_baseline, mut storefront_baseline) = (
+        baseline_menu.await.unwrap(),
+        baseline_storefront.await.unwrap(),
     );
     let menu_before = report(&mut menu_baseline, "baseline GET /c", baseline_duration);
     let storefront_before = report(
@@ -218,17 +234,14 @@ async fn sustained_delivery_capacity() {
         duration,
         true,
     ));
-    let (staff_send, mut staff_receive) = mpsc::channel::<(usize, String)>(CLIENTS);
-    let (staff_app, staff_pool, staff_tenants) =
-        (harness.app.clone(), pool.clone(), tenants.clone());
-    let staff = tokio::spawn(async move {
-        let mut completed = 0;
-        while let Some((tenant, public_id)) = staff_receive.recv().await {
-            complete(&staff_app, &staff_pool, &staff_tenants[tenant], &public_id).await;
-            completed += 1;
-        }
-        completed
-    });
+    let (staff_send, staff_receive) = mpsc::channel(CLIENTS);
+    let staff = tokio::spawn(staff::process(
+        harness.app.clone(),
+        pool.clone(),
+        tenants.clone(),
+        staff_receive,
+        started,
+    ));
     let mut workers = JoinSet::new();
     for client in 0..CLIENTS {
         workers.spawn(simulate_visitor(
@@ -245,11 +258,10 @@ async fn sustained_delivery_capacity() {
     while let Some(sample) = workers.join_next().await {
         samples.merge(sample.unwrap());
     }
-    let completed = staff.await.unwrap();
+    let staff = staff.await.unwrap();
+    let completed = staff.completed();
     let elapsed = started.elapsed();
     let (mut menu_live, mut storefront_live) = (menu.await.unwrap(), storefront.await.unwrap());
-    dispatcher.abort();
-    let _ = dispatcher.await;
     assert_eq!(completed, samples.delivery + samples.pickup);
     assert_eq!(samples.checkout.len(), completed);
     assert_eq!(samples.quote.len(), completed);
@@ -259,6 +271,7 @@ async fn sustained_delivery_capacity() {
     let quotes = report(&mut samples.quote, "POST quotes", elapsed);
     let checkouts = report(&mut samples.checkout, "POST new orders", elapsed);
     report(&mut samples.replay, "POST replayed orders", elapsed);
+    staff.report(elapsed);
     let menu_after = report(&mut menu_live, "mixed GET /c", duration);
     let storefront_after = report(&mut storefront_live, "mixed GET /s", duration);
     let orders_per_second = completed as f64 / elapsed.as_secs_f64();
@@ -273,6 +286,9 @@ async fn sustained_delivery_capacity() {
     println!("mixed/static p95 ratios: /c {menu_ratio:.3}x, /s {storefront_ratio:.3}x");
 
     reconcile::check(pool, samples.delivery, samples.pickup).await;
+    reconcile::check_publications(pool, completed).await;
+    dispatcher.abort();
+    let _ = dispatcher.await;
     if seconds >= 600 {
         let budgets = [
             ("throughput >= 30 orders/s", orders_per_second >= 30.0),

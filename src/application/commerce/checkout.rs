@@ -137,9 +137,10 @@ pub struct CheckoutPlacement {
 }
 
 #[derive(Default)]
-pub(crate) struct CheckoutRules {
+pub(crate) struct CheckoutRules<'a> {
     pub minimum_override: Option<i64>,
-    pub allow_missing_cep: bool,
+    /// A label from the configured delivery zone, safe to retain after customer erasure.
+    pub delivery_zone_label: Option<&'a str>,
 }
 
 /// Extend checkout inside a caller's `BEGIN IMMEDIATE`. The caller may consume a
@@ -152,38 +153,15 @@ pub async fn place_order_in(
     now: DateTime<Utc>,
 ) -> AppResult<CheckoutPlacement> {
     let fingerprint = AttemptFingerprint::new(target, &request)?;
-    place_order_with_attempt_in(
-        tx,
-        target,
-        request,
-        now,
-        &fingerprint,
-        CheckoutRules::default(),
-        None,
-    )
-    .await
-}
-
-pub(crate) async fn place_order_with_attempt_in(
-    tx: &mut Transaction<'_, Sqlite>,
-    target: CheckoutTarget<'_>,
-    request: CheckoutRequest,
-    now: DateTime<Utc>,
-    fingerprint: &AttemptFingerprint,
-    rules: CheckoutRules,
-    // Supplied only by a caller that has already ruled out a replay and loaded
-    // the snapshot under this same BEGIN IMMEDIATE.
-    checked_snapshot: Option<&CheckoutSnapshot<'_>>,
-) -> AppResult<CheckoutPlacement> {
     let mut checkout = tx.begin().await?;
     match place_locked(
         &mut checkout,
         target,
         request,
         now,
-        fingerprint,
-        rules,
-        checked_snapshot,
+        &fingerprint,
+        CheckoutRules::default(),
+        None,
     )
     .await
     {
@@ -198,13 +176,27 @@ pub(crate) async fn place_order_with_attempt_in(
     }
 }
 
+/// The channel owns the transaction and must roll it back on failure. It has already
+/// checked for a replay and loaded this snapshot under the same BEGIN IMMEDIATE.
+pub(crate) async fn place_checked_order_in(
+    tx: &mut Transaction<'_, Sqlite>,
+    target: CheckoutTarget<'_>,
+    request: CheckoutRequest,
+    now: DateTime<Utc>,
+    fingerprint: &AttemptFingerprint,
+    rules: CheckoutRules<'_>,
+    snapshot: &CheckoutSnapshot<'_>,
+) -> AppResult<CheckoutPlacement> {
+    place_locked(tx, target, request, now, fingerprint, rules, Some(snapshot)).await
+}
+
 async fn place_locked(
     tx: &mut Transaction<'_, Sqlite>,
     target: CheckoutTarget<'_>,
     request: CheckoutRequest,
     now: DateTime<Utc>,
     fingerprint: &AttemptFingerprint,
-    rules: CheckoutRules,
+    rules: CheckoutRules<'_>,
     checked_snapshot: Option<&CheckoutSnapshot<'_>>,
 ) -> AppResult<CheckoutPlacement> {
     // A concurrent checkout may have committed while this request waited for the writer.
@@ -224,7 +216,11 @@ async fn place_locked(
         return Err(INVALID_CART);
     }
     let customer = request.customer.normalized()?;
-    let address = delivery_address(target.mode, request.address, rules.allow_missing_cep)?;
+    let address = delivery_address(
+        target.mode,
+        request.address,
+        rules.delivery_zone_label.is_some(),
+    )?;
     let loaded_schedule;
     let schedule = if let Some(snapshot) = checked_snapshot {
         snapshot.schedule
@@ -311,7 +307,14 @@ async fn place_locked(
     .await?;
     order_customers::link(tx, &order, &customer_id).await?;
     if let Some(address) = address {
-        order_delivery_details::insert(tx, &order, &customer, &address).await?;
+        order_delivery_details::insert(
+            tx,
+            &order,
+            &customer,
+            &address,
+            rules.delivery_zone_label.unwrap_or_default(),
+        )
+        .await?;
     }
     payments::create_initial_pending(tx, &order, request.payment, now).await?;
     checkout_attempts::remember(

@@ -9,7 +9,7 @@ The engine answers, for one establishment and one capability on one date: does i
 | # | Dimension | Source | Denial (`Denial`) | i18n key |
 |---|---|---|---|---|
 | 1 | Module availability | `Lifecycle::grants()` of the offer that owns the capability | `ModuleUnavailable` | `error.module_unavailable` |
-| 2 | Establishment operational state | `establishment_operational_states` (`active`, `suspended_admin`, `suspended_security`) | `EstablishmentSuspended` | `error.establishment_suspended` |
+| 2 | Establishment operational state for operations that suspension can block | `establishment_operational_states` (`active`, `suspended_admin`, `suspended_security`) | `EstablishmentSuspended` | `error.establishment_suspended` |
 | 3 | Member permission | `MemberRole` from `establishment_members` (loaded into `TenantContext.role`) vs `Operation::roles()` | `PermissionDenied` | `error.permission_denied` |
 | 4 | Deployment feature flag | `state.billing.enforcement()` derives enforcement and environment from `application::payments::BillingGateways` | — | — |
 | 5 | Commercial entitlement | contracts with confirmed coverage + explicit grants | `NotEntitled(decision)` | `error.subscription_required` |

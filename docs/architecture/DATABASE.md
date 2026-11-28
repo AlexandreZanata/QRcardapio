@@ -20,6 +20,8 @@ Configured in `src/infrastructure/database/mod.rs`:
 | Pool size | `max = 5`, `min = 1` | Matches SQLite's single-writer concurrency model with negligible memory overhead. |
 | Write locking | `BEGIN IMMEDIATE` | `begin_immediate()` prevents snapshot upgrade `SQLITE_BUSY` errors under concurrent writers by honoring `busy_timeout`. |
 
+The pool checks the process-local SQLite connection on release and completes pending rollbacks before reuse. Acquiring an idle connection skips a second worker ping. A single statement reads a tenant's commercial settings, weekly hours and exceptions together from the same SQLite snapshot.
+
 ### `synchronous=FULL` vs `synchronous=NORMAL`
 
 In WAL mode, `NORMAL` avoids `fsync` on every transaction commit (flushing mainly on WAL checkpoints), whereas `FULL` calls `fsync` on commit. Because QR Cardápio serves public scans from static files and only writes to SQLite during infrequent owner dashboard edits, **write QPS is low and data integrity is paramount**; therefore `DB_SYNCHRONOUS=FULL` is the default. Operators on battery-backed NVMe may opt into `DB_SYNCHRONOUS=NORMAL` via environment variable.

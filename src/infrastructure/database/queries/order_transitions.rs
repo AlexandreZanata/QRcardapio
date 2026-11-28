@@ -4,26 +4,46 @@ use crate::domain::commerce::order::{Order, TransitionOrder};
 use crate::domain::commerce::state_machine::Actor;
 use crate::error::AppResult;
 
+macro_rules! member_role_exists {
+    ($account:literal, $establishment:literal, $role:literal) => {
+        concat!(
+            "EXISTS(
+                SELECT 1 FROM establishment_members
+                WHERE account_id = ",
+            $account,
+            " AND establishment_id = ",
+            $establishment,
+            " AND member_role = ",
+            $role,
+            "
+                UNION ALL
+                SELECT 1 FROM establishment_member_roles
+                WHERE account_id = ",
+            $account,
+            " AND establishment_id = ",
+            $establishment,
+            " AND member_role = ",
+            $role,
+            ")"
+        )
+    };
+}
+pub(super) use member_role_exists;
+
 pub(crate) async fn has_member_role(
     tx: &mut Transaction<'_, Sqlite>,
     establishment_id: &str,
     account_id: &str,
     actor: Actor,
 ) -> AppResult<bool> {
-    Ok(sqlx::query_scalar(
-        "SELECT EXISTS(
-             SELECT 1 FROM establishment_members
-             WHERE account_id = ?1 AND establishment_id = ?2 AND member_role = ?3
-             UNION ALL
-             SELECT 1 FROM establishment_member_roles
-             WHERE account_id = ?1 AND establishment_id = ?2 AND member_role = ?3
-         )",
+    Ok(
+        sqlx::query_scalar(concat!("SELECT ", member_role_exists!("?1", "?2", "?3")))
+            .bind(account_id)
+            .bind(establishment_id)
+            .bind(actor.as_str())
+            .fetch_one(&mut **tx)
+            .await?,
     )
-    .bind(account_id)
-    .bind(establishment_id)
-    .bind(actor.as_str())
-    .fetch_one(&mut **tx)
-    .await?)
 }
 
 pub(crate) async fn append(
